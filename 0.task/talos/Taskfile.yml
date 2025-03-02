@@ -2,6 +2,7 @@ version: '3'
 
 tasks:
   create-talos-image:
+    dir: ./0.ansible/talos-img
     cmds:
     - echo "Create and download Talos image"
-    - ansible-playbook ./0.ansible/talos-img/site.yml
+    - ansible-playbook -i ../inventories/inventory.proxmox.yml site.yml --vault-password-file=../../vault_password
