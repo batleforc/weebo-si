@@ -1,7 +1,7 @@
 version: '3'
 
 env:
-  KUBECONFIG: "./kubeconfig.yaml"
+  KUBECONFIG: "./.talos-capi/kubeconfig"
   VAULT_PASSWORD_FILES: "vault_password"
 
 dotenv: [ '.env' ]

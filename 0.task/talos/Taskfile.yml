@@ -1,8 +1,26 @@
 version: '3'
 
+env:
+  NODE_IP: 192.168.100.210
+
 tasks:
   create-talos-image:
     dir: ./0.ansible/talos-img
     cmds:
     - echo "Create and download Talos image"
     - ansible-playbook -i ../inventories/inventory.proxmox.yml site.yml --vault-password-file=../../vault_password
+  init-capi:
+    dir: ./.talos-capi
+    cmds:
+    - echo "Bootstrap Talos"
+    - talosctl gen secrets
+    - talosctl gen config capi https://$NODE_IP:6443
+    - echo "Init control plane"
+    - talosctl apply-config --insecure --nodes $NODE_IP --file controlplane.yaml
+    - echo "Bootstrap Talos"
+    - talosctl bootstrap -n $NODE_IP -e $NODE_IP --talosconfig ./talosconfig
+  get-kubeconfig-capi:
+    dir: ./.talos-capi
+    cmds:
+    - echo "Get kubeconfig"
+    - talosctl kubeconfig . -e 192.168.100.210 -n 192.168.100.210 --talosconfig ./talosconfig

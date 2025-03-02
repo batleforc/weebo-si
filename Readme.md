@@ -25,6 +25,10 @@ Achat du serveur 1 mars 2024 => Objectif du MVP 1 avril 2024
 
 Mes connaissances en Talos/Proxmox/CAPI sont nulls, donc on est sur du Zero to Hero (ou du moins j'espère).
 
+- [ ] Créer un cluster "Master" qui va gérer les autres clusters nommé "CAPI"
+  - [ ] Documenté le processus
+  - [x] Créer une VM a la main et la provisionner
+  - [ ] Créer la VM depuis ansible
 - [ ] Sur un noeud Proxmox, installer un Mono-Node Talos via la CAPI
 - [ ] Sur un noeud Proxmox, installer un Multi-Node Talos via la CAPI
 - [ ] Tester [KubeVirt](https://kubevirt.io/)

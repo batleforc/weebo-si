@@ -13,3 +13,4 @@ terraform.tfstate
 *.wg.conf
 vault_password
 terraform.tfstate.backup
+.talos-*
