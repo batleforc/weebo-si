@@ -35,6 +35,7 @@
     "POSTROUTING",
     "preshared",
     "proxmox",
+    "pveum",
     "Rollouts",
     "talos",
     "talosctl",

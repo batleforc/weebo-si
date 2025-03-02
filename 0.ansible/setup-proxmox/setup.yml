@@ -14,35 +14,9 @@
         - curl
         - git
         - vim
-        - wireguard
-    - name: "Already have wireguard configuration"
-      ansible.builtin.stat:
-        path: "/etc/wireguard/wg0.conf"
-      register: wireguard_config
-    - name: "Copy Wireguard configuration"
-      ansible.builtin.copy:
-        src: "../../0.terraform/vpn-proxmox/server.wg.conf"
-        dest: "/etc/wireguard/wg0.conf"
-        mode: "0600"
-      register: wireguard_config_copy
-    - name: "Enable firewall rules for Wireguard"
-      community.general.ufw:
-        rule: allow
-        port: 41820
-        proto: udp
-    - name: "Enable and start Wireguard"
-      ansible.builtin.systemd:
-        name: "wg-quick@wg0"
-        enabled: true
-        state: started
-    - name: "Allow in on wg0 to any"
-      community.general.ufw:
-        rule: allow
-        interface: wg0
-        direction: "in"
-        proto: any
-    - name: "Restart Wireguard"
-      ansible.builtin.systemd:
-        name: "wg-quick@wg0"
-        state: restarted
-      when: wireguard_config.stat.exists and wireguard_config_copy.changed
+    - name: Install and configure Wireguard
+      ansible.builtin.include_role:
+        name: wireguard
+    - name: "Create user used for the rest"
+      ansible.builtin.include_role:
+        name: user

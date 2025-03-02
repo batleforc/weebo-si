@@ -1,0 +1,48 @@
+---
+- name: "List user"
+  ansible.builtin.command:
+    cmd: "pveum user list"
+  register: proxmox_user_list
+  ignore_errors: true
+  changed_when: false
+- name: "Create user"
+  ansible.builtin.command:
+    cmd: "pveum user add weebo-env@pve"
+  register: create_user_output
+  ignore_errors: true
+  changed_when: false
+  when: proxmox_user_list.stdout.find("weebo-env@pve") == -1
+- name: "List ACL"
+  ansible.builtin.command:
+    cmd: "pveum acl list"
+  register: proxmox_acl_list
+  ignore_errors: true
+  changed_when: false
+- name: "Set ACL"
+  ansible.builtin.command:
+    cmd: "pveum aclmod / -user weebo-env@pve -role PVEVMAdmin"
+  register: set_acl_output
+  ignore_errors: true
+  changed_when: false
+  when: proxmox_acl_list.stdout.find("PVEVMAdmin │ user │ weebo-env@pve") == -1
+- name: "List token"
+  ansible.builtin.command:
+    cmd: "pveum user token list weebo-env@pve"
+  register: proxmox_token_list
+  ignore_errors: true
+  changed_when: false
+- name: "Create token"
+  ansible.builtin.command:
+    cmd: "pveum user token add weebo-env@pve weebenv -privsep -o json"
+  register: create_token_output
+  ignore_errors: true
+  changed_when: false
+  when: proxmox_token_list.stdout.find("weebenv") == -1
+- name: "Print token"
+  ansible.builtin.debug:
+    msg: "Please copy token and id : {{ create_token_output.stdout }}"
+  when: create_token_output.stdout is defined
+- name: "Print token already exists"
+  ansible.builtin.debug:
+    msg: "Token already exists"
+  when: create_user_output.stdout is undefined
