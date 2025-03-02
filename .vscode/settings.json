@@ -17,6 +17,7 @@
     "ansible",
     "CAPI",
     "clusterctl",
+    "Cocogitto",
     "coeur",
     "dotenv",
     "Falco",

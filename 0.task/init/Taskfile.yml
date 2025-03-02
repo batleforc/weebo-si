@@ -15,3 +15,7 @@ tasks:
     cmds:
     - echo "Install needed cli"
     - sudo ansible-playbook ./0.ansible/setup-host/site.yml
+  install-hook:
+    cmds:
+    - echo "Install Git hook"
+    - cog install-hook --all
