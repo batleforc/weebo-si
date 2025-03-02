@@ -32,6 +32,11 @@ Mes connaissances en Talos/Proxmox/CAPI sont nulls, donc on est sur du Zero to H
 - [ ] Sur un noeud Proxmox, installer un Mono-Node Talos via la CAPI
 - [ ] Sur un noeud Proxmox, installer un Multi-Node Talos via la CAPI
 - [ ] Tester [KubeVirt](https://kubevirt.io/)
+- [ ] Automatiser la configuration Proxmox
+  - [ ] DHCP
+  - [ ] Firewall
+  - [ ] Certificat
+  - [ ] Changement du port SSH
 
 ### 2. Gestion de l'infrastructure
 
