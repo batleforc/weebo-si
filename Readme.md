@@ -19,6 +19,8 @@ Avant toute chose, il est important de noter que ce projet est un projet personn
 
 ## Objectifs
 
+Achat du serveur 1 mars 2024 => Objectif du MVP 1 avril 2024
+
 ### 1. Création de l'infrastructure
 
 Mes connaissances en Talos/Proxmox/CAPI sont nulls, donc on est sur du Zero to Hero (ou du moins j'espère).
@@ -35,7 +37,7 @@ Bon on a nos clusters, maintenant il faut les gérer. Pour cela, on va utiliser 
 - [ ] Créer un déploiement ArgoCD pour la gestion des applications (Ingress, Monitoring, Logging, etc.)
 - [ ] Mettre en place une interface pour mutualisé le monitoring des clusters
 
-### 3. Déployer des applications
+### 3. Déployer des applications <== MVP 1
 
 La création de l'infrastructure et sa gestion c'est bien, mais il faut aussi mettre en place le coeur de l'env Weebo.
 
@@ -49,7 +51,7 @@ La création de l'infrastructure et sa gestion c'est bien, mais il faut aussi me
 - [ ] Déployer l'environnement de dev "Parfait"
 - [ ] Déployer un CNI ([Cilium](https://cilium.io/)) et un Observateur ([Falco](https://falco.org/), [Tetragon](https://tetragon.io/))
 
-### 4. Environnement de dev "Parfait"
+### 4. Environnement de dev "Parfait" <== MVP 2
 
 L'env de base est en place, maintenant il faut ajouter tout les outils pour s'approcher de l'env de dev parfait.
 
@@ -75,7 +77,7 @@ Bon, on a tout ce qu'il faut pour développer, mais il manque des outils pour fa
 - [ ] Installer une partit Wiki ([Docusaurus](https://docusaurus.io/))
 - [ ] Faciliter les automatismes ([N8N](https://n8n.io/), [Node-Red](https://nodered.org/))
 
-### 6. Intégration
+### 6. Intégration <== MVP 3
 
 Plein de services sont en place, mais ils ne sont pas systématiquement intégrés entre eux. C'est toujours mieux un Dashboard qui regroupe tout.
 
