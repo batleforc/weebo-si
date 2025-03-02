@@ -24,6 +24,7 @@ cog check
 script = """#!/bin/sh
 set -e
 task ansible:vault-lock || true
+gitleaks git -v
 """
 
 [commit_types]
