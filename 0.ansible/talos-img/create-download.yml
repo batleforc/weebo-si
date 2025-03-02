@@ -1,0 +1,19 @@
+---
+- name: "Create and download Talos image"
+  hosts: localhost
+  become_method: ansible.builtin.sudo
+  become: false
+  vars:
+    talos_version: "v1.9.4"
+  tasks:
+    - name: "Create Talos image" # noqa: command-instead-of-module
+      ansible.builtin.command:
+        cmd: |
+          curl -X POST --data-binary @./templates/bare-metal.yaml https://factory.talos.dev/schematics
+      register: talos_image_id
+      changed_when: talos_image_id.rc != 0
+    - name: "Download Talos image"
+      ansible.builtin.get_url:
+        url: "https://factory.talos.dev/image/{{ talos_image_id.stdout | from_json | community.general.json_query('id') }}/v1.9.4/metal-amd64.iso"
+        mode: "0644"
+        dest: "./talos-{{ talos_version }}.iso"

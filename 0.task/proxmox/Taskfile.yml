@@ -1,0 +1,14 @@
+version: '3'
+
+tasks:
+  init-vpn-config:
+    dir: ./0.terraform/vpn-proxmox
+    cmds:
+    - echo "Install packages"
+    - terraform init
+    - TF_VAR_dns="${PROXMOX_DNS}" terraform apply -auto-approve
+  setup-proxmox:
+    dir: ./0.ansible/setup-proxmox
+    cmds:
+    - echo "Setup Proxmox"
+    - ansible-playbook -i inventories/inventory.proxmox.yml setup.yml

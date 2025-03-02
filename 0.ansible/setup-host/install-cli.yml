@@ -1,0 +1,31 @@
+---
+- name: "Install needed cli"
+  hosts: localhost
+  become_method: ansible.builtin.sudo
+  become: true
+  vars:
+    clusterctl_version: "v1.9.5"
+    talosctl_version: "v1.9.4"
+    terraform_version: "1.11.0"
+    gitleaks_version: "8.24.0"
+  tasks:
+    - name: "Update and upgrade apt packages"
+      ansible.builtin.apt:
+        update_cache: "yes"
+        upgrade: "yes"
+    - name: "Install curl"
+      ansible.builtin.apt:
+        name: curl
+        state: present
+    - name: Install clusterctl
+      ansible.builtin.include_role:
+        name: clusterctl
+    - name: Install talosctl
+      ansible.builtin.include_role:
+        name: talosctl
+    - name: Install terraform
+      ansible.builtin.include_role:
+        name: terraform
+    - name: Install gitleaks
+      ansible.builtin.include_role:
+        name: gitleaks

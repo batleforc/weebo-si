@@ -1,0 +1,12 @@
+---
+- name: "Setup Proxmox"
+  hosts: proxmox
+  tasks:
+    - name: "Update and upgrade apt packages"
+      ansible.builtin.apt:
+        update_cache: "yes"
+        upgrade: "yes"
+    - name: "Install curl"
+      ansible.builtin.apt:
+        name: curl
+        state: present

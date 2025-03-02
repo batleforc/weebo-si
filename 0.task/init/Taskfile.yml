@@ -1,0 +1,17 @@
+version: '3'
+
+tasks:
+  init-venv:
+    cmds:
+    - echo "Install packages"
+    - sudo apt install python3-pip python3-venv -y
+    - echo "Create virtual environment"
+    - python3 -m venv .venv
+  install-ansible:
+    cmds:
+    - echo "Please make sure you are in the virtual environment"
+    - pip install -r ./0.ansible/requirements.txt
+  install-cli:
+    cmds:
+    - echo "Install needed cli"
+    - sudo ansible-playbook ./0.ansible/setup-host/site.yml

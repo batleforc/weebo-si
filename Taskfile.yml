@@ -1,0 +1,50 @@
+version: '3'
+
+env:
+  KUBECONFIG: "./kubeconfig.yaml"
+  VAULT_PASSWORD_FILES: "vault_password"
+
+dotenv: [ '.env' ]
+
+includes:
+  init:
+    taskfile: 0.task/init/Taskfile.yml
+  talos:
+    taskfile: 0.task/talos/Taskfile.yml
+  proxmox:
+    taskfile: 0.task/proxmox/Taskfile.yml
+  ansible:
+    taskfile: 0.task/ansible/Taskfile.yml
+
+tasks:
+  kubectl:
+    cmds:
+    - kubectl {{ .CLI_ARGS }}
+  kubectl-oidc:
+    cmds:
+    - kubectl {{ .CLI_ARGS }} --kubeconfig kubeconfig.oidc.yaml
+  traefik:
+    cmds:
+    - task kubectl --  port-forward $(task kubectl -- get pods --selector "app.kubernetes.io/name=traefik" --output=name -n traefik) -n traefik 9000:9000
+  create-kubeconfig-oidc:
+    vars:
+      OIDC_CLIENT_ID:
+        sh: task kubectl -- get secret -n zitadel cluster-auth -o jsonpath='{.data.clientID}' | base64 -d
+      server_url:
+        sh: cat kubeconfig.yaml | yq .clusters[0].cluster.server
+      server_ca:
+        sh: cat kubeconfig.yaml | yq .clusters[0].cluster."certificate-authority-data"
+    cmds:
+    - cp kubeconfig.oidc-template.yaml kubeconfig.oidc.yaml
+    - yq e -i '.users[0].user.exec.args[3] = "--oidc-client-id={{ .OIDC_CLIENT_ID }}"' kubeconfig.oidc.yaml
+    - yq e -i '.clusters[0].cluster.server = "{{ .server_url }}"' kubeconfig.oidc.yaml
+    - yq e -i '.clusters[0].cluster."certificate-authority-data" = "{{ .server_ca }}"' kubeconfig.oidc.yaml
+  k9s:
+    cmds:
+    - k9s {{ .CLI_ARGS }}
+  popeye:
+    cmds:
+    - popeye {{ .CLI_ARGS }}
+  get-traefik-ip:
+    cmds:
+    - task kubectl -- get pod --selector "app.kubernetes.io/name=traefik" -n traefik -o jsonpath='{.items[0].status.podIP}'

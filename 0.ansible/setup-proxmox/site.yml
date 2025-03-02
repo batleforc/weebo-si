@@ -1,0 +1,3 @@
+---
+- name: Setup Proxmox
+  import_playbook: setup.yml

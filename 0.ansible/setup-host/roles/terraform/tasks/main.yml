@@ -1,0 +1,26 @@
+---
+- name: "If terraform is already installed, get the version"
+  ansible.builtin.command:
+    cmd: "terraform version -json | jq -r .terraform_version"
+  register: terraform_version_output
+  ignore_errors: true
+  changed_when: false
+- name: "Download terraform"
+  ansible.builtin.get_url:
+    url: "https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip"
+    dest: "/tmp/terraform_{{ terraform_version }}_linux_amd64.zip"
+    mode: '0644'
+  when: terraform_version not in terraform_version_output.stdout
+- name: "Unzip terraform"
+  ansible.builtin.unarchive:
+    src: "/tmp/terraform_{{ terraform_version }}_linux_amd64.zip"
+    dest: "/usr/bin"
+    mode: '0755'
+    remote_src: true
+    keep_newer: true
+  when: terraform_version not in terraform_version_output.stdout
+- name: "Clean up terraform zip"
+  ansible.builtin.file:
+    path: "/tmp/terraform_{{ terraform_version }}_linux_amd64.zip"
+    state: absent
+  when: terraform_version not in terraform_version_output.stdout

@@ -1,0 +1,11 @@
+schemaVersion: 2.3.0
+metadata:
+  name: Weebo4GitOps
+  version: 1.0.0
+
+components:
+- name: tools
+  container:
+    image: ghcr.io/batleforc/weebodevimage/che-base:main
+    memoryLimit: 2Gi
+    mountSources: true

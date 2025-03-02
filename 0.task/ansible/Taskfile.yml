@@ -1,0 +1,13 @@
+version: '3'
+
+tasks:
+  vault-lock:
+    cmds:
+    - for:
+      - "./0.ansible/inventories/inventory.proxmox.yml"
+      cmd: ansible-vault encrypt {{ .ITEM }} --vault-password-file $VAULT_PASSWORD_FILES
+  vault-unlock:
+    cmds:
+    - for:
+      - "./0.ansible/inventories/inventory.proxmox.yml"
+      cmd: ansible-vault decrypt {{ .ITEM }} --vault-password-file $VAULT_PASSWORD_FILES

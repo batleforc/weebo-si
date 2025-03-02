@@ -1,0 +1,3 @@
+---
+- name: Import CLI installation playbook
+  import_playbook: install-cli.yml

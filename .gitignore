@@ -1,0 +1,15 @@
+kubeconfig.yml
+kubeconfig.yaml
+kubeconfig.oidc.yaml
+age.agekey
+vault-ca.crt
+.venv
+.ansible
+talos-*.iso
+secrets.yaml
+.env
+terraform.tfstate
+.terraform
+*.wg.conf
+vault_password
+terraform.tfstate.backup

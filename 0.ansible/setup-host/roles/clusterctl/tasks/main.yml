@@ -1,0 +1,26 @@
+---
+- name: "If clusterctl is already installed, get the version"
+  ansible.builtin.command:
+    cmd: "clusterctl version -o short"
+  register: clusterctl_version_output
+  ignore_errors: true
+  changed_when: false
+- name: "Download clusterctl"
+  ansible.builtin.get_url:
+    url: "https://github.com/kubernetes-sigs/cluster-api/releases/download/{{ clusterctl_version }}/clusterctl-linux-amd64"
+    dest: "/usr/local/bin/clusterctl"
+    mode: '0755'
+  when: clusterctl_version_output.stdout != clusterctl_version
+- name: "Make sure clusterctl config folder exist"
+  ansible.builtin.file:
+    path: "{{ lookup('ansible.builtin.env', 'XDG_CONFIG_HOME', default='/home/maxime') }}/.cluster-api"
+    state: directory
+    mode: '0770'
+    owner: maxime
+    group: maxime
+- name: "Set clusterctl config file"
+  ansible.builtin.copy:
+    content: |
+      {{ lookup('template', 'clusterctl.yml') }}
+    dest: "{{ lookup('ansible.builtin.env', 'XDG_CONFIG_HOME', default='/home/maxime') }}/.cluster-api/clusterctl.yaml"
+    mode: '0644'

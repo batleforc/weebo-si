@@ -1,0 +1,25 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "github.copilot",
+    "mitchdenny.ecdc",
+    "aaron-bond.better-comments",
+    "bierner.markdown-mermaid",
+    "hristian-kohler.path-intellisense",
+    "helixquar.randomeverything",
+    "shardulm94.trailing-spaces",
+    "tamasfe.even-better-toml",
+    "edwinkofler.vscode-hyperupcall-pack-markdown",
+    "proxzima.sweetdracula",
+    "wdhongtw.gpg-indicator",
+    "vadimcn.vscode-lldb",
+    "naumovs.color-highlight",
+    "formulahendry.auto-rename-tag",
+    "PKief.material-icon-theme",
+    "streetsidesoftware.code-spell-checker",
+    "streetsidesoftware.code-spell-checker-french",
+    "usernamehw.errorlens",
+    "eamodio.gitlens",
+    "oderwat.indent-rainbow"
+  ]
+}

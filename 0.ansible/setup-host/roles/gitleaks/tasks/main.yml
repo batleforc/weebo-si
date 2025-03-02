@@ -1,0 +1,43 @@
+---
+- name: "If gitleaks is already installed, get the version"
+  ansible.builtin.command:
+    cmd: "gitleaks version"
+  register: gitleaks_version_output
+  ignore_errors: true
+  changed_when: false
+- name: "Download gitleaks"
+  ansible.builtin.get_url:
+    url: "https://github.com/gitleaks/gitleaks/releases/download/v{{ gitleaks_version }}/gitleaks_{{ gitleaks_version }}_linux_x64.tar.gz"
+    dest: "/tmp/gitleaks_{{ gitleaks_version }}_linux_x64.tar.gz"
+    mode: '0644'
+  when: gitleaks_version_output.stdout != gitleaks_version
+- name: "Create gitleaks folder"
+  ansible.builtin.file:
+    path: "/tmp/gitleaks"
+    state: directory
+    mode: '0755'
+  when: gitleaks_version_output.stdout != gitleaks_version
+- name: "Unzip gitleaks"
+  ansible.builtin.unarchive:
+    src: "/tmp/gitleaks_{{ gitleaks_version }}_linux_x64.tar.gz"
+    dest: "/tmp/gitleaks"
+    mode: '0755'
+    remote_src: true
+    keep_newer: true
+  when: gitleaks_version_output.stdout != gitleaks_version
+- name: "Move gitleaks to /usr/bin"
+  ansible.builtin.command:
+    cmd: "mv /tmp/gitleaks/gitleaks /usr/bin/gitleaks"
+  register: gitleaks_move_output
+  changed_when: gitleaks_version_output.stdout != gitleaks_version
+  when: gitleaks_version_output.stdout != gitleaks_version
+- name: "Clean up gitleaks tar"
+  ansible.builtin.file:
+    path: "/tmp/gitleaks_{{ gitleaks_version }}_linux_x64.tar.gz"
+    state: absent
+  when: gitleaks_version_output.stdout != gitleaks_version
+- name: "Clean up gitleaks folder"
+  ansible.builtin.file:
+    path: "/tmp/gitleaks"
+    state: absent
+  when: gitleaks_version_output.stdout != gitleaks_version
