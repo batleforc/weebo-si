@@ -19,7 +19,7 @@ includes:
 tasks:
   ssh-proxmox:
     cmds:
-    - ssh -i $ANSIBLE_PROXMOX_SSH_KEY root@$PROXMOX_DNS
+    - ssh -i $ANSIBLE_PROXMOX_SSH_KEY root@$PROXMOX_DNS -p 2323
   kubectl:
     cmds:
     - kubectl {{ .CLI_ARGS }}
