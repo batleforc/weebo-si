@@ -17,6 +17,9 @@ includes:
     taskfile: 0.task/ansible/Taskfile.yml
 
 tasks:
+  ssh-proxmox:
+    cmds:
+    - ssh -i $ANSIBLE_PROXMOX_SSH_KEY root@$PROXMOX_DNS
   kubectl:
     cmds:
     - kubectl {{ .CLI_ARGS }}
