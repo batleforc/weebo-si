@@ -24,3 +24,9 @@ tasks:
     cmds:
     - echo "Get kubeconfig"
     - talosctl kubeconfig . -e 192.168.100.210 -n 192.168.100.210 --talosconfig ./talosconfig
+  init-template:
+    dir: ./0.terraform/template-proxmox
+    cmds:
+    - echo "Init template"
+    - terraform init
+    - TF_VAR_proxmox_api="${PROXMOX_URL}" TF_VAR_proxmox_api_token="${PROXMOX_USER}!${PROXMOX_TOKEN_ID}=${PROXMOX_TOKEN_SECRET}" TF_VAR_proxmox_ssh_username="${PROXMOX_NODE}" TF_VAR_proxmox_node_name="${PROXMOX_NODE}" terraform apply -auto-approve

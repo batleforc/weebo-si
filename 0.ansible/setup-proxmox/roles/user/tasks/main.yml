@@ -33,7 +33,7 @@
   changed_when: false
 - name: "Create token"
   ansible.builtin.command:
-    cmd: "pveum user token add weebo-env@pve weebenv -privsep -o json"
+    cmd: "pveum user token add weebo-env@pve weebenv -privsep 0 -o json"
   register: create_token_output
   ignore_errors: true
   changed_when: false
