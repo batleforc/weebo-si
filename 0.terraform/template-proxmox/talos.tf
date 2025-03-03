@@ -5,6 +5,8 @@ resource "proxmox_virtual_environment_vm" "talos_template" {
   node_name   = var.proxmox_node_name
   vm_id       = "9999"
 
+  template = true
+
   agent {
     enabled = true
   }
