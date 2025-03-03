@@ -23,3 +23,6 @@
         mode: "0644"
         dest: "/var/lib/vz/template/iso/talos-{{ talos_version }}.iso"
         force: true
+    - name: "Print Talos image ID"
+      ansible.builtin.debug:
+        msg: "Talos image ID: {{ talos_image_id.stdout | from_json | community.general.json_query('id') }}"

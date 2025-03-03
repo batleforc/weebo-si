@@ -12,6 +12,13 @@ data "talos_machine_configuration" "capi_config_controlplane" {
   machine_type     = "controlplane"
   cluster_endpoint = "https://${local.node_ip}:6443"
   machine_secrets  = talos_machine_secrets.capi_secret.machine_secrets
+  config_patches = [
+    yamlencode({
+      cluster = {
+        allowSchedulingOnControlPlanes = true
+      }
+    })
+  ]
 }
 
 data "talos_client_configuration" "capi_config_client" {
