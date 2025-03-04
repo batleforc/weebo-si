@@ -2,6 +2,13 @@ version: '3'
 
 env:
   KUBECONFIG: "./capi.terraform/kubeconfig"
+  ARGO_APP_REPO: "https://github.com/batleforc/weebo-si"
+  ARGO_DEST_SERVER: "https://kubernetes.default.svc"
+  ARGO_VERSION: "7.8.7"
+
+includes:
+  argo:
+    taskfile: ./argo/Taskfile.yml
 
 tasks:
   kubectl:
