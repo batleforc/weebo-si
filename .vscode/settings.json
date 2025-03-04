@@ -26,6 +26,7 @@
     "Falco",
     "Gitea",
     "gitleaks",
+    "ifnames",
     "kubeconfig",
     "KUBECONFIG",
     "Kyverno",

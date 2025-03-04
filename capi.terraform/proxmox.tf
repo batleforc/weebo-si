@@ -20,8 +20,8 @@ resource "proxmox_virtual_environment_vm" "capi_template" {
   }
 
   memory {
-    dedicated = 2048
-    floating  = 2048
+    dedicated = 8192
+    floating  = 8192
   }
   lifecycle {
     ignore_changes = [
@@ -31,7 +31,7 @@ resource "proxmox_virtual_environment_vm" "capi_template" {
 }
 
 locals {
-  capi_possible_ip = [for ip in proxmox_virtual_environment_vm.capi_template.ipv4_addresses : ip if length(ip) != 0 && ip != tolist(["127.0.0.1"])]
+  capi_possible_ip = [for ip in [for ip in proxmox_virtual_environment_vm.capi_template.ipv4_addresses : ip if length(ip) > 0] : ip if ip != tolist(["127.0.0.1"]) && ip != ["127.0.0.1"] && startswith(ip[0], "192.168.")]
 }
 
 output "capi_ip" {

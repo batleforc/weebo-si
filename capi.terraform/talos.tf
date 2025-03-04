@@ -19,7 +19,7 @@ data "talos_machine_configuration" "capi_config_controlplane" {
       },
       machine = {
         install = {
-          #image = data.talos_image_factory_urls.metal.urls.iso,
+          image = data.talos_image_factory_urls.metal.urls.installer,
           extraKernelArgs = [
             "net.ifnames=0"
           ]
