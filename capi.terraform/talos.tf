@@ -16,6 +16,14 @@ data "talos_machine_configuration" "capi_config_controlplane" {
     yamlencode({
       cluster = {
         allowSchedulingOnControlPlanes = true
+      },
+      machine = {
+        install = {
+          #image = data.talos_image_factory_urls.metal.urls.iso,
+          extraKernelArgs = [
+            "net.ifnames=0"
+          ]
+        }
       }
     })
   ]
@@ -55,4 +63,9 @@ resource "local_file" "capi_kubeconfig_file" {
   ]
   content  = talos_cluster_kubeconfig.capi_kubeconfig.kubeconfig_raw
   filename = "${path.module}/kubeconfig"
+}
+
+resource "local_file" "capi_talos_config" {
+  content  = data.talos_client_configuration.capi_config_client.talos_config
+  filename = "${path.module}/talos-config.yaml"
 }

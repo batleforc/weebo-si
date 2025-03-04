@@ -7,9 +7,19 @@ tasks:
   kubectl:
     cmds:
     - kubectl {{ .CLI_ARGS }}
+  talosctl:
+    env:
+      TALOSCONFIG: "./capi.terraform/talos-config.yaml"
+    cmds:
+    - talosctl {{ .CLI_ARGS }}
   init:
     dir: capi.terraform
     cmds:
     - echo "Init CAPI node with Proxmox and Talos"
     - terraform init
     - TF_VAR_proxmox_api="${PROXMOX_URL}" TF_VAR_proxmox_api_token="${PROXMOX_USER}!${PROXMOX_TOKEN_ID}=${PROXMOX_TOKEN_SECRET}" TF_VAR_proxmox_ssh_username="${PROXMOX_NODE}" TF_VAR_proxmox_node_name="${PROXMOX_NODE}" terraform apply {{ .CLI_ARGS }}
+  destroy:
+    dir: capi.terraform
+    cmds:
+    - echo "Destroy CAPI node with Proxmox and Talos"
+    - TF_VAR_proxmox_api="${PROXMOX_URL}" TF_VAR_proxmox_api_token="${PROXMOX_USER}!${PROXMOX_TOKEN_ID}=${PROXMOX_TOKEN_SECRET}" TF_VAR_proxmox_ssh_username="${PROXMOX_NODE}" TF_VAR_proxmox_node_name="${PROXMOX_NODE}" terraform destroy {{ .CLI_ARGS }}

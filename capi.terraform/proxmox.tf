@@ -1,9 +1,13 @@
 resource "proxmox_virtual_environment_vm" "capi_template" {
   name        = "capi-master"
   description = "Capi Master"
-  tags        = ["talos", "capi", "terraform", "weebo-si"]
+  tags        = ["talos", "capi", "terraform", "weebo-si", "metal"]
   node_name   = var.proxmox_node_name
   vm_id       = "201"
+
+  agent {
+    enabled = true
+  }
 
   clone {
     vm_id = "9999"
