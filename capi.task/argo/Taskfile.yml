@@ -3,6 +3,7 @@ version: '3'
 env:
   KUBECONFIG: "../capi.terraform/kubeconfig"
   ARGO_APP_REPO: "https://github.com/batleforc/weebo-si"
+  ARGO_APP_USERNAME: "batleforc"
   ARGO_DEST_SERVER: "https://kubernetes.default.svc"
   ARGO_VERSION: "7.8.7"
 
@@ -18,3 +19,13 @@ tasks:
   get-pwd:
     cmds:
     - kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+  login-pf:
+    vars:
+      PASSWORD:
+        sh: task capi:argo:get-pwd
+    cmds:
+    - argocd login localhost:8080 --username admin --password {{.PASSWORD}} --insecure
+    - kubectl config set-context --current --namespace=argocd
+  init-private-repo:
+    cmds:
+    - argocd repo add $ARGO_APP_REPO --username $ARGO_APP_USERNAME --password $GITHUB_TOKEN

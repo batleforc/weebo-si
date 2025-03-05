@@ -35,7 +35,9 @@
   ansible.builtin.file:
     path: "/tmp/k9s_Linux_amd64.tar.gz"
     state: absent
+  when: k9s_version not in k9s_version_output.stdout
 - name: "Clean k9s folder"
   ansible.builtin.file:
     path: "/tmp/k9s"
     state: absent
+  when: k9s_version not in k9s_version_output.stdout

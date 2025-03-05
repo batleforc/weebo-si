@@ -9,6 +9,7 @@
     terraform_version: "1.11.0"
     gitleaks_version: "8.24.0"
     k9s_version: "v0.40.5"
+    argocd_version: "v2.14.4"
   tasks:
     - name: "Update and upgrade apt packages"
       ansible.builtin.apt:
@@ -33,3 +34,6 @@
     - name: Install k9s
       ansible.builtin.include_role:
         name: k9s
+    - name: Install ArgoCD CLI
+      ansible.builtin.include_role:
+        name: argocd

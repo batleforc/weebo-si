@@ -1,0 +1,24 @@
+---
+- name: "If argocd is already installed, get the version"
+  ansible.builtin.command:
+    cmd: "argocd version --client --short"
+  register: argocd_version_output
+  ignore_errors: true
+  changed_when: false
+- name: "Download argocd"
+  ansible.builtin.get_url:
+    url: "https://github.com/argoproj/argo-cd/releases/download/{{ argocd_version }}/argocd-linux-amd64"
+    dest: "/tmp/argocd"
+    mode: '0755'
+  when: argocd_version not in argocd_version_output.stdout
+- name: "Move argocd to /usr/bin"
+  ansible.builtin.command:
+    cmd: "mv /tmp/argocd /usr/bin/argocd"
+  register: argocd_move_output
+  changed_when: argocd_version not in argocd_version_output.stdout
+  when: argocd_version not in argocd_version_output.stdout
+- name: "Clean argocd file"
+  ansible.builtin.file:
+    path: "/tmp/argocd"
+    state: absent
+  when: argocd_version not in argocd_version_output.stdout
