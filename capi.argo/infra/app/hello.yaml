@@ -8,7 +8,7 @@ spec:
   containers:
   - name: hello-there
     image: "busybox"
-    command: [ "echo", "\"Hello, there!\"", "&&", "tail", "/dev/null" ]
+    command: [ "tail", "/dev/null" ]
     resources:
       limits:
         memory: "10Mi"
