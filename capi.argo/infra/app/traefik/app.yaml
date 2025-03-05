@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+  source:
+    chart: traefik
+    repoURL: https://traefik.github.io/charts
+    targetRevision: 34.4.1
+    helm:
+      releaseName: traefik
+      valuesObject:
+        ingressRoute:
+          dashboard:
+            enabled: true
+        service:
+          annotations:
+            lbipam.cilium.io/sharing-key: "weebo-capi"
+            lbipam.cilium.io/ips: ""
+            lbipam.cilium.io/sharing-cross-namespace: "*"
+        logs:
+          general:
+            format: json
+          access:
+            enabled: true
+            format: json
+            fields:
+              headers:
+                defaultMode: keep
+                names:
+                  Authorization: redact
+        providers:
+          kubernetesCRD:
+            enabled: true
+            allowCrossNamespace: true
+          kubernetesIngress:
+            allowEmptyServices: true
+            allowExternalNameServices: true
+            publishedService:
+              enabled: true
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: traefik
