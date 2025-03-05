@@ -12,7 +12,7 @@ data "wireguard_config_document" "pc1" {
   peer {
     public_key           = wireguard_asymmetric_key.server.public_key
     preshared_key        = wireguard_preshared_key.pc1.key
-    allowed_ips          = ["192.168.100.0/24", "192.168.101.0/20"]
+    allowed_ips          = ["192.168.100.0/24", "192.168.101.0/20", "10.244.0.0/16", "10.96.0.0/12"]
     endpoint             = "${var.dns}:${var.port}"
     persistent_keepalive = 25
   }
