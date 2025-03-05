@@ -1,0 +1,41 @@
+---
+- name: "If k9s is already installed, get the version"
+  ansible.builtin.command:
+    cmd: "k9s version -s"
+  register: k9s_version_output
+  ignore_errors: true
+  changed_when: false
+- name: "Download k9s"
+  ansible.builtin.get_url:
+    url: "https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_amd64.tar.gz"
+    dest: "/tmp/k9s_Linux_amd64.tar.gz"
+    mode: '0644'
+  when: k9s_version not in k9s_version_output.stdout
+- name: "Create k9s folder"
+  ansible.builtin.file:
+    path: "/tmp/k9s"
+    state: directory
+    mode: '0755'
+  when: k9s_version not in k9s_version_output.stdout
+- name: "Unzip k9s"
+  ansible.builtin.unarchive:
+    src: "/tmp/k9s_Linux_amd64.tar.gz"
+    dest: "/tmp/k9s"
+    mode: '0755'
+    remote_src: true
+    keep_newer: true
+  when: k9s_version not in k9s_version_output.stdout
+- name: "Move k9s to /usr/bin"
+  ansible.builtin.command:
+    cmd: "mv /tmp/k9s/k9s /usr/bin/k9s"
+  register: k9s_move_output
+  changed_when: k9s_version not in k9s_version_output.stdout
+  when: k9s_version not in k9s_version_output.stdout
+- name: "Clean up k9s tar"
+  ansible.builtin.file:
+    path: "/tmp/k9s_Linux_amd64.tar.gz"
+    state: absent
+- name: "Clean k9s folder"
+  ansible.builtin.file:
+    path: "/tmp/k9s"
+    state: absent

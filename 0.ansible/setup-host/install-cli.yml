@@ -8,6 +8,7 @@
     talosctl_version: "v1.9.4"
     terraform_version: "1.11.0"
     gitleaks_version: "8.24.0"
+    k9s_version: "v0.40.5"
   tasks:
     - name: "Update and upgrade apt packages"
       ansible.builtin.apt:
@@ -29,3 +30,6 @@
     - name: Install gitleaks
       ansible.builtin.include_role:
         name: gitleaks
+    - name: Install k9s
+      ansible.builtin.include_role:
+        name: k9s

@@ -14,6 +14,9 @@ tasks:
   kubectl:
     cmds:
     - kubectl {{ .CLI_ARGS }}
+  k9s:
+    cmds:
+    - k9s {{ .CLI_ARGS }}
   talosctl:
     env:
       TALOSCONFIG: "./capi.terraform/talos-config.yaml"
