@@ -7,9 +7,10 @@ metadata:
 spec:
   containers:
   - name: hello-there
-    image: "busybox"
-    command: [ "tail", "/dev/null" ]
+    image: "traefik/whoami"
     resources:
       limits:
-        memory: "10Mi"
-        cpu: "10m"
+        memory: "64Mi"
+        cpu: "20m"
+    ports:
+    - containerPort: 80
