@@ -1,6 +1,6 @@
 schemaVersion: 2.3.0
 metadata:
-  name: Weebo4GitOps
+  name: weebo-si
   version: 1.0.0
 
 components:
