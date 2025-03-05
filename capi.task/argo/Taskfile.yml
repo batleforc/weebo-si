@@ -28,7 +28,7 @@ tasks:
     - kubectl config set-context --current --namespace=argocd
   init-private-repo:
     cmds:
-    - argocd repo add $ARGO_APP_REPO --username $ARGO_APP_USERNAME --password $GITHUB_TOKEN
+    - argocd repo add $ARGO_APP_REPO --username $ARGO_APP_USERNAME --password $ARGO_GITHUB_TOKEN
   install-app:
     cmds:
     - argocd app create weebo-capi --repo $ARGO_APP_REPO --directory-recurse --path capi.argo/infra/app --dest-server $ARGO_DEST_SERVER --dest-namespace default --sync-policy automated --directory-recurse
