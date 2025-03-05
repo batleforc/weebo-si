@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hello-there
+  labels:
+    name: hello-there
+spec:
+  containers:
+  - name: hello-there
+    image: "busybox"
+    command: [ "echo", "Hello, there!", "&&", "sleep", "3600" ]
+    resources:
+      limits:
+        memory: "10Mi"
+        cpu: "10m"
