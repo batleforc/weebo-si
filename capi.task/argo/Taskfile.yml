@@ -1,7 +1,7 @@
 version: '3'
 
 env:
-  KUBECONFIG: "../capi.terraform/kubeconfig"
+  KUBECONFIG: "{{.ROOT_DIR}}/capi.terraform/kubeconfig"
   ARGO_APP_REPO: "https://github.com/batleforc/weebo-si"
   ARGO_APP_USERNAME: "batleforc"
   ARGO_DEST_SERVER: "https://kubernetes.default.svc"
