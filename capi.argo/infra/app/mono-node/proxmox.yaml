@@ -4,7 +4,7 @@ metadata:
   name: mono-node-proxmox-cluster
   namespace: default
 spec:
-  scheduleHints:
+  schedulerHints:
     memoryAdjustment: 0
   allowedNodes:
   - weebo4
