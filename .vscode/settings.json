@@ -68,5 +68,8 @@
     "0.ansible": "ansible",
     "0.terraform": "terraform",
     "0.task": "taskfile"
+  },
+  "yaml.schemas": {
+    "https://json.schemastore.org/kustomization.json": "file:///home/maxime/git/weebo-si/capi.argo/infra/app/mono-node/cluster.yaml"
   }
 }

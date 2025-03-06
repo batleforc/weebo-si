@@ -1,0 +1,25 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: ProxmoxMachineTemplate
+metadata:
+  name: mono-node-cp
+  namespace: default
+spec:
+  template:
+    spec:
+      disks:
+        bootVolume:
+          disk: scsi0
+          sizeGb: 20
+      format: qcow2
+      full: true
+      memoryMiB: 4096
+      network:
+        default:
+          bridge: vmbr1
+          model: virtio
+      numCores: 2
+      numSockets: 1
+      sourceNode: weebo4
+      templateID: 9998
+      checks:
+        skipCloudInitStatus: true
