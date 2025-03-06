@@ -14,7 +14,6 @@ spec:
     helm:
       releaseName: cluster-operator
       valuesObject:
-        infrastructure: proxmox:v0.6.2
         configSecret:
           name: "infra-provider"
           namespace: "cluster-api"
