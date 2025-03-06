@@ -23,6 +23,7 @@ spec:
             lbipam.cilium.io/ips: "192.168.100.137"
             lbipam.cilium.io/sharing-cross-namespace: "*"
             metallb.universe.tf/address-pool: one
+            metallb.io/ip-allocated-from-pool: one
         logs:
           general:
             format: json
