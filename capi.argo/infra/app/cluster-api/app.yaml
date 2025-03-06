@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cluster-operator
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+  source:
+    chart: cluster-api-operator
+    repoURL: https://kubernetes-sigs.github.io/cluster-api-operator
+    targetRevision: 0.17.0
+    helm:
+      releaseName: cluster-operator
+      valuesObject:
+        infrastructure: proxmox:v0.6.2
+        configSecret:
+          name: "infra-provider"
+          namespace: "cluster-api"
+        cert-manager:
+          enabled: true
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: cluster-api-operator-system
