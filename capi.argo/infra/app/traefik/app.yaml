@@ -20,8 +20,10 @@ spec:
         service:
           annotations:
             lbipam.cilium.io/sharing-key: "weebo-capi"
-            lbipam.cilium.io/ips: ""
+            lbipam.cilium.io/ips: "192.168.100.137"
             lbipam.cilium.io/sharing-cross-namespace: "*"
+            metallb.universe.tf/loadBalancerIPs: 192.168.100.137
+            metallb.universe.tf/allow-shared-ip: "capi-mainip"
         logs:
           general:
             format: json
