@@ -16,6 +16,8 @@ spec:
       valuesObject:
         infrastructure: proxmox:v0.6.2
         core: cluster-api:v0.3.17
+        controlPlane: talos:v0.5.8
+        bootstrap: talos:v0.6.7
         configSecret:
           name: "infra-provider"
           namespace: "cluster-api"
