@@ -29,3 +29,9 @@ data "talos_image_factory_urls" "metal" {
   schematic_id  = talos_image_factory_schematic.schematic_qemu.id
   platform      = "metal"
 }
+
+data "talos_image_factory_urls" "nocloud" {
+  talos_version = data.talos_image_factory_extensions_versions.extensions_list.talos_version
+  schematic_id  = talos_image_factory_schematic.schematic_qemu.id
+  platform      = "nocloud"
+}

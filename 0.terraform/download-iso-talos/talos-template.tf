@@ -80,4 +80,6 @@ resource "proxmox_virtual_environment_vm" "talos_template_nocloud" {
   network_device {
     bridge = "vmbr1"
   }
+
+  boot_order = ["scsi0", "ide2"]
 }

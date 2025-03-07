@@ -9,6 +9,8 @@ env:
 includes:
   argo:
     taskfile: ./argo/Taskfile.yml
+  cluster:
+    taskfile: ./cluster/Taskfile.yml
 
 tasks:
   kubectl:

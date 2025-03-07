@@ -1,0 +1,22 @@
+version: '3'
+
+env:
+  KUBECONFIG: "{{.ROOT_DIR}}/capi.terraform/kubeconfig"
+
+tasks:
+  get-kubeconfig:
+    cmds:
+    - kubectl get secret {{.CLI_ARGS}}-kubeconfig -n default -o yaml | yq .data.value | base64 -d > kubeconfig.{{.CLI_ARGS}}.yml
+  get-talosconfig:
+    cmds:
+    - kubectl get secret {{.CLI_ARGS}}-talosconfig -n default -o yaml | yq .data.talosconfig | base64 -d > talosconfig.{{.CLI_ARGS}}.yml
+  kubectl:
+    vars:
+      cluster: '{{.cluster}}'
+    preconditions:
+    - sh: '[ {{.cluster}} != "" ]'
+      msg: "cluster is required ex task capi:cluster:kubectl cluster='mono-node' -- get pods"
+    - sh: '[ -f kubeconfig.{{.cluster}}.yml ]'
+      msg: "kubeconfig.{{.cluster}}.yml is required please run get-kubeconfig ex: 'task cluster:get-kubeconfig -- mono-node' "
+    cmds:
+    - kubectl --kubeconfig kubeconfig.{{.cluster}}.yml {{.CLI_ARGS}}
