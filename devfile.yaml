@@ -6,6 +6,12 @@ metadata:
 components:
 - name: tools
   container:
-    image: ghcr.io/batleforc/weebodevimage/che-base:main
+    image: ghcr.io/batleforc/weebodevimage/che-ops:main
     memoryLimit: 2Gi
+    memoryRequest: 1Gi
     mountSources: true
+    endpoints:
+    - exposure: public
+      name: doc
+      protocol: https
+      targetPort: 3000
