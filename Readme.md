@@ -25,11 +25,11 @@ Achat du serveur 1 mars 2024 => Objectif du MVP 1 avril 2024
 
 Mes connaissances en Talos/Proxmox/CAPI sont nulls, donc on est sur du Zero to Hero (ou du moins j'espère).
 
-- [ ] Créer un cluster "Master" qui va gérer les autres clusters nommé "CAPI"
+- [x] Créer un cluster "Master" qui va gérer les autres clusters nommé "CAPI"
   - [ ] Documenté le processus
   - [x] Créer une VM a la main et la provisionner
   - [x] Créer la VM depuis terraform
-- [ ] Sur un noeud Proxmox, installer un Mono-Node Talos via la CAPI
+- [x] Sur un noeud Proxmox, installer un Mono-Node Talos via la CAPI
 - [ ] Sur un noeud Proxmox, installer un Multi-Node Talos via la CAPI
 - [ ] Tester [KubeVirt](https://kubevirt.io/)
 - [ ] Automatiser la configuration Proxmox
@@ -42,7 +42,7 @@ Mes connaissances en Talos/Proxmox/CAPI sont nulls, donc on est sur du Zero to H
 
 Bon on a nos clusters, maintenant il faut les gérer. Pour cela, on va utiliser mon outil préféré, ArgoCD.
 
-- [ ] Créer un déploiement ArgoCD pour la gestion de l'infrastructure (Master Cluster et Worker Cluster)
+- [x] Créer un déploiement ArgoCD pour la gestion de l'infrastructure (Master Cluster et Worker Cluster)
 - [ ] Créer un déploiement ArgoCD pour la gestion des applications (Ingress, Monitoring, Logging, etc.)
 - [ ] Mettre en place une interface pour mutualisé le monitoring des clusters
 
