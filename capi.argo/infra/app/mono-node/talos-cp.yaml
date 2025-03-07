@@ -21,3 +21,14 @@ spec:
             disk: /dev/sda
             extensions:
               - image: ghcr.io/siderolabs/qemu-guest-agent:9.2.0
+        - op: add
+          path: /machine/install/extraKernelArgs
+          value:
+            - net.ifnames=0
+        - op: add
+          path: /machine/network/interfaces
+          value:
+            - interface: eth0
+              dhcp: false
+              vip:
+                ip: 192.168.100.20
