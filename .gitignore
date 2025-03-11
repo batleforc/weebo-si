@@ -16,9 +16,13 @@ terraform.tfstate.backup
 .talos-*
 kubeconfig
 talos-config.yaml
-
 kubeconfig.*.yml
 talosconfig.*.yml
+
+## VitePress
+
+docs/.vitepress/dist
+docs/.vitepress/cache
 
 
 

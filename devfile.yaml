@@ -14,4 +14,4 @@ components:
     - exposure: public
       name: doc
       protocol: https
-      targetPort: 3000
+      targetPort: 5173
