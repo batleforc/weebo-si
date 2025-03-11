@@ -18,6 +18,7 @@ spec:
         controlPlane: talos:v0.5.8
         bootstrap: talos:v0.6.7
         ipam: in-cluster:v1.0.1
+        addon: helm:v0.3.1
         configSecret:
           name: "infra-provider"
           namespace: "cluster-api"
