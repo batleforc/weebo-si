@@ -4,22 +4,20 @@ layout: home
 
 hero:
   name: "Weebo-Env"
-  text: "A Weebo Env made to test new cool stuff and in the make the next Gen WeeboGitOps env"
-  tagline: My great project tagline
+  text: "Made to test new cool stuff"
+  tagline:  and make the next Gen WeeboGitOps env
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: Introduction
+      link: /0.introduction/home
     - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: Sources
+      link: /0.introduction/sources
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: Automatisation
+    details: Ansible, Terraform, GitOps, ArgoCD, CI/CD
+  - title: As a service
+    details: Proxmox, Kubernetes, Cluster !
 ---
 
