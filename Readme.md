@@ -16,16 +16,6 @@ Dans cette doc vous retrouverez les informations suivantes:
 - [Le déroulement du projet et les étapes](https://batleforc.github.io/weebo-si/0.introduction/etape.html)
 - [Comment contribuer](https://batleforc.github.io/weebo-si/0.introduction/contributing.html) qui explique surtout comment installer les outils nécessaires et la mise en place de git-hooks.
 
-## Technologies utilisées
-
-- [Taskfile](https://taskfile.dev/#/)
-- [Ansible](https://www.ansible.com/)
-- [Terraform](https://www.terraform.io/)
-- [Talos](https://www.talos.dev/)
-- [Proxmox](https://www.proxmox.com/)
-- [CAPI](https://cluster-api.sigs.k8s.io/)
-- [ArgoCD](https://argoproj.github.io/argo-cd/)
-
 ## Participating
 
 Please, before contributing, read the [CONTRIBUTING.md](CONTRIBUTING.md) file.

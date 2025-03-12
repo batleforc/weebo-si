@@ -4,7 +4,7 @@ Merci à toutes les personnes qui ont partagé leur savoir et leur expérience. 
 
 - [Une tasse de café - CAPI/Proxmox](https://une-tasse-de.cafe/blog/talos-capi-proxmox/)
 - [Use tasse de café - Talos](https://une-tasse-de.cafe/blog/talos/)
-- [AbyssProject - Proxmox avec une ip (Setup DHCP over one card)](https://wiki.abyssproject.net/en/proxmox/proxmox-with-one-public-ip)
+- [AbyssProject - Proxmox single (Setup DHCP over one card)](https://wiki.abyssproject.net/en/proxmox/proxmox-with-one-public-ip)
 - [Stéphane Robert - Ansible](https://blog.stephane-robert.info/docs/infra-as-code/gestion-de-configuration/ansible/introduction/)
 - [Stéphane Robert - Ansible X Proxmox](https://blog.stephane-robert.info/docs/virtualiser/type1/proxmox/ansible-modules/)
 - [Stéphane Robert - Terraform X Proxmox](https://blog.stephane-robert.info/docs/virtualiser/type1/proxmox/terraform/)

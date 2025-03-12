@@ -24,6 +24,19 @@ export default defineConfig({
       { text: "Introduction", link: "/0.introduction/home" },
     ],
 
+    editLink: {
+      pattern: ({ filePath, frontmatter }) => {
+        if (typeof frontmatter.editLink === "string") {
+          return frontmatter.editLink;
+        }
+        return `https://github.com/batleforc/weebo-si/edit/main/docs/${filePath}`;
+      },
+      text: "Edit this page on GitHub",
+    },
+    outline: {
+      level: "deep",
+    },
+
     sidebar: [
       {
         text: "0. Introduction",
@@ -36,6 +49,20 @@ export default defineConfig({
       },
       {
         text: "1. Création de l'infrastructure",
+        items: [
+          {
+            text: "Préparation du poste de travail",
+            link: "/1.infrastructure/prepare-pc",
+          },
+          {
+            text: "Préparation du serveur",
+            link: "/1.infrastructure/prepare-server",
+          },
+          {
+            text: "Préparation pour nos premières VM",
+            link: "/1.infrastructure/prepare-first-vm",
+          },
+        ],
       },
       {
         text: "2. Gestion de l'infrastructure",

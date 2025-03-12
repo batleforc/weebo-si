@@ -18,7 +18,7 @@ tasks:
     dir: ./.talos-capi
     cmds:
     - echo "Get kubeconfig"
-    - talosctl kubeconfig . -e 192.168.100.210 -n 192.168.100.210 --talosconfig ./talosconfig
+    - talosctl kubeconfig . -e $NODE_IP -n $NODE_IP --talosconfig ./talosconfig
   init:
     dir: ./0.terraform/download-iso-talos
     cmds:
