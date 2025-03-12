@@ -62,6 +62,10 @@ export default defineConfig({
             text: "Préparation pour nos premières VM",
             link: "/1.infrastructure/prepare-first-vm",
           },
+          {
+            text: "Création de la première VM CAPI",
+            link: "/1.infrastructure/creation-capi",
+          },
         ],
       },
       {
