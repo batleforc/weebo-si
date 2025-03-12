@@ -20,3 +20,23 @@ Achat du serveur Lab le 1 mars 2024 => Objectif du MVP 1 autour de la premiere s
 - [Proxmox](https://www.proxmox.com/)
 - [CAPI](https://cluster-api.sigs.k8s.io/)
 - [ArgoCD](https://argoproj.github.io/argo-cd/)
+
+## Organisation du projet
+
+Le projet est organisé de la manière suivante:
+
+- `.github` : Contient les actions GitHub comme le déploiement de la doc.
+- `.vscode` : Contient la configuration de Visual Studio Code. (Extensions, settings, ...)
+- `.venv` : Contient l'environnement virtuel Python. Ce dossier n'est pas versionné et donc dans le gitignore.
+- `.talos-capi` : Contient la configuration Talos pour le cluster CAPI. Ce dossier n'est pas versionné car contient des secret.
+- `docs` : Contient la documentation du projet.
+- `0.*` : Contient les étapes initial du projet.
+  - `0.ansible` : Contient les playbooks Ansible.
+  - `0.terraform` : Contient les scripts Terraform.
+  - `0.task` : Contient les tâches Taskfile pour automatiser les étapes initial du projet.
+- `capi.*` : Contient le nécessaire pour Créer/Manager le cluster CAPI.
+  - `capi.argo` : Contient les fichiers ArgoCD pour le cluster CAPI afin d'implémenter la logique GitOps.
+  - `capi.task` : Contient les tâches Taskfile pour automatiser les étapes de gestion du cluster CAPI.
+  - `capi.terraform` : Contient les scripts Terraform pour la création/maintient en état nominale du cluster CAPI (Création VM, Bootstrap Talos, etc).
+  - `capi.terraform_init` : Contient les scripts Terraform pour Bootstrap la cluster API et lui permettre l'accès au cluster Proxmox.
+- `$CLUSTER_NAME.*` : Contiendra les information nécessaire pour Manager le cluster $CLUSTER_NAME.
