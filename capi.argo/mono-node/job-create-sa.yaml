@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: mono-node-webhook-job
+  name: mono-node-create-sa-job
   annotations:
     argocd.argoproj.io/sync-wave: "3"
 spec:
