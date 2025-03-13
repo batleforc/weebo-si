@@ -14,6 +14,6 @@ spec:
   options:
     waitForJobs: true
     wait: true
-    timeout: 5m
+    timeout: 5m0s
     install:
       createNamespace: true
