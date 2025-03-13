@@ -20,3 +20,13 @@ tasks:
       msg: "kubeconfig.{{.cluster}}.yml is required please run get-kubeconfig ex: 'task cluster:get-kubeconfig -- mono-node' "
     cmds:
     - kubectl --kubeconfig kubeconfig.{{.cluster}}.yml {{.CLI_ARGS}}
+  k9s:
+    vars:
+      cluster: '{{.cluster}}'
+    preconditions:
+    - sh: '[ {{.cluster}} != "" ]'
+      msg: "cluster is required ex task capi:cluster:kubectl cluster='mono-node' -- get pods"
+    - sh: '[ -f kubeconfig.{{.cluster}}.yml ]'
+      msg: "kubeconfig.{{.cluster}}.yml is required please run get-kubeconfig ex: 'task cluster:get-kubeconfig -- mono-node' "
+    cmds:
+    - k9s --kubeconfig kubeconfig.{{.cluster}}.yml {{.CLI_ARGS}}

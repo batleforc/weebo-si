@@ -1,0 +1,55 @@
+kind: ConfigMap
+metadata:
+  name: mono-node-create-sa
+apiVersion: v1
+data:
+  manifest.yaml: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: argocd-manager
+      namespace: kube-system
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: argocd-manager-role
+    rules:
+    - apiGroups:
+      - '*'
+      resources:
+      - '*'
+      verbs:
+      - '*'
+    - nonResourceURLs:
+      - '*'
+      verbs:
+      - '*'
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: argocd-manager-role-binding
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: argocd-manager-role
+    subjects:
+    - kind: ServiceAccount
+      name: argocd-manager
+      namespace: kube-system
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: argocd-manager-secret
+      namespace: kube-system
+      annotations:
+        kubernetes.io/service-account.name: argocd-manager
+    type: kubernetes.io/service-account-token
+  playbook.yaml: |
+    - hosts: localhost
+      tasks:
+        - name: Apply manifest
+          ansible.builtin.command:
+            cmd: "kubectl apply -f ./scripts/manifest.yaml --kubeconfig /tokens/value"
