@@ -26,7 +26,7 @@ spec:
       volumes:
       - name: mono-node-script-vol
         configMap:
-          name: mono-node-webhook-script
+          name: mono-node-create-sa
       - name: kube-secret
         secret:
           secretName: mono-node-kubeconfig
