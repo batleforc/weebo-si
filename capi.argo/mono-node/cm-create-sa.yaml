@@ -59,4 +59,4 @@ data:
           register: secret
         - name: "Print token"
           ansible.builtin.debug:
-            msg: "Please copy token : {{ secret.stdout }}"
+            msg: "Please copy token : {{ secret.stdout | b64decode }}"
