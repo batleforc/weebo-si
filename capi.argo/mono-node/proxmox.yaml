@@ -3,6 +3,8 @@ kind: ProxmoxCluster
 metadata:
   name: mono-node-proxmox-cluster
   namespace: default
+  labels:
+    argoHelmInstall: enabled
 spec:
   schedulerHints:
     memoryAdjustment: 0
