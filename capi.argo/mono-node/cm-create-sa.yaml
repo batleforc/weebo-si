@@ -52,4 +52,4 @@ data:
       tasks:
         - name: Apply manifest
           ansible.builtin.command:
-            cmd: "kubectl apply -f ./scripts/manifest.yaml --kubeconfig /tokens/value"
+            cmd: "kubectl apply -f /scripts/manifest.yaml --kubeconfig /tokens/value"

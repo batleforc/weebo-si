@@ -19,6 +19,15 @@ resource "proxmox_virtual_environment_vm" "capi_template" {
     type    = "x86-64-v2-AES"
   }
 
+  disk {
+    datastore_id = "local"
+    interface    = "scsi0"
+    replicate    = false
+    backup       = false
+    aio          = null
+    size         = 50
+  }
+
   memory {
     dedicated = 8192
     floating  = 8192

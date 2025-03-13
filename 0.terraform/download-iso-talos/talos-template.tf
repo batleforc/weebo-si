@@ -38,6 +38,7 @@ resource "proxmox_virtual_environment_vm" "talos_template_metal" {
   network_device {
     bridge = "vmbr1"
   }
+  boot_order = ["scsi0", "ide2"]
 }
 
 resource "proxmox_virtual_environment_vm" "talos_template_nocloud" {
