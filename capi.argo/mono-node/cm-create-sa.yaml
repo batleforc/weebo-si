@@ -55,7 +55,7 @@ data:
             cmd: "kubectl apply -f /scripts/manifest.yaml --kubeconfig /tokens/value"
         - name: Get Secret
           ansible.builtin.command:
-            cmd: "kubectl get secret argocd-manager-secret -n kube-system -o jsonpath='{.data.token}' --kubeconfig /tokens/value"
+            cmd: "kubectl get secret argocd-manager-secret -n kube-system -o jsonpath='{.data.token}' --kubeconfig /tokens/value | base64 -d"
           register: secret
         - name: "Print token"
           ansible.builtin.debug:
