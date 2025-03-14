@@ -63,7 +63,7 @@ data:
         {
           "bearerToken": "{{ secret.stdout | b64decode }}",
           "tlsClientConfig": {
-            "serverName": "{{ (kubeconfig.stdout | from_yaml).clusters[0].cluster.server }}",
+            "serverName": "kubernetes.default.svc",
             "caData": "{{ (kubeconfig.stdout | from_yaml).clusters[0].cluster['certificate-authority-data'] }}"
           }
         }
