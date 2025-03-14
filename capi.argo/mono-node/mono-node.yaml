@@ -4,7 +4,7 @@ metadata:
   name: mono-node
   namespace: default
   labels:
-    argoHelmInstall: enabled
+    argoHelmInstall: disabled
 spec:
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
