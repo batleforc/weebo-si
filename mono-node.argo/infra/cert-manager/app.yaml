@@ -4,7 +4,7 @@ metadata:
   name: mono-node-cert-manager
   namespace: argocd
 spec:
-  project: default
+  project: mono-node
   syncPolicy:
     automated: {}
     syncOptions:
