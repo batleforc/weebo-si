@@ -16,3 +16,5 @@ spec:
     path: mono-node.argo/infra
     repoURL: https://github.com/batleforc/weebo-si
     targetRevision: HEAD
+    directory:
+      recurse: true
