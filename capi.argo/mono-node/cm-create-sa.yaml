@@ -56,13 +56,13 @@ data:
     type: Opaque
     stringData:
       name: mono-node
-      server: {{ (kubeconfig | from_yaml).clusters[0].cluster.server }}
+      server: {{ (kubeconfig).clusters[0].cluster.server }}
       config: |
         {
           "bearerToken": "{{ secret.stdout | b64decode }}",
           "tlsClientConfig": {
-            "serverName": "{{ (kubeconfig | from_yaml).clusters[0].cluster.server }}",
-            "caData": "{{ (kubeconfig | from_yaml).clusters[0].cluster['certificate-authority-data'] }}"
+            "serverName": "{{ (kubeconfig).clusters[0].cluster.server }}",
+            "caData": "{{ (kubeconfig ).clusters[0].cluster['certificate-authority-data'] }}"
           }
         }
   playbook.yaml: |
