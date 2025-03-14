@@ -23,5 +23,5 @@ spec:
           servicemonitor:
             enabled: true
   destination:
-    name: "mono-node"
+    server: "https://192.168.100.20:6443"
     namespace: cert-manager
