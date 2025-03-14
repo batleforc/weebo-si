@@ -48,6 +48,7 @@ data:
         kubernetes.io/service-account.name: argocd-manager
     type: kubernetes.io/service-account-token
   secrets.j2: |
+    apiVersion: v1
     kind: Secret
     metadata:
       name: mono-node-secret
