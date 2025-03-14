@@ -13,6 +13,6 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   source:
-    path: capi.argo/mono-node
+    path: capi.argo/infra
     repoURL: https://github.com/batleforc/weebo-si
     targetRevision: HEAD
