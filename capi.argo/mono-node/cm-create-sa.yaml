@@ -53,7 +53,7 @@ data:
     metadata:
       name: mono-node-secret
       labels:
-        Argo CD.argoproj.io/secret-type: cluster
+        argocd.argoproj.io/secret-type: cluster
     type: Opaque
     stringData:
       name: mono-node
