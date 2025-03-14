@@ -85,7 +85,7 @@ data:
         - name: Create Secret
           ansible.builtin.template:
             src: secrets.j2
-            dest: /scripts/secrets.yaml
+            dest: /tmp/secrets.yaml
         - name: Apply Secret
           ansible.builtin.command:
-            cmd: "kubectl apply -f /scripts/secrets.yaml"
+            cmd: "kubectl apply -f /tmp/secrets.yaml"
