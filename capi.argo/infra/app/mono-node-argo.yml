@@ -13,6 +13,6 @@ spec:
     name: "mono-node"
   project: default
   source:
-    path: mono-node.argo/mono-node
+    path: mono-node.argo/infra
     repoURL: https://github.com/batleforc/weebo-si
     targetRevision: HEAD
