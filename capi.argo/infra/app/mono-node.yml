@@ -11,7 +11,7 @@ spec:
   destination:
     namespace: default
     server: https://kubernetes.default.svc
-  project: default
+  project: mono-node
   source:
     path: capi.argo/mono-node
     repoURL: https://github.com/batleforc/weebo-si
