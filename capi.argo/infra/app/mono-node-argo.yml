@@ -10,7 +10,7 @@ spec:
     automated: {}
   destination:
     namespace: default
-    name: "in-cluster"
+    name: "mono-node"
   project: default
   source:
     path: mono-node.argo/infra
