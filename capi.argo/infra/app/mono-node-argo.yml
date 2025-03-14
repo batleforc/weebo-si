@@ -10,7 +10,7 @@ spec:
     automated: {}
   destination:
     namespace: default
-    name: "mono-node"
+    server: https://kubernetes.default.svc
   project: default
   source:
     path: mono-node.argo/infra
