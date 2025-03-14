@@ -47,6 +47,24 @@ data:
       annotations:
         kubernetes.io/service-account.name: argocd-manager
     type: kubernetes.io/service-account-token
+  secrets.j2: |
+    kind: Secret
+    metadata:
+      name: mono-node-secret
+      labels:
+        Argo CD.argoproj.io/secret-type: cluster
+    type: Opaque
+    stringData:
+      name: mono-node
+      server: {{ (kubeconfig | from_yaml).clusters[0].cluster.server }}
+      config: |
+        {
+          "bearerToken": "{{ secret.stdout | b64decode }}",
+          "tlsClientConfig": {
+            "serverName": "{{ (kubeconfig | from_yaml).clusters[0].cluster.server }}",
+            "caData": "{{ (kubeconfig | from_yaml).clusters[0].cluster['certificate-authority-data'] }}"
+          }
+        }
   playbook.yaml: |
     - hosts: localhost
       tasks:
@@ -60,3 +78,14 @@ data:
         - name: "Print token"
           ansible.builtin.debug:
             msg: "Please copy token : {{ secret.stdout | b64decode }}"
+        - name: Read Kubeconfig
+          ansible.builtin.command:
+            cmd: "cat /tokens/value"
+          register: kubeconfig
+        - name: Create Secret
+          ansible.builtin.template:
+            src: secrets.j2
+            dest: /scripts/secrets.yaml
+        - name: Apply Secret
+          ansible.builtin.command:
+            cmd: "kubectl apply -f /scripts/secrets.yaml"
