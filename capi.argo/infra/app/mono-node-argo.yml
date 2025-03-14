@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mono-node-argo
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: mono-node-argo
+spec:
+  syncPolicy:
+    automated: {}
+  destination:
+    namespace: default
+    name: "mono-node"
+  project: default
+  source:
+    path: mono-node.argo/mono-node
+    repoURL: https://github.com/batleforc/weebo-si
+    targetRevision: HEAD

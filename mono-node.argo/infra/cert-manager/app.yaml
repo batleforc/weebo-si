@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+  source:
+    chart: cert-manager
+    repoURL: https://charts.jetstack.io
+    targetRevision: 1.17.1
+    helm:
+      releaseName: cert-manager
+      valuesObject:
+        crds:
+          enabled: true
+        prometheus:
+          enabled: false
+          servicemonitor:
+            enabled: true
+  destination:
+    name: "mono-node"
+    namespace: cert-manager
