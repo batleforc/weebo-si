@@ -1,12 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: cert-manager
+  name: mono-node-cert-manager
   namespace: argocd
 spec:
   project: default
   syncPolicy:
     automated: {}
+    syncOptions:
+    - CreateNamespace=true
   source:
     chart: cert-manager
     repoURL: https://charts.jetstack.io
