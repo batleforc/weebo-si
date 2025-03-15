@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-argo-local
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: {{ .Release.Name }}-argo
+spec:
+  syncPolicy:
+    automated: {}
+  destination:
+    namespace: argocd
+    name: {{ .Release.Name }}
+  project: {{ .Release.Name }}
+  source:
+    path: {{ .Release.Name }}.argo/local
+    repoURL: https://github.com/batleforc/weebo-si
+    targetRevision: HEAD
+    directory:
+      recurse: true
