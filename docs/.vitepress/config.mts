@@ -1,6 +1,22 @@
-import { defineConfig } from "vitepress";
+import { defineConfig, HeadConfig } from "vitepress";
 
 import MermaidExample from "./mermaid-markdown-all.js";
+
+const umamiScript: HeadConfig = [
+  "script",
+  {
+    defer: "true",
+    src: process.env.UMAMI_URL || "",
+    "data-website-id": process.env.UMAMI_ID || "",
+  },
+];
+
+const baseHeaders: HeadConfig[] = [];
+
+const headers =
+  process.env.NODE_ENV === "production"
+    ? [...baseHeaders, umamiScript]
+    : baseHeaders;
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -8,6 +24,7 @@ export default defineConfig({
   description:
     "A Weebo Env made to test new cool stuff and in the make the next Gen WeeboGitOps env",
   base: "/weebo-si/",
+  head: headers,
   markdown: {
     theme: {
       dark: "catppuccin-mocha",

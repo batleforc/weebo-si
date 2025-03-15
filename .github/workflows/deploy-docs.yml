@@ -39,6 +39,9 @@ jobs:
         run: yarn install
       - name: Build with VitePress
         run: yarn docs:build
+        env:
+          UMAMI_URL: ${{ vars.UMAMI_URL }}
+          UMAMI_ID: ${{ vars.UMAMI_ID }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
