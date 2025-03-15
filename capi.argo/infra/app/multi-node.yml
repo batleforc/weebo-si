@@ -12,7 +12,7 @@ spec:
       releaseName: multi-node
       valuesObject:
         controlPlane:
-          replicas: 1
+          replicas: 3
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: 'default'

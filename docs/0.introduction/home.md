@@ -28,7 +28,6 @@ Le projet est organisé de la manière suivante:
 - `.github` : Contient les actions GitHub comme le déploiement de la doc.
 - `.vscode` : Contient la configuration de Visual Studio Code. (Extensions, settings, ...)
 - `.venv` : Contient l'environnement virtuel Python. Ce dossier n'est pas versionné et donc dans le gitignore.
-- `.talos-capi` : Contient la configuration Talos pour le cluster CAPI. Ce dossier n'est pas versionné car contient des secret.
 - `docs` : Contient la documentation du projet.
 - `0.*` : Contient les étapes initial du projet.
   - `0.ansible` : Contient les playbooks Ansible.
