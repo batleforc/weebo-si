@@ -24,12 +24,11 @@ architecture-beta
 ```
 
 - [x] Créer un cluster "Master" qui va gérer les autres clusters nommé "CAPI"
-  - [ ] Documenté le processus
+  - [x] Documenté le processus
   - [x] Créer une VM a la main et la provisionner
   - [x] Créer la VM depuis terraform
 - [x] Sur un noeud Proxmox, installer un Mono-Node Talos via la CAPI
 - [ ] Sur un noeud Proxmox, installer un Multi-Node Talos via la CAPI
-- [ ] Tester [KubeVirt](https://kubevirt.io/)
 - [ ] Automatiser la configuration Proxmox
   - [ ] DHCP
   - [ ] Firewall
@@ -43,6 +42,22 @@ Bon on a nos clusters, maintenant il faut les gérer. Pour cela, on va utiliser 
 - [x] Créer un déploiement ArgoCD pour la gestion de l'infrastructure (Master Cluster et Worker Cluster)
 - [ ] Créer un déploiement ArgoCD pour la gestion des applications (Ingress, Monitoring, Logging, etc.)
 - [ ] Mettre en place une interface pour mutualisé le monitoring des clusters
+
+```mermaid
+flowchart TD
+  subgraph "Proxmox - Weebo4"
+    subgraph "CAPI"
+      argo@{ icon: "logos:argo", pos: "t", h: 60 }
+      capi["Cluster api"]
+    end
+    MonoNode@{ icon: "mdi:kubernetes", label: "Mono Node", pos: "t", h: 60 }
+  end
+
+  argo -- Ask creation of cluster --> capi
+  capi -- Create cluster --> MonoNode
+  argo -- Orchestrate --> MonoNode
+
+```
 
 ## 3. Déployer des applications <== MVP 1
 
@@ -73,7 +88,7 @@ L'env de base est en place, maintenant il faut ajouter tout les outils pour s'ap
 - [ ] Déploiement d'application ([ArgoCD](https://argoproj.github.io/argo-cd/), [Argo Rollouts](https://argoproj.github.io/argo-rollouts/))
 - [ ] Prévenir et détecter les vulnérabilités ([Trivy](https://trivy.dev/latest/), [Popeye](https://popeyecli.io/), [Dependency-Track](https://dependencytrack.org/))
 - [ ] Sécuriser les accès ([Oathkeeper](https://www.ory.sh/oathkeeper/), [Keto](https://www.ory.sh/keto/), [Oauth2-Proxy](https://oauth2-proxy.github.io/oauth2-proxy/), [Zitadel](https://zitadel.com/))
-- [ ] Sécuriser le réseau ([Cilium](https://cilium.io/), [Falco](https://falco.org/), [Tetragon](https://tetragon.io/))
+- [ ] Sécuriser le réseau ([Cilium](https://cilium.io/), [Falco](https://falco.org/), [Falco-talon](https://docs.falco-talon.org) [Tetragon](https://tetragon.io/))
 - [ ] Sécuriser les déploiements ([Opa](https://www.openpolicyagent.org/), [Gatekeeper](https://www.openpolicyagent.org/docs/latest/kubernetes-introduction/), [Kyverno](https://kyverno.io/))
 
 ## 5. User friendly

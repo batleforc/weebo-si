@@ -29,8 +29,8 @@ resource "proxmox_virtual_environment_vm" "capi_template" {
   }
 
   memory {
-    dedicated = 8192
-    floating  = 8192
+    dedicated = 10240
+    floating  = 10240
   }
   lifecycle {
     ignore_changes = [

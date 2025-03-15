@@ -7,17 +7,11 @@ const init = mermaid.registerExternalDiagrams([zenuml]);
 mermaid.registerIconPacks([
   {
     name: "logos",
-    loader: () =>
-      fetch("https://unpkg.com/@iconify-json/logos/icons.json").then((res) =>
-        res.json()
-      ),
+    loader: () => import("@iconify-json/logos").then((module) => module.icons),
   },
   {
     name: "mdi",
-    loader: () =>
-      fetch("https://unpkg.com/@iconify-json/mdi/icons.json").then((res) =>
-        res.json()
-      ),
+    loader: () => import("@iconify-json/mdi").then((module) => module.icons),
   },
 ]);
 
@@ -28,12 +22,12 @@ export const render = async (
 ): Promise<string> => {
   await init;
   mermaid.initialize(config);
-  let { svg, diagramType } = await mermaid.render(id, code);
+  let { svg } = await mermaid.render(id, code);
   let svg2 = svg;
   let iterMax = 5;
   do {
     let { svg: svg3 } = await mermaid.render(id, code);
     svg2 = svg3;
-  } while (!svg2.includes("<g ") && iterMax-- > 0);
+  } while (!svg2.includes("<g ") && iterMax-- >= 0);
   return svg2;
 };
