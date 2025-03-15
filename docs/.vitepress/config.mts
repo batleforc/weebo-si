@@ -6,8 +6,8 @@ const umamiScript: HeadConfig = [
   "script",
   {
     defer: "true",
-    src: process.env.UMAMI_URL || "",
-    "data-website-id": process.env.UMAMI_ID || "",
+    src: process.env.VITE_UMAMI_URL || "",
+    "data-website-id": process.env.VITE_UMAMI_ID || "",
   },
 ];
 
