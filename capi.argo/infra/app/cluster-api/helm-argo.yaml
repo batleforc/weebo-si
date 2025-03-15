@@ -17,3 +17,6 @@ spec:
     timeout: 5m0s
     install:
       createNamespace: true
+  valuesTemplate: |
+    nameOverride: argocd-client
+    namespaceOverride: argocd-client

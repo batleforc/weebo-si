@@ -15,7 +15,7 @@ extensions:
 kubernetes:
   version: v1.32.0
   labels:
-    argoHelmInstall: disabled
+    argoHelmInstall: enabled
 
 controlPlane:
   replicas: 1
