@@ -3,13 +3,13 @@
 ```mermaid
 kanban
   todo[To Do]
-    us1[Créer un cluster multi master self schedulable]
-    us2[Déployer Traefik et CertManager sur tous les clusters via ArgoCD]
     us3[Définir les règles de sécurité pour les clusters]
     us4[Nuke le Proxmox et automatisé la configuration réseau DHCP]
     us5[Créer le cluster CAPI avec un CloudInit]
   doing[Doing]
+    us2[Déployer Traefik et CertManager sur tous les clusters via ArgoCD]
   done[Done]
+    us1[Créer un cluster multi master self schedulable]
 ```
 
 ## Stream 15 mars 2025
