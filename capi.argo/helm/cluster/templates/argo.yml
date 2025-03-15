@@ -8,11 +8,9 @@ metadata:
 spec:
   syncPolicy:
     automated: {}
-    syncOptions:
-    - CreateNamespace=true
   destination:
     namespace: default
-    name: {{ .Release.Name }}
+    server: https://kubernetes.default.svc
   project: {{ .Release.Name }}
   source:
     path: {{ .Release.Name }}.argo/infra
