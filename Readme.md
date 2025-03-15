@@ -1,4 +1,4 @@
-# Weebo SI
+# Weebo SI - L'env de dev Presque Parfait
 
 Ce projet est double et séparer en deux:
 
