@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: multi-node-metallb
+  namespace: argocd
+spec:
+  project: multi-node
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - CreateNamespace=true
+  source:
+    chart: metallb
+    repoURL: https://metallb.github.io/metallb
+    targetRevision: 0.14.9
+    helm:
+      releaseName: metallb-system
+      valuesObject:
+        crds:
+          enabled: true
+  destination:
+    name: multi-node
+    namespace: metallb-system

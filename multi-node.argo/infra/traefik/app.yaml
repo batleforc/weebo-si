@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: traefik-multi-node
+  name: multi-node-traefik
   namespace: argocd
 spec:
   project: multi-node
