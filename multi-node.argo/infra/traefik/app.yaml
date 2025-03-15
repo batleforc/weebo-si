@@ -44,5 +44,5 @@ spec:
             publishedService:
               enabled: true
   destination:
-    server: "multi-node"
+    name: "multi-node"
     namespace: traefik
