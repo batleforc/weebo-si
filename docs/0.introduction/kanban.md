@@ -26,6 +26,7 @@ kanban
 
 - Debut : 17h10
 - FIN : ~19h00 ?
+- Vod : [Twitch](https://www.twitch.tv/videos/2406435027) Youtube : Soon
 - Objectif :
   - Présenté le projet
   - Terminer la configuration du cluster multi master self schedulable
