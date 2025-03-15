@@ -6,6 +6,7 @@ kanban
     us3[Définir les règles de sécurité pour les clusters]
     us4[Nuke le Proxmox et automatisé la configuration réseau DHCP]
     us5[Créer le cluster CAPI avec un CloudInit]
+    us6[Passer les cluster sous cilium]
   doing[Doing]
     us2[Déployer Traefik et CertManager sur tous les clusters via ArgoCD]
   done[Done]
