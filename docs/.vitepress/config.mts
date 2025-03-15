@@ -45,6 +45,7 @@ export default defineConfig({
           { text: "Sources", link: "/0.introduction/sources" },
           { text: "Contribuer", link: "/0.introduction/contributing" },
           { text: "Etape", link: "/0.introduction/etape" },
+          { text: "Kanban", link: "/0.introduction/kanban" },
         ],
       },
       {
