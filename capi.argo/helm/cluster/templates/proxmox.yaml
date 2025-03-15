@@ -1,0 +1,24 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: ProxmoxCluster
+metadata:
+  name: {{ .Release.Name }}-proxmox-cluster
+  namespace: default
+spec:
+  schedulerHints:
+    memoryAdjustment: 0
+  allowedNodes:
+  {{- range .Values.proxmox.allowedNodes }}
+  - {{ . }}
+  {{- end }}
+  controlPlaneEndpoint:
+    host: {{ .Values.network.vip }}
+    port: {{ .Values.network.port }}
+  dnsServers:
+  {{- range .Values.network.dnsServers }}
+  - {{ . }}
+  {{- end }}
+  ipv4Config:
+    addresses:
+    - {{ .Values.network.addresses }}
+    gateway: {{ .Values.network.gateway }}
+    prefix: {{ .Values.network.prefix }}

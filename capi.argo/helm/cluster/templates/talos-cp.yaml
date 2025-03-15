@@ -1,0 +1,37 @@
+apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+kind: TalosControlPlane
+metadata:
+  name: {{ .Release.Name }}-talos-cp
+spec:
+  version: {{ .Values.kubernetes.version }}
+  replicas: {{ .Values.controlPlane.replicas }}
+  infrastructureTemplate:
+    kind: ProxmoxMachineTemplate
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+    name: {{ .Release.Name }}-cp
+    namespace: default
+  controlPlaneConfig:
+    controlplane:
+      generateType: controlplane
+      strategicPatches:
+      - |
+        - op: replace
+          path: /machine/install
+          value:
+            disk: /dev/sda
+            extensions:
+              - image: {{ .Values.extensions.qemuGuestAgent.image }}
+        - op: replace
+          path: /cluster/allowSchedulingOnControlPlanes
+          value: true
+        - op: add
+          path: /machine/install/extraKernelArgs
+          value:
+            - net.ifnames=0
+        - op: add
+          path: /machine/network/interfaces
+          value:
+            - interface: eth0
+              dhcp: false
+              vip:
+                ip: {{ .Values.network.vip }}

@@ -1,0 +1,93 @@
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-create-sa
+apiVersion: v1
+data:
+  manifest.yaml: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: argocd-manager
+      namespace: kube-system
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: argocd-manager-role
+    rules:
+    - apiGroups:
+      - '*'
+      resources:
+      - '*'
+      verbs:
+      - '*'
+    - nonResourceURLs:
+      - '*'
+      verbs:
+      - '*'
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: argocd-manager-role-binding
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: argocd-manager-role
+    subjects:
+    - kind: ServiceAccount
+      name: argocd-manager
+      namespace: kube-system
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: argocd-manager-secret
+      namespace: kube-system
+      annotations:
+        kubernetes.io/service-account.name: argocd-manager
+    type: kubernetes.io/service-account-token
+  secrets.j2: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: {{ .Release.Name }}-secret
+      namespace: argocd
+      labels:
+        argocd.argoproj.io/secret-type: cluster
+    type: Opaque
+    stringData:
+      name: {{ .Release.Name }}
+      server: {{"{{"}} (kubeconfig.stdout | from_yaml).clusters[0].cluster.server }}
+      config: |
+        {
+          "bearerToken": "{{"{{"}}  secret.stdout | b64decode }}",
+          "tlsClientConfig": {
+            "serverName": "kubernetes.default.svc",
+            "caData": "{{"{{"}} (kubeconfig.stdout | from_yaml).clusters[0].cluster['certificate-authority-data'] }}"
+          }
+        }
+  playbook.yaml: |
+    - hosts: localhost
+      tasks:
+        - name: Apply manifest
+          ansible.builtin.command:
+            cmd: "kubectl apply -f /scripts/manifest.yaml --kubeconfig /tokens/value"
+        - name: Get Secret
+          ansible.builtin.command:
+            cmd: "kubectl get secret argocd-manager-secret -n kube-system -o jsonpath='{.data.token}' --kubeconfig /tokens/value"
+          register: secret
+        - name: "Print token"
+          ansible.builtin.debug:
+            msg: "Please copy token : {{"{{"}}  secret.stdout | b64decode }}"
+        - name: Read Kubeconfig
+          ansible.builtin.command:
+            cmd: "cat /tokens/value"
+          register: kubeconfig
+        - name: Create Secret
+          ansible.builtin.template:
+            src: secrets.j2
+            dest: /tmp/secrets.yaml
+        - name: Apply Secret
+          ansible.builtin.command:
+            cmd: "kubectl apply -f /tmp/secrets.yaml"

@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-create-sa-job
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  backoffLimit: 100
+  template:
+    spec:
+      containers:
+      - name: create-webhook
+        command:
+        - /bin/bash
+        - '-c'
+        - |
+          set -x
+          ansible-playbook -i localhost /scripts/playbook.yaml
+        image: quay.io/agnosticd/ee-multicloud:latest
+        volumeMounts:
+        - mountPath: /scripts
+          name: {{ .Release.Name }}-script-vol
+        - mountPath: /tokens
+          name: kube-secret
+      restartPolicy: Never
+      volumes:
+      - name: {{ .Release.Name }}-script-vol
+        configMap:
+          name: {{ .Release.Name }}-create-sa
+      - name: kube-secret
+        secret:
+          secretName: {{ .Release.Name }}-kubeconfig

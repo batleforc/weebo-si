@@ -1,0 +1,36 @@
+network:
+  vip: 192.168.100.40
+  port: 6443
+  dnsServers:
+  - 8.8.8.8
+  - 8.8.4.4
+  gateway: 192.168.100.1
+  prefix: 20
+  addresses: 192.168.100.41-192.168.100.50
+
+extensions:
+  qemuGuestAgent:
+    image: ghcr.io/siderolabs/qemu-guest-agent:9.2.0
+
+kubernetes:
+  version: v1.32.0
+  labels:
+    argoHelmInstall: disabled
+
+controlPlane:
+  replicas: 1
+
+proxmox:
+  allowedNodes:
+  - weebo4
+  nodeConf:
+    node: weebo4
+    disk:
+      name: scsi0
+      sizeGb: 50
+    memoryMiB: 8192
+    network: vmbr1
+    templateID: 9998
+    cpu:
+      cores: 2
+      sockets: 1

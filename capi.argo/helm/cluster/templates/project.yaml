@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ .Release.Name }}
+  namespace: argocd
+spec:
+  sourceRepos:
+  - '*'
+  destinations:
+  - namespace: '*'
+    name: '{{ .Release.Name }}'
+  - namespace: '*'
+    name: 'in-cluster'
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'

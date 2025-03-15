@@ -1,0 +1,25 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: ProxmoxMachineTemplate
+metadata:
+  name: {{ .Release.Name }}-cp
+  namespace: default
+spec:
+  template:
+    spec:
+      disks:
+        bootVolume:
+          disk: {{ .Values.proxmox.nodeConf.disk.name }}
+          sizeGb: {{ .Values.proxmox.nodeConf.disk.sizeGb }}
+      format: qcow2
+      full: true
+      memoryMiB: {{ .Values.proxmox.nodeConf.memoryMiB }}
+      network:
+        default:
+          bridge: {{ .Values.proxmox.nodeConf.network }}
+          model: virtio
+      numCores: {{ .Values.proxmox.nodeConf.cpu.cores }}
+      numSockets: {{ .Values.proxmox.nodeConf.cpu.sockets }}
+      sourceNode: {{ .Values.proxmox.nodeConf.node }}
+      templateID: {{ .Values.proxmox.nodeConf.templateID }}
+      checks:
+        skipCloudInitStatus: true
