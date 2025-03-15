@@ -7,6 +7,8 @@ spec:
   project: default
   syncPolicy:
     automated: {}
+    syncOptions:
+    - CreateNamespace=true
   source:
     chart: traefik
     repoURL: https://traefik.github.io/charts
@@ -42,5 +44,5 @@ spec:
             publishedService:
               enabled: true
   destination:
-    server: "https://kubernetes.default.svc"
+    server: "multi-node"
     namespace: traefik
