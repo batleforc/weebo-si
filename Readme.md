@@ -9,14 +9,14 @@ Ce projet est double et séparer en deux:
 
 Avant toute chose, il est important de noter que ce projet est un projet personnel et que je ne suis pas un expert dans toutes les technologies utilisées. Ce projet est un moyen pour moi de continuer a apprendre mais surtout de m'amuser en définissant mon Env parfait. Je vous prierais par contre de me cité si vous utilisez ce projet pour vos propres besoins.
 
-Pour plus d'informations sur le projet, veuillez vous référer à la [documentation](https://batleforc.github.io/weebo-si/).
+Pour plus d'informations sur le projet, veuillez vous référer à la [documentation](https://batleforc.github.io/weebo-si/?utm_source=github&utm_medium=readme&utm_campaign=weebo-si).
 
 Dans cette doc vous retrouverez les informations suivantes:
 
-- [Les sources](https://batleforc.github.io/weebo-si/0.introduction/sources.html)
-- [Les technologies utilisées](https://batleforc.github.io/weebo-si/0.introduction/home.html#technologies-utilisees)
-- [Le déroulement du projet et les étapes](https://batleforc.github.io/weebo-si/0.introduction/etape.html)
-- [Comment contribuer](https://batleforc.github.io/weebo-si/0.introduction/contributing.html) qui explique surtout comment installer les outils nécessaires et la mise en place de git-hooks.
+- [Les sources](https://batleforc.github.io/weebo-si/0.introduction/sources.html?utm_source=github&utm_medium=readme&utm_campaign=weebo-si)
+- [Les technologies utilisées](https://batleforc.github.io/weebo-si/0.introduction/home.html#technologies-utilisees?utm_source=github&utm_medium=readme&utm_campaign=weebo-si)
+- [Le déroulement du projet et les étapes](https://batleforc.github.io/weebo-si/0.introduction/etape.html?utm_source=github&utm_medium=readme&utm_campaign=weebo-si)
+- [Comment contribuer](https://batleforc.github.io/weebo-si/0.introduction/contributing.html?utm_source=github&utm_medium=readme&utm_campaign=weebo-si) qui explique surtout comment installer les outils nécessaires et la mise en place de git-hooks.
 
 ## Participating
 

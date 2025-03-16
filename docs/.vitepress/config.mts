@@ -1,6 +1,8 @@
 import { defineConfig, HeadConfig } from "vitepress";
-
+import { RSSOptions, RssPlugin } from "vitepress-plugin-rss";
 import MermaidExample from "./mermaid-markdown-all.js";
+
+/// Umami
 
 const umamiScript: HeadConfig = [
   "script",
@@ -17,6 +19,20 @@ const headers =
   process.env.NODE_ENV === "production"
     ? [...baseHeaders, umamiScript]
     : baseHeaders;
+
+/// RSS
+const baseUrl = "https://batleforc.github.io";
+const RSS: RSSOptions = {
+  title: "Weebo-Env",
+  baseUrl,
+  copyright: `Copyright (c) 2025-present, Batleforc`,
+  authors: [
+    {
+      name: "Batleforc",
+      link: "https://github.com/batleforc",
+    },
+  ],
+};
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -108,6 +124,16 @@ export default defineConfig({
 
     socialLinks: [
       { icon: "github", link: "https://github.com/batleforc/weebo-si" },
+      { icon: "twitch", link: "https://twitch.tv/batleforc" },
+      { icon: "twitter", link: "https://twitter.com/maxweebo" },
+      {
+        icon: "bluesky",
+        link: "https://bsky.app/profile/maxweebo.bsky.social",
+      },
     ],
+  },
+
+  vite: {
+    plugins: [RssPlugin(RSS)],
   },
 });
