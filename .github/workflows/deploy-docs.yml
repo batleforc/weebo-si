@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Build with VitePress
-        run: env | grep VITE_UMAMI && yarn docs:build
+        run: yarn docs:build
         env:
           VITE_UMAMI_URL: ${{ vars.UMAMI_URL }}
           VITE_UMAMI_ID: ${{ vars.UMAMI_ID }}

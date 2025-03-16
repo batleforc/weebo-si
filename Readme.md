@@ -1,5 +1,7 @@
 # Weebo SI - L'env de dev Presque Parfait
 
+![banner](./docs/public/banner.png)
+
 Ce projet est double et séparer en deux:
 
 - un poc pour la mise en place de Talos sur un cluster Proxmox via la CAPI, celui ci est basé sur le [super article](https://une-tasse-de.cafe/blog/talos-capi-proxmox/) de [Une tasse de café](https://une-tasse-de.cafe/) (que je meurt d'envie d'essayer depuis qu'il est sortit).
