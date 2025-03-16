@@ -79,6 +79,7 @@ export default defineConfig({
           { text: "Contribuer", link: "/0.introduction/contributing" },
           { text: "Etape", link: "/0.introduction/etape" },
           { text: "Kanban", link: "/0.introduction/kanban" },
+          { text: "Architecture", link: "/0.introduction/architecture" },
         ],
       },
       {
