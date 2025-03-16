@@ -28,7 +28,7 @@ architecture-beta
   - [x] Créer une VM a la main et la provisionner
   - [x] Créer la VM depuis terraform
 - [x] Sur un noeud Proxmox, installer un Mono-Node Talos via la CAPI
-- [ ] Sur un noeud Proxmox, installer un Multi-Node Talos via la CAPI
+- [x] Sur un noeud Proxmox, installer un Multi-Node Talos via la CAPI
 - [ ] Automatiser la configuration Proxmox
   - [ ] DHCP
   - [ ] Firewall
@@ -63,8 +63,8 @@ flowchart TD
 
 La création de l'infrastructure et sa gestion c'est bien, mais il faut aussi mettre en place le coeur de l'env Weebo.
 
-- [ ] Déployer un Ingress Controller
-- [ ] Déployer Cert-Manager
+- [x] Déployer un Ingress Controller
+- [x] Déployer Cert-Manager
 - [ ] Déployer un Monitoring Stack
 - [ ] Déployer un Logging Stack
 - [ ] Déployer un CI/CD (Tekton)

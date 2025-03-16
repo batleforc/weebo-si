@@ -19,7 +19,6 @@ resource "proxmox_virtual_environment_vm" "talos_template_metal" {
 
   memory {
     dedicated = 2048
-    floating  = 2048
   }
 
   disk {
@@ -62,7 +61,6 @@ resource "proxmox_virtual_environment_vm" "talos_template_nocloud" {
 
   memory {
     dedicated = 2048
-    floating  = 2048
   }
 
   disk {
