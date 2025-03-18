@@ -17,6 +17,8 @@ spec:
         ingressRoute:
           dashboard:
             enabled: true
+            entryPoints:
+            - web
         service:
           annotations:
             metallb.universe.tf/address-pool: one
