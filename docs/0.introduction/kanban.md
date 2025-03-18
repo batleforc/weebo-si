@@ -8,14 +8,15 @@ config:
 ---
 
 kanban
+  todoS[To Do On Stream]
+    us4[Nuke le Proxmox et automatisé la configuration réseau DHCP]@{ assigned: Post-Nuke, priority: 'Low'}
+    us5[Créer le cluster CAPI avec un CloudInit]@{ assigned: Post-Nuke, priority: 'Low'}
+    us6[Passer les cluster sous cilium]@{ assigned: Post-Nuke, priority: 'Low'}
   todo[To Do]
     us7[Exposer dashboard Traefik]@{ assigned: Pre-Nuke, priority: 'High'}
     use8[Check if HeadLamp can be used to access dynamically each cluster]@{ assigned: Pre-Nuke, priority: 'High'}
     us3[Définir les règles de sécurité pour les clusters]@{ assigned: Pre-Nuke, priority: 'High'}
     us8[Définir les règles d'identité]@{ assigned: Pre-Nuke, priority: 'High'}
-    us4[Nuke le Proxmox et automatisé la configuration réseau DHCP]@{ assigned: Post-Nuke, priority: 'Low'}
-    us5[Créer le cluster CAPI avec un CloudInit]@{ assigned: Post-Nuke, priority: 'Low'}
-    us6[Passer les cluster sous cilium]@{ assigned: Post-Nuke, priority: 'Low'}
     us7[Gestion PKI partagé avec DNS bind9]@{ assigned: Post-Nuke, priority: 'Low'}
   doing[Doing]
   done[Done]
