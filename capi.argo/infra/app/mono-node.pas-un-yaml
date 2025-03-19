@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mono-node
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/batleforc/weebo-si'
+    path: 'capi.argo/helm/cluster'
+    helm:
+      releaseName: mono-node
+      valuesObject:
+        controlPlane:
+          replicas: 1
+        network:
+          vip: 192.168.100.20
+          addresses: 192.168.100.21-192.168.100.50
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'default'
+  syncPolicy:
+    automated:
+      prune: false
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
