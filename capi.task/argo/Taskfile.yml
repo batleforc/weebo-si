@@ -5,14 +5,15 @@ env:
   ARGO_APP_REPO: "https://github.com/batleforc/weebo-si"
   ARGO_APP_USERNAME: "batleforc"
   ARGO_DEST_SERVER: "https://kubernetes.default.svc"
-  ARGO_VERSION: "7.8.7"
+  ARGO_VERSION: "7.8.12"
 
 tasks:
   install:
     cmds:
     - kubectl apply -f ./argo/ns.yaml
     - helm repo add argo https://argoproj.github.io/argo-helm
-    - helm upgrade --install argocd argo/argo-cd --namespace argocd --version $ARGO_VERSION
+    - helm repo update
+    - helm upgrade --install argocd argo/argo-cd --namespace argocd --version $ARGO_VERSION --values ./argo/values.yaml
   port-forward:
     cmds:
     - kubectl port-forward svc/argocd-server -n argocd 8080:443
