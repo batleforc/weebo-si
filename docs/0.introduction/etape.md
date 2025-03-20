@@ -110,3 +110,7 @@ Plein de services sont en place, mais ils ne sont pas systématiquement intégr�
 Tout est en place, mais il manque encore des choses pour être parfait. Et pourquoi pas tout casser pour voir si ça tient la route.
 
 - [ ] Chaos Engineering ([Chaos Mesh](https://chaos-mesh.org/), [Litmus](https://litmuschaos.io/))
+- [ ] Remediation en cas d'incident
+  - [ ] Que faire si comme un gros sagouin j'applique de force une rule NetworkPolicy qui coupe TOUT ?
+  - [ ] Que faire si un pod est compromis ?
+  - [ ] Que faire si un cluster est compromis ?

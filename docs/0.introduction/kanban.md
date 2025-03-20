@@ -31,17 +31,34 @@ kanban
 ### Stream 15 mars 2025
 
 - Debut : 17h10
-- FIN : ~19h00 ?
+- FIN : ~19h00
 - Vod : [Twitch](https://www.twitch.tv/videos/2406435027) YouTube : Soon
-- Musique: [Chillhop](https://app.chillhop.com/)
+- Musique: [Chillhop](https://app.chillhop.com/)Soon
 - Objectif :
   - Présenté le projet
   - Terminer la configuration du cluster multi master self schedulable
   - Déployer Traefik et CertManager sur tous les clusters via ArgoCD
 - Bilan
-  - [Headlamp injection](https://headlamp.dev/docs/latest/installation/in-cluster/#exposing-headlamp-with-an-ingress-server)
+  - [Headlamp injection](https://headlamp.dev/docs/latest/inSoonstallation/in-cluster/#exposing-headlamp-with-an-ingress-server)
   - [Headlamp Oidc](https://headlamp.dev/docs/latest/installation/in-cluster/oidc/)
   - Task board mis a jour
+
+### Stream 22 mars 2025 - SOON TM
+
+- Debut : SOON TM
+- FIN : SOON TM
+- Vod : Twitch YouTube : SOON TM
+- Musique: SOON TM
+- Objectif :
+  - SOON TM
+- Sujet Important
+  - [Oh Hell No](https://developer-friendly.blog/blog/2025/03/17/migration-from-promtail-to-alloy-the-what-the-why-and-the-how/)
+  - [Alloy](https://grafana.com/docs/alloy/latest/)
+  - [Promtail deprecated](https://grafana.com/docs/loki/latest/send-data/promtail/)
+  - Parler des sujets Special Stream et ceux que je me garde pour les longue nuit d'hiver
+  - Incident Ovh 🤣
+- Bilan
+  - SOON TM
 
 ## Music
 
