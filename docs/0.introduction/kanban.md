@@ -45,10 +45,10 @@ kanban
 
 ### Stream 22 mars 2025 - SOON TM
 
-- Debut : SOON TM
-- FIN : SOON TM
+- Debut : 16h30
+- FIN : ~ 18h30
 - Vod : Twitch YouTube : SOON TM
-- Musique: SOON TM
+- Musique: [NCS](https://ncs.io/) [Playlist](https://youtube.com/playlist?list=PLRBp0Fe2GpgnymQGm0yIxcdzkQsPKwnBD&si=sZjZvU09XJG6aqKQ)
 - Objectif :
   - SOON TM
 - Sujet Important
@@ -57,8 +57,10 @@ kanban
   - [Promtail deprecated](https://grafana.com/docs/loki/latest/send-data/promtail/)
   - Parler des sujets Special Stream et ceux que je me garde pour les longue nuit d'hiver
   - Incident Ovh 🤣
+- Sujet secondaire
+  - Passage a [Hyprland](https://hyprland.org/)
 - Bilan
-  - SOON TM
+  - Tester OMNI
 
 ## Music
 

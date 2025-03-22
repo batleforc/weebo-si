@@ -23,7 +23,7 @@ spec:
               - image: {{ .Values.extensions.qemuGuestAgent.image }}
         - op: replace
           path: /cluster/allowSchedulingOnControlPlanes
-          value: true
+          value: {{.Values.controlPlane.allowScheduling}}
         - op: add
           path: /machine/install/extraKernelArgs
           value:

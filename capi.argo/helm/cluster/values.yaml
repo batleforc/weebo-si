@@ -19,6 +19,7 @@ kubernetes:
 
 controlPlane:
   replicas: 1
+  allowScheduling: true
 
 proxmox:
   allowedNodes:

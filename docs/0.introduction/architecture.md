@@ -157,3 +157,28 @@ flowchart LR
   argo -- Deploy --> truc
   argo -- Deploy --> other-apps
 ```
+
+## Accès aux clusters
+
+```mermaid
+flowchart LR
+  user["Utilisateur"]
+  subgraph "Cloud"
+    subgraph "Cluster Main"
+      kube1["KubeApi"]
+      oidcProvider["OIDC Provider"]
+      vault["Vault"]
+    end
+  end
+
+  user -- 1.Authentification --> oidcProvider
+  user -- 2.Demande Kubeconfig --> vault
+  vault -- 3.Validate TOKEN --> oidcProvider
+  vault -- 4.Retourne kubeconfig --> user
+  user -- 5.Accès ressource via vault's kubeconfig --> kube1
+  kube1 -- 6.Valide Kubeconfig --> oidcProvider
+  kube1 -- 7.Retourne ressource --> user
+```
+
+- Comment user obtient le kubeconfig ?
+- 
