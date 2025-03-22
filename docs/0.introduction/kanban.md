@@ -47,7 +47,7 @@ kanban
 
 - Debut : 16h30
 - FIN : ~ 18h30
-- Vod : Twitch YouTube : SOON TM
+- Vod : [Twitch](https://www.twitch.tv/videos/2412410374) YouTube : SOON TM
 - Musique: [NCS](https://ncs.io/) [Playlist](https://youtube.com/playlist?list=PLRBp0Fe2GpgnymQGm0yIxcdzkQsPKwnBD&si=sZjZvU09XJG6aqKQ)
 - Objectif :
   - SOON TM
@@ -60,7 +60,15 @@ kanban
 - Sujet secondaire
   - Passage a [Hyprland](https://hyprland.org/)
 - Bilan
-  - Tester OMNI
+  - Beaucoup de lecture
+    - Tester [OMNI](https://omni.siderolabs.com/tutorials/getting_started)
+    - [Chaos Engineering](https://www.oreilly.com/library/view/chaos-engineering/9781492043850/)
+    - [Argo Workflows](https://argo-workflows.readthedocs.io/en/latest/use-cases/ci-cd/)
+    - [Argo Events](https://argoproj.github.io/argo-events/)
+    - [OpenBao](https://github.com/openbao/openbao)
+    - [OpenTofu](https://opentofu.org/)
+  - Et un test de patch talosconfig sur le scheduling de noeud qui a mis en lumière un soucis de NodeRef
+    - I0322 20:55:05.609493       1 scale.go:94] "one of machines does not have NodeRef" logger="controllers.TalosControlPlane" machine="mono-node-talos-cp-lvg4j"
 
 ## Music
 
