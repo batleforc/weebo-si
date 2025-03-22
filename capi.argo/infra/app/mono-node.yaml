@@ -13,9 +13,10 @@ spec:
       valuesObject:
         controlPlane:
           replicas: 1
+          allowScheduling: false
         network:
           vip: 192.168.100.20
-          addresses: 192.168.100.21-192.168.100.50
+          addresses: 192.168.100.21-192.168.100.25
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: 'default'
