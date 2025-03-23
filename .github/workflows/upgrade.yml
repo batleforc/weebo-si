@@ -31,11 +31,6 @@ jobs:
       - name: Install Updatecli in the runner
         uses: updatecli/updatecli-action@v2
 
-      - name: Run Updatecli in Dry Run mode
-        run: "updatecli diff --config ./0.updatecli/setup-host.yaml --values ./0.updatecli/values.yaml"
-        env:
-          UPDATECLI_GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
       - name: Run Updatecli in apply mode
         run: "updatecli apply --config ./0.updatecli/setup-host.yaml --values ./0.updatecli/values.yaml"
         env:
