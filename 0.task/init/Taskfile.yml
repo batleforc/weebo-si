@@ -19,3 +19,7 @@ tasks:
     cmds:
     - echo "Install Git hook"
     - cog install-hook --all
+  update:
+    cmds:
+    - echo "Update packages"
+    - updatecli apply --config ./0.updatecli/setup-host.yaml

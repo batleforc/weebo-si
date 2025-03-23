@@ -4,12 +4,13 @@
   become_method: ansible.builtin.sudo
   become: true
   vars:
-    clusterctl_version: "v1.9.5"
+    clusterctl_version: "v1.9.4"
     talosctl_version: "v1.9.4"
     terraform_version: "1.11.0"
     gitleaks_version: "8.24.0"
     k9s_version: "v0.40.8"
     argocd_version: "v2.14.4"
+    updatecli_version: "v0.95.0"
   tasks:
     - name: "Update and upgrade apt packages"
       ansible.builtin.apt:
@@ -37,3 +38,6 @@
     - name: Install ArgoCD CLI
       ansible.builtin.include_role:
         name: argocd
+    - name: Install updatecli
+      ansible.builtin.include_role:
+        name: updatecli

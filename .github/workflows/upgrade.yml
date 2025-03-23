@@ -1,0 +1,42 @@
+---
+name: Updatecli
+
+on:
+  # Trigger Updatecli if a new commit land on the main branch
+  push:
+    branches: [main]
+  # Trigger Updatecli if a pullrequest is open targeting the main branch.
+  # This is useful to test Updatecli manifest change
+  pull_request:
+    branches: [main]
+  # Manually trigger Updatecli via GitHub UI
+  workflow_dispatch:
+  # Trigger Updatecli once day by a cronjob
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    # Run once a day
+    - cron: "0 0 * * *"
+
+permissions:
+  contents: "write"
+  pull-requests: "write"
+
+jobs:
+  updatecli:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Updatecli in the runner
+        uses: updatecli/updatecli-action@v2
+
+      - name: Run Updatecli in Dry Run mode
+        run: "updatecli diff --config ./0.updatecli/setup-host.yaml --values ./0.updatecli/values.yaml"
+        env:
+          UPDATECLI_GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Run Updatecli in apply mode
+        run: "updatecli apply --config ./0.updatecli/setup-host.yaml --values ./0.updatecli/values.yaml"
+        env:
+          UPDATECLI_GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

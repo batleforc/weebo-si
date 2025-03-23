@@ -1,0 +1,43 @@
+---
+- name: "If updatecli is already installed, get the version"
+  ansible.builtin.command:
+    cmd: "updatecli version -s"
+  register: updatecli_version_output
+  ignore_errors: true
+  changed_when: false
+- name: "Download updatecli"
+  ansible.builtin.get_url:
+    url: "https://github.com/updatecli/updatecli/releases/download/{{ updatecli_version }}/updatecli_Linux_x86_64.tar.gz"
+    dest: "/tmp/updatecli_Linux_amd64.tar.gz"
+    mode: '0644'
+  when: updatecli_version not in updatecli_version_output.stdout
+- name: "Create updatecli folder"
+  ansible.builtin.file:
+    path: "/tmp/updatecli"
+    state: directory
+    mode: '0755'
+  when: updatecli_version not in updatecli_version_output.stdout
+- name: "Unzip updatecli"
+  ansible.builtin.unarchive:
+    src: "/tmp/updatecli_Linux_amd64.tar.gz"
+    dest: "/tmp/updatecli"
+    mode: '0755'
+    remote_src: true
+    keep_newer: true
+  when: updatecli_version not in updatecli_version_output.stdout
+- name: "Move updatecli to /usr/bin"
+  ansible.builtin.command:
+    cmd: "mv /tmp/updatecli/updatecli /usr/bin/updatecli"
+  register: updatecli_move_output
+  changed_when: updatecli_version not in updatecli_version_output.stdout
+  when: updatecli_version not in updatecli_version_output.stdout
+- name: "Clean up updatecli tar"
+  ansible.builtin.file:
+    path: "/tmp/updatecli_Linux_amd64.tar.gz"
+    state: absent
+  when: updatecli_version not in updatecli_version_output.stdout
+- name: "Clean updatecli folder"
+  ansible.builtin.file:
+    path: "/tmp/updatecli"
+    state: absent
+  when: updatecli_version not in updatecli_version_output.stdout

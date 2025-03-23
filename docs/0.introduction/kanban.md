@@ -17,6 +17,7 @@ kanban
     us3[Définir les règles de sécurité pour les clusters]@{ assigned: Pre-Nuke, priority: 'High'}
     us8[Définir les règles d'identité]@{ assigned: Pre-Nuke, priority: 'High'}
     us7[Gestion PKI partagé avec DNS bind9]@{ assigned: Post-Nuke, priority: 'Low'}
+    us9[Mettre en place updatecli]@{ assigned: Post-Nuke, priority: 'Low'}
   doing[Doing]
   done[Done]
     us7[Exposer dashboard Traefik]@{ assigned: Pre-Nuke, priority: 'High'}
@@ -25,6 +26,7 @@ kanban
 ```
 
 - [Talos Kubernetes configuration](https://www.talos.dev/v1.9/reference/configuration/v1alpha1/config/)
+- [Update CLI](https://github.com/updatecli/updatecli)
 
 ## Stream
 
