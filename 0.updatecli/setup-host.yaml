@@ -24,15 +24,6 @@ sources:
       versionFilter:
         kind: latest
 
-conditions:
-  bumpClusterctl:
-    kind: yaml
-    name: "Clusterctl need to be updated"
-    spec:
-      file: 0.ansible/setup-host/install-cli.yml
-      key: "$.[0].vars.updatecli_version"
-      value: Clusterctl version
-
 targets:
   bumpClusterctl:
     kind: yaml
