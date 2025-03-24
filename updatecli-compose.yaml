@@ -1,0 +1,6 @@
+policies:
+- name: install-cli
+  config:
+  - ./0.updatecli/setup-host.yaml
+  values:
+  - ./0.updatecli/values.yaml

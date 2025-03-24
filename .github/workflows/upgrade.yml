@@ -30,7 +30,7 @@ jobs:
         uses: updatecli/updatecli-action@v2
 
       - name: "Run updatecli in dryrun"
-        run: "updatecli compose diff --config ./0.updatecli/setup-host.yaml --values ./0.updatecli/values.yaml"
+        run: "updatecli compose diff"
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -44,7 +44,7 @@ jobs:
 
       - name: "Run updatecli"
         if: github.ref == 'refs/heads/main'
-        run: "updatecli compose apply --config ./0.updatecli/setup-host.yaml --values ./0.updatecli/values.yaml"
+        run: "updatecli compose apply"
         env:
           GITHUB_ACTOR: ${{ secrets.UPDATECLI_BOT_GITHUB_ACTOR }}
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
