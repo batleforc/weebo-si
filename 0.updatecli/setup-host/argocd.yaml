@@ -13,32 +13,32 @@ scms:
       branch: main
 
 sources:
-  clusterctl:
+  argocd:
     kind: githubrelease
     scmid: default
     spec:
-      owner: kubernetes-sigs
-      repository: cluster-api
+      owner: argoproj
+      repository: argo-cd
       token: "{{ requiredEnv .github.token }}"
       username: "{{ .github.username }}"
       versionFilter:
         kind: latest
 
 targets:
-  bumpClusterctl:
+  bumpargocd:
     kind: file
-    name: "Bump Clusterctl version"
+    name: "Bump argocd version"
     scmid: default
-    sourceid: clusterctl
+    sourceid: argocd
     spec:
       file: 0.ansible/setup-host/install-cli.yml
-      matchpattern: 'clusterctl_version: ".*"'
-      replacepattern: 'clusterctl_version: "{{ source "clusterctl" }}"'
+      matchpattern: 'argocd_version: ".*"'
+      replacepattern: 'argocd_version: "{{ source "argocd" }}"'
 
 actions:
-  bumpClusterctl:
+  bumpargocd:
     kind: github/pullrequest
     scmid: default
     spec:
-      title: 'ci: Bump `clusterctl` version to {{ source "clusterctl" }}'
+      title: 'ci: Bump `argocd` version to {{ source "argocd" }}'
       automerge: false

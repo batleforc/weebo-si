@@ -42,5 +42,5 @@ actions:
     kind: github/pullrequest
     scmid: default
     spec:
-      title: Bump `terraform` version to {{ source "terraform" }}
+      title: 'ci: Bump `terraform` version to {{ source "terraform" }}'
       automerge: false

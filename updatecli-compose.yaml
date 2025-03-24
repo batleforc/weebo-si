@@ -3,5 +3,9 @@ policies:
   config:
   - ./0.updatecli/setup-host/clusterctl.yaml
   - ./0.updatecli/setup-host/terraform.yaml
+  - ./0.updatecli/setup-host/gitleaks.yaml
+  - ./0.updatecli/setup-host/k9s.yaml
+  - ./0.updatecli/setup-host/argocd.yaml
+  - ./0.updatecli/setup-host/updatecli.yaml
   values:
   - ./0.updatecli/values.yaml

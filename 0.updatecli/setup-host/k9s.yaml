@@ -13,32 +13,32 @@ scms:
       branch: main
 
 sources:
-  clusterctl:
+  k9s:
     kind: githubrelease
     scmid: default
     spec:
-      owner: kubernetes-sigs
-      repository: cluster-api
+      owner: derailed
+      repository: k9s
       token: "{{ requiredEnv .github.token }}"
       username: "{{ .github.username }}"
       versionFilter:
         kind: latest
 
 targets:
-  bumpClusterctl:
+  bumpk9s:
     kind: file
-    name: "Bump Clusterctl version"
+    name: "Bump k9s version"
     scmid: default
-    sourceid: clusterctl
+    sourceid: k9s
     spec:
       file: 0.ansible/setup-host/install-cli.yml
-      matchpattern: 'clusterctl_version: ".*"'
-      replacepattern: 'clusterctl_version: "{{ source "clusterctl" }}"'
+      matchpattern: 'k9s_version: ".*"'
+      replacepattern: 'k9s_version: "{{ source "k9s" }}"'
 
 actions:
-  bumpClusterctl:
+  bumpk9s:
     kind: github/pullrequest
     scmid: default
     spec:
-      title: 'ci: Bump `clusterctl` version to {{ source "clusterctl" }}'
+      title: 'ci: Bump `k9s` version to {{ source "k9s" }}'
       automerge: false

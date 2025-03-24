@@ -13,32 +13,32 @@ scms:
       branch: main
 
 sources:
-  clusterctl:
+  updatecli:
     kind: githubrelease
     scmid: default
     spec:
-      owner: kubernetes-sigs
-      repository: cluster-api
+      owner: updatecli
+      repository: updatecli
       token: "{{ requiredEnv .github.token }}"
       username: "{{ .github.username }}"
       versionFilter:
         kind: latest
 
 targets:
-  bumpClusterctl:
+  bumpupdatecli:
     kind: file
-    name: "Bump Clusterctl version"
+    name: "Bump updatecli version"
     scmid: default
-    sourceid: clusterctl
+    sourceid: updatecli
     spec:
       file: 0.ansible/setup-host/install-cli.yml
-      matchpattern: 'clusterctl_version: ".*"'
-      replacepattern: 'clusterctl_version: "{{ source "clusterctl" }}"'
+      matchpattern: 'updatecli_version: ".*"'
+      replacepattern: 'updatecli_version: "{{ source "updatecli" }}"'
 
 actions:
-  bumpClusterctl:
+  bumpupdatecli:
     kind: github/pullrequest
     scmid: default
     spec:
-      title: 'ci: Bump `clusterctl` version to {{ source "clusterctl" }}'
+      title: 'ci: Bump `updatecli` version to {{ source "updatecli" }}'
       automerge: false

@@ -13,32 +13,34 @@ scms:
       branch: main
 
 sources:
-  clusterctl:
+  gitleaks:
     kind: githubrelease
     scmid: default
     spec:
-      owner: kubernetes-sigs
-      repository: cluster-api
+      owner: gitleaks
+      repository: gitleaks
       token: "{{ requiredEnv .github.token }}"
       username: "{{ .github.username }}"
       versionFilter:
         kind: latest
+    transformers:
+    - trimPrefix: "v"
 
 targets:
-  bumpClusterctl:
+  bumpgitleaks:
     kind: file
-    name: "Bump Clusterctl version"
+    name: "Bump gitleaks version"
     scmid: default
-    sourceid: clusterctl
+    sourceid: gitleaks
     spec:
       file: 0.ansible/setup-host/install-cli.yml
-      matchpattern: 'clusterctl_version: ".*"'
-      replacepattern: 'clusterctl_version: "{{ source "clusterctl" }}"'
+      matchpattern: 'gitleaks_version: ".*"'
+      replacepattern: 'gitleaks_version: "{{ source "gitleaks" }}"'
 
 actions:
-  bumpClusterctl:
+  bumpgitleaks:
     kind: github/pullrequest
     scmid: default
     spec:
-      title: 'ci: Bump `clusterctl` version to {{ source "clusterctl" }}'
+      title: 'ci: Bump `gitleaks` version to {{ source "gitleaks" }}'
       automerge: false
