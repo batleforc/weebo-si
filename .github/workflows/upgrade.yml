@@ -17,12 +17,15 @@ on:
     # Run once a day
     - cron: "0 0 * * *"
 
-permissions:
-  contents: "write"
-  pull-requests: "write"
-
 jobs:
   updatecli:
+    permissions:
+      contents: "write"
+      pull-requests: "write"
+      issues: write
+      checks: write
+      security-events: write
+      actions: read
     runs-on: "ubuntu-latest"
     steps:
       - name: Checkout
