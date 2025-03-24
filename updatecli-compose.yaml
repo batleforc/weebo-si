@@ -2,6 +2,6 @@ policies:
 - name: install-cli
   config:
   - ./0.updatecli/setup-host/clusterctl.yaml
-  - ./0.updatecli/setup-host/terraform.yml
+  - ./0.updatecli/setup-host/terraform.yaml
   values:
   - ./0.updatecli/values.yaml
