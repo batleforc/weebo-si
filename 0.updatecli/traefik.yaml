@@ -1,0 +1,55 @@
+name: Upgrade Traefik
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: batleforc
+      repository: weebo-si
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      branch: main
+
+sources:
+  traefik:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: traefik
+      repository: traefik-helm-chart
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: latest
+    transformers:
+    - trimPrefix: "v"
+
+targets:
+  bumpTraefikCapi:
+    kind: file
+    name: "Bump traefik version"
+    scmid: default
+    sourceid: traefik
+    spec:
+      file: capi.argo/infra/app/traefik/app.yaml
+      matchpattern: 'targetRevision: .*'
+      replacepattern: 'targetRevision: {{ source "traefik" }}'
+  bumpTraefikMultiNode:
+    kind: file
+    name: "Bump traefik version"
+    scmid: default
+    sourceid: traefik
+    spec:
+      file: multi-node.argo/infra/traefik/app.yaml
+      matchpattern: 'targetRevision: .*'
+      replacepattern: 'targetRevision: {{ source "traefik" }}'
+
+actions:
+  bumptraefik:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      title: 'ci: Bump `traefik` version to {{ source "traefik" }}'
+      automerge: false
