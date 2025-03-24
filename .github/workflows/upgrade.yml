@@ -19,16 +19,32 @@ on:
 
 jobs:
   updatecli:
-    permissions: write-all
+    permissions:
+      contents: read
     runs-on: "ubuntu-latest"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install Updatecli in the runner
         uses: updatecli/updatecli-action@v2
 
-      - name: Run Updatecli in apply mode
-        run: "updatecli apply --config ./0.updatecli/setup-host.yaml --values ./0.updatecli/values.yaml"
+      - name: "Run updatecli in dryrun"
+        run: "updatecli compose diff --config ./0.updatecli/setup-host.yaml --values ./0.updatecli/values.yaml"
         env:
-          UPDATECLI_GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/create-github-app-token@af35edadc00be37caa72ed9f3e6d5f7801bfdf09 # v1.11.7
+        id: generate_token
+        if: github.ref == 'refs/heads/main'
+        with:
+          app-id: ${{ secrets.UPDATECLIBOT_APP_ID }}
+          private-key: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
+
+      - name: "Run updatecli"
+        if: github.ref == 'refs/heads/main'
+        run: "updatecli compose apply --config ./0.updatecli/setup-host.yaml --values ./0.updatecli/values.yaml"
+        env:
+          GITHUB_ACTOR: ${{ secrets.UPDATECLI_BOT_GITHUB_ACTOR }}
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
