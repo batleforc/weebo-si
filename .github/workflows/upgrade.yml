@@ -1,5 +1,5 @@
 ---
-name: Updatecli
+name: Updatecli Workflow
 
 on:
   # Trigger Updatecli if a new commit land on the main branch
