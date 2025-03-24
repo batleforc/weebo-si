@@ -39,5 +39,7 @@ targets:
 actions:
   bumpClusterctl:
     kind: github/pullrequest
-    title: Bump `clusterctl` version to {{ source "clusterctl" }}
     scmid: default
+    spec:
+      title: Bump `clusterctl` version to {{ source "clusterctl" }}
+      automerge: false
