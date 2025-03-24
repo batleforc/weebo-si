@@ -24,7 +24,7 @@ sources:
       versionFilter:
         kind: latest
     transformers:
-    - trimPrefix: "v"
+    - trimprefix: "v"
 
 targets:
   bumpgitleaks:
