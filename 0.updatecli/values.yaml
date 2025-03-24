@@ -6,4 +6,4 @@ github:
   test: "v1.0"
 
 gpg:
-  key: "GPG_KEY"
+  key: "GPG_KEY_ID"
