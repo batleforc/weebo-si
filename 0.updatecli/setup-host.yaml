@@ -11,6 +11,8 @@ scms:
       token: "{{ requiredEnv .github.token }}"
       username: "{{ .github.username }}"
       branch: main
+      gpg:
+        signingkey: "{{ requiredEnv .gpg.key }}"
 
 sources:
   clusterctl:

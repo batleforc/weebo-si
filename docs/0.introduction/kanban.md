@@ -27,6 +27,7 @@ kanban
 
 - [Talos Kubernetes configuration](https://www.talos.dev/v1.9/reference/configuration/v1alpha1/config/)
 - [Update CLI](https://github.com/updatecli/updatecli)
+- [Terraform Cilium](https://registry.terraform.io/providers/littlejo/cilium/latest/docs/resources/cilium) plus jamais d'install manuelle !!!
 
 ## Stream
 
