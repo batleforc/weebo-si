@@ -22,4 +22,5 @@ tasks:
   update:
     cmds:
     - echo "Update packages"
-    - updatecli apply --config ./0.updatecli/setup-host.yaml
+    - pwd
+    - UPDATECLI_GITHUB_TOKEN="${ARGO_GITHUB_TOKEN}" updatecli diff --config ./0.updatecli/setup-host.yaml --values ./0.updatecli/values.yaml --debug
