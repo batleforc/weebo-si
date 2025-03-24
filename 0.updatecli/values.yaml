@@ -2,5 +2,5 @@ github:
   user: "GitHub Actions Bot"
   email: "bots@batleforc.io"
   username: "github-actions"
-  token: "UPDATECLI_GITHUB_TOKEN"
+  token: "GITHUB_TOKEN"
   test: "v1.0"
