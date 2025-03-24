@@ -32,7 +32,7 @@ targets:
     sourceid: clusterctl
     spec:
       file: 0.ansible/setup-host/install-cli.yml
-      key: "$.[0].vars.clusterctl_version"
+      key: "$[0].vars.clusterctl_version"
       #file: 0.updatecli/values.yaml
       #key: "$.github"
 
