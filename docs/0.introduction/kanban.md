@@ -18,6 +18,7 @@ kanban
     us8[Définir les règles d'identité]@{ assigned: Pre-Nuke, priority: 'High'}
     us7[Gestion PKI partagé avec DNS bind9]@{ assigned: Post-Nuke, priority: 'Low'}
     us9[Mettre en place updatecli]@{ assigned: Post-Nuke, priority: 'Low'}
+    use10[Setup Cilium V6 et V4 pour les LoadBalancer]@{ assigned: Post-Nuke, priority: 'Low'}
   doing[Doing]
   done[Done]
     us7[Exposer dashboard Traefik]@{ assigned: Pre-Nuke, priority: 'High'}

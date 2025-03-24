@@ -23,6 +23,16 @@ sources:
       username: "{{ .github.username }}"
       versionFilter:
         kind: latest
+  terraform:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: hashicorp
+      repository: terraform
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: latest
 
 targets:
   bumpClusterctl:
@@ -34,8 +44,15 @@ targets:
       file: 0.ansible/setup-host/install-cli.yml
       matchpattern: 'clusterctl_version: ".*"'
       replacepattern: 'clusterctl_version: "{{ source "clusterctl" }}"'
-      #file: 0.updatecli/values.yaml
-      #key: "$.github"
+  terraform:
+    kind: file
+    name: "Bump Terraform version"
+    scmid: default
+    sourceid: terraform
+    spec:
+      file: 0.ansible/setup-host/install-cli.yml
+      matchpattern: 'terraform_version: ".*"'
+      replacepattern: 'terraform_version: "{{ source "terraform" }}"'
 
 actions:
   bumpClusterctl:
