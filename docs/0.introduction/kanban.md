@@ -17,10 +17,10 @@ kanban
     us3[Définir les règles de sécurité pour les clusters]@{ assigned: Pre-Nuke, priority: 'High'}
     us8[Définir les règles d'identité]@{ assigned: Pre-Nuke, priority: 'High'}
     us7[Gestion PKI partagé avec DNS bind9]@{ assigned: Post-Nuke, priority: 'Low'}
-    us9[Mettre en place updatecli]@{ assigned: Post-Nuke, priority: 'Low'}
     use10[Setup Cilium V6 et V4 pour les LoadBalancer]@{ assigned: Post-Nuke, priority: 'Low'}
     us11[Comparer Falco et Tetragon]@{ assigned: Post-Nuke, priority: 'Low'}
   doing[Doing]
+    us9[Mettre en place updatecli]@{ assigned: Post-Nuke, priority: 'Low'}
   done[Done]
     us7[Exposer dashboard Traefik]@{ assigned: Pre-Nuke, priority: 'High'}
     us1[Créer un cluster multi master self schedulable]
@@ -30,6 +30,7 @@ kanban
 - [Talos Kubernetes configuration](https://www.talos.dev/v1.9/reference/configuration/v1alpha1/config/)
 - [Update CLI](https://github.com/updatecli/updatecli)
 - [Terraform Cilium](https://registry.terraform.io/providers/littlejo/cilium/latest/docs/resources/cilium) plus jamais d'install manuelle !!!
+- [Falco on Talos](https://falco.org/blog/deploy-falco-talos-cluster/)
 
 ## Stream
 
@@ -79,3 +80,17 @@ kanban
 
 - [Chillhop](https://app.chillhop.com/)<= Plus calme
 - [NCS](https://ncs.io/) <= Plus rythmé et varié (Pas encore testé)
+
+## Task
+
+### us9 - Mettre en place updatecli
+
+- [x] Créer un fichier de configuration updatecli
+- [x] Mise en place CI/CD
+- [x] Automatiser la mise a jour des outils dans le script ansible
+- [ ] Automatiser la mise a jour des outils dans l'image Che-Ops
+- [ ] Automatiser la mise a jour des Traefik
+- [ ] Automatiser la mise a jour des CertManager
+- [ ] Automatiser la mise a jour des Cilium
+- [ ] Automatiser la mise a jour des Talos
+- [ ] Automatiser la mise a jour des ArgoCD
