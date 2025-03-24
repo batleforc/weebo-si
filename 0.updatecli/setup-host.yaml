@@ -11,7 +11,6 @@ scms:
       token: "{{ requiredEnv .github.token }}"
       username: "{{ .github.username }}"
       branch: main
-      commitusingapi: true
 
 sources:
   clusterctl:
