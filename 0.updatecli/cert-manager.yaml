@@ -1,0 +1,55 @@
+name: Upgrade CertManager
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: batleforc
+      repository: weebo-si
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      branch: main
+
+sources:
+  cert-manager:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: cert-manager
+      repository: cert-manager-helm-chart
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: semver
+    transformers:
+    - trimprefix: "v"
+
+targets:
+  bumpcert-managerCapi:
+    kind: file
+    name: "Bump cert-manager version"
+    scmid: default
+    sourceid: cert-manager
+    spec:
+      file: capi.argo/infra/app/cert-manager/app.yaml
+      matchpattern: 'targetRevision: .*'
+      replacepattern: 'targetRevision: {{ source "cert-manager" }}'
+  bumpcert-managerMultiNode:
+    kind: file
+    name: "Bump cert-manager version"
+    scmid: default
+    sourceid: cert-manager
+    spec:
+      file: multi-node.argo/infra/cert-manager/app.yaml
+      matchpattern: 'targetRevision: .*'
+      replacepattern: 'targetRevision: {{ source "cert-manager" }}'
+
+actions:
+  bumpcert-manager:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      title: 'ci: Bump `cert-manager` version to {{ source "cert-manager" }}'
+      automerge: false
