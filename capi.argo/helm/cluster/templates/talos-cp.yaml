@@ -48,7 +48,7 @@ spec:
                 - os:reader
               allowedKubernetesNamespaces:
                 - kube-system
-        - op: replace
+        - op: add
           path: /cluster/externalCloudProvider
           value:
             enabled: true
