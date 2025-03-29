@@ -24,3 +24,5 @@ spec:
       checks:
         skipCloudInitStatus: true
         skipQemuGuestAgent: false
+      metadataSettings:
+        providerIDInjection: true
