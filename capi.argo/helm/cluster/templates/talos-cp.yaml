@@ -40,15 +40,14 @@ spec:
           path: /machine/kubelet/extraArgs
           value:
               cloud-provider: external
-        - op: replace
-          path: /machine/features
+        - op: add
+          path: /machine/features/kubernetesTalosAPIAccess
           value:
-            kubernetesTalosAPIAccess:
-              enabled: true
-              allowedRoles:
-                - os:reader
-              allowedKubernetesNamespaces:
-                - kube-system
+            enabled: true
+            allowedRoles:
+              - os:reader
+            allowedKubernetesNamespaces:
+              - kube-system
         - op: add
           path: /cluster/externalCloudProvider
           value:
