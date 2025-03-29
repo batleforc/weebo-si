@@ -77,12 +77,27 @@ kanban
 ### Stream 29 mars 2025
 
 - Debut : 16h30
-- FIN : ~ 18h00 - Stream plus court pour l'épisode 25 de Solo Leveling
-- Vod : Twitch YouTube : SOON TM
+- FIN : ~ 18h50
+- Vod : [Twitch](https://www.twitch.tv/videos/2418536784) YouTube : SOON TM
 - Musique: [NCS](https://ncs.io/) [Playlist](https://www.youtube.com/watch?v=zyXmsVwZqX4&list=PLRBp0Fe2GpgleasyNsblE57aQt8xlEoVK)
 - Objectif :
   - Tester le patch talosconfig en désactivant le scheduling sur les noeud master
   - Parler d'[Updatecli](https://www.updatecli.io/) et de la mise a jour des outils pendant le patch
+  - Le reste est reporté
+- Bilan
+  - Vive le [Talos Cloud Controller Manager](https://github.com/ionos-cloud/cluster-api-provider-proxmox/discussions/405)
+  - Patch du control plane fonctionnelle !!! (les 3 noeud ont été patché et renouvelé sans soucis)
+  - Cluster API is back BABY
+
+### Stream 5 avril 2025 - Pause (Out Of Town)
+
+### Stream 12 avril 2025 - Soon TM
+
+- Debut : 16h30
+- FIN : ~ 18h30
+- Vod : Twitch YouTube : SOON TM
+- Musique: [NCS](https://ncs.io/)
+- Objectif :
   - Tester [Falco](https://falco.org/blog/deploy-falco-talos-cluster/)
   - Nuke le proxmox et recréer CAPI avec CloudInit / Ip Statique / Cilium !
   - Automatiser la configuration réseau
@@ -98,7 +113,7 @@ kanban
   - Gestion des secrets et des identités
   - Rediffusion du stream
 - Bilan
-  - Vive le [TCCM](https://github.com/ionos-cloud/cluster-api-provider-proxmox/discussions/405)
+  - Soon TM
 
 ## Music
 
