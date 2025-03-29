@@ -12,8 +12,9 @@ spec:
       releaseName: mono-node
       valuesObject:
         controlPlane:
-          replicas: 0
-          allowScheduling: true
+          replicas: 3
+          allowScheduling: false
+          tccm: true
         network:
           vip: 192.168.100.20
           addresses: 192.168.100.21-192.168.100.25

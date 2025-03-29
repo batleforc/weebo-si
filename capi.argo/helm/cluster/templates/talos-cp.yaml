@@ -35,3 +35,23 @@ spec:
               dhcp: false
               vip:
                 ip: {{ .Values.network.vip }}
+        {{- if .Values.controlPlane.tccm -}}
+        - op: replace
+          path: /machine/kubelet/extraArgs/cloud-provider
+          value: external
+        - op: replace
+          path: /machine/features
+          value:
+            kubernetesTalosAPIAccess:
+              enabled: true
+              allowedRoles:
+                - os:reader
+              allowedKubernetesNamespaces:
+                - kube-system
+        - op: replace
+          path: /cluster/externalCloudProvider
+          value:
+            enabled: true
+            manifests:
+              - {{ .Values.controlPlane.cloudProvider }}
+        {{- end -}}
