@@ -28,9 +28,7 @@ kanban
 ```
 
 - [Talos Kubernetes configuration](https://www.talos.dev/v1.9/reference/configuration/v1alpha1/config/)
-- [Update CLI](https://github.com/updatecli/updatecli)
 - [Terraform Cilium](https://registry.terraform.io/providers/littlejo/cilium/latest/docs/resources/cilium) plus jamais d'install manuelle !!!
-- [Falco on Talos](https://falco.org/blog/deploy-falco-talos-cluster/)
 
 ## Stream
 
@@ -49,7 +47,7 @@ kanban
   - [Headlamp Oidc](https://headlamp.dev/docs/latest/installation/in-cluster/oidc/)
   - Task board mis a jour
 
-### Stream 22 mars 2025 - SOON TM
+### Stream 22 mars 2025
 
 - Debut : 16h30
 - FIN : ~ 18h30
@@ -75,6 +73,31 @@ kanban
     - [OpenTofu](https://opentofu.org/)
   - Et un test de patch talosconfig sur le scheduling de noeud qui a mis en lumière un soucis de NodeRef
     - I0322 20:55:05.609493       1 scale.go:94] "one of machines does not have NodeRef" logger="controllers.TalosControlPlane" machine="mono-node-talos-cp-lvg4j"
+
+### Stream 29 mars 2025 - SOON TM
+
+- Debut : 16h30
+- FIN : ~ 18h00 - Stream plus court pour l'épisode 25 de Solo Leveling
+- Vod : Twitch YouTube : SOON TM
+- Musique: [NCS](https://ncs.io/)
+- Objectif :
+  - Tester le patch talosconfig en désactivant le scheduling sur les noeud master
+  - Parler d'[Updatecli](https://www.updatecli.io/) et de la mise a jour des outils pendant le patch
+  - Tester [Falco](https://falco.org/blog/deploy-falco-talos-cluster/)
+  - Nuke le proxmox et recréer CAPI avec CloudInit / Ip Statique / Cilium !
+  - Automatiser la configuration réseau
+- Sujet décisionnelle
+  - Volonté d'utiliser les projets [CNCF](https://landscape.cncf.io/)
+  - Choix Auth Provider
+    - Model d'habilitation
+      - RBAC
+      - [ReBAC](https://www.permit.io/blog/relationship-based-access-control-rebac-with-open-policy-agent-opa)
+    - Authority server
+    - Should we use [OPA](https://www.openpolicyagent.org/) ?
+  - Architecture
+  - Gestion des secrets et des identités
+  - Rediffusion du stream
+- Bilan
 
 ## Music
 
