@@ -35,7 +35,7 @@ spec:
               dhcp: false
               vip:
                 ip: {{ .Values.network.vip }}
-        {{- if .Values.controlPlane.tccm -}}
+        {{ if .Values.controlPlane.tccm -}}
         - op: replace
           path: /machine/kubelet/extraArgs/cloud-provider
           value: external
