@@ -74,12 +74,12 @@ kanban
   - Et un test de patch talosconfig sur le scheduling de noeud qui a mis en lumière un soucis de NodeRef
     - I0322 20:55:05.609493       1 scale.go:94] "one of machines does not have NodeRef" logger="controllers.TalosControlPlane" machine="mono-node-talos-cp-lvg4j"
 
-### Stream 29 mars 2025 - SOON TM
+### Stream 29 mars 2025
 
 - Debut : 16h30
 - FIN : ~ 18h00 - Stream plus court pour l'épisode 25 de Solo Leveling
 - Vod : Twitch YouTube : SOON TM
-- Musique: [NCS](https://ncs.io/)
+- Musique: [NCS](https://ncs.io/) [Playlist](https://www.youtube.com/watch?v=zyXmsVwZqX4&list=PLRBp0Fe2GpgleasyNsblE57aQt8xlEoVK)
 - Objectif :
   - Tester le patch talosconfig en désactivant le scheduling sur les noeud master
   - Parler d'[Updatecli](https://www.updatecli.io/) et de la mise a jour des outils pendant le patch
