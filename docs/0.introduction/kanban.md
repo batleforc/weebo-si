@@ -98,6 +98,7 @@ kanban
   - Gestion des secrets et des identités
   - Rediffusion du stream
 - Bilan
+  - Vive le [TCCM](https://github.com/ionos-cloud/cluster-api-provider-proxmox/discussions/405)
 
 ## Music
 
