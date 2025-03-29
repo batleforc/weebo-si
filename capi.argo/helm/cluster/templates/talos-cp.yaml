@@ -37,8 +37,9 @@ spec:
                 ip: {{ .Values.network.vip }}
         {{ if .Values.controlPlane.tccm -}}
         - op: add
-          path: /machine/kubelet/extraArgs/cloud-provider
-          value: external
+          path: /machine/kubelet/extraArgs
+          value:
+              cloud-provider: external
         - op: replace
           path: /machine/features
           value:
