@@ -12,7 +12,7 @@ spec:
       releaseName: mono-node
       valuesObject:
         controlPlane:
-          replicas: 2
+          replicas: 3
           allowScheduling: false
         network:
           vip: 192.168.100.20
