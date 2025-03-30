@@ -1,0 +1,77 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: fluent
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+  source:
+    chart: fluent-bit
+    repoURL: https://fluent.github.io/helm-charts
+    targetRevision: 0.48.9
+    helm:
+      releaseName: fluent
+      valuesObject:
+        podAnnotations:
+          fluentbit.io/exclude: 'true'
+
+        daemonSetVolumes:
+        - name: varlog
+          hostPath:
+            path: /var/log
+
+        daemonSetVolumeMounts:
+        - name: varlog
+          mountPath: /var/log
+
+        tolerations:
+        - operator: Exists
+          effect: NoSchedule
+
+        nodeSelector:
+          node-role.kubernetes.io/control-plane: ""
+
+        config:
+          service: |
+            [SERVICE]
+              Flush            5
+              Daemon           Off
+              Log_Level        warn
+              HTTP_Server      On
+              HTTP_Listen      0.0.0.0
+              HTTP_Port        2020
+              Health_Check     On
+              Parsers_File     /fluent-bit/etc/parsers.conf
+              Parsers_File     /fluent-bit/etc/conf/custom_parsers.conf
+
+          inputs: |
+            [INPUT]
+              Name          tail
+              Alias         audit
+              Path          /var/log/audit/kube/*.log
+              Parser        audit
+              Tag           audit.*
+              Ignore_older  true
+
+          customParsers: |
+            [PARSER]
+              Name          audit
+              Format        json
+              Time_Key      requestReceivedTimestamp
+              Time_Format   %Y-%m-%dT%H:%M:%S.%L%z
+
+          outputs: |
+            [OUTPUT]
+              Name    http
+              Alias   http
+              Match   *
+              Host    falco-k8saudit-webhook.falco.svc.cluster.local
+              Port    9765
+              URI     /k8s-audit
+              Format  json
+
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: kube-system
