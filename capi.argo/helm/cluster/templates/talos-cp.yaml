@@ -54,7 +54,7 @@ spec:
             enabled: true
             manifests:
               - {{ .Values.controlPlane.cloudProvider }}
-        {{- end -}}
+        {{- end }}
         - op: add
           path: /cluster/apiServer/admissionControl/0/configuration/exemptions/namespaces/-
           value: falco
