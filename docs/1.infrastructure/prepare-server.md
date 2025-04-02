@@ -28,7 +28,7 @@ Votre serveur doit comporter les éléments suivants :
 
 Cette partie est optionnelle, mais fortement recommandée. Elle permettra de définir une plage d'adresse IP que les vm pourront utiliser.
 
-Cette partit n'est pas encore automatisée, mais vous pouvez suivre l'article [AbyssProject - Proxmox single ip (Setup DHCP over one card)](https://wiki.abyssproject.net/en/proxmox/proxmox-with-one-public-ip) pour mettre en place un serveur DHCP.
+Cette partit vient tout juste d'être automatisée via le script ansible exécuté dans l'étape 3.
 
 ## 2. Initialisation de la configuration VPN
 
@@ -67,6 +67,8 @@ task proxmox:setup-proxmox
 ```
 
 A l'aide des information en sortit de la commande précédente, compléter le fichier `.env` avec les informations PROXMOX_USER, PROXMOX_TOKEN_ID, PROXMOX_TOKEN_SECRET.
+
+Ensuite, un petit restart de votre serveur proxmox s'impose.
 
 ## 4. Activer/Désactiver le VPN
 
