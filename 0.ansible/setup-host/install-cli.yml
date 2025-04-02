@@ -10,7 +10,7 @@
     gitleaks_version: "8.24.2"
     k9s_version: "v0.40.10"
     argocd_version: "v2.12.11"
-    updatecli_version: "v0.96.0"
+    updatecli_version: "v0.97.0"
     tofu_version: "1.9.0"
   tasks:
     - name: "Update and upgrade apt packages"
