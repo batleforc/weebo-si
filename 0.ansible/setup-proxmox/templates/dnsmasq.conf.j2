@@ -1,0 +1,11 @@
+# interface to listen to
+interface=vmbr1
+# IP range to handout
+dhcp-range=192.168.100.200,192.168.100.250,30d
+# set gateway
+dhcp-option=vmbr1,3,192.168.100.1
+# DNS server
+server=1.1.1.1
+server=8.8.8.8
+# DHCP database location (to save to)
+dhcp-leasefile=/var/lib/misc/dnsmasq.leases

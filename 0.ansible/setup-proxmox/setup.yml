@@ -14,6 +14,11 @@
         - curl
         - git
         - vim
+        - ufw
+        - dnsmasq
+    - name: Setup Firewall
+      ansible.builtin.include_role:
+        name: network
     - name: Install and configure Wireguard
       ansible.builtin.include_role:
         name: wireguard

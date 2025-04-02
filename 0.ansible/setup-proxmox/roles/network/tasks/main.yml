@@ -1,0 +1,119 @@
+---
+- name: "Make sure default/ufw has IPV6 enabled"
+  ansible.builtin.lineinfile:
+    path: /etc/default/ufw
+    regexp: '^{{ item.target }}='
+    line: "{{ item.value }}"
+    mode: "0644"
+  loop:
+    - { target: 'IPV6', value: 'IPV6=yes' }
+    - { target: 'DEFAULT_FORWARD_POLICY', value: 'DEFAULT_FORWARD_POLICY="ACCEPT"' }
+- name: "Setup /etc/ufw/sysctl.conf"
+  ansible.builtin.lineinfile:
+    path: /etc/ufw/sysctl.conf
+    regexp: '^{{ item.target }}='
+    line: '{{ item.value }}'
+    mode: "0644"
+  loop:
+    - { target: 'net/ipv4/ip_forward', value: 'net/ipv4/ip_forward=1' }
+    - { target: 'net/ipv6/conf/default/forwarding', value: 'net/ipv6/conf/default/forwarding=1' }
+    - { target: 'net/ipv6/conf/all/forwarding', value: 'net/ipv6/conf/all/forwarding=1' }
+- name: "Disable firewall"
+  ansible.builtin.command:
+    cmd: "ufw disable"
+  failed_when: false
+  changed_when: false
+- name: "Deny incoming connections"
+  ansible.builtin.command:
+    cmd: "ufw default deny incoming"
+  failed_when: false
+  changed_when: false
+- name: "Allow outgoing connections"
+  ansible.builtin.command:
+    cmd: "ufw default allow outgoing"
+  failed_when: false
+  changed_when: false
+- name: "Allow in on vmbr1"
+  ansible.builtin.command:
+    cmd: "ufw allow in on vmbr1 to any"
+  failed_when: false
+  changed_when: false
+- name: "Allow some port"
+  ansible.builtin.command:
+    cmd: "ufw allow {{ item }}"
+  loop:
+    - "2323"
+    - "8006"
+    - "443"
+    - "80"
+    - "41820"
+  failed_when: false
+  changed_when: false
+- name: "Allow in on wg0"
+  ansible.builtin.command:
+    cmd: "ufw allow in on wg0 to any"
+  failed_when: false
+  changed_when: false
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled
+- name: "Backup /etc/network/interfaces exists"
+  ansible.builtin.stat:
+    path: /etc/network/interfaces.bck
+  register: backup_interfaces
+- name: "Backup /etc/network/interfaces"
+  ansible.builtin.command:
+    cmd: "cp /etc/network/interfaces /etc/network/interfaces.bck"
+  when: backup_interfaces.stat.islnk is defined
+  register: backup_interfaces
+  failed_when: false
+  changed_when: false
+- name: "Read backup"
+  ansible.builtin.command:
+    cmd: "cat /etc/network/interfaces.bck"
+  register: backup_interfaces
+  failed_when: false
+  changed_when: false
+- name: "Get /etc/network/interfaces content"
+  ansible.builtin.set_fact:
+    previous_content: "{{ backup_interfaces.stdout }}"
+- name: "Setup /etc/network/interfaces"
+  ansible.builtin.template:
+    src: interfaces.j2
+    dest: /etc/network/interfaces
+    mode: "0644"
+- name: "Restart networking"
+  ansible.builtin.systemd:
+    name: networking
+    state: restarted
+  register: restart_networking
+  failed_when: false
+  changed_when: false
+- name: "Up interface"
+  ansible.builtin.command:
+    cmd: "ifup -a"
+  register: up_interface
+  failed_when: false
+  changed_when: false
+- name: "Debug"
+  ansible.builtin.debug:
+    msg: "Restart networking failed, please check the network configuration and restart the proxmox."
+  when: restart_networking is failed
+- name: "Set dnsmasq"
+  ansible.builtin.template:
+    src: dnsmasq.conf.j2
+    dest: /etc/dnsmasq.conf
+    mode: "0644"
+- name: "Enable dnsmasq"
+  ansible.builtin.systemd:
+    name: dnsmasq
+    state: restarted
+    enabled: true
+  register: restart_dnsmasq
+  failed_when: false
+  changed_when: false
+- name: "Crete dnat.sh"
+  ansible.builtin.template:
+    src: dnat.sh.j2
+    dest: /root/dnat.sh
+    mode: "0755"

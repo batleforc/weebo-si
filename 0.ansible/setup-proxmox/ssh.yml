@@ -1,0 +1,29 @@
+---
+- name: "Setup Proxmox"
+  hosts: proxmox-init
+  tasks:
+    - name: "Update and upgrade apt packages"
+      ansible.builtin.apt:
+        update_cache: "yes"
+        upgrade: "yes"
+    - name: "Install packages"
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - curl
+        - git
+        - vim
+    - name: Change ssh port
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Port '
+        line: 'Port 2323'
+        state: present
+      register: change_ssh_port
+      notify: Restart ssh
+  handlers:
+    - name: Restart ssh
+      ansible.builtin.service:
+        name: ssh
+        state: restarted

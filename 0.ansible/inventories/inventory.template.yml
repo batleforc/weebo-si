@@ -3,4 +3,11 @@ proxmox:
     serveur1:
       ansible_host: je_suis_un_serveur.fr
       ansible_user: root
+      ansible_port: 2323
+      ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_PROXMOX_SSH_KEY') }}"
+proxmox-init:
+  hosts:
+    serveur1-init:
+      ansible_host: je_suis_un_serveur.fr
+      ansible_user: root
       ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_PROXMOX_SSH_KEY') }}"

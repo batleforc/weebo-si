@@ -13,6 +13,11 @@ tasks:
     - echo "Setup Proxmox"
     - task proxmox:init-vpn-config
     - ansible-playbook -i ../inventories/inventory.proxmox.yml setup.yml --vault-password-file=../../vault_password
+  change-ssh-port:
+    dir: ./0.ansible/setup-proxmox
+    cmds:
+    - echo "Change ssh port"
+    - ansible-playbook -i ../inventories/inventory.proxmox.yml ssh.yml --vault-password-file=../../vault_password
   vpn-local-up:
     dir: ./0.terraform/vpn-proxmox
     cmds:
