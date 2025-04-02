@@ -29,9 +29,9 @@ sources:
 targets:
   opentofu:
     kind: file
-    name: "Bump Terraform version"
+    name: "Bump Opentofu version"
     scmid: default
-    sourceid: terraform
+    sourceid: opentofu
     spec:
       file: 0.ansible/setup-host/install-cli.yml
       matchpattern: 'tofu_version: ".*"'
