@@ -1,7 +1,7 @@
 ---
 - name: "If tofu is already installed, get the version"
   ansible.builtin.command:
-    cmd: "tofu version -json | jq -r .tofu_version"
+    cmd: "tofu -version"
   register: tofu_version_output
   ignore_errors: true
   changed_when: false

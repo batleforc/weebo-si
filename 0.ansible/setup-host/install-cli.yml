@@ -42,3 +42,6 @@
     - name: Install updatecli
       ansible.builtin.include_role:
         name: updatecli
+    - name: Install tofu
+      ansible.builtin.include_role:
+        name: opentofu
