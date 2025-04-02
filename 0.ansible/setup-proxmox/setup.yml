@@ -25,3 +25,6 @@
     - name: "Create user used for the rest"
       ansible.builtin.include_role:
         name: user
+    - name: "Set Timezone"
+      community.general.timezone:
+        name: Europe/Paris

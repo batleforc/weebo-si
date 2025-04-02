@@ -10,7 +10,7 @@ locals {
 data "talos_machine_configuration" "capi_config_controlplane" {
   cluster_name     = local.cluster_name
   machine_type     = "controlplane"
-  cluster_endpoint = "https://${local.node_ip}:6443"
+  cluster_endpoint = "https://192.168.100.11:6443"
   machine_secrets  = talos_machine_secrets.capi_secret.machine_secrets
   config_patches = [
     yamlencode({
@@ -22,6 +22,26 @@ data "talos_machine_configuration" "capi_config_controlplane" {
           image = data.talos_image_factory_urls.metal.urls.installer,
           extraKernelArgs = [
             "net.ifnames=0"
+          ],
+        },
+        network = {
+          nameservers = [
+            "8.8.8.8",
+            "8.8.4.4"
+          ]
+          interfaces = [
+            {
+              interface = "eth0",
+              addresses = [
+                "192.168.100.11/24"
+              ],
+              routes = [
+                {
+                  network = "0.0.0.0/0"
+                  gateway = "192.168.100.1"
+                }
+              ]
+            }
           ]
         }
       }
@@ -32,7 +52,7 @@ data "talos_machine_configuration" "capi_config_controlplane" {
 data "talos_client_configuration" "capi_config_client" {
   cluster_name         = local.cluster_name
   client_configuration = talos_machine_secrets.capi_secret.client_configuration
-  nodes                = ["${local.node_ip}"]
+  nodes                = ["192.168.100.11"]
 }
 
 resource "talos_machine_configuration_apply" "capi_config_apply" {
@@ -45,7 +65,7 @@ resource "talos_machine_bootstrap" "capi_bootstrap" {
   depends_on = [
     talos_machine_configuration_apply.capi_config_apply
   ]
-  node                 = local.node_ip
+  node                 = "192.168.100.11"
   client_configuration = talos_machine_secrets.capi_secret.client_configuration
 }
 
@@ -54,7 +74,7 @@ resource "talos_cluster_kubeconfig" "capi_kubeconfig" {
     talos_machine_bootstrap.capi_bootstrap
   ]
   client_configuration = talos_machine_secrets.capi_secret.client_configuration
-  node                 = local.node_ip
+  node                 = "192.168.100.11"
 }
 
 resource "local_file" "capi_kubeconfig_file" {

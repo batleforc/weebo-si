@@ -8,10 +8,14 @@ env:
   ARGO_VERSION: "7.8.12"
 
 tasks:
-  install:
+  init-install:
     cmds:
     - kubectl apply -f ./argo/ns.yaml
     - helm repo add argo https://argoproj.github.io/argo-helm
+    - helm repo update
+    - helm upgrade --install argocd argo/argo-cd --namespace argocd --version $ARGO_VERSION
+  install:
+    cmds:
     - helm repo update
     - helm upgrade --install argocd argo/argo-cd --namespace argocd --version $ARGO_VERSION --values ./argo/values.yaml
   port-forward:
@@ -25,11 +29,11 @@ tasks:
       PASSWORD:
         sh: task argo:get-pwd
     cmds:
-    - argocd login localhost:8080 --username admin --password {{.PASSWORD}} --insecure
+    - argocd login --port-forward --port-forward-namespace argocd localhost:8080 --username admin --password {{.PASSWORD}} --insecure
     - kubectl config set-context --current --namespace=argocd
   init-private-repo:
     cmds:
-    - argocd repo add $ARGO_APP_REPO --username $ARGO_APP_USERNAME --password $ARGO_GITHUB_TOKEN
+    - argocd repo add $ARGO_APP_REPO --username $ARGO_APP_USERNAME --password $ARGO_GITHUB_TOKEN --port-forward --port-forward-namespace argocd
   install-app:
     cmds:
-    - argocd app create weebo-capi --repo $ARGO_APP_REPO --directory-recurse --path capi.argo/infra/app --dest-server $ARGO_DEST_SERVER --dest-namespace default --sync-policy automated --directory-recurse
+    - argocd app create weebo-capi --repo $ARGO_APP_REPO --directory-recurse --path capi.argo/infra/app --dest-server $ARGO_DEST_SERVER --dest-namespace default --sync-policy automated --directory-recurse --port-forward --port-forward-namespace argocd

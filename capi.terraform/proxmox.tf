@@ -43,6 +43,3 @@ locals {
   capi_possible_ip = [for ip in [for ip in proxmox_virtual_environment_vm.capi_template.ipv4_addresses : ip if length(ip) > 0] : ip if ip != tolist(["127.0.0.1"]) && ip != ["127.0.0.1"] && startswith(ip[0], "192.168.")]
 }
 
-output "capi_ip" {
-  value = element(local.capi_possible_ip[0], 0)
-}
