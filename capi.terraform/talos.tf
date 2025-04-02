@@ -18,6 +18,11 @@ data "talos_machine_configuration" "capi_config_controlplane" {
         allowSchedulingOnControlPlanes = true
       },
       machine = {
+        kubelet = {
+          extraArgs = {
+            rotate-server-certificates = "true"
+          }
+        }
         install = {
           image = data.talos_image_factory_urls.metal.urls.installer,
           extraKernelArgs = [

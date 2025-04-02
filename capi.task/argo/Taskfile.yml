@@ -14,6 +14,9 @@ tasks:
     - helm repo add argo https://argoproj.github.io/argo-helm
     - helm repo update
     - helm upgrade --install argocd argo/argo-cd --namespace argocd --version $ARGO_VERSION
+    - task capi:argo:login-pf
+    - task capi:argo:init-private-repo
+    - task capi:argo:install
   install:
     cmds:
     - helm repo update
