@@ -1,0 +1,46 @@
+name: Setup Host
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: batleforc
+      repository: weebo-si
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      branch: main
+
+sources:
+  opentofu:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: opentofu
+      repository: opentofu
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: latest
+    transformers:
+    - trimprefix: "v"
+
+targets:
+  opentofu:
+    kind: file
+    name: "Bump Terraform version"
+    scmid: default
+    sourceid: terraform
+    spec:
+      file: 0.ansible/setup-host/install-cli.yml
+      matchpattern: 'tofu_version: ".*"'
+      replacepattern: 'tofu_version: "{{ source "opentofu" }}"'
+
+actions:
+  bumpTerraform:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      title: 'ci: Bump `OpenTofu` version to {{ source "opentofu" }}'
+      automerge: false

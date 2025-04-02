@@ -19,6 +19,7 @@ kanban
     us7[Gestion PKI partagé avec DNS bind9]@{ assigned: Post-Nuke, priority: 'Low'}
     use10[Setup Cilium V6 et V4 pour les LoadBalancer]@{ assigned: Post-Nuke, priority: 'Low'}
     us11[Comparer Falco et Tetragon]@{ assigned: Post-Nuke, priority: 'Low'}
+    use12[Centraliser l'authentification0]@{ assigned: Post-Nuke, priority: 'Low'}
   doing[Doing]
     us9[Mettre en place updatecli]@{ assigned: Post-Nuke, priority: 'Low'}
   done[Done]
@@ -29,6 +30,7 @@ kanban
 
 - [Talos Kubernetes configuration](https://www.talos.dev/v1.9/reference/configuration/v1alpha1/config/)
 - [Terraform Cilium](https://registry.terraform.io/providers/littlejo/cilium/latest/docs/resources/cilium) plus jamais d'install manuelle !!!
+- [Paralus](https://www.paralus.io/docs/Installation/) [ParalusTF](https://registry.terraform.io/providers/iherbllc/paralus/latest/docs)
 
 ## Stream
 

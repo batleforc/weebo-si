@@ -1,21 +1,22 @@
 policies:
-  - name: install-cli
-    config:
-      - ./0.updatecli/setup-host/clusterctl.yaml
-      - ./0.updatecli/setup-host/terraform.yaml
-      - ./0.updatecli/setup-host/gitleaks.yaml
-      - ./0.updatecli/setup-host/k9s.yaml
-      - ./0.updatecli/setup-host/argocd.yaml
-      - ./0.updatecli/setup-host/updatecli.yaml
-    values:
-      - ./0.updatecli/values.yaml
-  - name: Upgrade Traefik
-    config:
-      - ./0.updatecli/traefik.yaml
-    values:
-      - ./0.updatecli/values.yaml
-  - name: Upgrade CertManager
-    config:
-      - ./0.updatecli/cert-manager.yaml
-    values:
-      - ./0.updatecli/values.yaml
+- name: install-cli
+  config:
+  - ./0.updatecli/setup-host/clusterctl.yaml
+  - ./0.updatecli/setup-host/terraform.yaml
+  - ./0.updatecli/setup-host/gitleaks.yaml
+  - ./0.updatecli/setup-host/k9s.yaml
+  - ./0.updatecli/setup-host/argocd.yaml
+  - ./0.updatecli/setup-host/updatecli.yaml
+  - ./0.updatecli/setup-host/opentofu.yaml
+  values:
+  - ./0.updatecli/values.yaml
+- name: Upgrade Traefik
+  config:
+  - ./0.updatecli/traefik.yaml
+  values:
+  - ./0.updatecli/values.yaml
+- name: Upgrade CertManager
+  config:
+  - ./0.updatecli/cert-manager.yaml
+  values:
+  - ./0.updatecli/values.yaml
