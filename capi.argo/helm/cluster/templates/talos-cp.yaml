@@ -61,7 +61,7 @@ spec:
           value:
             name: none
         - op: add
-          path: /cluster/network/proxy
+          path: /cluster/proxy
           value:
             disabled: true
         {{- end }}
