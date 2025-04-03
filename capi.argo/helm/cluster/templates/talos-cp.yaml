@@ -60,9 +60,10 @@ spec:
           path: /cluster/network/cni
           value:
             name: none
-        - op: replace
-          path: /cluster/network/proxy/disabled
-          value: true
+        - op: add
+          path: /cluster/network/proxy
+          value:
+            disabled: true
         {{- end }}
         - op: add
           path: /cluster/apiServer/admissionControl/0/configuration/exemptions/namespaces/-
