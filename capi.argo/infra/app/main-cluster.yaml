@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: multi-node
+  name: main-cluster
   namespace: argocd
 spec:
   project: default
@@ -9,7 +9,7 @@ spec:
     repoURL: 'https://github.com/batleforc/weebo-si'
     path: 'capi.argo/helm/cluster'
     helm:
-      releaseName: multi-node
+      releaseName: main-cluster
       valuesObject:
         controlPlane:
           replicas: 3
