@@ -57,8 +57,9 @@ spec:
         {{- end }}
         {{ if .Values.cilium.enabled -}}
         - op: add
-          path: /cluster/network/cni/name
-          value: none
+          path: /cluster/network/cni
+          value:
+            name: none
         - op: replace
           path: /cluster/network/proxy/disabled
           value: true
