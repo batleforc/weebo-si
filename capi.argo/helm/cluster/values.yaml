@@ -18,6 +18,12 @@ argo:
 
 cilium:
   enabled: true
+  podSubnets:
+  - 10.244.0.0/16
+  - 2001:db8:7653:299:cafe:0::/96
+  serviceSubnets:
+  - 10.96.0.0/12
+  - 2001:db8:7653:299:cafe:1::/96
 
 kubernetes:
   version: v1.32.2

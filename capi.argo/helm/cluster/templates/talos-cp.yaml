@@ -64,6 +64,18 @@ spec:
           path: /cluster/proxy
           value:
             disabled: true
+        - op: replace
+          path: /cluster/network/podSubnets
+          value:
+            {{- range $index, $subnet := .Values.cilium.podSubnets }}
+            - {{ $subnet }}
+            {{- end }}
+        - op: replace
+          path: /cluster/network/serviceSubnets
+          value:
+            {{- range $index, $subnet := .Values.cilium.serviceSubnets }}
+            - {{ $subnet }}
+            {{- end }}
         {{- end }}
         - op: add
           path: /cluster/apiServer/admissionControl/0/configuration/exemptions/namespaces/-
