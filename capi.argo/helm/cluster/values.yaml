@@ -16,6 +16,9 @@ argo:
   local: false
   main: false
 
+cilium:
+  enabled: true
+
 kubernetes:
   version: v1.32.2
   labels:

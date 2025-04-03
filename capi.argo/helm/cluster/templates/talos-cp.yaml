@@ -55,6 +55,14 @@ spec:
             manifests:
               - {{ .Values.controlPlane.cloudProvider }}
         {{- end }}
+        {{ if .Values.cilium.enabled -}}
+        - op: replace
+          path: /cluster/network/cni/name
+          value: none
+        - op: replace
+          path: /cluster/network/proxy/disabled
+          value: true
+        {{- end }}
         - op: add
           path: /cluster/apiServer/admissionControl/0/configuration/exemptions/namespaces/-
           value: falco

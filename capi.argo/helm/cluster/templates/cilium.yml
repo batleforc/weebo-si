@@ -1,0 +1,40 @@
+{{- if .Values.cilium.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-cilium
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: {{ .Release.Name }}-argo
+spec:
+  syncPolicy:
+    automated: {}
+  destination:
+    namespace: kube-system
+    name: {{ .Release.Name }}
+  project: {{ .Release.Name }}
+  source:
+    chart: cilium
+    repoURL: https://helm.cilium.io/
+    targetRevision: 1.17.2
+    helm:
+      releaseName: cilium
+      valuesObject:
+        ipam:
+          mode: kubernetes
+        kubeProxyReplacement: true
+        securityContext:
+          capabilities:
+            ciliumAgent: "{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}"
+            cleanCiliumState: "{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}"
+        cgroup:
+          autoMount:
+            enabled: false
+          hostRoot: /sys/fs/cgroup
+        k8sServiceHost: {{ .Values.network.vip }}
+        k8sServicePort: 6443
+        ipv4:
+          enabled: true
+        ipv6:
+          enabled: true
+{{- end -}}
