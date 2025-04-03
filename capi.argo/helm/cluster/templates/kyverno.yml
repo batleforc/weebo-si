@@ -25,5 +25,8 @@ spec:
     targetRevision: {{ .Values.kyverno.version }}
     helm:
       releaseName: kyverno
+      parameters:
+        - name: crds.migration.enabled
+          value: 'false'
 
 {{- end -}}
