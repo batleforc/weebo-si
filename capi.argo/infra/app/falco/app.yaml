@@ -69,6 +69,13 @@ spec:
             library_path: libjson.so
             init_config: ""
           load_plugins: [ k8saudit, json ]
+
+          customRules:
+            allow_argo_capi.yaml: |
+              - list: known_sa_list
+                items: ['capi-operator-manager']
+                override:
+                  items: append
   destination:
     server: "https://kubernetes.default.svc"
     namespace: falco
