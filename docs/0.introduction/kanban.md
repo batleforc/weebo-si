@@ -13,19 +13,19 @@ kanban
     us5[Créer le cluster CAPI avec un CloudInit]@{ assigned: Post-Nuke, priority: 'Low'}
     us6[Passer les cluster sous cilium]@{ assigned: Post-Nuke, priority: 'Low'}
   todo[To Do]
-    use8[Check if HeadLamp can be used to access dynamically each cluster]@{ assigned: Pre-Nuke, priority: 'High'}
     us3[Définir les règles de sécurité pour les clusters]@{ assigned: Pre-Nuke, priority: 'High'}
-    us8[Définir les règles d'identité]@{ assigned: Pre-Nuke, priority: 'High'}
     us7[Gestion PKI partagé avec DNS bind9]@{ assigned: Post-Nuke, priority: 'Low'}
     use10[Setup Cilium V6 et V4 pour les LoadBalancer]@{ assigned: Post-Nuke, priority: 'Low'}
     us11[Comparer Falco et Tetragon]@{ assigned: Post-Nuke, priority: 'Low'}
-    use12[Centraliser l'authentification0]@{ assigned: Post-Nuke, priority: 'Low'}
   doing[Doing]
-    us9[Mettre en place updatecli]@{ assigned: Post-Nuke, priority: 'Low'}
+    use12[Centraliser l'authentification0]@{ assigned: Post-Nuke, priority: 'Low'}
+    us8[Définir les règles d'identité]@{ assigned: Pre-Nuke, priority: 'High'}
+    use8[Check if HeadLamp can be used to access dynamically each cluster]@{ assigned: Pre-Nuke, priority: 'High'}
   done[Done]
     us7[Exposer dashboard Traefik]@{ assigned: Pre-Nuke, priority: 'High'}
     us1[Créer un cluster multi master self schedulable]
     us2[Déployer Traefik et CertManager sur tous les clusters via ArgoCD]
+    us9[Mettre en place updatecli]@{ assigned: Post-Nuke, priority: 'Low'}
 ```
 
 - [Talos Kubernetes configuration](https://www.talos.dev/v1.9/reference/configuration/v1alpha1/config/)

@@ -12,6 +12,10 @@ extensions:
   qemuGuestAgent:
     image: ghcr.io/siderolabs/qemu-guest-agent:9.2.0
 
+argo:
+  local: false
+  main: false
+
 kubernetes:
   version: v1.32.2
   labels:
@@ -20,7 +24,7 @@ kubernetes:
 controlPlane:
   replicas: 1
   allowScheduling: true
-  tccm: false
+  tccm: true
   cloudProvider: https://raw.githubusercontent.com/siderolabs/talos-cloud-controller-manager/main/docs/deploy/cloud-controller-manager.yml
 
 proxmox:

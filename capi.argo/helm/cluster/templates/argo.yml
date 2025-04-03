@@ -1,3 +1,4 @@
+{{- if .Values.argo.main -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -18,3 +19,4 @@ spec:
     targetRevision: HEAD
     directory:
       recurse: true
+{{- end -}}
