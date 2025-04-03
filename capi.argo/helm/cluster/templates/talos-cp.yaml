@@ -56,7 +56,7 @@ spec:
               - {{ .Values.controlPlane.cloudProvider }}
         {{- end }}
         {{ if .Values.cilium.enabled -}}
-        - op: replace
+        - op: add
           path: /cluster/network/cni/name
           value: none
         - op: replace
