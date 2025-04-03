@@ -48,7 +48,7 @@ spec:
         k8sServiceHost: {{ .Values.network.vip }}
         k8sServicePort: 6443
         ipv4:
-          enabled: true
+          enabled: {{ .Values.cilium.ipv4 }}
         ipv6:
-          enabled: true
+          enabled: {{ .Values.cilium.ipv6 }}
 {{- end -}}
