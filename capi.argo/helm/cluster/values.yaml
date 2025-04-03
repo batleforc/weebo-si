@@ -32,9 +32,9 @@ controlPlane:
 
 proxmox:
   allowedNodes:
-  - weebo4
+  - weebo4-2
   nodeConf:
-    node: weebo4
+    node: weebo4-2
     disk:
       name: scsi0
       sizeGb: 50
