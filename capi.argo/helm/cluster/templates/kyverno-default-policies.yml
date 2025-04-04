@@ -1,0 +1,26 @@
+{{- if .Values.kyverno.enabled -}}
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-kyverno-default-policies
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: {{ .Release.Name }}-argo
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: kyverno
+    name: {{ .Release.Name }}
+  project: {{ .Release.Name }}
+  source:
+    chart: kyverno-policies
+    repoURL: https://kyverno.github.io/kyverno/
+    targetRevision: {{ .Values.kyverno.policies }}
+    helm:
+      releaseName: kyverno-default-policies
+
+{{- end -}}
