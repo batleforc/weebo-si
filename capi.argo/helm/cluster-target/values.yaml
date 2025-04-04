@@ -1,0 +1,34 @@
+network:
+  vip: 192.168.100.40
+  port: 6443
+  dnsServers:
+  - 8.8.8.8
+  - 8.8.4.4
+  gateway: 192.168.100.1
+  prefix: 20
+  addresses: 192.168.100.41-192.168.100.50
+
+argo:
+  local: false
+  main: false
+
+cilium:
+  version: 1.17.2
+  enabled: true
+  ipv6: false
+  ipv4: true
+  podSubnets:
+  - 10.244.0.0/16
+  #- 2001:db8:7653:299:cafe:0::/96
+  serviceSubnets:
+  - 10.96.0.0/12
+  #- 2001:db8:7653:299:cafe:1::/96
+
+kyverno:
+  enabled: true
+  version: 3.3.7
+
+kubernetes:
+  version: v1.32.2
+  labels:
+    argoHelmInstall: enabled

@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-target
+  namespace: argocd
+spec:
+  project: {{ .Release.Name }}
+  source:
+    repoURL: 'https://github.com/batleforc/weebo-si'
+    path: 'capi.argo/helm/cluster-target'
+    helm:
+      releaseName: {{ .Release.Name }}-target
+      valuesObject:
+        {{ - range $key, $value := .Values }}
+        {{ $key }}: {{ $value | toJson | indent 8 }}
+        {{- end }}
+  destination:
+    server: {{ .Release.Name }}
+    namespace: 'default'
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m

@@ -82,6 +82,7 @@
     "0.task": "taskfile"
   },
   "yaml.schemas": {
-    "https://json.schemastore.org/kustomization.json": "file:///home/maxime/git/weebo-si/capi.argo/infra/app/mono-node/cluster.yaml"
+    "https://json.schemastore.org/kustomization.json": "file:///home/maxime/git/weebo-si/capi.argo/infra/app/mono-node/cluster.yaml",
+    "https://json.schemastore.org/helmfile.json": "file:///home/maxime/git/weebo-si/capi.argo/helm/cluster-target/template/network.yaml"
   }
 }

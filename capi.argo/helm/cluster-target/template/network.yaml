@@ -1,0 +1,19 @@
+{{- if .Values.cilium.enabled -}}
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: "first-pool"
+spec:
+  blocks:
+  - start: "{{ .Values.network.vip }}"
+    stop: "{{ .Values.network.vip }}"
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: default-l2-announcement-policy
+  namespace: kube-system
+spec:
+  externalIPs: true
+  loadBalancerIPs: true
+{{- end -}}
