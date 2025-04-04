@@ -21,6 +21,7 @@ kanban
     use12[Centraliser l'authentification0]@{ assigned: Post-Nuke, priority: 'Low'}
     us8[Définir les règles d'identité]@{ assigned: Pre-Nuke, priority: 'High'}
     use8[Check if HeadLamp can be used to access dynamically each cluster]@{ assigned: Pre-Nuke, priority: 'High'}
+    us13[Hardening SSH]@{ assigned: Pre-Nuke, priority: 'High'}
   done[Done]
     us7[Exposer dashboard Traefik]@{ assigned: Pre-Nuke, priority: 'High'}
     us1[Créer un cluster multi master self schedulable]

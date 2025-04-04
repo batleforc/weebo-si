@@ -8,6 +8,7 @@ Merci à toutes les personnes qui ont partagé leur savoir et leur expérience. 
 - [Stéphane Robert - Ansible](https://blog.stephane-robert.info/docs/infra-as-code/gestion-de-configuration/ansible/introduction/)
 - [Stéphane Robert - Ansible X Proxmox](https://blog.stephane-robert.info/docs/virtualiser/type1/proxmox/ansible-modules/)
 - [Stéphane Robert - Terraform X Proxmox](https://blog.stephane-robert.info/docs/virtualiser/type1/proxmox/terraform/)
+- [ItTavern - Hardening SSH](https://ittavern.com/ssh-server-hardening/)
 
 :::warning
 
