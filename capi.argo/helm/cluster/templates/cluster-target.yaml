@@ -11,7 +11,7 @@ spec:
     helm:
       releaseName: {{ .Release.Name }}-target
       valuesObject:
-        {{ - range $key, $value := .Values }}
+        {{ range $key, $value := .Values }}
         {{ $key }}: {{ $value | toJson | indent 8 }}
         {{- end }}
   destination:
