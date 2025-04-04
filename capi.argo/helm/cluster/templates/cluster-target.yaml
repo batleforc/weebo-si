@@ -15,7 +15,7 @@ spec:
         {{ $key }}: {{ $value | toJson | indent 8 }}
         {{- end }}
   destination:
-    server: {{ .Release.Name }}
+    name: {{ .Release.Name }}
     namespace: 'default'
   syncPolicy:
     automated:
