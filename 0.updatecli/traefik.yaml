@@ -44,7 +44,7 @@ targets:
     spec:
       file: capi.argo/helm/cluster/values.yaml
       key: traefik.version
-      value: 'traefik'
+      value: '{{ source "traefik" }}'
 
 actions:
   bumptraefik:
