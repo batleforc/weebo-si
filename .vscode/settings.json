@@ -39,6 +39,7 @@
     "kubeconfig",
     "KUBECONFIG",
     "Kyverno",
+    "lbipam",
     "linux",
     "matchpattern",
     "nocloud",

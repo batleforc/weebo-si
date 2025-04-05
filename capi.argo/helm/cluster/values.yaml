@@ -33,6 +33,22 @@ kyverno:
   version: 3.3.7
   policies: 3.3.4
 
+certManager:
+  enabled: true
+  version: 1.17.1
+  installCRDs: true
+
+traefik:
+  enabled: true
+  version: 34.5.0
+  plugins:
+    bouncer:
+      moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+      version: v1.3.5
+    sablier:
+      moduleName: github.com/sablierapp/sablier
+      version: v1.8.1
+
 kubernetes:
   version: v1.32.2
   labels:
