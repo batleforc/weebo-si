@@ -37,14 +37,14 @@ targets:
       matchpattern: 'targetRevision: .*'
       replacepattern: 'targetRevision: {{ source "traefik" }}'
   bumpTraefikMultiNode:
-    kind: file
+    kind: yaml
     name: "Bump traefik version"
     scmid: default
     sourceid: traefik
     spec:
-      file: multi-node.argo/infra/traefik/app.yaml
-      matchpattern: 'targetRevision: .*'
-      replacepattern: 'targetRevision: {{ source "traefik" }}'
+      file: capi.argo/helm/cluster/values.yaml
+      key: traefik.version
+      value: 'traefik'
 
 actions:
   bumptraefik:
