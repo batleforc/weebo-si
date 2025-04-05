@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "docs/**"
+      - "0.docs/**"
       - ".github/workflows/deploy-docs.yml"
       - "package.json"
       - "yarn.lock"
