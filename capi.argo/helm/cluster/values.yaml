@@ -40,7 +40,7 @@ certManager:
 
 traefik:
   enabled: true
-  version: traefik
+  version: 34.5.0
   plugins:
     bouncer:
       moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
