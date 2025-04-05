@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../node_modules/@zenuml/core/dist/close.8e1a8f43.js"],
+  "sourcesContent": ["import { o as e, c as o, a as t } from \"./core.d2435cf8.js\";\nconst r = {\n  xmlns: \"http://www.w3.org/2000/svg\",\n  fill: \"none\",\n  stroke: \"currentColor\",\n  \"aria-hidden\": \"true\",\n  viewBox: \"0 0 24 24\"\n}, n = /* @__PURE__ */ t(\"path\", {\n  \"stroke-linecap\": \"round\",\n  \"stroke-linejoin\": \"round\",\n  \"stroke-width\": \"2\",\n  d: \"M6 18 18 6M6 6l12 12\"\n}, null, -1), s = [\n  n\n];\nfunction c(a, l) {\n  return e(), o(\"svg\", r, s);\n}\nconst i = { render: c };\nexport {\n  i as default,\n  c as render\n};\n//# sourceMappingURL=close.8e1a8f43.js.map\n"],
+  "mappings": ";;;;;;;;AACA,IAAM,IAAI;AAAA,EACR,OAAO;AAAA,EACP,MAAM;AAAA,EACN,QAAQ;AAAA,EACR,eAAe;AAAA,EACf,SAAS;AACX;AANA,IAMG,IAAoB,EAAE,QAAQ;AAAA,EAC/B,kBAAkB;AAAA,EAClB,mBAAmB;AAAA,EACnB,gBAAgB;AAAA,EAChB,GAAG;AACL,GAAG,MAAM,EAAE;AAXX,IAWc,IAAI;AAAA,EAChB;AACF;AACA,SAAS,EAAE,GAAG,GAAG;AACf,SAAO,EAAE,GAAG,EAAE,OAAO,GAAG,CAAC;AAC3B;AACA,IAAM,IAAI,EAAE,QAAQ,EAAE;",
+  "names": []
+}
