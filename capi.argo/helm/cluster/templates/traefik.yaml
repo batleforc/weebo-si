@@ -46,7 +46,7 @@ spec:
             publishedService:
               enabled: true
         experimental:
-          {{ - range $name, $plugin := .Values.traefik.plugins }}
+          {{- range $name, $plugin := .Values.traefik.plugins }}
           plugins:
             {{ $name }}:
               moduleName: {{ $plugin.moduleName }}
