@@ -1,0 +1,51 @@
+---
+- name: "Update and upgrade apt packages"
+  ansible.builtin.apt:
+    update_cache: "yes"
+    upgrade: "yes"
+- name: "Install packages"
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - fail2ban
+    - iptables
+- name: Change ssh port
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?{{ item.regex }}'
+    line: '{{ item.regex }} {{ item.value }}'
+    state: present
+  notify: Restart ssh
+  loop:
+    - { regex: 'Port', value: "2323" }
+    - { regex: 'PasswordAuthentication', value: "no" }
+    - { regex: 'Protocol', value: "2" }
+    - { regex: 'LoginGraceTime', value: "20" }
+    - { regex: 'MaxAuthTries', value: "3" }
+    - { regex: 'ClientAliveCountMax', value: "3" }
+    - { regex: 'ClientAliveInterval', value: "120" }
+    - { regex: 'DebianBanner', value: "no" }
+    - { regex: 'KerberosAuthentication', value: "no" }
+    - { regex: 'GSSAPIAuthentication', value: "no" }
+    - { regex: 'X11Forwarding', value: "no" }
+- name: "Copy fail2ban config to .local"
+  ansible.builtin.copy:
+    src: /etc/fail2ban/jail.conf
+    dest: /etc/fail2ban/jail.local
+    remote_src: true
+    mode: "0644"
+- name: "Replace ignoreip"
+  ansible.builtin.replace:
+    path: /etc/fail2ban/jail.local
+    regexp: '^#?ignoreip ='
+    replace: 'ignoreip = 127.0.0.1/8 10.43.0.0/16 10.42.0.0/16'
+- name: "Copy fail2ban ssh config"
+  ansible.builtin.template:
+    src: fail2ban-ssh.local.j2
+    dest: /etc/fail2ban/jail.d/sshd.local
+    mode: "0644"
+- name: "Restart fail2ban"
+  ansible.builtin.systemd:
+    name: "fail2ban"
+    state: "restarted"

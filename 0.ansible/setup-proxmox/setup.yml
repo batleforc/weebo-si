@@ -28,3 +28,11 @@
     - name: "Set Timezone"
       community.general.timezone:
         name: Europe/Paris
+    - name: "Setup SSH HARDENING"
+      ansible.builtin.include_role:
+        name: ssh
+  handlers:
+    - name: Restart ssh
+      ansible.builtin.service:
+        name: ssh
+        state: restarted

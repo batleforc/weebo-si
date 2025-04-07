@@ -1,0 +1,11 @@
+[sshd]
+enabled = true
+backend = systemd
+port = ssh
+action = iptables-multiport
+logpath = /var/log/secure
+maxretry = 3
+bantime = 86400
+bantime.increment = true
+bantime.factor = 24
+bantime.maxtime = 10w

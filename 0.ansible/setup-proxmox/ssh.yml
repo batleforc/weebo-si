@@ -14,14 +14,9 @@
         - curl
         - git
         - vim
-    - name: Change ssh port
-      ansible.builtin.lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: '^#?Port '
-        line: 'Port 2323'
-        state: present
-      register: change_ssh_port
-      notify: Restart ssh
+    - name: "Setup SSH HARDENING"
+      ansible.builtin.include_role:
+        name: ssh
   handlers:
     - name: Restart ssh
       ansible.builtin.service:
