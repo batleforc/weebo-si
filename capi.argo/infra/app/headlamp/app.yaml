@@ -26,6 +26,8 @@ spec:
         env:
         - name: KUBECONFIG
           value: /kubeconfig/main-cluster/value
+        serviceAccount:
+          create: true
 
   destination:
     server: "https://kubernetes.default.svc"
