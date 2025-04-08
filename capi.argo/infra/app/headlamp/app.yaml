@@ -9,7 +9,7 @@ spec:
     automated: {}
   source:
     chart: headlamp
-    repoURL: https://headlamp-k8s.github.io/headlamp/
+    repoURL: https://kubernetes-sigs.github.io/headlamp/
     targetRevision: 0.14.9
     helm:
       releaseName: headlamp
