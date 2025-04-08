@@ -19,7 +19,7 @@ spec:
         volumes:
         - name: main-cluster
           secret:
-            name: main-cluster-kubeconfig
+            secretName: main-cluster-kubeconfig
         volumesMounts:
         - name: main-cluster
           mountPath: /kubeconfig/main-cluster
