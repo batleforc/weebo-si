@@ -15,7 +15,7 @@ spec:
       releaseName: headlamp
       valuesObject:
         config:
-          baseUrl: /headlamp
+          baseURL: /headlamp
         volumes:
         - name: main-cluster
           secret:
