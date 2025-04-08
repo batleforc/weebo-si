@@ -23,16 +23,9 @@ spec:
         volumeMounts:
         - name: main-cluster
           mountPath: /kubeconfig/main-cluster
-        extraEnv:
+        env:
         - name: KUBECONFIG
           value: /kubeconfig/main-cluster/value
-        ingress:
-          enabled: true
-          hosts:
-          - host: 192.168.100.11
-            paths:
-            - path: /headlamp
-              pathType: Prefix
 
   destination:
     server: "https://kubernetes.default.svc"
