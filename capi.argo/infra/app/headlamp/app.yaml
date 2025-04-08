@@ -28,6 +28,15 @@ spec:
           value: /kubeconfig/main-cluster/value
         serviceAccount:
           create: true
+        extraManifests:
+        - apiVersion: v1
+          kind: Secret
+          metadata:
+            name: headlamp-secret
+            namespace: default
+            annotations:
+              kubernetes.io/service-account.name: headlamp
+          type: kubernetes.io/service-account-token
 
   destination:
     server: "https://kubernetes.default.svc"
