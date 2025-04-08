@@ -16,6 +16,7 @@ spec:
       valuesObject:
         config:
           baseURL: /headlamp
+          inCluster: true
         volumes:
         - name: main-cluster
           secret:
