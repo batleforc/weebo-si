@@ -18,15 +18,15 @@ kanban
     use10[Setup Cilium V6 et V4 pour les LoadBalancer]@{ assigned: Post-Nuke, priority: 'Low'}
     us11[Comparer Falco et Tetragon]@{ assigned: Post-Nuke, priority: 'Low'}
   doing[Doing]
-    use12[Centraliser l'authentification0]@{ assigned: Post-Nuke, priority: 'Low'}
+    use12[Centraliser l'authentification et l'appliquer au différent service]@{ assigned: Post-Nuke, priority: 'Low'}
     us8[Définir les règles d'identité]@{ assigned: Pre-Nuke, priority: 'High'}
-    use8[Check if HeadLamp can be used to access dynamically each cluster]@{ assigned: Pre-Nuke, priority: 'High'}
   done[Done]
     us7[Exposer dashboard Traefik]@{ assigned: Pre-Nuke, priority: 'High'}
     us1[Créer un cluster multi master self schedulable]
     us2[Déployer Traefik et CertManager sur tous les clusters via ArgoCD]
     us9[Mettre en place updatecli]@{ assigned: Post-Nuke, priority: 'Low'}
     us13[Hardening SSH]@{ assigned: Pre-Nuke, priority: 'High'}
+    use8[Check if HeadLamp can be used to access dynamically each cluster]@{ assigned: Pre-Nuke, priority: 'High'}
 ```
 
 - [Talos Kubernetes configuration](https://www.talos.dev/v1.9/reference/configuration/v1alpha1/config/)
