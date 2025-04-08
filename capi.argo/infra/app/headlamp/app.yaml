@@ -29,7 +29,8 @@ spec:
         serviceAccount:
           create: true
         extraManifests:
-        - apiVersion: v1
+        - |
+          apiVersion: v1
           kind: Secret
           metadata:
             name: headlamp-secret
