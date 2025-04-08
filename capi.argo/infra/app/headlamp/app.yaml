@@ -17,6 +17,8 @@ spec:
         config:
           baseURL: /headlamp
           inCluster: true
+          extraArgs:
+          - --kubeconfig=/kubeconfig/main-cluster/value
         volumes:
         - name: main-cluster
           secret:
@@ -29,8 +31,6 @@ spec:
           value: /kubeconfig/main-cluster/value:/home/headlamp/.config/Headlamp/kubeconfigs/config
         serviceAccount:
           create: true
-        extraArgs:
-        - --kubeconfig=/kubeconfig/main-cluster/value
         extraManifests:
         - |
           apiVersion: v1
