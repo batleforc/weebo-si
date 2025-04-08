@@ -25,7 +25,7 @@ spec:
           mountPath: /kubeconfig/main-cluster
         env:
         - name: KUBECONFIG
-          value: /kubeconfig/main-cluster/value
+          value: /kubeconfig/main-cluster/value:/home/headlamp/.config/Headlamp/kubeconfigs/config
         serviceAccount:
           create: true
         extraManifests:
