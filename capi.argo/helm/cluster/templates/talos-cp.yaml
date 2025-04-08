@@ -85,3 +85,6 @@ spec:
         - op: add
           path: /cluster/apiServer/admissionControl/0/configuration/exemptions/namespaces/-
           value: falco
+        - op: add
+          path: /machine/kubelet/extraArgs/rotate-server-certificates
+          value: "true"
