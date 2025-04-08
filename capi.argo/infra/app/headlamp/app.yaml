@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: headlamp
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+  source:
+    chart: headlamp
+    repoURL: https://headlamp-k8s.github.io/headlamp/
+    targetRevision: 0.14.9
+    helm:
+      releaseName: headlamp
+      valuesObject:
+        config:
+          baseUrl: /headlamp
+        volumes:
+        - name: main-cluster
+          secret:
+            name: main-cluster-kubeconfig
+        volumesMounts:
+        - name: main-cluster
+          mountPath: /kubeconfig/main-cluster
+        extraEnv:
+        - name: KUBECONFIG
+          value: /kubeconfig/main-cluster/value
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: default

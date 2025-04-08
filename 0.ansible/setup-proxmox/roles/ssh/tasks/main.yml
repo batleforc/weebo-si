@@ -39,7 +39,7 @@
   ansible.builtin.replace:
     path: /etc/fail2ban/jail.local
     regexp: '^#?ignoreip ='
-    replace: 'ignoreip = 127.0.0.1/8 10.43.0.0/16 10.42.0.0/16'
+    replace: 'ignoreip = 127.0.0.1/8 10.43.0.0/16 10.42.0.0/16 192.168.101.0/20 192.168.100.0/24'
 - name: "Copy fail2ban ssh config"
   ansible.builtin.template:
     src: fail2ban-ssh.local.j2
