@@ -1,6 +1,6 @@
 # Weebo SI - L'env de dev Presque Parfait
 
-![banner](./docs/public/banner.png)
+![banner](./0.docs/public/banner.png)
 
 Ce projet a pour but de définir et de mettre en place un environnement Kubernetes de dev et expérimentation tester et complet. Cette environnement est `presque` parfait car les choix d'aujourd'hui ne seront pas forcément ceux de demain.
 
