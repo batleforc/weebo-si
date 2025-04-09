@@ -17,9 +17,12 @@ kanban
     us7[Gestion PKI partagé avec DNS bind9]@{ assigned: Post-Nuke, priority: 'Low'}
     use10[Setup Cilium V6 et V4 pour les LoadBalancer]@{ assigned: Post-Nuke, priority: 'Low'}
     us11[Comparer Falco et Tetragon]@{ assigned: Post-Nuke, priority: 'Low'}
+    us14[Déployer Dex (auth) sur tous les clusters via ArgoCD]@{ assigned: Post-Nuke, priority: 'Low'}
   doing[Doing]
     use12[Centraliser l'authentification et l'appliquer au différent service]@{ assigned: Post-Nuke, priority: 'Low'}
     us8[Définir les règles d'identité]@{ assigned: Pre-Nuke, priority: 'High'}
+    us15[Faire une gestion DNS avec alias dynamique]@{ assigned: Post-Nuke, priority: 'Low'}
+    us16[Autorité de certification]@{ assigned: Post-Nuke, priority: 'Low'}
   done[Done]
     us7[Exposer dashboard Traefik]@{ assigned: Pre-Nuke, priority: 'High'}
     us1[Créer un cluster multi master self schedulable]
@@ -138,3 +141,27 @@ kanban
 - [ ] Automatiser la mise a jour des Cilium
 - [ ] Automatiser la mise a jour des Talos
 - [ ] Automatiser la mise a jour des ArgoCD
+
+## us15 - Faire une gestion DNS avec alias dynamique
+
+Solution possible ?
+
+- [CoreDNS](https://coredns.io/) - Need ETCD ❌
+- [RFC2136](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/rfc2136.md) - Need Bind9 ✔️
+
+Mise en place d'un serveur DNS avec Bind9 et une automatisation via l'opérateur [External DNS](https://github.com/kubernetes-sigs/external-dns). En plus de l'opérateur External DNS, passage par les [CRD](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/sources/crd.md) comme source.
+
+- 1 Zone DNS weebo.si
+  - *.capi.weebo.si => CAPI
+  - *.main.weebo.si => Main-Cluster
+  - *.dev.weebo.si => Dev-Cluster
+  - *.test.weebo.si => Test-Cluster
+  - *.prod.weebo.si => Prod-Cluster
+- Record A / AAAA / NS / CNAME / TXT
+- Forwarding du reste des requêtes en fonction de mon envie a l'instant T
+  - <https://www.baeldung.com/linux/bind9-dns-server-configuration>
+
+## us16 - Autorité de certification
+
+- [SmallStep](https://smallstep.com/)
+- [CertManager](https://cert-manager.io/docs/)
