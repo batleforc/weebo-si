@@ -17,7 +17,7 @@ kanban
     us7[Gestion PKI partagé avec DNS bind9]@{ assigned: Post-Nuke, priority: 'Low'}
     use10[Setup Cilium V6 et V4 pour les LoadBalancer]@{ assigned: Post-Nuke, priority: 'Low'}
     us11[Comparer Falco et Tetragon]@{ assigned: Post-Nuke, priority: 'Low'}
-    us14[Déployer Dex (auth) sur tous les clusters via ArgoCD]@{ assigned: Post-Nuke, priority: 'Low'}
+    us14[Déployer Dex sur tous les clusters via ArgoCD]@{ assigned: Post-Nuke, priority: 'Low'}
   doing[Doing]
     use12[Centraliser l'authentification et l'appliquer au différent service]@{ assigned: Post-Nuke, priority: 'Low'}
     us8[Définir les règles d'identité]@{ assigned: Pre-Nuke, priority: 'High'}
