@@ -142,7 +142,7 @@ kanban
 - [ ] Automatiser la mise a jour des Talos
 - [ ] Automatiser la mise a jour des ArgoCD
 
-## us15 - Faire une gestion DNS avec alias dynamique
+### us15 - Faire une gestion DNS avec alias dynamique
 
 Solution possible ?
 
@@ -161,7 +161,7 @@ Mise en place d'un serveur DNS avec Bind9 et une automatisation via l'opérateur
 - Forwarding du reste des requêtes en fonction de mon envie a l'instant T
   - <https://www.baeldung.com/linux/bind9-dns-server-configuration>
 
-## us16 - Autorité de certification
+### us16 - Autorité de certification
 
 - [SmallStep](https://smallstep.com/)
 - [CertManager](https://cert-manager.io/docs/)
