@@ -12,10 +12,6 @@ zone:
                               60 ) ; minimum
               IN      NS      ns.weebo.
       ns              A       192.168.100.11
-      capi            A       192.168.100.11
-      *.capi          A       192.168.100.11
-      main            A       192.168.100.20
-      *.main          A       192.168.100.20
 
 forwarders:
 - 8.8.8.8
