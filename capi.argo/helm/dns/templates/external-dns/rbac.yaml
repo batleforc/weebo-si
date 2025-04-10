@@ -45,7 +45,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ .Release.Namespace }}
+  name: external-dns
 subjects:
 - kind: ServiceAccount
   name: external-dns
