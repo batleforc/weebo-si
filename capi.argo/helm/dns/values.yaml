@@ -1,6 +1,6 @@
 zone:
   "db.weebo.":
-    zone: "weebo."
+    zone: "weebo"
     file: |
       $TTL 1h ;
       $ORIGIN weebo.
