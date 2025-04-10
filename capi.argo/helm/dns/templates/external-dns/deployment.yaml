@@ -16,10 +16,8 @@ spec:
       containers:
       - name: external-dns
         image: registry.k8s.io/external-dns/external-dns:v0.16.1
-        command:
-        - tail
-        - -f
-        - /dev/null
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do sleep 10;done"]
         # args:
         # - --registry=txt
         # - --txt-prefix=external-dns-
