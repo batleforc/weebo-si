@@ -23,6 +23,7 @@ spec:
           annotations:
             metallb.universe.tf/address-pool: one
             metallb.io/ip-allocated-from-pool: one
+            metallb.universe.tf/allow-shared-ip: one
         logs:
           general:
             format: json
