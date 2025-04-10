@@ -17,6 +17,7 @@ spec:
           - |
             tsig-keygen -a hmac-sha256 tsig-key> /output/tsig.key;
             cat /output/tsig.key | grep secret | awk '{print $2}' | sed -r 's/[\";]+//g' > /output/tsig.key.secret
+            cat /output/tsig.key.secret | base64 > /output/tsig.key.secret.base64
         volumeMounts:
         - name: output-volume
           mountPath: /output
@@ -29,7 +30,7 @@ spec:
             do
               sleep 0.5
             done
-            kubectl create secret generic tsig-key-secret --from-file=/output/tsig.key.secret --from-file=/output/tsig.key -n {{ .Release.Namespace }} --dry-run=client -o yaml | kubectl apply -f -
+            kubectl create secret generic tsig-key-secret --from-file=/output/tsig.key.secret --from-file=/output/tsig.key --from-file=/output/tsig.key.secret.base64 -n {{ .Release.Namespace }} --dry-run=client -o yaml | kubectl apply -f -
         volumeMounts:
         - name: output-volume
           mountPath: /output
