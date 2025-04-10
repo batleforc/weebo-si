@@ -36,7 +36,7 @@ spec:
             # Create a volumeMount for each zone
             {{- range $key, $value := .Values.zone }}
             - name: zone-map
-              mountPath: "/var/lib/bind/{{ $value.zone }}/{{ $key }}"
+              mountPath: "/var/lib/bind/pri/{{ $value.zone }}/{{ $key }}"
               subPath: {{ $key }}
             {{- end }}
             - name: tsig-key
