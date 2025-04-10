@@ -1,0 +1,21 @@
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: examplearecord
+spec:
+  endpoints:
+  - dnsName: headlamp.weebo
+    recordTTL: 60
+    recordType: A
+    targets:
+    - 192.168.100.11
+  - dnsName: main.weebo
+    recordTTL: 60
+    recordType: A
+    targets:
+    - 192.168.100.20
+  - dnsName: \*.main.weebo
+    recordTTL: 60
+    recordType: A
+    targets:
+    - 192.168.100.20
