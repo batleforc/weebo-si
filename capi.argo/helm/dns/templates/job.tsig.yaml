@@ -25,6 +25,10 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
+            while [ ! -f /output/tsig.key.secret ]
+            do
+              sleep 0.5
+            done
             kubectl create secret generic tsig-key-secret --from-file=/output/tsig.key.secret --from-file=/output/tsig.key -n {{ .Release.Namespace }} --dry-run=client -o yaml | kubectl apply -f -
         volumeMounts:
         - name: output-volume
