@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: '{{ include (print $.Template.BasePath "/configmap.zone.yaml") . | sha256sum }}'
+        checksum/config: '{{ include (print $.Template.BasePath "/dns/configmap.zone.yaml") . | sha256sum }}'
       labels:
         app: dns-server
     spec:
