@@ -3,7 +3,7 @@ zone:
     zone: "weebo."
     file: |
       $TTL 1h ;
-      $ORIGIN weebo.si.
+      $ORIGIN weebo.
       @       IN      SOA     weebo. root.weebo. (
                               10; serial
                               60; refresh
