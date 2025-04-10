@@ -151,12 +151,12 @@ Solution possible ?
 
 Mise en place d'un serveur DNS avec Bind9 et une automatisation via l'opérateur [External DNS](https://github.com/kubernetes-sigs/external-dns). En plus de l'opérateur External DNS, passage par les [CRD](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/sources/crd.md) comme source.
 
-- 1 Zone DNS weebo.si
-  - *.capi.weebo.si => CAPI
-  - *.main.weebo.si => Main-Cluster
-  - *.dev.weebo.si => Dev-Cluster
-  - *.test.weebo.si => Test-Cluster
-  - *.prod.weebo.si => Prod-Cluster
+- 1 Zone DNS weebo.
+  - *.capi.weebo. => CAPI
+  - *.main.weebo. => Main-Cluster
+  - *.dev.weebo. => Dev-Cluster
+  - *.test.weebo. => Test-Cluster
+  - *.prod.weebo. => Prod-Cluster
 - Record A / AAAA / NS / CNAME / TXT
 - Forwarding du reste des requêtes en fonction de mon envie a l'instant T
   - <https://www.baeldung.com/linux/bind9-dns-server-configuration>
