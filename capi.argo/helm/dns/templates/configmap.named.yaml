@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: named-map
+  namespace: {{ .Release.Namespace }}
+data:
+  named.conf: |
+    include "/val/lib/bind/pri/tsig.key";
+    options {
+      directory "/var/cache/bind";
+      querylog yes;
+      listen-on port 53 { any; };
+      listen-on-v6 { ::1; };
+      allow-recursion {
+        none;
+      };
+      allow-transfer {
+        none;
+      };
+      allow-update {
+        none;
+      };
+    };
+    {{ range $key, $value := .Values.zone }}
+    zone "{{ $value.zone }}"{
+      type primary;
+      file "/var/lib/bind/pri/{{$value.zone}}/{{ $key}}";
+      notify explicit;
+      update-policy {
+        grant tsig-key subdomain {{ $value.zone }} TXT; # for _acme-challenge.*.{{ $key}}
+        grant tsig-key zonesub ANY;
+      };
+    };
+    {{ end }}
+    forwarders {
+      {{- range .Values.forwarders }}
+      {{ . }};
+      {{- end }}
+    };

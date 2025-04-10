@@ -1,0 +1,36 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: generate-tsig-key
+  namespace: {{ .Release.Namespace }}
+spec:
+  template:
+    metadata:
+      name: generate-tsig-key
+    spec:
+      containers:
+      - name: tsig-key-generator
+        image: ubuntu/bind9:{{ .Values.bind9Version }}
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            tsig-keygen -a hmac-sha256 example.com > /output/tsig.key;
+            cat /output/tsig.key | grep secret | awk '{print $2}' | sed -r 's/[\";]+//g' > /output/tsig.key.secret
+        volumeMounts:
+        - name: output-volume
+          mountPath: /output
+      - name: tsig-secret-creator
+        image: bitnami/kubectl:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            kubectl create secret generic tsig-key-secret --from-file=/output/tsig.key.secret --from-file=/output/tsig.key -n {{ .Release.Namespace }} --dry-run=client -o yaml | kubectl apply -f -
+        volumeMounts:
+        - name: output-volume
+          mountPath: /output
+      restartPolicy: Never
+      volumes:
+      - name: output-volume
+        emptyDir: {}
+  backoffLimit: 4
