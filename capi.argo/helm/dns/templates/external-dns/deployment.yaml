@@ -33,6 +33,7 @@ spec:
         - --managed-record-types=A
         - --managed-record-types=CNAME
         - --managed-record-types=NS
+        - --log-level=debug
         env:
         - name: TSIG_KEY
           valueFrom:
