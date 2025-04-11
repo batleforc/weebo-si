@@ -33,10 +33,11 @@ spec:
         - --managed-record-types=A
         - --managed-record-types=CNAME
         - --managed-record-types=NS
+        - --managed-record-types=TXT
         - --log-level=trace
         env:
         - name: TSIG_KEY
           valueFrom:
             secretKeyRef:
               name: tsig-key-secret
-              key: tsig.key.secret
+              key: tsig.key.secret.base64
