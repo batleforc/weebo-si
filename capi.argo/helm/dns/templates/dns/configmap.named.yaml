@@ -12,7 +12,7 @@ data:
       listen-on port 53 { any; };
     };
     {{ range $key, $value := .Values.zone }}
-    zone "{{ $value.zone }}"{
+    zone "{{ $value.zone }}" {
       type primary;
       file "/var/lib/bind/pri/{{$value.zone}}/{{ $key}}";
       allow-transfer {
