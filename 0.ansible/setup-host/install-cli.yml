@@ -6,9 +6,9 @@
   vars:
     clusterctl_version: "v1.9.6"
     talosctl_version: "v1.9.4"
-    terraform_version: "1.11.3"
+    terraform_version: "1.11.4"
     gitleaks_version: "8.24.2"
-    k9s_version: "v0.40.10"
+    k9s_version: "v0.50.2"
     argocd_version: "v2.14.9"
     updatecli_version: "v0.97.0"
     tofu_version: "1.9.0"
