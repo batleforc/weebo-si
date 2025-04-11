@@ -44,7 +44,7 @@ spec:
               mountPath: /val/lib/bind/pri/tsig.key
               subPath: tsig.key
             - name: empty-dir
-              mountPath: /var/lib/bind/pri
+              mountPath: /var/lib/bind/pri/weebo.poc
           readinessProbe:
             tcpSocket:
               port: dns-tcp
