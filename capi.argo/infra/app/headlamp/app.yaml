@@ -15,7 +15,6 @@ spec:
       releaseName: headlamp
       valuesObject:
         config:
-          baseURL: /
           inCluster: true
           extraArgs:
           - --kubeconfig=/kubeconfig/main-cluster/value

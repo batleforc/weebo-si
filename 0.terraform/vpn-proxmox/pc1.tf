@@ -7,6 +7,9 @@ data "wireguard_config_document" "pc1" {
   private_key = wireguard_asymmetric_key.pc1.private_key
   mtu         = "1280"
   addresses   = ["192.168.101.10/20"]
+  dns = [
+    "192.168.100.11"
+  ]
 
   # Serveur
   peer {
