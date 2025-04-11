@@ -10,7 +10,6 @@ data:
       directory "/var/cache/bind";
       querylog yes;
       listen-on port 53 { any; };
-      listen-on-v6 { ::1; };
     };
     {{ range $key, $value := .Values.zone }}
     zone "{{ $value.zone }}"{
