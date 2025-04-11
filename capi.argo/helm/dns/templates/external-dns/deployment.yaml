@@ -40,4 +40,4 @@ spec:
           valueFrom:
             secretKeyRef:
               name: tsig-key-secret
-              key: tsig.key.secret.base64
+              key: tsig.key.secret
