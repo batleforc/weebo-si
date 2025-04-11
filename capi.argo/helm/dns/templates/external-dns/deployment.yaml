@@ -24,7 +24,7 @@ spec:
         - --rfc2136-host=192.168.100.11
         - --rfc2136-port=53
         - --rfc2136-zone=weebo
-        - --rfc2136-tsig-secret=TRUCTRUCTRUC
+        - --rfc2136-tsig-secret=$TSIG_KEY
         - --rfc2136-tsig-secret-alg=hmac-sha256
         - --rfc2136-tsig-keyname=tsig-key
         #- --rfc2136-tsig-axfr
