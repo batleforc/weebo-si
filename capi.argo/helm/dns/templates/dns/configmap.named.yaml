@@ -21,7 +21,6 @@ data:
         key "tsig-key";
       };
       update-policy {
-        grant tsig-key subdomain {{ $value.zone }} TXT; # for _acme-challenge.*.{{ $key}}
         grant tsig-key zonesub ANY;
       };
     };
