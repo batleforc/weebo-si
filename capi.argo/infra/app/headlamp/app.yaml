@@ -15,7 +15,7 @@ spec:
       releaseName: headlamp
       valuesObject:
         config:
-          baseURL: /headlamp
+          baseURL: /
           inCluster: true
           extraArgs:
           - --kubeconfig=/kubeconfig/main-cluster/value
@@ -31,6 +31,8 @@ spec:
           value: /kubeconfig/main-cluster/value:/home/headlamp/.config/Headlamp/kubeconfigs/config
         serviceAccount:
           create: true
+        service:
+          port: 8080
         extraManifests:
         - |
           apiVersion: v1

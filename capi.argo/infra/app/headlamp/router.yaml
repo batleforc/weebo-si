@@ -8,8 +8,8 @@ spec:
   - websecure
   routes:
   - kind: Rule
-    match: PathPrefix(`/headlamp`)
+    match: Host(`headlamp.capi.weebo.poc`)
     priority: 10
     services:
     - name: headlamp
-      port: 80
+      port: 8080
