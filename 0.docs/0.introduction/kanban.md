@@ -21,7 +21,6 @@ kanban
   doing[Doing]
     use12[Centraliser l'authentification et l'appliquer au différent service]@{ assigned: Post-Nuke, priority: 'Low'}
     us8[Définir les règles d'identité]@{ assigned: Pre-Nuke, priority: 'High'}
-    us15[Faire une gestion DNS avec alias dynamique]@{ assigned: Post-Nuke, priority: 'Low'}
     us16[Autorité de certification]@{ assigned: Post-Nuke, priority: 'Low'}
   done[Done]
     us7[Exposer dashboard Traefik]@{ assigned: Pre-Nuke, priority: 'High'}
@@ -30,6 +29,7 @@ kanban
     us9[Mettre en place updatecli]@{ assigned: Post-Nuke, priority: 'Low'}
     us13[Hardening SSH]@{ assigned: Pre-Nuke, priority: 'High'}
     use8[Check if HeadLamp can be used to access dynamically each cluster]@{ assigned: Pre-Nuke, priority: 'High'}
+    us15[Faire une gestion DNS avec alias dynamique]@{ assigned: Post-Nuke, priority: 'Low'}
 ```
 
 - [Talos Kubernetes configuration](https://www.talos.dev/v1.9/reference/configuration/v1alpha1/config/)
@@ -107,8 +107,10 @@ kanban
 - Musique: [NCS](https://ncs.io/)
 - Objectif :
   - Tester [Falco](https://falco.org/blog/deploy-falco-talos-cluster/)
-  - Nuke le proxmox et recréer CAPI avec CloudInit / Ip Statique / Cilium !
-  - Automatiser la configuration réseau
+  - Parler du DNS automatisé
+  - Parler de l'autorité de certification
+  - Parler de la gestion des identités
+  - Nuke le proxmox
 - Sujet décisionnelle
   - Volonté d'utiliser les projets [CNCF](https://landscape.cncf.io/)
   - Choix Auth Provider
