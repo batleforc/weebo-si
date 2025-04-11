@@ -15,7 +15,7 @@ data:
     zone "{{ $value.zone }}"{
       type primary;
       file "/var/lib/bind/pri/{{$value.zone}}/{{ $key}}";
-      allow-transfter {
+      allow-transfer {
         key "tsig-key";
       };
       update-policy {
