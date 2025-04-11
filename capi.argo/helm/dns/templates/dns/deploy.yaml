@@ -64,7 +64,7 @@ spec:
         - name: zone-map
           configMap:
             name: zone-map
-            defaultMode: 755
+            defaultMode: 0755
         - name: named-map
           configMap:
             name: named-map
