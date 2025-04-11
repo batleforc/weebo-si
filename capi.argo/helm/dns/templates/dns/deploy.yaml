@@ -43,6 +43,8 @@ spec:
             - name: tsig-key
               mountPath: /val/lib/bind/pri/tsig.key
               subPath: tsig.key
+            - name: empty-dir
+              mountPath: /var/lib/bind/pri
           readinessProbe:
             tcpSocket:
               port: dns-tcp
@@ -71,3 +73,5 @@ spec:
         - name: tsig-key
           secret:
             secretName: tsig-key-secret
+        - name: empty-dir
+          emptyDir: {}
