@@ -1,9 +1,9 @@
 zone:
-  "db.weebo.poc":
+  "db.weebo":
     zone: "weebo.poc"
     file: |
-      $TTL 60;
-      $ORIGIN weebo.poc
+      $TTL 60 ;
+      $ORIGIN weebo.poc.
       @       IN      SOA     weebo.poc. root.weebo.poc. (
                               10; serial
                               60; refresh
