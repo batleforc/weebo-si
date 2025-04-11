@@ -1,16 +1,16 @@
 zone:
-  "db.weebo.":
-    zone: "weebo"
+  "db.weebo.poc.":
+    zone: "weebo.poc"
     file: |
       $TTL 1h ;
-      $ORIGIN weebo.
-      @       IN      SOA     weebo. root.weebo. (
+      $ORIGIN weebo.poc.
+      @       IN      SOA     weebo.poc. root.weebo.poc. (
                               10; serial
                               60; refresh
                               60; retry
                               60; expire
                               60 ) ; minimum
-              IN      NS      ns.weebo.
+              IN      NS      ns.weebo.poc.
       ns              A       192.168.100.11
 
 forwarders:

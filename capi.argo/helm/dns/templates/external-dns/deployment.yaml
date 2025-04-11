@@ -23,13 +23,13 @@ spec:
         - --provider=rfc2136
         - --rfc2136-host=dns-server.{{ .Release.Namespace }}.svc.cluster.local
         - --rfc2136-port=53
-        - --rfc2136-zone=weebo
+        - --rfc2136-zone=weebo.poc
         - --rfc2136-tsig-secret="$TSIG_KEY"
         - --rfc2136-tsig-secret-alg=hmac-sha512
         - --rfc2136-tsig-keyname=tsig-key
         - --rfc2136-tsig-axfr
         - --source=crd
-        - --domain-filter=weebo
+        - --domain-filter=weebo.poc
         - --managed-record-types=A
         - --managed-record-types=CNAME
         - --managed-record-types=NS
