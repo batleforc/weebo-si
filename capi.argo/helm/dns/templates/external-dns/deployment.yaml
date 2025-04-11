@@ -21,7 +21,7 @@ spec:
         - --txt-prefix=external-dns-
         - --txt-owner-id=k8s
         - --provider=rfc2136
-        - --rfc2136-host=192.168.100.11
+        - --rfc2136-host=dns-server.{{ .Release.Namespace }}.svc.cluster.local
         - --rfc2136-port=53
         - --rfc2136-zone=weebo
         - --rfc2136-tsig-secret=$TSIG_KEY
