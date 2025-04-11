@@ -14,6 +14,7 @@ spec:
     metadata:
       annotations:
         checksum/config: '{{ include (print $.Template.BasePath "/dns/configmap.zone.yaml") . | sha256sum }}'
+        checksum/named: '{{ include (print $.Template.BasePath "/dns/configmap.named.yaml") . | sha256sum }}'
       labels:
         app: dns-server
     spec:
