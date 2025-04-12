@@ -16,6 +16,12 @@ argo:
   local: false
   main: false
 
+dns:
+  enabled: true
+  wildcard: true
+  base: weebo.poc
+  name: "{{.Release.Name}}"
+
 cilium:
   version: 1.17.2
   enabled: true

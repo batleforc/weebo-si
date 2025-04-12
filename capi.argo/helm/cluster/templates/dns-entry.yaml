@@ -1,0 +1,21 @@
+{{- if .Values.dns.enabled -}}
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: {{ .Release.Name }}-dns
+spec:
+  endpoints:
+  - dnsName: "{{ tpl .Values.dns.name}}.{{.Values.dns.base}}"
+    recordTTL: 60
+    recordType: A
+    targets:
+    - {{ .Values.network.vip  }}
+  {{- if .Values.dns.wildcard }}
+  - dnsName: "*.{{ tpl .Values.dns.name }}.{{.Values.dns.base}}"
+    recordTTL: 60
+    recordType: A
+    targets:
+    - {{ .Values.network.vip  }}
+  {{- end }}
+{{- end -}}
