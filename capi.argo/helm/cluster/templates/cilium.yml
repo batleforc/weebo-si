@@ -51,4 +51,18 @@ spec:
           enabled: {{ .Values.cilium.ipv4 }}
         ipv6:
           enabled: {{ .Values.cilium.ipv6 }}
+  ignoreDifferences:
+  - group: ''
+    kind: Secret
+    name: hubble-server-certs
+    jsonPointers:
+    - /data/ca.crt
+    - /data/tls.crt
+    - /data/tls.key
+  - group: ''
+    kind: Secret
+    name: cilium-ca
+    jsonPointers:
+    - /data/ca.crt
+    - /data/ca.key
 {{- end -}}

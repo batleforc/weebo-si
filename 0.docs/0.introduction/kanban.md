@@ -102,16 +102,16 @@ kanban
 ### Stream 12 avril 2025
 
 - Debut : 16h30
-- FIN : ~ 18h30
+- FIN : ~ 18h00
 - Vod : Twitch YouTube : SOON TM
 - Musique: [NCS](https://ncs.io/)
   - [NCS: Background Music 🎧 For Work, Study & Chill](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgnRZpKULnyDQv9e_q41M6St)
 - Objectif :
   - Tester [Falco](https://falco.org/blog/deploy-falco-talos-cluster/)
-  - Parler du DNS automatisé
+  - Parler du DNS automatisé :white_check_mark:
   - Parler de l'autorité de certification
   - Parler de la gestion des identités
-  - Nuke le proxmox
+  - Nuke le proxmox - Reported again
 - Sujet décisionnelle
   - Volonté d'utiliser les projets [CNCF](https://landscape.cncf.io/)
   - Choix Auth Provider
