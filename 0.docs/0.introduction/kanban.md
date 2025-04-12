@@ -99,12 +99,13 @@ kanban
 
 ### Stream 5 avril 2025 - Pause (Out Of Town)
 
-### Stream 12 avril 2025 - Soon TM
+### Stream 12 avril 2025
 
 - Debut : 16h30
 - FIN : ~ 18h30
 - Vod : Twitch YouTube : SOON TM
 - Musique: [NCS](https://ncs.io/)
+  - [NCS: Background Music 🎧 For Work, Study & Chill](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgnRZpKULnyDQv9e_q41M6St)
 - Objectif :
   - Tester [Falco](https://falco.org/blog/deploy-falco-talos-cluster/)
   - Parler du DNS automatisé

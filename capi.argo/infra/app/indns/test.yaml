@@ -4,11 +4,6 @@ metadata:
   name: examplearecord
 spec:
   endpoints:
-  - dnsName: main.weebo.poc
-    recordTTL: 60
-    recordType: A
-    targets:
-    - 192.168.100.20
   - dnsName: capi.weebo.poc
     recordTTL: 60
     recordType: A
