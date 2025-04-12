@@ -27,7 +27,7 @@ spec:
         - --rfc2136-tsig-secret=$(TSIG_KEY)
         - --rfc2136-tsig-secret-alg=hmac-sha512
         - --rfc2136-tsig-keyname=tsig-key
-        #- --rfc2136-tsig-axfr
+        - --rfc2136-tsig-axfr
         - --source=crd
         - --domain-filter=weebo.poc
         - --managed-record-types=A

@@ -35,8 +35,10 @@ kanban
 - [Talos Kubernetes configuration](https://www.talos.dev/v1.9/reference/configuration/v1alpha1/config/)
 - [Terraform Cilium](https://registry.terraform.io/providers/littlejo/cilium/latest/docs/resources/cilium) plus jamais d'install manuelle !!!
 - [Paralus](https://www.paralus.io/docs/Installation/) [ParalusTF](https://registry.terraform.io/providers/iherbllc/paralus/latest/docs)
+- [OpenUnison](https://openunison.github.io/)
 - [Falco rules](https://une-tasse-de.cafe/blog/falco/)
 - [Dex](https://dexidp.io/)
+- [WarpGate](https://warpgate.null.page/docs/)
 
 ## Stream
 
@@ -109,7 +111,7 @@ kanban
 - Objectif :
   - Tester [Falco](https://falco.org/blog/deploy-falco-talos-cluster/)
   - Parler du DNS automatisé :white_check_mark:
-  - Parler de l'autorité de certification
+  - Parler de l'autorité de certification - Passage par OpenBao ?
   - Parler de la gestion des identités
   - Nuke le proxmox - Reported again
 - Sujet décisionnelle
