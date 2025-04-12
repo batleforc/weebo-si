@@ -46,7 +46,7 @@ kanban
 
 - Debut : 17h10
 - FIN : ~19h00
-- Vod : [Twitch](https://www.twitch.tv/videos/2406435027) YouTube : Soon
+- Vod : [Twitch](https://www.twitch.tv/videos/2406435027) [YouTube](https://www.youtube.com/watch?v=fsg3unfvPKk)
 - Musique: [Chillhop](https://app.chillhop.com/)Soon
 - Objectif :
   - Présenté le projet
@@ -61,7 +61,7 @@ kanban
 
 - Debut : 16h30
 - FIN : ~ 18h30
-- Vod : [Twitch](https://www.twitch.tv/videos/2412410374) YouTube : SOON TM
+- Vod : [Twitch](https://www.twitch.tv/videos/2412410374) [YouTube](https://www.youtube.com/watch?v=KmYbE6V2qto)
 - Musique: [NCS](https://ncs.io/) [Playlist](https://youtube.com/playlist?list=PLRBp0Fe2GpgnymQGm0yIxcdzkQsPKwnBD&si=sZjZvU09XJG6aqKQ)
 - Objectif :
   - SOON TM
@@ -88,7 +88,7 @@ kanban
 
 - Debut : 16h30
 - FIN : ~ 18h50
-- Vod : [Twitch](https://www.twitch.tv/videos/2418536784) YouTube : SOON TM
+- Vod : [Twitch](https://www.twitch.tv/videos/2418536784) [YouTube](https://www.youtube.com/watch?v=VeUMq-RtwkM)
 - Musique: [NCS](https://ncs.io/) [Playlist](https://www.youtube.com/watch?v=zyXmsVwZqX4&list=PLRBp0Fe2GpgleasyNsblE57aQt8xlEoVK)
 - Objectif :
   - Tester le patch talosconfig en désactivant le scheduling sur les noeud master
@@ -105,14 +105,13 @@ kanban
 
 - Debut : 16h30
 - FIN : ~ 18h00
-- Vod : Twitch YouTube : SOON TM
+- Vod : [Twitch](https://www.twitch.tv/videos/2430893763) YouTube : SOON TM
 - Musique: [NCS](https://ncs.io/)
   - [NCS: Background Music 🎧 For Work, Study & Chill](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgnRZpKULnyDQv9e_q41M6St)
 - Objectif :
   - Tester [Falco](https://falco.org/blog/deploy-falco-talos-cluster/)
   - Parler du DNS automatisé :white_check_mark:
-  - Parler de l'autorité de certification - Passage par OpenBao ?
-  - Parler de la gestion des identités
+  - Parler de l'autorité de certification - Passage par OpenBao !
   - Nuke le proxmox - Reported again
 - Sujet décisionnelle
   - Volonté d'utiliser les projets [CNCF](https://landscape.cncf.io/)
@@ -124,9 +123,12 @@ kanban
     - Should we use [OPA](https://www.openpolicyagent.org/) ?
   - Architecture
   - Gestion des secrets et des identités
-  - Rediffusion du stream
 - Bilan
-  - Soon TM
+  - Décision
+    - Utilisation [OpenBao](https://openbao.org/) pour faire du RootCA / IntermediateCA
+    - [CertManager](https://cert-manager.io/docs/) pour faire le lien entre le cluster et l'autorité de certification
+    - Utilisation de CertManager en DNS01 et HTTP01 possible
+  - NUKE DU SERVEUR EN PREUMS LA PROCHAINE FOIS !!!!
 
 ## Music
 
@@ -147,7 +149,7 @@ kanban
 - [ ] Automatiser la mise a jour des Talos
 - [ ] Automatiser la mise a jour des ArgoCD
 
-### us15 - Faire une gestion DNS avec alias dynamique
+### us15 - Faire une gestion DNS avec alias dynamique ✅
 
 Solution possible ?
 
