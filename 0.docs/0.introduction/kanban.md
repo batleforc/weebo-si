@@ -111,7 +111,7 @@ kanban
 - Objectif :
   - Tester [Falco](https://falco.org/blog/deploy-falco-talos-cluster/)
   - Parler du DNS automatisé :white_check_mark:
-  - Parler de l'autorité de certification - Passage par OpenBao !
+  - Parler de l'autorité de certification - Passage par OpenBao ou [BankVault](https://github.com/bank-vaults) ?
   - Nuke le proxmox - Reported again
 - Sujet décisionnelle
   - Volonté d'utiliser les projets [CNCF](https://landscape.cncf.io/)
@@ -125,7 +125,7 @@ kanban
   - Gestion des secrets et des identités
 - Bilan
   - Décision
-    - Utilisation [OpenBao](https://openbao.org/) pour faire du RootCA / IntermediateCA
+    - Utilisation [OpenBao](https://openbao.org/) pour faire du RootCA / IntermediateCA ou [BankVault ?](https://github.com/bank-vaults)
     - [CertManager](https://cert-manager.io/docs/) pour faire le lien entre le cluster et l'autorité de certification
     - Utilisation de CertManager en DNS01 et HTTP01 possible
   - NUKE DU SERVEUR EN PREUMS LA PROCHAINE FOIS !!!!
