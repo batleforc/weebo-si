@@ -170,5 +170,15 @@ Mise en place d'un serveur DNS avec Bind9 et une automatisation via l'opérateur
 
 ### us16 - Autorité de certification
 
-- [SmallStep](https://smallstep.com/)
-- [CertManager](https://cert-manager.io/docs/)
+Mise en place d'une autorité de Certification RootCA / IntermediateCA via Bank Vaults et de son orchestrations.
+
+Ne pas oublier une migration vers OpenBao quand celui-ci sera supporté par le projet.
+
+- [Tuto HashiCorp](https://developer.hashicorp.com/vault/tutorials/pki/pki-engine)
+- [Tuto OpenBao](https://openbao.org/docs/secrets/pki/quick-start-root-ca/)
+
+L'objectif est que chaque Cluster puisse avoir son propre IntermediateCA et que l'autorité RootCA soit présente sur CAPI dans la déclinaison Vault présente.
+
+Via la RFC2136, il sera possible de faire du DNS01 et a défaut du HTTP01 pour la création des certificats et sans oublier via [CertManager](https://cert-manager.io/docs/) pour la gestion des certificats.
+
+Chaque cluster aura son propre sous-groupe de KV partageable.
