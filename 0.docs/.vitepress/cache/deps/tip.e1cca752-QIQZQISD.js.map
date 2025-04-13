@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../node_modules/@zenuml/core/dist/tip.e1cca752.js"],
-  "sourcesContent": ["import { o as e, c as t, a as o } from \"./core.d2435cf8.js\";\nconst s = {\n  xmlns: \"http://www.w3.org/2000/svg\",\n  viewBox: \"0 0 1024 1024\"\n}, r = /* @__PURE__ */ o(\"path\", {\n  fill: \"currentColor\",\n  d: \"M512 1024C229.248 1024 0 794.752 0 512S229.248 0 512 0s512 229.248 512 512-229.248 512-512 512zm0-938.667C276.352 85.333 85.333 276.352 85.333 512S276.352 938.667 512 938.667 938.667 747.648 938.667 512A426.667 426.667 0 0 0 512 85.333zM512 768a42.667 42.667 0 0 1-42.368-42.667V469.76a42.368 42.368 0 1 1 84.693 0v255.573A42.41 42.41 0 0 1 512 768zm0-426.667a42.325 42.325 0 1 1-.085-84.65 42.325 42.325 0 0 1 .085 84.65zm42.325-42.666z\"\n}, null, -1), a = [\n  r\n];\nfunction c(n, l) {\n  return e(), t(\"svg\", s, a);\n}\nconst i = { render: c };\nexport {\n  i as default,\n  c as render\n};\n//# sourceMappingURL=tip.e1cca752.js.map\n"],
-  "mappings": ";;;;;;;;AACA,IAAM,IAAI;AAAA,EACR,OAAO;AAAA,EACP,SAAS;AACX;AAHA,IAGG,IAAoB,EAAE,QAAQ;AAAA,EAC/B,MAAM;AAAA,EACN,GAAG;AACL,GAAG,MAAM,EAAE;AANX,IAMc,IAAI;AAAA,EAChB;AACF;AACA,SAAS,EAAE,GAAG,GAAG;AACf,SAAO,EAAE,GAAG,EAAE,OAAO,GAAG,CAAC;AAC3B;AACA,IAAM,IAAI,EAAE,QAAQ,EAAE;",
-  "names": []
-}

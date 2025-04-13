@@ -21,8 +21,8 @@ talosconfig.*.yml
 
 ## VitePress
 
-docs/.vitepress/dist
-docs/.vitepress/cache
+0.docs/.vitepress/dist
+0.docs/.vitepress/cache
 
 
 

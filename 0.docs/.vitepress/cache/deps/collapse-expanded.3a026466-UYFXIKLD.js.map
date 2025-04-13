@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../node_modules/@zenuml/core/dist/collapse-expanded.3a026466.js"],
-  "sourcesContent": ["import { o as e, c as o, a as t } from \"./core.d2435cf8.js\";\nconst n = {\n  xmlns: \"http://www.w3.org/2000/svg\",\n  fill: \"none\",\n  stroke: \"currentColor\",\n  \"stroke-linecap\": \"round\",\n  viewBox: \"0 0 24 24\"\n}, r = /* @__PURE__ */ t(\"path\", { d: \"m14 10 7-7M20 10h-6V4M3 21l7-7M4 14h6v6\" }, null, -1), s = [\n  r\n];\nfunction c(a, l) {\n  return e(), o(\"svg\", n, s);\n}\nconst h = { render: c };\nexport {\n  h as default,\n  c as render\n};\n//# sourceMappingURL=collapse-expanded.3a026466.js.map\n"],
-  "mappings": ";;;;;;;;AACA,IAAM,IAAI;AAAA,EACR,OAAO;AAAA,EACP,MAAM;AAAA,EACN,QAAQ;AAAA,EACR,kBAAkB;AAAA,EAClB,SAAS;AACX;AANA,IAMG,IAAoB,EAAE,QAAQ,EAAE,GAAG,0CAA0C,GAAG,MAAM,EAAE;AAN3F,IAM8F,IAAI;AAAA,EAChG;AACF;AACA,SAAS,EAAE,GAAG,GAAG;AACf,SAAO,EAAE,GAAG,EAAE,OAAO,GAAG,CAAC;AAC3B;AACA,IAAM,IAAI,EAAE,QAAQ,EAAE;",
-  "names": []
-}

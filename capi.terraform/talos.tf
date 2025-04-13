@@ -31,8 +31,8 @@ data "talos_machine_configuration" "capi_config_controlplane" {
         },
         network = {
           nameservers = [
-            "8.8.8.8",
-            "8.8.4.4"
+            "192.168.100.11",
+            "8.8.8.8"
           ]
           interfaces = [
             {

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../node_modules/@zenuml/core/dist/collapse-unexpanded.028788c0.js"],
-  "sourcesContent": ["import { o, c as t, a as e } from \"./core.d2435cf8.js\";\nconst n = {\n  xmlns: \"http://www.w3.org/2000/svg\",\n  fill: \"currentColor\",\n  viewBox: \"0 0 24 24\"\n}, r = /* @__PURE__ */ e(\"g\", {\n  fill: \"none\",\n  stroke: \"currentColor\",\n  \"stroke-linecap\": \"round\",\n  \"stroke-linejoin\": \"round\"\n}, [\n  /* @__PURE__ */ e(\"path\", {\n    d: \"M3 17.3V21h3.7\",\n    \"data-name\": \"Right\"\n  }),\n  /* @__PURE__ */ e(\"path\", { d: \"m10 14-6.2 6.2M14 10l6.2-6.2\" }),\n  /* @__PURE__ */ e(\"path\", {\n    d: \"M21 6.7V3h-3.7\",\n    \"data-name\": \"Right\"\n  })\n], -1), a = [\n  r\n];\nfunction s(c, d) {\n  return o(), t(\"svg\", n, a);\n}\nconst i = { render: s };\nexport {\n  i as default,\n  s as render\n};\n//# sourceMappingURL=collapse-unexpanded.028788c0.js.map\n"],
-  "mappings": ";;;;;;;;AACA,IAAM,IAAI;AAAA,EACR,OAAO;AAAA,EACP,MAAM;AAAA,EACN,SAAS;AACX;AAJA,IAIG,IAAoB,EAAE,KAAK;AAAA,EAC5B,MAAM;AAAA,EACN,QAAQ;AAAA,EACR,kBAAkB;AAAA,EAClB,mBAAmB;AACrB,GAAG;AAAA,EACe,EAAE,QAAQ;AAAA,IACxB,GAAG;AAAA,IACH,aAAa;AAAA,EACf,CAAC;AAAA,EACe,EAAE,QAAQ,EAAE,GAAG,+BAA+B,CAAC;AAAA,EAC/C,EAAE,QAAQ;AAAA,IACxB,GAAG;AAAA,IACH,aAAa;AAAA,EACf,CAAC;AACH,GAAG,EAAE;AAnBL,IAmBQ,IAAI;AAAA,EACV;AACF;AACA,SAAS,EAAE,GAAG,GAAG;AACf,SAAO,EAAE,GAAG,EAAE,OAAO,GAAG,CAAC;AAC3B;AACA,IAAM,IAAI,EAAE,QAAQ,EAAE;",
-  "names": []
-}

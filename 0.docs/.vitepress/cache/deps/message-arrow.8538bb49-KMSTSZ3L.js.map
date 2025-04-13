@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../node_modules/@zenuml/core/dist/message-arrow.8538bb49.js"],
-  "sourcesContent": ["import { o as t, c as s, a as e } from \"./core.d2435cf8.js\";\nconst r = {\n  xmlns: \"http://www.w3.org/2000/svg\",\n  width: \"30\",\n  height: \"24\",\n  class: \"arrow text-skin-message-arrow\"\n}, o = /* @__PURE__ */ e(\"path\", {\n  d: \"M0 2h28v13H14\",\n  class: \"line stroke-current fill-none stroke-2\"\n}, null, -1), n = /* @__PURE__ */ e(\"path\", {\n  d: \"M18 9 8 15l10 6\",\n  class: \"head stroke-current fill-current stroke-2\"\n}, null, -1), a = [\n  o,\n  n\n];\nfunction c(l, h) {\n  return t(), s(\"svg\", r, a);\n}\nconst i = { render: c };\nexport {\n  i as default,\n  c as render\n};\n//# sourceMappingURL=message-arrow.8538bb49.js.map\n"],
-  "mappings": ";;;;;;;;AACA,IAAM,IAAI;AAAA,EACR,OAAO;AAAA,EACP,OAAO;AAAA,EACP,QAAQ;AAAA,EACR,OAAO;AACT;AALA,IAKG,IAAoB,EAAE,QAAQ;AAAA,EAC/B,GAAG;AAAA,EACH,OAAO;AACT,GAAG,MAAM,EAAE;AARX,IAQc,IAAoB,EAAE,QAAQ;AAAA,EAC1C,GAAG;AAAA,EACH,OAAO;AACT,GAAG,MAAM,EAAE;AAXX,IAWc,IAAI;AAAA,EAChB;AAAA,EACA;AACF;AACA,SAAS,EAAE,GAAG,GAAG;AACf,SAAO,EAAE,GAAG,EAAE,OAAO,GAAG,CAAC;AAC3B;AACA,IAAM,IAAI,EAAE,QAAQ,EAAE;",
-  "names": []
-}

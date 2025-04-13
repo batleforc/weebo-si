@@ -8,7 +8,8 @@ data "wireguard_config_document" "pc1" {
   mtu         = "1280"
   addresses   = ["192.168.101.10/20"]
   dns = [
-    "192.168.100.11"
+    "192.168.100.11",
+    "8.8.8.8"
   ]
 
   # Serveur

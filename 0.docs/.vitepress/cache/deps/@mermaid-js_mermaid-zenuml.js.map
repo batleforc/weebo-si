@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../node_modules/@mermaid-js/mermaid-zenuml/dist/mermaid-zenuml.core.mjs"],
-  "sourcesContent": ["const id = \"zenuml\";\nconst detector = (txt) => {\n  return /^\\s*zenuml/.test(txt);\n};\nconst loader = async () => {\n  const { diagram } = await import(\"./zenuml-definition-ddfc84a5.js\");\n  return { id, diagram };\n};\nconst plugin = {\n  id,\n  detector,\n  loader\n};\nexport {\n  plugin as default\n};\n"],
-  "mappings": ";;;AAAA,IAAM,KAAK;AACX,IAAM,WAAW,CAAC,QAAQ;AACxB,SAAO,aAAa,KAAK,GAAG;AAC9B;AACA,IAAM,SAAS,YAAY;AACzB,QAAM,EAAE,QAAQ,IAAI,MAAM,OAAO,0CAAiC;AAClE,SAAO,EAAE,IAAI,QAAQ;AACvB;AACA,IAAM,SAAS;AAAA,EACb;AAAA,EACA;AAAA,EACA;AACF;",
-  "names": []
-}

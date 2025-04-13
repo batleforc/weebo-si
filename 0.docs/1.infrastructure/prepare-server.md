@@ -21,14 +21,32 @@ Votre serveur doit comporter les éléments suivants :
 - Plus de 2 coeur
 - Plus de 100Go de disque
 - Une connexion internet
-- Un accès SSH
+- Un accès SSH avec une clef SSH pré installer
 - Un accès à l'interface web de Proxmox
 
-## 1. Mise en place du serveur DHCP
+## 1. Setup SSH Initial et Hardening
 
-Cette partie est optionnelle, mais fortement recommandée. Elle permettra de définir une plage d'adresse IP que les vm pourront utiliser.
+Avant de commencer, il est nécessaire d'appliquer quelques configuration de sécurité initiale sur le serveur:
 
-Cette partit vient tout juste d'être automatisée via le script ansible exécuté dans l'étape 3.
+- Changer le port SSH par défaut (22) pour le port 2323
+- Désactiver l'accès SSH par mot de passe
+- Forcer le SSH à utiliser la version 2
+- Passage du temps pour ce connecter en 20 secondes par connection
+- Nombre de tentative de connexion SSH par connection a 3
+- Limiter le nombre de connexion SSH vivante a 3
+- Limiter l'interval entre deux tentatives de connexion SSH a 120 secondes
+- Désactiver la bannière de status SSH
+- Désactiver les protocole de connection non supporté (GSSAPI, KERBEROS)
+- Désactiver le X11 forwarding
+- Mise en place Fail2Ban
+
+Tout ceci afin d'appliquer un hardening minimale de sécurité en accord avec le [SSH Hardening Guide](https://ittavern.com/ssh-server-hardening/).
+
+Pour cela, exécuter la commande suivante :
+
+```bash
+task proxmox:change-ssh-port
+```
 
 ## 2. Initialisation de la configuration VPN
 
@@ -46,15 +64,24 @@ Pour lancer la configuration, resté a la racine du projet git et exécuté la c
 task proxmox:init-vpn-config
 ```
 
+::: warning
+
+La configuration de wireguard `pc1.wg.conf` utilise deux serveur DNS, le noeud CAPI qui portera le serveur DNS centralisé et le dns google 8.8.8.8
+
+:::
+
 ## 3. Configuration du serveur
 
 Ce script a différentes étapes :
 
 - Mettre a jour le système
-- Installer les paquets nécessaires (Curl, Git, Vim)
+- Installer les paquets nécessaires (Curl, Git, Vim, ufw, DNSMasq)
+- Mise en place du Firewall UFW et création de la carte VMBR1 ainsi que du serveur DHCP
 - Installer WireGuard
 - Configurer WireGuard en lui téléversant le fichier de configuration générés précédemment et démarrage de wireguard en mode service.
 - Création d'un utilisateur `weebo-env@pve` avec un token d'authentification qui serra utilisé par terraform lors des prochain script.
+- Définition de la zone Timezone sur `Europe/Paris`
+- Exécution a nouveau du Hardening SSH
 
 En préparation pour la suite veuillez copier/coller le fichier `.env.template` en `.env` et remplir les champs PROXMOX_DNS, PROXMOX_DNS2, PROXMOX_URL, PROXMOX_NODE et ANSIBLE_PROXMOX_SSH_KEY avec l'emplacement de votre clef SSH.
 
