@@ -22,6 +22,8 @@ kanban
     use12[Centraliser l'authentification et l'appliquer au différent service]@{ assigned: Post-Nuke, priority: 'Low'}
     us8[Définir les règles d'identité]@{ assigned: Pre-Nuke, priority: 'High'}
     us16[Autorité de certification]@{ assigned: Post-Nuke, priority: 'Low'}
+    use17[Déployer OpenUnison sur tous les clusters via ArgoCD]@{ assigned: Post-Nuke, priority: 'Low'}
+    us18[Déployer WarpGate sur tous les clusters via ArgoCD]@{ assigned: Post-Nuke, priority: 'Low'}
   done[Done]
     us7[Exposer dashboard Traefik]@{ assigned: Pre-Nuke, priority: 'High'}
     us1[Créer un cluster multi master self schedulable]

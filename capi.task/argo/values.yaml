@@ -1,4 +1,29 @@
+# Enable Kustomize Alpha Plugins via Argo CD ConfigMap, required for ksops
+configs:
+  cm:
+    url: http://argo.capi.weebo.poc
+    kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"
+    resource.exclusions: |
+      - apiGroups:
+          - tekton.dev
+        kinds:
+          - TaskRun
+          - PipelineRun
+        clusters:
+          - "*"
+  params:
+    server.insecure: true
+  rbac:
+    scopes: '[roles]'
+    policy.csv: |
+      g, admin, role:admin
+      g, dev, role:dev
+      g, reader, role:readonly
+      g, backstage, role:readonly
+
+global:
+  domain: argo.capi.weebo.poc
 server:
-  extraArgs:
-  - --rootpath=/argo
-  - --insecure
+  ingress:
+    enabled: true
+    tls: false
