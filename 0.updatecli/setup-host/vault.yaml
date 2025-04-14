@@ -1,0 +1,46 @@
+name: Setup Host
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: batleforc
+      repository: weebo-si
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      branch: main
+
+sources:
+  vault:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: hashicorp
+      repository: vault
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: latest
+    transformers:
+    - trimprefix: "v"
+
+targets:
+  vault:
+    kind: file
+    name: "Bump Terraform version"
+    scmid: default
+    sourceid: terraform
+    spec:
+      file: 0.ansible/setup-host/install-cli.yml
+      matchpattern: 'vault_version: ".*"'
+      replacepattern: 'vault_version: "{{ source "vault" }}"'
+
+actions:
+  bumpVault:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      title: 'ci: Bump `vault` version to {{ source "vault" }}'
+      automerge: false

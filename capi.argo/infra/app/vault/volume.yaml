@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vault-raft
+  namespace: vault
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
+  # storageClassName: ""
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi

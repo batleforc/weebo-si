@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+  source:
+    chart: vault-operator
+    repoURL: ghcr.io/bank-vaults/helm-charts
+    # https://github.com/bank-vaults/vault-operator/pkgs/container/helm-charts%2Fvault-operator
+    targetRevision: 1.22.5
+    helm:
+      releaseName: vault
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: vault

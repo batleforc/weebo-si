@@ -1,0 +1,26 @@
+---
+- name: "If vault is already installed, get the version"
+  ansible.builtin.command:
+    cmd: "vault version -json | jq -r .vault_version"
+  register: vault_version_output
+  ignore_errors: true
+  changed_when: false
+- name: "Download vault"
+  ansible.builtin.get_url:
+    url: "https://releases.hashicorp.com/vault/{{ vault_version }}/vault_{{ vault_version }}_linux_amd64.zip"
+    dest: "/tmp/vault_{{ vault_version }}_linux_amd64.zip"
+    mode: '0644'
+  when: vault_version not in vault_version_output.stdout
+- name: "Unzip vault"
+  ansible.builtin.unarchive:
+    src: "/tmp/vault_{{ vault_version }}_linux_amd64.zip"
+    dest: "/usr/bin"
+    mode: '0755'
+    remote_src: true
+    keep_newer: true
+  when: vault_version not in vault_version_output.stdout
+- name: "Clean up vault zip"
+  ansible.builtin.file:
+    path: "/tmp/vault_{{ vault_version }}_linux_amd64.zip"
+    state: absent
+  when: vault_version not in vault_version_output.stdout

@@ -12,6 +12,7 @@
     argocd_version: "v2.14.9"
     updatecli_version: "v0.97.0"
     tofu_version: "1.9.0"
+    vault_version: "1.19.1"
   tasks:
     - name: "Update and upgrade apt packages"
       ansible.builtin.apt:
@@ -45,3 +46,6 @@
     - name: Install tofu
       ansible.builtin.include_role:
         name: opentofu
+    - name: Install vault
+      ansible.builtin.include_role:
+        name: vault

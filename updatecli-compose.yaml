@@ -8,6 +8,7 @@ policies:
   - ./0.updatecli/setup-host/argocd.yaml
   - ./0.updatecli/setup-host/updatecli.yaml
   - ./0.updatecli/setup-host/opentofu.yaml
+  - ./0.updatecli/setup-host/vault.yaml
   values:
   - ./0.updatecli/values.yaml
 - name: Upgrade Traefik
