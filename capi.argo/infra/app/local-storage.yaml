@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'github.com/rancher/local-path-provisioner/'
+    repoURL: 'https://github.com/rancher/local-path-provisioner'
     path: 'deploy'
     kustomize:
       patches:
