@@ -29,9 +29,9 @@ sources:
 targets:
   vault:
     kind: file
-    name: "Bump Terraform version"
+    name: "Bump vault version"
     scmid: default
-    sourceid: terraform
+    sourceid: vault
     spec:
       file: 0.ansible/setup-host/install-cli.yml
       matchpattern: 'vault_version: ".*"'
