@@ -10,7 +10,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "2"
 spec:
   size: 1
-  image: hashicorp/vault:1.18
+  image: hashicorp/vault:1.19
 
   # Common annotations for all created resources
   annotations:
