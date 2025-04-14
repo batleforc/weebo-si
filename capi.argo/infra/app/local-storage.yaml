@@ -3,7 +3,7 @@ kind: Kustomization
 metadata:
   name: local-storage
 resources:
-- https://github.com/rancher/local-path-provisioner/blob/v0.0.31/deploy/local-path-storage.yaml
+- github.com/rancher/local-path-provisioner/deploy/local-path-storage.yaml?ref=v0.0.31
 patches:
 - patch: |-
     kind: ConfigMap
