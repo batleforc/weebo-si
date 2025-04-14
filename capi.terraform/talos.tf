@@ -22,6 +22,18 @@ data "talos_machine_configuration" "capi_config_controlplane" {
           extraArgs = {
             rotate-server-certificates = "true"
           }
+          extraMounts = [
+            {
+              source      = "/var/local-path-provisioner",
+              destination = "/var/local-path-provisioner",
+              type        = "bind"
+              options = [
+                "bind",
+                "rshared",
+                "rw"
+              ]
+            }
+          ]
         }
         install = {
           image = data.talos_image_factory_urls.metal.urls.installer,
