@@ -1,5 +1,10 @@
-# Create namespace for vault
+---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: vault
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vault-infra
