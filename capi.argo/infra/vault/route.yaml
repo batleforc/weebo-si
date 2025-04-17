@@ -1,15 +1,17 @@
 apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
+kind: IngressRouteTCP
 metadata:
   name: vault
   namespace: vault
 spec:
   entryPoints:
   - websecure
+  - web
   routes:
   - kind: Rule
-    match: Host("vault.capi.weebo.poc")
+    match: HostSNI("vault.capi.weebo.poc") || Host("vault.capi.weebo.poc")
     services:
     - name: vault
       port: 8200
-      scheme: https
+  tls:
+    passthrough: true
