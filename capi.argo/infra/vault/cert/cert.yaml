@@ -1,0 +1,29 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: vault
+  namespace: vault
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: vault-cert
+  namespace: vault
+spec:
+  commonName: vault
+  usages:
+  - server auth
+  dnsNames:
+  - vault
+  - vault.default
+  - vault.default.svc
+  - vault.default.svc.cluster.local
+  - vault.capi.weebo.poc
+  ipAddresses:
+  - 127.0.0.1
+  - 192.168.100.11
+  secretName: vault-tls
+  issuerRef:
+    name: vault

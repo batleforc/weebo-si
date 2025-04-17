@@ -1,0 +1,32 @@
+version: '3'
+
+env:
+  KUBECONFIG: "{{.ROOT_DIR}}/capi.terraform/kubeconfig"
+  VAULT_ADDR: "https://127.0.0.1:8200"
+  VAULT_CACERT: "{{.ROOT_DIR}}/vault-ca.crt"
+
+tasks:
+  get-ca:
+    cmds:
+    - kubectl get -n vault secret vault-tls -o jsonpath="{.data.ca\.crt}" | base64 --decode > ./vault-ca.crt
+  get-token:
+    cmds:
+    - kubectl get -n vault secrets vault-unseal-keys -o jsonpath={.data.vault-root} | base64 --decode
+  read-secret:
+    vars:
+      VAULT_TOKEN:
+        sh: task vault:get-token
+    cmds:
+    - VAULT_TOKEN={{.VAULT_TOKEN}} vault kv get {{ .CLI_ARGS }}
+  write-secret:
+    vars:
+      VAULT_TOKEN:
+        sh: task vault:get-token
+    cmds:
+    - VAULT_TOKEN={{.VAULT_TOKEN}} vault kv put {{ .CLI_ARGS }}
+  vault:
+    vars:
+      VAULT_TOKEN:
+        sh: task vault:get-token
+    cmds:
+    - VAULT_TOKEN={{.VAULT_TOKEN}} vault {{ .CLI_ARGS }}

@@ -22,9 +22,9 @@ tasks:
     dir: ./0.terraform/vpn-proxmox
     cmds:
     - echo "Start VPN"
-    - sudo wg-quick up ./pc1.wg.conf
+    - wg-quick up ./pc1.wg.conf
   vpn-local-down:
     dir: ./0.terraform/vpn-proxmox
     cmds:
     - echo "Stop VPN"
-    - sudo wg-quick down ./pc1.wg.conf
+    - wg-quick down ./pc1.wg.conf
