@@ -9,7 +9,7 @@ spec:
   - web
   routes:
   - kind: Rule
-    match: Host('vault.capi.weebo.poc')
+    match: Host("vault.capi.weebo.poc")
     services:
     - name: vault
       port: 8200
