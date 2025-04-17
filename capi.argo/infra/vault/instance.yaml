@@ -118,6 +118,8 @@ spec:
     policies:
     - name: allow_secrets
       rules: path "secret/*" { capabilities = ["create", "read", "update", "delete", "list"] }
+    - name: allow_pki
+      rules: path "pki/*" { capabilities = ["create", "read", "update", "delete", "list"] }
     auth:
     - type: kubernetes
       roles:
@@ -126,6 +128,11 @@ spec:
         bound_service_account_namespaces: [ "vault" ]
         policies: allow_secrets
         ttl: 1h
+      - name: cert-manager
+        bound_service_account_names: [ "cert-manager" ]
+        bound_service_account_namespaces: [ "cert-manager" ]
+        policies: allow_pki
+        ttl: 1h
 
     secrets:
     - path: secret
@@ -133,6 +140,26 @@ spec:
       description: General secrets.
       options:
         version: 2
+    - path: pki
+      type: pki
+      description: Weebo SI CA.
+      config:
+        default_lease_ttl: 168h
+        max_lease_ttl: 720h
+      configuration:
+        config:
+        - name: urls
+          issuing_certificates: https://vault.capi.weebo.poc/v1/pki/ca
+          crl_distribution_points: https://vault.capi.weebo.poc/v1/pki/crl
+        root/generate:
+        - name: internal
+          common_name: weebo.poc
+        roles:
+        - name: default
+          allowed_domains: weebo.poc
+          allow_subdomains: true
+          generate_lease: true
+          ttl: 1m
     # Allows writing some secrets to Vault (useful for development purposes).
     # See https://www.vaultproject.io/docs/secrets/kv/index.html for more information.
     startupSecrets:
