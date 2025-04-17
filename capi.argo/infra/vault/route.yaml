@@ -6,12 +6,10 @@ metadata:
 spec:
   entryPoints:
   - websecure
-  - web
   routes:
   - kind: Rule
     match: Host("vault.capi.weebo.poc")
     services:
     - name: vault
       port: 8200
-  tls:
-    passthrough: true
+      scheme: https
