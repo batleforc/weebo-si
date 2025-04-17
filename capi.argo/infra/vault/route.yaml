@@ -8,8 +8,8 @@ spec:
   - websecure
   - web
   routes:
-  - match: HostSNI(`vault.capi.weebo.poc`) || Host('vault.capi.weebo.poc')
-    kind: Rule
+  - kind: Rule
+    match: HostSNI(`vault.capi.weebo.poc`) || Host('vault.capi.weebo.poc')
     services:
     - name: vault
       port: 8200
