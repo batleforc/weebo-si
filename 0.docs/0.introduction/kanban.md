@@ -132,6 +132,27 @@ kanban
     - Utilisation de CertManager en DNS01 et HTTP01 possible
   - NUKE DU SERVEUR EN PREUMS LA PROCHAINE FOIS !!!!
 
+### Stream 19 avril 2025
+
+- Debut : 16h30
+- FIN : ~ 18h30
+- Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : SOON TM
+- Musique: [NCS](https://ncs.io/)
+  - [NCS: Background Music 🎧 For Work, Study & Chill](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgnRZpKULnyDQv9e_q41M6St)
+- Objectif :
+  - Nuke le proxmox
+  - Automatiser la mise en place de l'autorité de certification RootCA / IntermediateCA via Bank Vaults.
+  - Automatiser la création de certificats via le DNS01 et HTTP01
+  - Trust le RootCA sur mon ordinateur et le propager sur les clusters
+- Sujet
+  - Volonté d'utiliser les projets [CNCF](https://landscape.cncf.io/)
+  - Besoin de pouvoir accéder aux clusters de manière sécurisé
+    - [WarpGate](https://warpgate.null.page/docs/)
+    - [ContainerSSH](https://containerssh.io/v0.5/)
+    - [Pomerium](https://www.pomerium.com/docs/get-started/fundamentals/core/get-started)
+  - [Automated Security Test](https://www.securecodebox.io/)
+- Bilan
+
 ## Music
 
 - [Chillhop](https://app.chillhop.com/)<= Plus calme
