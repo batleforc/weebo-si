@@ -10,7 +10,7 @@
     gitleaks_version: "8.24.3"
     k9s_version: "v0.50.3"
     argocd_version: "v2.14.10"
-    updatecli_version: "v0.97.0"
+    updatecli_version: "v0.98.0"
     tofu_version: "1.9.0"
     vault_version: "1.19.1"
   tasks:
