@@ -44,10 +44,13 @@ kanban
 
 ## Stream
 
+- [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
+- [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
+
 ### Stream 15 mars 2025
 
 - Debut : 17h10
-- FIN : ~19h00
+- FIN : ~19h00 - [Stream 2H41]
 - Vod : [Twitch](https://www.twitch.tv/videos/2406435027) [YouTube](https://www.youtube.com/watch?v=fsg3unfvPKk)
 - Musique: [Chillhop](https://app.chillhop.com/)Soon
 - Objectif :
@@ -62,7 +65,7 @@ kanban
 ### Stream 22 mars 2025
 
 - Debut : 16h30
-- FIN : ~ 18h30
+- FIN : ~ 18h30 - [Stream 2H23]
 - Vod : [Twitch](https://www.twitch.tv/videos/2412410374) [YouTube](https://www.youtube.com/watch?v=KmYbE6V2qto)
 - Musique: [NCS](https://ncs.io/) [Playlist](https://youtube.com/playlist?list=PLRBp0Fe2GpgnymQGm0yIxcdzkQsPKwnBD&si=sZjZvU09XJG6aqKQ)
 - Objectif :
@@ -89,7 +92,7 @@ kanban
 ### Stream 29 mars 2025
 
 - Debut : 16h30
-- FIN : ~ 18h50
+- FIN : ~ 18h50 - [Stream 2H21]
 - Vod : [Twitch](https://www.twitch.tv/videos/2418536784) [YouTube](https://www.youtube.com/watch?v=VeUMq-RtwkM)
 - Musique: [NCS](https://ncs.io/) [Playlist](https://www.youtube.com/watch?v=zyXmsVwZqX4&list=PLRBp0Fe2GpgleasyNsblE57aQt8xlEoVK)
 - Objectif :
@@ -106,8 +109,8 @@ kanban
 ### Stream 12 avril 2025
 
 - Debut : 16h30
-- FIN : ~ 18h00
-- Vod : [Twitch](https://www.twitch.tv/videos/2430893763) YouTube : SOON TM
+- FIN : ~ 18h00 - [Stream 1h49]
+- Vod : [Twitch](https://www.twitch.tv/videos/2430893763) [YouTube](https://youtu.be/VyTVqSORshM)
 - Musique: [NCS](https://ncs.io/)
   - [NCS: Background Music 🎧 For Work, Study & Chill](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgnRZpKULnyDQv9e_q41M6St)
 - Objectif :
@@ -135,15 +138,16 @@ kanban
 ### Stream 19 avril 2025
 
 - Debut : 16h30
-- FIN : ~ 18h30
-- Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : SOON TM
+- FIN : ~ 19h27 - [Stream 2h57]
+- Vod : [Twitch](https://www.twitch.tv/videos/2437118197) [YouTube](https://youtu.be/mQAp8V1QNPs) => Rendering en cours
 - Musique: [NCS](https://ncs.io/)
   - [NCS: Background Music 🎧 For Work, Study & Chill](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgnRZpKULnyDQv9e_q41M6St)
+  - [NCS: The Best of 2025 ⚡️](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgkDw2aMG2lM5heA8cbLvOoN)
 - Objectif :
-  - Nuke le proxmox
-  - Automatiser la mise en place de l'autorité de certification RootCA / IntermediateCA via Bank Vaults.
-  - Automatiser la création de certificats via le DNS01 et HTTP01
-  - Trust le RootCA sur mon ordinateur et le propager sur les clusters
+  - Nuke le proxmox :white_check_mark:
+  - Automatiser la mise en place de l'autorité de certification RootCA / IntermediateCA via [Bank Vaults](https://bank-vaults.dev/). - Reported
+  - Automatiser la création de certificats via le DNS01 et HTTP01 - Reported
+  - Trust le RootCA sur mon ordinateur et le propager sur les clusters - Reported
 - Sujet
   - Volonté d'utiliser les projets [CNCF](https://landscape.cncf.io/)
   - Besoin de pouvoir accéder aux clusters de manière sécurisé
@@ -152,6 +156,28 @@ kanban
     - [Pomerium](https://www.pomerium.com/docs/get-started/fundamentals/core/get-started)
     - [Eclipse Che](https://eclipse.dev/che/)
   - [Automated Security Test](https://www.securecodebox.io/)
+- Bilan
+  - Nuke du serveur fait avec un belle effet Demo :white_check_mark:
+  - Création du cluster Capi et Main :white_check_mark:
+  - Prévision d'un comparatif entre Flannel + MetalLB et Cilium la prochaine fois
+  - Discussion autour du besoin d'accéder a l'environnement de manière sécurisé sans toujours passer par un VPN
+
+### Stream 26 avril 2025 - Pause (Out Of Town)
+
+### Stream 3 mai 2025 : SOON TM
+
+- Debut : 16h30
+- FIN : ~ 18H30
+- Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : SOON TM
+- Musique: [NCS](https://ncs.io/)
+  - [NCS: The Best of 2025 ⚡️](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgkDw2aMG2lM5heA8cbLvOoN)
+- Objectif :
+  - Mise en place des [sync waves](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/) ArgoCD
+  - Automatiser la mise en place de l'autorité de certification RootCA / IntermediateCA via [Bank Vaults](https://bank-vaults.dev/).
+  - Automatiser la création de certificats via le DNS01 et HTTP01
+  - Trust le RootCA sur mon ordinateur et le propager sur les clusters
+  - Déployer un Auth Provider sur Main Cluster
+- Sujet
 - Bilan
 
 ## Music
@@ -194,7 +220,7 @@ Mise en place d'un serveur DNS avec Bind9 et une automatisation via l'opérateur
 
 ### us16 - Autorité de certification
 
-Mise en place d'une autorité de Certification RootCA / IntermediateCA via Bank Vaults et de son orchestrations.
+Mise en place d'une autorité de Certification RootCA / IntermediateCA via [Bank Vaults](https://bank-vaults.dev/) et de son orchestrations.
 
 Ne pas oublier une migration vers OpenBao quand celui-ci sera supporté par le projet.
 
