@@ -3,7 +3,7 @@ kind: Job
 metadata:
   name: {{ .Release.Name }}-create-sa-job
   annotations:
-    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/hook: PostSync
 spec:
   backoffLimit: 100
   template:

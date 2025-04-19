@@ -77,6 +77,10 @@ data:
           ansible.builtin.command:
             cmd: "kubectl get secret argocd-manager-secret -n kube-system -o jsonpath='{.data.token}' --kubeconfig /tokens/value"
           register: secret
+        - name: Fail if token is empty
+          ansible.builtin.fail:
+            msg: "Token is empty"
+          when: secret.stdout == "" or secret.stdout is not defined or "Error from server (NotFound)" in secret.stdout
         - name: "Print token"
           ansible.builtin.debug:
             msg: "Please copy token : {{"{{"}}  secret.stdout | b64decode }}"

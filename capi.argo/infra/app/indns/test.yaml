@@ -2,6 +2,8 @@ apiVersion: externaldns.k8s.io/v1alpha1
 kind: DNSEndpoint
 metadata:
   name: capi-record
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   endpoints:
   - dnsName: capi.weebo.poc
