@@ -1,5 +1,5 @@
 {{- if .Values.kyverno.enabled -}}
-
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -7,6 +7,8 @@ metadata:
   namespace: argocd
   labels:
     app.kubernetes.io/name: {{ .Release.Name }}-argo
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
     automated:

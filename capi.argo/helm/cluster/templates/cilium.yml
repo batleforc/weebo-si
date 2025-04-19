@@ -6,6 +6,8 @@ metadata:
   namespace: argocd
   labels:
     app.kubernetes.io/name: {{ .Release.Name }}-argo
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
     automated: {}
