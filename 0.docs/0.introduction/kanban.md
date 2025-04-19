@@ -150,6 +150,7 @@ kanban
     - [WarpGate](https://warpgate.null.page/docs/)
     - [ContainerSSH](https://containerssh.io/v0.5/)
     - [Pomerium](https://www.pomerium.com/docs/get-started/fundamentals/core/get-started)
+    - [Eclipse Che](https://eclipse.dev/che/)
   - [Automated Security Test](https://www.securecodebox.io/)
 - Bilan
 

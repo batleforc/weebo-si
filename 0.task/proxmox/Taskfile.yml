@@ -28,3 +28,7 @@ tasks:
     cmds:
     - echo "Stop VPN"
     - wg-quick down ./pc1.wg.conf
+  remove-old-ssh-keys:
+    cmds:
+    - echo "Remove old ssh keys"
+    - ssh-keygen -R "${PROXMOX_DNS}"

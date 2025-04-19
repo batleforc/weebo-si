@@ -47,3 +47,7 @@ tasks:
   headlamp:
     cmds:
     - kubectl get secret headlamp-admin-secret -n default -o jsonpath='{.data.token}' | base64 --decode
+
+  install-csr:
+    cmds:
+    - kubectl apply -f ./capi.argo/infra/cert-approver/app.yaml

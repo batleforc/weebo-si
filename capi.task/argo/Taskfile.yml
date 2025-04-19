@@ -31,11 +31,11 @@ tasks:
       PASSWORD:
         sh: task argo:get-pwd
     cmds:
-    - argocd login --port-forward --port-forward-namespace argocd localhost:8080 --username admin --password {{.PASSWORD}} --insecure
+    - argocd login --core  --username admin --password {{.PASSWORD}} --insecure
     - kubectl config set-context --current --namespace=argocd
   init-private-repo:
     cmds:
-    - argocd repo add $ARGO_APP_REPO --username $ARGO_APP_USERNAME --password $ARGO_GITHUB_TOKEN --port-forward --port-forward-namespace argocd
+    - argocd repo add $ARGO_APP_REPO --username $ARGO_APP_USERNAME --password $ARGO_GITHUB_TOKEN --core
   install-app:
     cmds:
-    - argocd app create weebo-capi --repo $ARGO_APP_REPO --directory-recurse --path capi.argo/infra/app --dest-server $ARGO_DEST_SERVER --dest-namespace default --sync-policy automated --directory-recurse --port-forward --port-forward-namespace argocd
+    - argocd app create weebo-capi --repo $ARGO_APP_REPO --directory-recurse --path capi.argo/infra/app --dest-server $ARGO_DEST_SERVER --dest-namespace default --sync-policy automated --directory-recurse --core

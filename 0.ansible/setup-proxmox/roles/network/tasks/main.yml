@@ -64,7 +64,7 @@
 - name: "Backup /etc/network/interfaces"
   ansible.builtin.command:
     cmd: "cp /etc/network/interfaces /etc/network/interfaces.bck"
-  when: backup_interfaces.stat.islnk is defined
+  when: backup_interfaces.stat.islnk is not defined
   register: backup_interfaces
   failed_when: false
   changed_when: false
