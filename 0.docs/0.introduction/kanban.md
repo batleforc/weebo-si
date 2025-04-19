@@ -161,6 +161,7 @@ kanban
   - Création du cluster Capi et Main :white_check_mark:
   - Prévision d'un comparatif entre Flannel + MetalLB et Cilium la prochaine fois
   - Discussion autour du besoin d'accéder a l'environnement de manière sécurisé sans toujours passer par un VPN
+  - Mise en place des [sync waves](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/) ArgoCD (Off Stream)
 
 ### Stream 26 avril 2025 - Pause (Out Of Town)
 
@@ -172,7 +173,6 @@ kanban
 - Musique: [NCS](https://ncs.io/)
   - [NCS: The Best of 2025 ⚡️](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgkDw2aMG2lM5heA8cbLvOoN)
 - Objectif :
-  - Mise en place des [sync waves](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/) ArgoCD
   - Automatiser la mise en place de l'autorité de certification RootCA / IntermediateCA via [Bank Vaults](https://bank-vaults.dev/).
   - Automatiser la création de certificats via le DNS01 et HTTP01
   - Trust le RootCA sur mon ordinateur et le propager sur les clusters
