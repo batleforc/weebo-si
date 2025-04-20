@@ -146,8 +146,8 @@ spec:
       type: pki
       description: Weebo SI CA.
       config:
-        default_lease_ttl: 168h
-        max_lease_ttl: 720h
+        default_lease_ttl: 744h
+        max_lease_ttl: 87600h
       configuration:
         config:
         - name: urls
@@ -156,6 +156,7 @@ spec:
         root/generate:
         - name: internal
           common_name: weebo.poc
+          ttl: 87600h
         roles:
         - name: default
           allowed_domains: weebo.poc
