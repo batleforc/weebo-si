@@ -139,7 +139,7 @@ kanban
 
 - Debut : 16h30
 - FIN : ~ 19h27 - [Stream 2h57]
-- Vod : [Twitch](https://www.twitch.tv/videos/2437118197) [YouTube](https://youtu.be/mQAp8V1QNPs) => Rendering en cours
+- Vod : [Twitch](https://www.twitch.tv/videos/2437118197) [YouTube](https://youtu.be/mQAp8V1QNPs)
 - Musique: [NCS](https://ncs.io/)
   - [NCS: Background Music 🎧 For Work, Study & Chill](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgnRZpKULnyDQv9e_q41M6St)
   - [NCS: The Best of 2025 ⚡️](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgkDw2aMG2lM5heA8cbLvOoN)
@@ -175,8 +175,9 @@ kanban
 - Objectif :
   - Automatiser la mise en place de l'autorité de certification RootCA / IntermediateCA via [Bank Vaults](https://bank-vaults.dev/).
   - Automatiser la création de certificats via le DNS01 et HTTP01
-  - Trust le RootCA sur mon ordinateur et le propager sur les clusters
+  - Trust le RootCA sur mon ordinateur et [le propager sur les clusters](https://github.com/cert-manager/trust-manager)
   - Déployer un Auth Provider sur Main Cluster
+  - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/)
 - Sujet
 - Bilan
 
@@ -226,6 +227,8 @@ Ne pas oublier une migration vers OpenBao quand celui-ci sera supporté par le p
 
 - [Tuto HashiCorp](https://developer.hashicorp.com/vault/tutorials/pki/pki-engine)
 - [Tuto OpenBao](https://openbao.org/docs/secrets/pki/quick-start-root-ca/)
+- [A suivre](https://github.com/bank-vaults/bank-vaults/issues/3077)
+- [Exemple](https://github.com/bank-vaults/bank-vaults/blob/main/vault-config.yml)
 
 L'objectif est que chaque Cluster puisse avoir son propre IntermediateCA et que l'autorité RootCA soit présente sur CAPI dans la déclinaison Vault présente.
 

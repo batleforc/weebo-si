@@ -174,7 +174,7 @@ spec:
         - name: urls
           issuing_certificates: https://vault.capi.weebo.poc/v1/pki_int/ca
           crl_distribution_points: https://vault.capi.weebo.poc/v1/pki_int/crl
-        root/generate:
+        intermediate/generate:
         - name: example-dot-com-intermediate
           common_name: weebo.poc Intermediate CA
           ttl: 43800h
