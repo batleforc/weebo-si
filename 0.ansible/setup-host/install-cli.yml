@@ -7,12 +7,12 @@
     clusterctl_version: "v1.10.1"
     talosctl_version: "v1.9.4"
     terraform_version: "1.11.4"
-    gitleaks_version: "8.25.0"
+    gitleaks_version: "8.25.1"
     k9s_version: "v0.50.4"
     argocd_version: "v2.14.11"
     updatecli_version: "v0.98.0"
     tofu_version: "1.7.8"
-    vault_version: "1.19.2"
+    vault_version: "1.19.3"
   tasks:
     - name: "Update and upgrade apt packages"
       ansible.builtin.apt:
