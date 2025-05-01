@@ -172,13 +172,15 @@ kanban
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : SOON TM
 - Musique: [NCS](https://ncs.io/)
   - [NCS: The Best of 2025 ⚡️](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgkDw2aMG2lM5heA8cbLvOoN)
-- Objectif :
+- Objectif (Pas dans l'ordre):
   - Automatiser la mise en place de l'autorité de certification RootCA / IntermediateCA via [Bank Vaults](https://bank-vaults.dev/).
   - Automatiser la création de certificats via le DNS01 et HTTP01
   - Trust le RootCA sur mon ordinateur et [le propager sur les clusters](https://github.com/cert-manager/trust-manager)
   - Déployer un Auth Provider sur Main Cluster
   - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/)
+  - Passage a Talos V1.10.0 ?
 - Sujet
+  - [Talos V1.10.0](https://github.com/siderolabs/talos/releases/tag/v1.10.0)
 - Bilan
 
 ## Music
