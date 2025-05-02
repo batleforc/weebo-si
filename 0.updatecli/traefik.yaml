@@ -25,6 +25,26 @@ sources:
         kind: semver
     transformers:
     - trimprefix: "v"
+  pluginsCrowdSec:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: maxlerebourg
+      repository: crowdsec-bouncer-traefik-plugin
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: semver
+  pluginsSablier:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: sablierapp
+      repository: sablier
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: semver
 
 targets:
   bumpTraefikCapi:
@@ -45,11 +65,34 @@ targets:
       file: capi.argo/helm/cluster/values.yaml
       key: traefik.version
       value: '{{ source "traefik" }}'
+  bumpCrowdSecPluginMultiNode:
+    kind: yaml
+    name: "Bump crowdSec plugin version"
+    scmid: default
+    sourceid: pluginsCrowdSec
+    spec:
+      file: capi.argo/helm/cluster/values.yaml
+      key: traefik.plugins.bouncer.version
+      value: '{{ source "pluginsCrowdSec" }}'
+  bumpSablierPluginMultiNode:
+    kind: yaml
+    name: "Bump sablier plugin version"
+    scmid: default
+    sourceid: pluginsSablier
+    spec:
+      file: capi.argo/helm/cluster/values.yaml
+      key: traefik.plugins.sablier.version
+      value: '{{ source "pluginsSablier" }}'
 
 actions:
   bumptraefik:
     kind: github/pullrequest
     scmid: default
     spec:
-      title: 'ci: Bump `traefik` version to {{ source "traefik" }}'
+      title: 'ci: Bump `traefik` version and plugins'
+      description: |
+        Bump `traefik` version and plugins
+        - `traefik` version: {{ source "traefik" }}
+        - `crowdsec` plugin version: {{ source "pluginsCrowdSec" }}
+        - `sablier` plugin version: {{ source "pluginsSablier" }}
       automerge: false
