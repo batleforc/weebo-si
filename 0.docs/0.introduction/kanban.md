@@ -186,6 +186,8 @@ kanban
   - Déployer un Auth Provider sur Main Cluster
   - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/)
   - Passage a Talos V1.10.0 progressif, créer un cluster en v1.9 puis le migrer vers v1.10.0, vérifier que tout fonctionne et ensuite faire la mise a jour de l'image de base/template
+    - [Talos Upgrade](https://www.talos.dev/v1.10/talos-guides/upgrading-talos/)
+    - [Kubernetes Upgrade](https://www.talos.dev/v1.10/kubernetes-guides/upgrading-kubernetes/)
   - Déployer les sous instances ArgoCD sur chaque cluster via l'ArgoCD principal
 - Sujet
   - [Talos v1.10.0](https://github.com/siderolabs/talos/releases/tag/v1.10.0)

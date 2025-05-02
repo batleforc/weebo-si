@@ -130,6 +130,7 @@ targets:
     kind: yaml
     name: "Bump ipam-in-cluster cluster API version"
     scmid: default
+    sourceid: ipamInClusterClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
       key: spec.source.helm.valuesObject.ipam
