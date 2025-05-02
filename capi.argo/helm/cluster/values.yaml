@@ -10,7 +10,7 @@ network:
 
 extensions:
   qemuGuestAgent:
-    image: ghcr.io/siderolabs/qemu-guest-agent:9.2.0
+    image: ghcr.io/siderolabs/qemu-guest-agent:9.2.3
 
 argo:
   local: false
