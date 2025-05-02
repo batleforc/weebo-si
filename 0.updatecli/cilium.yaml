@@ -40,4 +40,4 @@ targets:
     spec:
       file: capi.argo/helm/cluster/values.yaml
       key: "cilium.version"
-      value: '{{ source "qemuGuestAgent" }}'
+      value: '{{ source "cilium" }}'
