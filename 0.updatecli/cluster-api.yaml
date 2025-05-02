@@ -103,6 +103,8 @@ sources:
       username: "{{ .github.username }}"
       versionFilter:
         kind: semver
+    transformers:
+    - trimprefix: "v"
 
 targets:
   bumpCoreClusterAPI:
