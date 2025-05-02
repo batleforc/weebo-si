@@ -1,0 +1,43 @@
+name: Upgrade Cilium
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: batleforc
+      repository: weebo-si
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      branch: main
+
+actions:
+  talos:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      title: 'ci: Bump Cilium'
+      automerge: false
+
+sources:
+  cilium:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: cilium
+      repository: cilium
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: semver
+
+targets:
+  bumpCiliumHelm:
+    name: "Update Cilium"
+    kind: yaml
+    scmid: default
+    spec:
+      file: capi.argo/helm/cluster/values.yaml
+      key: "cilium.version"
+      value: '{{ source "qemuGuestAgent" }}'
