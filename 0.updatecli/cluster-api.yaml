@@ -1,0 +1,144 @@
+name: Upgrade ClusterAPI
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: batleforc
+      repository: weebo-si
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      branch: main
+
+actions:
+  clusterAPI:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      title: 'ci: Bump ClusterAPI'
+      automerge: false
+      labels:
+      - "Upgrade"
+      - "UpdateCLI"
+      description: |
+        Bump ClusterAPI
+        - `core` version: {{ source "coreClusterAPI" }}
+        - `infrastructure` version: {{ source "infrastructureProxmoxClusterAPI" }}
+        - `controlPlane` version: {{ source "controlPlaneTalosClusterAPI" }}
+        - `bootstrap` version: {{ source "bootstrapTalosClusterAPI" }}
+        - `ipam` version: {{ source "ipamInClusterClusterAPI" }}
+        - `addon-helm` version: {{ source "addonHelmClusterAPI" }}
+
+sources:
+  coreClusterAPI:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: kubernetes-sigs
+      repository: cluster-api
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: semver
+  infrastructureProxmoxClusterAPI:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: ionos-cloud
+      repository: cluster-api-provider-proxmox
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: semver
+  controlPlaneTalosClusterAPI:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: siderolabs
+      repository: cluster-api-control-plane-provider-talos
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: semver
+  bootstrapTalosClusterAPI:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: siderolabs
+      repository: cluster-api-bootstrap-provider-talos
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: semver
+  ipamInClusterClusterAPI:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: kubernetes-sigs
+      repository: cluster-api-ipam-provider-in-cluster
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: semver
+  addonHelmClusterAPI:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: kubernetes-sigs
+      repository: cluster-api-addon-helm
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: semver
+
+targets:
+  bumpCoreClusterAPI:
+    kind: yaml
+    name: "Bump core cluster API version"
+    scmid: default
+    spec:
+      file: capi.argo/infra/app/cluster-api/app.yaml
+      key: spec.source.helm.valuesObject.core
+      value: 'cluster-api:{{ source "coreClusterAPI" }}'
+  bumpInfrastructureProxmoxClusterAPI:
+    kind: yaml
+    name: "Bump infrastructure-proxmox cluster API version"
+    scmid: default
+    spec:
+      file: capi.argo/infra/app/cluster-api/app.yaml
+      key: spec.source.helm.valuesObject.infrastructure
+      value: 'proxmox:{{ source "infrastructureProxmoxClusterAPI" }}'
+  bumpControlPlaneTalosClusterAPI:
+    kind: yaml
+    name: "Bump control-plane-talos cluster API version"
+    scmid: default
+    spec:
+      file: capi.argo/infra/app/cluster-api/app.yaml
+      key: spec.source.helm.valuesObject.controlPlane
+      value: 'talos:{{ source "controlPlaneTalosClusterAPI" }}'
+  bumpBootstrapTalosClusterAPI:
+    kind: yaml
+    name: "Bump bootstrap-talos cluster API version"
+    scmid: default
+    spec:
+      file: capi.argo/infra/app/cluster-api/app.yaml
+      key: spec.source.helm.valuesObject.bootstrap
+      value: 'talos:{{ source "bootstrapTalosClusterAPI" }}'
+  bumpIpamInClusterClusterAPI:
+    kind: yaml
+    name: "Bump ipam-in-cluster cluster API version"
+    scmid: default
+    spec:
+      file: capi.argo/infra/app/cluster-api/app.yaml
+      key: spec.source.helm.valuesObject.ipam
+      value: 'in-cluster:{{ source "ipamInClusterClusterAPI" }}'
+  bumpAddonHelmClusterAPI:
+    kind: yaml
+    name: "Bump addon-helm cluster API version"
+    scmid: default
+    spec:
+      file: capi.argo/infra/app/cluster-api/app.yaml
+      key: spec.source.helm.valuesObject.addon
+      value: 'helm:{{ source "addonHelmClusterAPI" }}'
