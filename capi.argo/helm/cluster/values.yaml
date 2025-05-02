@@ -36,7 +36,7 @@ cilium:
 
 kyverno:
   enabled: true
-  version: 3.3.7
+  version: 3.4.1
   policies: 3.3.4
 
 certManager:
