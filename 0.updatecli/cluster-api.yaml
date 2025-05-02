@@ -87,7 +87,7 @@ sources:
     scmid: default
     spec:
       owner: kubernetes-sigs
-      repository: cluster-api-addon-helm
+      repository: cluster-api-addon-provider-helm
       token: "{{ requiredEnv .github.token }}"
       username: "{{ .github.username }}"
       versionFilter:
