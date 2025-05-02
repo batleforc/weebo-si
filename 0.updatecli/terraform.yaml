@@ -42,7 +42,7 @@ targets:
     sourceid: talos
     spec:
       file: capi.terraform/main.tf
-      path: "terraform.required_providers.talos"
+      path: "terraform.required_providers.talos.version"
   bumpProxmox:
     name: "Update Proxmox Provider"
     kind: terraform/file
@@ -50,4 +50,4 @@ targets:
     sourceid: proxmox
     spec:
       file: capi.terraform/main.tf
-      path: "terraform.required_providers.proxmox"
+      path: "terraform.required_providers.proxmox.version"
