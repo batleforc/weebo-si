@@ -1,0 +1,39 @@
+name: Upgrade Talos
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: batleforc
+      repository: weebo-si
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      branch: main
+
+actions:
+  talos:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      title: 'ci: Bump Talos Provider'
+      automerge: false
+
+sources:
+  qemuGuestAgent:
+    kind: dockerimage
+    spec:
+      image: ghcr.io/siderolabs/qemu-guest-agent
+      architecture: "linux/amd64"
+
+targets:
+  bumpQemuGuestAgent:
+    name: "Update QEMU Guest Agent"
+    kind: yaml
+    scmid: default
+    sourceid: qemuGuestAgent
+    spec:
+      file: capi.argo/helm/cluster/values.yaml
+      key: "extensions.qemuGuestAgent.image"
+      tag: 'ghcr.io/siderolabs/qemu-guest-agent:{{ source "qemuGuestAgent" }}'
