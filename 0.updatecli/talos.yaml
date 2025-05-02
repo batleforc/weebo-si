@@ -26,6 +26,8 @@ sources:
     spec:
       image: ghcr.io/siderolabs/qemu-guest-agent
       architecture: "linux/amd64"
+      versionFilter:
+        kind: semver
 
 targets:
   bumpQemuGuestAgent:
