@@ -24,6 +24,7 @@ actions:
       - "UpdateCLI"
       description: |
         Bump ClusterAPI
+        - `cluster-api-operator` version: {{ source "operatorClusterAPI" }}
         - `core` version: {{ source "coreClusterAPI" }}
         - `infrastructure` version: {{ source "infrastructureProxmoxClusterAPI" }}
         - `controlPlane` version: {{ source "controlPlaneTalosClusterAPI" }}
@@ -92,6 +93,16 @@ sources:
       username: "{{ .github.username }}"
       versionFilter:
         kind: semver
+  operatorClusterAPI:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: kubernetes-sigs
+      repository: cluster-api-operator
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: semver
 
 targets:
   bumpCoreClusterAPI:
@@ -148,3 +159,12 @@ targets:
       file: capi.argo/infra/app/cluster-api/app.yaml
       key: spec.source.helm.valuesObject.addon
       value: 'helm:{{ source "addonHelmClusterAPI" }}'
+  bumpOperatorClusterAPI:
+    kind: yaml
+    name: "Bump operator cluster API version"
+    scmid: default
+    sourceid: operatorClusterAPI
+    spec:
+      file: capi.argo/infra/app/cluster-api/app.yaml
+      key: spec.source.targetRevision
+      value: '{{ source "operatorClusterAPI" }}'
