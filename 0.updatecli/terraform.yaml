@@ -33,6 +33,18 @@ sources:
       type: provider
       namespace: bpg
       name: proxmox
+  kubernetes:
+    kind: terraform/registry
+    spec:
+      type: provider
+      namespace: hashicorp
+      name: kubernetes
+  wireguard:
+    kind: terraform/registry
+    spec:
+      type: provider
+      namespace: OJFord
+      name: wireguard
 
 targets:
   bumpTalosCapi:
@@ -67,3 +79,19 @@ targets:
     spec:
       file: 0.terraform/download-iso-talos/main.tf
       provider: "proxmox"
+  bumpKubernetesCapiPrepare:
+    name: "Update Kubernetes Provider CAPI"
+    kind: terraform/provider
+    scmid: default
+    sourceid: kubernetes
+    spec:
+      file: capi.terraform_init/main.tf
+      provider: "kubernetes"
+  bumpProxmoxVpn:
+    name: "Update Proxmox Provider VPN"
+    kind: terraform/provider
+    scmid: default
+    sourceid: wireguard
+    spec:
+      file: 0.terraform/vpn-proxmox/main.tf
+      provider: "wireguard"
