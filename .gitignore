@@ -19,6 +19,8 @@ talos-config.yaml
 kubeconfig.*.yml
 talosconfig.*.yml
 
+0.keepassxc
+
 ## VitePress
 
 0.docs/.vitepress/dist

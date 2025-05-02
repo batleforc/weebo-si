@@ -1,0 +1,14 @@
+version: '3'
+
+tasks:
+  ui:
+    cmds:
+    - keepassxc --keyfile 0.keepassxc/keyfile 0.keepassxc/weebo-si
+  ks:
+    cmds:
+    - keepassxc-cli {{ .CLI_ARGS }}
+  init:
+    cmds:
+    - echo "Init keystore"
+    - mkdir -p .keepassxc
+    - cat vault_password | task ks:ks -- db-create -q --set-key-file=0.keepassxc/keyfile  0.keepassxc/weebo-si

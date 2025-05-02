@@ -16,6 +16,8 @@ includes:
     taskfile: 0.task/ansible/Taskfile.yml
   capi:
     taskfile: capi.task/Taskfile.yml
+  ks:
+    taskfile: 0.task/keystore/Taskfile.yml
 
 tasks:
   ssh-proxmox:

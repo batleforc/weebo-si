@@ -39,3 +39,9 @@ tasks:
   install-app:
     cmds:
     - argocd app create weebo-capi --repo $ARGO_APP_REPO --directory-recurse --path capi.argo/infra/app --dest-server $ARGO_DEST_SERVER --dest-namespace default --sync-policy automated --directory-recurse --core
+  ks-record:
+    vars:
+      PASSWORD:
+        sh: task argo:get-pwd
+    cmds:
+    - cd .. && echo '{{.PASSWORD}}' | task ks:ks -- add -k 0.keepassxc/keyfile --no-password -p -u admin --url https://argo.capi.weebo.poc 0.keepassxc/weebo-si capi-argo
