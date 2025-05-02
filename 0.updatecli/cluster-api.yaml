@@ -98,6 +98,7 @@ targets:
     kind: yaml
     name: "Bump core cluster API version"
     scmid: default
+    sourceid: coreClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
       key: spec.source.helm.valuesObject.core
@@ -106,6 +107,7 @@ targets:
     kind: yaml
     name: "Bump infrastructure-proxmox cluster API version"
     scmid: default
+    sourceid: infrastructureProxmoxClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
       key: spec.source.helm.valuesObject.infrastructure
@@ -114,6 +116,7 @@ targets:
     kind: yaml
     name: "Bump control-plane-talos cluster API version"
     scmid: default
+    sourceid: controlPlaneTalosClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
       key: spec.source.helm.valuesObject.controlPlane
@@ -122,6 +125,7 @@ targets:
     kind: yaml
     name: "Bump bootstrap-talos cluster API version"
     scmid: default
+    sourceid: bootstrapTalosClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
       key: spec.source.helm.valuesObject.bootstrap
@@ -139,6 +143,7 @@ targets:
     kind: yaml
     name: "Bump addon-helm cluster API version"
     scmid: default
+    sourceid: addonHelmClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
       key: spec.source.helm.valuesObject.addon
