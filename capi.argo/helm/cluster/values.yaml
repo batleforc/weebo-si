@@ -50,10 +50,10 @@ traefik:
   plugins:
     bouncer:
       moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
-      version: v1.3.5
+      version: v1.4.2
     sablier:
       moduleName: github.com/sablierapp/sablier
-      version: v1.8.1
+      version: v1.9.0
 
 kubernetes:
   version: v1.32.2
