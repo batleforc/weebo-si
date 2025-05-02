@@ -19,6 +19,9 @@ actions:
     spec:
       title: 'ci: Bump Talos Provider'
       automerge: false
+      description: |
+        Bump Qemu Guest Agent
+        - `qemuGuestAgent` version: {{ source "qemuGuestAgent" }}
 
 sources:
   qemuGuestAgent:

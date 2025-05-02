@@ -1,4 +1,4 @@
-name: Upgrade Cilium
+name: Upgrade DNS
 
 scms:
   default:
@@ -17,31 +17,30 @@ actions:
     kind: github/pullrequest
     scmid: default
     spec:
-      title: 'ci: Bump Cilium'
-      automerge: false
+      title: 'ci: Bump External DNS'
       description: |
-        Bump Cilium
-        - `cilium` version: {{ source "cilium" }}
+        Bump `External DNS` version
+        - `External DNS` version: {{ source "externalDns" }}
+      automerge: false
 
 sources:
-  cilium:
+  externalDns:
     kind: githubrelease
     scmid: default
     spec:
-      owner: cilium
-      repository: cilium
+      owner: kubernetes-sigs
+      repository: external-dns
       token: "{{ requiredEnv .github.token }}"
       username: "{{ .github.username }}"
       versionFilter:
         kind: semver
-    transformers:
-    - trimprefix: "v"
+
 targets:
-  bumpCiliumHelm:
-    name: "Update Cilium"
+  bumpExternalDns:
+    name: "Update External DNS"
     kind: yaml
     scmid: default
     spec:
-      file: capi.argo/helm/cluster/values.yaml
-      key: "cilium.version"
-      value: '{{ source "cilium" }}'
+      file: capi.argo/helm/dns/values.yaml
+      key: "externalDns.version"
+      value: '{{ source "externalDns" }}'

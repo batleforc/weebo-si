@@ -41,3 +41,8 @@ policies:
   - ./0.updatecli/kyverno.yaml
   values:
   - ./0.updatecli/values.yaml
+- name: Upgrade DNS
+  config:
+  - ./0.updatecli/dns.yaml
+  values:
+  - ./0.updatecli/values.yaml

@@ -19,6 +19,12 @@ actions:
     spec:
       title: 'ci: Bump terraform Provider'
       automerge: false
+      description: |
+        Bump terraform Provider
+        - `talos` version: {{ source "talos" }}
+        - `proxmox` version: {{ source "proxmox" }}
+        - `kubernetes` version: {{ source "kubernetes" }}
+        - `wireguard` version: {{ source "wireguard" }}
 
 sources:
   talos:

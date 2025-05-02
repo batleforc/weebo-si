@@ -12,6 +12,17 @@ scms:
       username: "{{ .github.username }}"
       branch: main
 
+actions:
+  bumpcert-manager:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      title: 'ci: Bump `cert-manager` version to {{ source "cert-manager" }}'
+      automerge: false
+      description: |
+        Bump `cert-manager` version
+        - `cert-manager` version: {{ source "cert-manager" }}
+
 sources:
   cert-manager:
     kind: githubrelease
@@ -45,11 +56,3 @@ targets:
       file: capi.argo/helm/cluster/values.yaml
       key: "certManager.version"
       value: '{{ source "cert-manager" }}'
-
-actions:
-  bumpcert-manager:
-    kind: github/pullrequest
-    scmid: default
-    spec:
-      title: 'ci: Bump `cert-manager` version to {{ source "cert-manager" }}'
-      automerge: false
