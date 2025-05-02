@@ -21,3 +21,8 @@ policies:
   - ./0.updatecli/cert-manager.yaml
   values:
   - ./0.updatecli/values.yaml
+- name: Upgrade Terraform Provider
+  config:
+  - ./0.updatecli/terraform.yaml
+  values:
+  - ./0.updatecli/values.yaml

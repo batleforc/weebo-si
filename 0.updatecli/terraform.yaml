@@ -1,0 +1,53 @@
+name: Upgrade Terraform Provider
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: batleforc
+      repository: weebo-si
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      branch: main
+
+actions:
+  terraform:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      title: 'ci: Bump terraform Provider'
+      automerge: false
+
+sources:
+  talos:
+    kind: terraform/registry
+    spec:
+      type: provider
+      namespace: siderolabs
+      name: talos
+  proxmox:
+    kind: terraform/registry
+    spec:
+      type: provider
+      namespace: bpg
+      name: proxmox
+
+targets:
+  bumpTalos:
+    name: "Update Talos Provider"
+    kind: terraform/file
+    scmid: default
+    sourceid: talos
+    spec:
+      file: capi.terraform/main.tf
+      path: "terraform.required_providers.talos"
+  bumpProxmox:
+    name: "Update Proxmox Provider"
+    kind: terraform/file
+    scmid: default
+    sourceid: proxmox
+    spec:
+      file: capi.terraform/main.tf
+      path: "terraform.required_providers.proxmox"
