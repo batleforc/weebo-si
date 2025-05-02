@@ -13,7 +13,7 @@ scms:
       branch: main
 
 actions:
-  talos:
+  kyverno:
     kind: github/pullrequest
     scmid: default
     spec:
