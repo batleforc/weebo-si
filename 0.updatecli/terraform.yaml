@@ -37,17 +37,17 @@ sources:
 targets:
   bumpTalos:
     name: "Update Talos Provider"
-    kind: terraform/file
+    kind: terraform/provider
     scmid: default
     sourceid: talos
     spec:
       file: capi.terraform/main.tf
-      path: "terraform.required_providers.talos.version"
+      provider: "talos"
   bumpProxmox:
     name: "Update Proxmox Provider"
-    kind: terraform/file
+    kind: terraform/provider
     scmid: default
     sourceid: proxmox
     spec:
       file: capi.terraform/main.tf
-      path: "terraform.required_providers.proxmox.version"
+      provider: "proxmox"
