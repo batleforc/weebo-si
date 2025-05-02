@@ -12,6 +12,19 @@ scms:
       username: "{{ .github.username }}"
       branch: main
 
+actions:
+  bumptraefik:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      title: 'ci: Bump `traefik` version and plugins'
+      description: |
+        Bump `traefik` version and plugins
+        - `traefik` version: {{ source "traefik" }}
+        - `crowdsec` plugin version: {{ source "pluginsCrowdSec" }}
+        - `sablier` plugin version: {{ source "pluginsSablier" }}
+      automerge: false
+
 sources:
   traefik:
     kind: githubrelease
@@ -83,16 +96,3 @@ targets:
       file: capi.argo/helm/cluster/values.yaml
       key: traefik.plugins.sablier.version
       value: '{{ source "pluginsSablier" }}'
-
-actions:
-  bumptraefik:
-    kind: github/pullrequest
-    scmid: default
-    spec:
-      title: 'ci: Bump `traefik` version and plugins'
-      description: |
-        Bump `traefik` version and plugins
-        - `traefik` version: {{ source "traefik" }}
-        - `crowdsec` plugin version: {{ source "pluginsCrowdSec" }}
-        - `sablier` plugin version: {{ source "pluginsSablier" }}
-      automerge: false

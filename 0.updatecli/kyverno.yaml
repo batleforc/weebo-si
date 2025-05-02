@@ -1,0 +1,61 @@
+name: Upgrade Kyverno
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: batleforc
+      repository: weebo-si
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      branch: main
+
+actions:
+  talos:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      title: 'ci: Bump `Kyverno`'
+      description: |
+        Bump `Kyverno` version and plugins
+        - `Kyverno` version: {{ source "kyverno" }}
+        - `KyvernoPolicies` plugin version: {{ source "kyvernoPolicies" }}
+      automerge: false
+
+sources:
+  kyverno:
+    kind: dockerimage
+    spec:
+      image: ghcr.io/kyverno/charts/kyverno
+      architecture: "linux/amd64"
+      versionFilter:
+        kind: semver
+  kyvernoPolicies:
+    kind: dockerimage
+    spec:
+      image: ghcr.io/kyverno/charts/kyverno-policies
+      architecture: "linux/amd64"
+      versionFilter:
+        kind: semver
+
+targets:
+  bumpKyvernoHelm:
+    name: "Update kyverno helm"
+    kind: yaml
+    scmid: default
+    sourceid: kyverno
+    spec:
+      file: capi.argo/helm/cluster/values.yaml
+      key: "kyverno.version"
+      value: '{{ source "kyverno" }}'
+  bumpKyvernoPoliciesHelm:
+    name: "Update kyverno policies helm"
+    kind: yaml
+    scmid: default
+    sourceid: kyvernoPolicies
+    spec:
+      file: capi.argo/helm/cluster/values.yaml
+      key: "kyverno.policies"
+      value: '{{ source "kyvernoPolicies" }}'
