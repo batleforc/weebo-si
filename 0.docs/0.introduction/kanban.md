@@ -47,7 +47,7 @@ kanban
 - Nuke le Proxmox tout les 2 mois
   - last update : 19-04-2025
   - next update : 19-06-2025
-- Vérifier les MR de mise a jour toute les semaines
+- Vérifier les [MR](https://github.com/batleforc/weebo-si/pulls?q=is%3Aopen+is%3Apr+label%3AUpdateCLI) de mise a jour toute les semaines
 
 ## Stream
 
