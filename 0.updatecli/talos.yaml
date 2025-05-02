@@ -34,7 +34,6 @@ targets:
     name: "Update QEMU Guest Agent"
     kind: yaml
     scmid: default
-    #sourceid: qemuGuestAgent
     spec:
       file: capi.argo/helm/cluster/values.yaml
       key: "extensions.qemuGuestAgent.image"
