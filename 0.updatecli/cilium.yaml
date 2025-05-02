@@ -22,6 +22,9 @@ actions:
       description: |
         Bump Cilium
         - `cilium` version: {{ source "cilium" }}
+      labels:
+      - "Upgrade"
+      - "UpdateCLI"
 
 sources:
   cilium:

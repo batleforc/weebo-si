@@ -25,6 +25,9 @@ actions:
         - `proxmox` version: {{ source "proxmox" }}
         - `kubernetes` version: {{ source "kubernetes" }}
         - `wireguard` version: {{ source "wireguard" }}
+      labels:
+      - "Upgrade"
+      - "UpdateCLI"
 
 sources:
   talos:

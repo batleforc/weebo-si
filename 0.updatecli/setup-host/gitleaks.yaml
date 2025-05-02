@@ -44,3 +44,6 @@ actions:
     spec:
       title: 'ci: Bump `gitleaks` version to {{ source "gitleaks" }}'
       automerge: false
+      labels:
+      - "Upgrade"
+      - "UpdateCLI"

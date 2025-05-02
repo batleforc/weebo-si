@@ -23,6 +23,9 @@ actions:
         - `Kyverno` version: {{ source "kyverno" }}
         - `KyvernoPolicies` plugin version: {{ source "kyvernoPolicies" }}
       automerge: false
+      labels:
+      - "Upgrade"
+      - "UpdateCLI"
 
 sources:
   kyverno:

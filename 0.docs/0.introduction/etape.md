@@ -29,11 +29,11 @@ architecture-beta
   - [x] Créer la VM depuis terraform
 - [x] Sur un noeud Proxmox, installer un Mono-Node Talos via la CAPI
 - [x] Sur un noeud Proxmox, installer un Multi-Node Talos via la CAPI
-- [ ] Automatiser la configuration Proxmox
-  - [ ] DHCP
-  - [ ] Firewall
+- [x] Automatiser la configuration Proxmox
+  - [x] DHCP
+  - [x] Firewall
   - [ ] Certificat
-  - [ ] Changement du port SSH
+  - [x] Changement du port SSH
 
 ## 2. Gestion de l'infrastructure
 
@@ -71,7 +71,8 @@ La création de l'infrastructure et sa gestion c'est bien, mais il faut aussi me
 - [ ] Déployer un Registry (Ou utiliser mon registre privé)
 - [ ] Déployer Vault x Bank-Vaults x External-Secrets
 - [ ] Déployer l'environnement de dev "Parfait"
-- [ ] Déployer un CNI ([Cilium](https://cilium.io/)) et un Observateur ([Falco](https://falco.org/), [Tetragon](https://tetragon.io/))
+- [x] Déployer un CNI ([Cilium](https://cilium.io/))
+- [ ] Déployer un moniteur de sécurité ([Falco](https://falco.org/), [Tetragon](https://tetragon.io/))
 
 ## 4. Environnement de dev "Parfait" <== MVP 2
 
@@ -95,7 +96,7 @@ L'env de base est en place, maintenant il faut ajouter tout les outils pour s'ap
 
 Bon, on a tout ce qu'il faut pour développer, mais il manque des outils pour faciliter la vie de tout les jours.
 
-- [ ] Installer une partit ChatOps ([Mattermost](https://mattermost.com/), [Rocket.Chat](https://rocket.chat/), [Matrix](https://matrix.org/))
+- [ ] Installer une partit ChatOps ([Mattermost](https://mattermost.com/), [Rocket.Chat](https://rocket.chat/), [Matrix](https://matrix.org/), LLM/MCP ([exemple](https://github.com/qjoly/talos-mcp)) ?)
 - [ ] Installer une partit Wiki ([Docusaurus](https://docusaurus.io/))
 - [ ] Faciliter les automatismes ([N8N](https://n8n.io/), [Node-Red](https://nodered.org/))
 

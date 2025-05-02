@@ -42,3 +42,6 @@ actions:
     spec:
       title: 'ci: Bump `k9s` version to {{ source "k9s" }}'
       automerge: false
+      labels:
+      - "Upgrade"
+      - "UpdateCLI"

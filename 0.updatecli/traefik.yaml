@@ -24,6 +24,9 @@ actions:
         - `crowdsec` plugin version: {{ source "pluginsCrowdSec" }}
         - `sablier` plugin version: {{ source "pluginsSablier" }}
       automerge: false
+      labels:
+      - "Upgrade"
+      - "UpdateCLI"
 
 sources:
   traefik:

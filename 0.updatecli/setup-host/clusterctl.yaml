@@ -42,3 +42,6 @@ actions:
     spec:
       title: 'ci: Bump `clusterctl` version to {{ source "clusterctl" }}'
       automerge: false
+      labels:
+      - "Upgrade"
+      - "UpdateCLI"

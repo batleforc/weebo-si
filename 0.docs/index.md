@@ -11,8 +11,8 @@ hero:
       text: Introduction
       link: /0.introduction/home
     - theme: alt
-      text: Sources
-      link: /0.introduction/sources
+      text: Kanban
+      link: /0.introduction/kanban
 
 features:
   - title: Automatisation

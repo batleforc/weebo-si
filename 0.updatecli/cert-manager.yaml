@@ -22,6 +22,9 @@ actions:
       description: |
         Bump `cert-manager` version
         - `cert-manager` version: {{ source "cert-manager" }}
+      labels:
+      - "Upgrade"
+      - "UpdateCLI"
 
 sources:
   cert-manager:

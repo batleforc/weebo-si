@@ -22,6 +22,9 @@ actions:
         Bump `External DNS` version
         - `External DNS` version: {{ source "externalDns" }}
       automerge: false
+      labels:
+      - "Upgrade"
+      - "UpdateCLI"
 
 sources:
   externalDns:

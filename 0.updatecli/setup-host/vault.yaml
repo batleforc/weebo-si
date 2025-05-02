@@ -44,3 +44,6 @@ actions:
     spec:
       title: 'ci: Bump `vault` version to {{ source "vault" }}'
       automerge: false
+      labels:
+      - "Upgrade"
+      - "UpdateCLI"

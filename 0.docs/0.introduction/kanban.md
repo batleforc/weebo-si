@@ -42,6 +42,13 @@ kanban
 - [Dex](https://dexidp.io/)
 - [WarpGate](https://warpgate.null.page/docs/)
 
+## Actions récurrentes
+
+- Nuke le Proxmox tout les 2 mois
+  - last update : 19-04-2025
+  - next update : 19-06-2025
+- Vérifier les MR de mise a jour toute les semaines
+
 ## Stream
 
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
@@ -179,8 +186,9 @@ kanban
   - Déployer un Auth Provider sur Main Cluster
   - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/)
   - Passage a Talos V1.10.0 progressif, créer un cluster en v1.9 puis le migrer vers v1.10.0, vérifier que tout fonctionne et ensuite faire la mise a jour de l'image de base/template
+  - Déployer les sous instances ArgoCD sur chaque cluster via l'ArgoCD principal
 - Sujet
-  - [Talos V1.10.0](https://github.com/siderolabs/talos/releases/tag/v1.10.0)
+  - [Talos v1.10.0](https://github.com/siderolabs/talos/releases/tag/v1.10.0)
 - Bilan
 
 ## Music
@@ -195,11 +203,11 @@ kanban
 - [x] Créer un fichier de configuration updatecli
 - [x] Mise en place CI/CD
 - [x] Automatiser la mise a jour des outils dans le script ansible
-- [ ] Automatiser la mise a jour des outils dans l'image Che-Ops
-- [ ] Automatiser la mise a jour des Traefik
-- [ ] Automatiser la mise a jour des CertManager
-- [ ] Automatiser la mise a jour des Cilium
-- [ ] Automatiser la mise a jour des Talos
+- [x] Automatiser la mise a jour des outils dans l'image Che-Ops
+- [x] Automatiser la mise a jour des Traefik
+- [x] Automatiser la mise a jour des CertManager
+- [x] Automatiser la mise a jour des Cilium
+- [x] Automatiser la mise a jour des Talos
 - [ ] Automatiser la mise a jour des ArgoCD
 
 ### us15 - Faire une gestion DNS avec alias dynamique ✅
