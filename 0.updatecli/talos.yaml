@@ -34,8 +34,8 @@ targets:
     name: "Update QEMU Guest Agent"
     kind: yaml
     scmid: default
-    sourceid: qemuGuestAgent
+    #sourceid: qemuGuestAgent
     spec:
       file: capi.argo/helm/cluster/values.yaml
       key: "extensions.qemuGuestAgent.image"
-      tag: 'ghcr.io/siderolabs/qemu-guest-agent:{{ source "qemuGuestAgent" }}'
+      value: 'ghcr.io/siderolabs/qemu-guest-agent:{{ source "qemuGuestAgent" }}'
