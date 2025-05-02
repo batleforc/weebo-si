@@ -35,19 +35,35 @@ sources:
       name: proxmox
 
 targets:
-  bumpTalos:
-    name: "Update Talos Provider"
+  bumpTalosCapi:
+    name: "Update Talos Provider CAPI"
     kind: terraform/provider
     scmid: default
     sourceid: talos
     spec:
       file: capi.terraform/main.tf
       provider: "talos"
-  bumpProxmox:
-    name: "Update Proxmox Provider"
+  bumpTalosPrepare:
+    name: "Update Talos Provider Prepare"
+    kind: terraform/provider
+    scmid: default
+    sourceid: talos
+    spec:
+      file: 0.terraform/download-iso-talos/main.tf
+      provider: "talos"
+  bumpProxmoxCapi:
+    name: "Update Proxmox Provider CAPI"
     kind: terraform/provider
     scmid: default
     sourceid: proxmox
     spec:
       file: capi.terraform/main.tf
+      provider: "proxmox"
+  bumpProxmoxPrepare:
+    name: "Update Proxmox Provider Prepare"
+    kind: terraform/provider
+    scmid: default
+    sourceid: proxmox
+    spec:
+      file: 0.terraform/download-iso-talos/main.tf
       provider: "proxmox"
