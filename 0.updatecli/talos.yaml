@@ -56,7 +56,7 @@ sources:
     spec:
       command: |
         #!/bin/bash
-        set -euo pipefail
+        set -e
         # Get the latest version of the Talos factory image
         latest_version=$(curl -s --data-binary @./0.updatecli/shell/talos-scheme.yaml https://factory.talos.dev/schematics | jq -r '.id')
         # Print the latest version
