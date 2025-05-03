@@ -34,23 +34,33 @@ sources:
       architecture: "linux/amd64"
       versionFilter:
         kind: semver
-  factoryTalos:
-    kind: http
+  # factoryTalos:
+  #   kind: http
+  #   spec:
+  #     url: https://factory.talos.dev/schematics
+  #     request:
+  #       verb: POST
+  #       body: |
+  #         customization:
+  #           extraKernelArgs:
+  #               - -net.ifnames=0
+  #           systemExtensions:
+  #               officialExtensions:
+  #                   - siderolabs/qemu-guest-agent
+  #       headers:
+  #         Content-Type: application/x-www-form-urlencoded
+  #     responseasserts:
+  #       statuscode: 200
+  factoryTalosV2:
+    kind: shell
     spec:
-      url: https://factory.talos.dev/schematics
-      request:
-        verb: POST
-        body: |
-          customization:
-            extraKernelArgs:
-                - -net.ifnames=0
-            systemExtensions:
-                officialExtensions:
-                    - siderolabs/qemu-guest-agent
-        headers:
-          Content-Type: application/x-www-form-urlencoded
-      responseasserts:
-        statuscode: 200
+      command: |
+        #!/bin/bash
+        set -euo pipefail
+        # Get the latest version of the Talos factory image
+        latest_version=$(curl -s --data-binary @./0.updatecli/shell/talos-scheme.yaml https://factory.talos.dev/schematics | jq -r '.id')
+        # Print the latest version
+        echo "$latest_version"
 
 targets:
   bumpQemuGuestAgent:
@@ -70,4 +80,5 @@ targets:
     spec:
       file: capi.argo/helm/cluster/values.yaml
       key: "controlPlane.installImage"
-      value: 'factory.talos.dev/nocloud-installer/{{ (source "factoryTalos" | fromJson ).id }}:v1.10.0'
+      #value: 'factory.talos.dev/nocloud-installer/{{ (source "factoryTalos" | fromJson ).id }}:v1.10.0'
+      value: 'factory.talos.dev/nocloud-installer/{{ source "factoryTalosV2" }}:v1.10.0'
