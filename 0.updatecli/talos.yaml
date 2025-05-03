@@ -47,6 +47,8 @@ sources:
             systemExtensions:
                 officialExtensions:
                     - siderolabs/qemu-guest-agent
+        headers:
+          Content-Type: application/octet-stream
       responseasserts:
         statuscode: 200
 
