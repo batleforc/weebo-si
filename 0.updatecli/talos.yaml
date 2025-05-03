@@ -64,4 +64,4 @@ targets:
     spec:
       file: capi.argo/helm/cluster/values.yaml
       key: "controlPlane.installImage"
-      value: 'factory.talos.dev/nocloud-installer/{{ (source "factoryTalos").id }}:v1.10.0'
+      value: 'factory.talos.dev/nocloud-installer/{{ (source "factoryTalos" | toJson).id }}:v1.10.0'
