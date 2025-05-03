@@ -9,9 +9,6 @@ config:
 
 kanban
   todoS[To Do On Stream]
-    us4[Nuke le Proxmox et automatisé la configuration réseau DHCP]@{ assigned: Post-Nuke, priority: 'Low'}
-    us5[Créer le cluster CAPI avec un CloudInit]@{ assigned: Post-Nuke, priority: 'Low'}
-    us6[Passer les cluster sous cilium]@{ assigned: Post-Nuke, priority: 'Low'}
   todo[To Do]
     us3[Définir les règles de sécurité pour les clusters]@{ assigned: Pre-Nuke, priority: 'High'}
     us7[Gestion PKI partagé avec DNS bind9]@{ assigned: Post-Nuke, priority: 'Low'}
@@ -32,6 +29,9 @@ kanban
     us13[Hardening SSH]@{ assigned: Pre-Nuke, priority: 'High'}
     use8[Check if HeadLamp can be used to access dynamically each cluster]@{ assigned: Pre-Nuke, priority: 'High'}
     us15[Faire une gestion DNS avec alias dynamique]@{ assigned: Post-Nuke, priority: 'Low'}
+    us4[Nuke le Proxmox et automatisé la configuration réseau DHCP]@{ assigned: Post-Nuke, priority: 'Low'}
+    us5[Créer le cluster CAPI avec un CloudInit]@{ assigned: Post-Nuke, priority: 'Low'}
+    us6[Passer les cluster sous cilium]@{ assigned: Post-Nuke, priority: 'Low'}
 ```
 
 - [Talos Kubernetes configuration](https://www.talos.dev/v1.9/reference/configuration/v1alpha1/config/)
@@ -41,6 +41,7 @@ kanban
 - [Falco rules](https://une-tasse-de.cafe/blog/falco/)
 - [Dex](https://dexidp.io/)
 - [WarpGate](https://warpgate.null.page/docs/)
+- [Kyverno Reporter](https://kyverno.github.io/policy-reporter-docs/getting-started/installation.html)
 
 ## Actions récurrentes
 
