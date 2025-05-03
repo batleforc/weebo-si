@@ -2,8 +2,8 @@ version: '3'
 
 env:
   KUBECONFIG: "{{.ROOT_DIR}}/capi.terraform/kubeconfig"
-  VAULT_ADDR: "https://127.0.0.1:8200"
-  VAULT_CACERT: "{{.ROOT_DIR}}/vault-ca.crt"
+  VAULT_ADDR: "https://vault.capi.weebo.poc"
+  VAULT_CACERT: "{{.ROOT_DIR}}/capi.task/vault-ca.crt"
 
 tasks:
   get-ca:
@@ -41,6 +41,10 @@ tasks:
     - task capi:vault:get-ca
     - terraform init
     - TF_VAR_vault_token={{.VAULT_TOKEN}} terraform apply -auto-approve
+  trust-root:
+    cmds:
+    #- task vault:vault -- read -field=certificate pki/root/signing/cert
+    - /usr/local/share/ca-certificates
   ks-record:
     vars:
       PASSWORD:

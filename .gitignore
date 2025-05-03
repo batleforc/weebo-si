@@ -20,7 +20,7 @@ kubeconfig.*.yml
 talosconfig.*.yml
 
 0.keepassxc
-
+root_ca*.pem
 ## VitePress
 
 0.docs/.vitepress/dist

@@ -30,3 +30,6 @@ server:
     annotations:
       ingress.kubernetes.io/ssl-redirect: true
       cert-manager.io/cluster-issuer: "vault-issuer"
+      cert-manager.io/common-name: "argo.capi.weebo.poc"
+      cert-manager.io/subject-organizations: "WeeboSI"
+      cert-manager.io/subject-organizationalunits: "CAPI"
