@@ -19,7 +19,7 @@ spec:
         core: cluster-api:v1.10.1
         infrastructure: proxmox:v0.7.0
         controlPlane: talos:v0.5.10
-        bootstrap: talos:v0.6.7
+        bootstrap: talos:v0.6.9
         ipam: in-cluster:v1.0.1
         addon: helm:v0.3.1
         configSecret:
