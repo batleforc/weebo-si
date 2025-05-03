@@ -30,6 +30,17 @@ tasks:
         sh: task vault:get-token
     cmds:
     - VAULT_TOKEN={{.VAULT_TOKEN}} vault {{ .CLI_ARGS }}
+  init-pki-int:
+    env:
+      VAULT_CACERT: "{{.ROOT_DIR}}/capi.task/vault-ca.crt"
+    vars:
+      VAULT_TOKEN:
+        sh: task capi:vault:get-token
+    dir: ../capi.vault_terraform
+    cmds:
+    - task capi:vault:get-ca
+    - terraform init
+    - TF_VAR_vault_token={{.VAULT_TOKEN}} terraform apply -auto-approve
   ks-record:
     vars:
       PASSWORD:

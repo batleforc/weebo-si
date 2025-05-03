@@ -131,7 +131,7 @@ spec:
         policies: allow_secrets
         ttl: 1h
       - name: cert-manager
-        bound_service_account_names: [ "cert-manager" ]
+        bound_service_account_names: [ "cert-manager", "vault-issuer" ]
         bound_service_account_namespaces: [ "cert-manager" ]
         policies: allow_pki
         ttl: 1h
