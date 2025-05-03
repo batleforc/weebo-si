@@ -48,7 +48,7 @@ sources:
                 officialExtensions:
                     - siderolabs/qemu-guest-agent
         headers:
-          Content-Type: application/octet-stream
+          Content-Type: application/x-www-form-urlencoded
       responseasserts:
         statuscode: 200
 
