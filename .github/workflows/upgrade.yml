@@ -29,6 +29,16 @@ jobs:
       - name: Install Updatecli in the runner
         uses: updatecli/updatecli-action@v2
 
+      - name: Check if talos factory reachable
+        run: |
+          curl -vvv https://factory.talos.dev/schematics
+        continue-on-error: true
+
+      - name: Check if talos factory reachable2
+        run: |
+          curl -X POST -vvv --data-binary @test.yaml https://factory.talos.dev/schematics
+        continue-on-error: true
+
       - name: Set up GPG
         run: |
           echo "$GPG_PRIVATE_KEY" | gpg --import
