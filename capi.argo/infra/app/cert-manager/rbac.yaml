@@ -29,5 +29,5 @@ metadata:
   name: vault-issuer
   namespace: cert-manager
   annotations:
-    kubernetes.io/service-account.name: vault-issuer
+    kubernetes.io/service-account.name: cert-manager
 type: kubernetes.io/service-account-token
