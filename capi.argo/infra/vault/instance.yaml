@@ -108,10 +108,10 @@ spec:
     # Detail can reference: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container
     vault:
       limits:
-        memory: "512Mi"
+        memory: "1Gi"
         cpu: "200m"
       requests:
-        memory: "256Mi"
+        memory: "512Mi"
         cpu: "100m"
 
   # See: https://banzaicloud.com/docs/bank-vaults/cli-tool/#example-external-vault-configuration
