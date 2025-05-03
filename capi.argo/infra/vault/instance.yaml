@@ -182,7 +182,6 @@ spec:
         - name: default
           allowed_domains: weebo.poc
           allow_subdomains: true
-          generate_lease: true
           require_cn: false
           ttl: 1m
     # Allows writing some secrets to Vault (useful for development purposes).
