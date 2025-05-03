@@ -114,8 +114,8 @@ targets:
     sourceid: coreClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
-      key: spec.source.helm.valuesObject.core
-      value: 'cluster-api:{{ source "coreClusterAPI" }}'
+      key: spec.source.helm.valuesObject.core.cluster-api
+      value: '{{ source "coreClusterAPI" }}'
   bumpInfrastructureProxmoxClusterAPI:
     kind: yaml
     name: "Bump infrastructure-proxmox cluster API version"
@@ -123,8 +123,8 @@ targets:
     sourceid: infrastructureProxmoxClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
-      key: spec.source.helm.valuesObject.infrastructure
-      value: 'proxmox:{{ source "infrastructureProxmoxClusterAPI" }}'
+      key: spec.source.helm.valuesObject.infrastructure.proxmox
+      value: '{{ source "infrastructureProxmoxClusterAPI" }}'
   bumpControlPlaneTalosClusterAPI:
     kind: yaml
     name: "Bump control-plane-talos cluster API version"
@@ -132,8 +132,8 @@ targets:
     sourceid: controlPlaneTalosClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
-      key: spec.source.helm.valuesObject.controlPlane
-      value: 'talos:{{ source "controlPlaneTalosClusterAPI" }}'
+      key: spec.source.helm.valuesObject.controlPlane.talos
+      value: '{{ source "controlPlaneTalosClusterAPI" }}'
   bumpBootstrapTalosClusterAPI:
     kind: yaml
     name: "Bump bootstrap-talos cluster API version"
@@ -141,8 +141,8 @@ targets:
     sourceid: bootstrapTalosClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
-      key: spec.source.helm.valuesObject.bootstrap
-      value: 'talos:{{ source "bootstrapTalosClusterAPI" }}'
+      key: spec.source.helm.valuesObject.bootstrap.talos
+      value: '{{ source "bootstrapTalosClusterAPI" }}'
   bumpIpamInClusterClusterAPI:
     kind: yaml
     name: "Bump ipam-in-cluster cluster API version"
@@ -150,8 +150,8 @@ targets:
     sourceid: ipamInClusterClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
-      key: spec.source.helm.valuesObject.ipam
-      value: 'in-cluster:{{ source "ipamInClusterClusterAPI" }}'
+      key: spec.source.helm.valuesObject.ipam.in-cluster
+      value: '{{ source "ipamInClusterClusterAPI" }}'
   bumpAddonHelmClusterAPI:
     kind: yaml
     name: "Bump addon-helm cluster API version"
@@ -159,8 +159,8 @@ targets:
     sourceid: addonHelmClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
-      key: spec.source.helm.valuesObject.addon
-      value: 'helm:{{ source "addonHelmClusterAPI" }}'
+      key: spec.source.helm.valuesObject.addon.helm
+      value: '{{ source "addonHelmClusterAPI" }}'
   bumpOperatorClusterAPI:
     kind: yaml
     name: "Bump operator cluster API version"
