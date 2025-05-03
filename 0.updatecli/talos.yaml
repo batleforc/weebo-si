@@ -47,6 +47,8 @@ sources:
             systemExtensions:
                 officialExtensions:
                     - siderolabs/qemu-guest-agent
+      responseasserts:
+        statuscode: 200
 
 targets:
   bumpQemuGuestAgent:
