@@ -22,3 +22,12 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: vault-issuer
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: vault-issuer
+  namespace: cert-manager
+  annotations:
+    kubernetes.io/service-account.name: vault-issuer
+type: kubernetes.io/service-account-token

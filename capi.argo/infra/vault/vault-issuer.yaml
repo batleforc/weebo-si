@@ -13,6 +13,6 @@ spec:
       kubernetes:
         role: vault-issuer
         mountPath: /v1/auth/kubernetes
-        serviceAccountRef:
+        secretRef:
           name: vault-issuer
-          namespace: cert-manager
+          key: token
