@@ -16,7 +16,7 @@ spec:
     helm:
       releaseName: cluster-operator
       valuesObject:
-        core: cluster-api:v1.9.6
+        core: cluster-api:v1.10.1
         infrastructure: proxmox:v0.7.0
         controlPlane: talos:v0.5.8
         bootstrap: talos:v0.6.7
