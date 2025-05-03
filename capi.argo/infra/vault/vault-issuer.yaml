@@ -15,3 +15,4 @@ spec:
         mountPath: /v1/auth/kubernetes
         serviceAccountRef:
           name: vault-issuer
+          namespace: cert-manager
