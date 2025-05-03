@@ -4,7 +4,7 @@ metadata:
   name: vault-issuer
 spec:
   vault:
-    path: pki_int/sign/weebo.poc
+    path: pki_int/sign/default
     server: https://vault.capi.weebo.poc
     caBundleSecretRef:
       key: ca.crt
