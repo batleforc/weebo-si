@@ -34,23 +34,6 @@ sources:
       architecture: "linux/amd64"
       versionFilter:
         kind: semver
-  # factoryTalos:
-  #   kind: http
-  #   spec:
-  #     url: https://factory.talos.dev/schematics
-  #     request:
-  #       verb: POST
-  #       body: |
-  #         customization:
-  #           extraKernelArgs:
-  #               - -net.ifnames=0
-  #           systemExtensions:
-  #               officialExtensions:
-  #                   - siderolabs/qemu-guest-agent
-  #       headers:
-  #         Content-Type: application/x-www-form-urlencoded
-  #     responseasserts:
-  #       statuscode: 200
   factoryTalosV2:
     kind: shell
     spec:
@@ -80,5 +63,4 @@ targets:
     spec:
       file: capi.argo/helm/cluster/values.yaml
       key: "controlPlane.installImage"
-      #value: 'factory.talos.dev/nocloud-installer/{{ (source "factoryTalos" | fromJson ).id }}:v1.10.0'
       value: 'factory.talos.dev/nocloud-installer/{{ source "factoryTalosV2" }}:v1.10.0'

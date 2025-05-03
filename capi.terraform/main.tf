@@ -33,7 +33,7 @@ variable "proxmox_node_name" {
 
 variable "talos_version" {
   type    = string
-  default = "1.9.4"
+  default = "1.10.0"
 
 }
 

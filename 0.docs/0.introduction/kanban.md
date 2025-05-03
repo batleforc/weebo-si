@@ -173,7 +173,25 @@ kanban
 
 ### Stream 26 avril 2025 - Pause (Out Of Town)
 
-### Stream 3 mai 2025 : SOON TM
+### Stream 3 mai 2025
+
+- Debut : 16h30
+- FIN : ~ 19H40 - [Stream 3H18]
+- Vod : [Twitch](https://www.twitch.tv/videos/2449245677) YouTube : SOON TM
+- Musique: [NCS](https://ncs.io/)
+  - [NCS: The Best of 2025 ⚡️](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgkDw2aMG2lM5heA8cbLvOoN)
+- Objectif (Pas dans l'ordre):
+  - Passage a Talos V1.10.0 progressif, créer un cluster en v1.9 puis le migrer vers v1.10.0, vérifier que tout fonctionne et ensuite faire la mise a jour de l'image de base/template
+    - [Talos Upgrade](https://www.talos.dev/v1.10/talos-guides/upgrading-talos/)
+    - [Kubernetes Upgrade](https://www.talos.dev/v1.10/kubernetes-guides/upgrading-kubernetes/)
+    - [Cluster API Upgrade](https://github.com/batleforc/weebo-si/pull/100)
+- Sujet
+  - [Talos v1.10.0](https://github.com/siderolabs/talos/releases/tag/v1.10.0)
+- Bilan
+  - Upgrade de Talos v1.10.0 fait sur le cluster Main et passage en kubernetes v1.33.0
+  - Automatisation de l'upgrade de Talos et Kubernetes effectué
+
+### Stream 10 mai 2025 : SOON TM
 
 - Debut : 16h30
 - FIN : ~ 18H30
@@ -186,13 +204,8 @@ kanban
   - Trust le RootCA sur mon ordinateur et [le propager sur les clusters](https://github.com/cert-manager/trust-manager)
   - Déployer un Auth Provider sur Main Cluster
   - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/)
-  - Passage a Talos V1.10.0 progressif, créer un cluster en v1.9 puis le migrer vers v1.10.0, vérifier que tout fonctionne et ensuite faire la mise a jour de l'image de base/template
-    - [Talos Upgrade](https://www.talos.dev/v1.10/talos-guides/upgrading-talos/)
-    - [Kubernetes Upgrade](https://www.talos.dev/v1.10/kubernetes-guides/upgrading-kubernetes/)
-    - [Cluster API Upgrade](https://github.com/batleforc/weebo-si/pull/100)
   - Déployer les sous instances ArgoCD sur chaque cluster via l'ArgoCD principal
 - Sujet
-  - [Talos v1.10.0](https://github.com/siderolabs/talos/releases/tag/v1.10.0)
 - Bilan
 
 ## Music

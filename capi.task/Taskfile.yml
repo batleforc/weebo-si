@@ -31,7 +31,7 @@ tasks:
     dir: capi.terraform
     cmds:
     - echo "Init CAPI node with Proxmox and Talos"
-    - terraform init
+    - terraform init -upgrade
     - TF_VAR_proxmox_api="${PROXMOX_URL}" TF_VAR_proxmox_api_token="${PROXMOX_USER}!${PROXMOX_TOKEN_ID}=${PROXMOX_TOKEN_SECRET}" TF_VAR_proxmox_ssh_username="${PROXMOX_NODE}" TF_VAR_proxmox_node_name="${PROXMOX_NODE}" terraform apply {{ .CLI_ARGS }}
   init-provider:
     dir: capi.terraform_init
