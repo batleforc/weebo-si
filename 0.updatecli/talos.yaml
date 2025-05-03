@@ -76,7 +76,7 @@ targets:
     name: "Update Talos Install Image"
     kind: yaml
     scmid: default
-    sourceid: factoryTalos
+    sourceid: factoryTalosV2
     spec:
       file: capi.argo/helm/cluster/values.yaml
       key: "controlPlane.installImage"
