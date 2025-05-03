@@ -183,6 +183,7 @@ spec:
           allowed_domains: weebo.poc
           allow_subdomains: true
           generate_lease: true
+          use_csr_common_name: true
           ttl: 1m
     # Allows writing some secrets to Vault (useful for development purposes).
     # See https://www.vaultproject.io/docs/secrets/kv/index.html for more information.
