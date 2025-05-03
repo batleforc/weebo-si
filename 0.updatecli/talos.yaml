@@ -34,6 +34,19 @@ sources:
       architecture: "linux/amd64"
       versionFilter:
         kind: semver
+  factoryTalos:
+    kind: http
+    spec:
+      url: https://factory.talos.dev/schematics
+      request:
+        verb: POST
+        body: |
+          customization:
+            extraKernelArgs:
+                - -net.ifnames=0
+            systemExtensions:
+                officialExtensions:
+                    - siderolabs/qemu-guest-agent
 
 targets:
   bumpQemuGuestAgent:
@@ -44,3 +57,11 @@ targets:
       file: capi.argo/helm/cluster/values.yaml
       key: "extensions.qemuGuestAgent.image"
       value: 'ghcr.io/siderolabs/qemu-guest-agent:{{ source "qemuGuestAgent" }}'
+  bumpInstallImage:
+    name: "Update Talos Install Image"
+    kind: yaml
+    scmid: default
+    spec:
+      file: capi.argo/helm/cluster/values.yaml
+      key: "controlPlane.installImage"
+      value: 'factory.talos.dev/nocloud-installer/{{ source "factoryTalos" | .id }}:v1.10.0'
