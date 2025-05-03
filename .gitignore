@@ -21,6 +21,10 @@ talosconfig.*.yml
 
 0.keepassxc
 root_ca*.pem
+root_ca*.crt
+weebo-si-int-ca.crt
+weebo-si-int-ca.pem
+
 ## VitePress
 
 0.docs/.vitepress/dist

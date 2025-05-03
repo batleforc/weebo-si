@@ -44,7 +44,13 @@ tasks:
   trust-root:
     cmds:
     #- task vault:vault -- read -field=certificate pki/root/signing/cert
-    - /usr/local/share/ca-certificates
+    - sudo cp root_ca.pem /usr/local/share/ca-certificates/weebo-si-root-ca.crt
+    - sudo update-ca-certificates
+  trust_intermediate:
+    cmds:
+    - task vault:vault -- list -format=json pki_int/certs | jq .[] | awk '{print "task vault:vault -- read -format=json pki_int/cert/" $1 " | jq -r .data.certificate | cat >> weebo-si-int-ca.pem"}' | bash
+    - sudo cp weebo-si-int-ca.pem /usr/local/share/ca-certificates/weebo-si-int-ca.crt
+    - sudo update-ca-certificates
   ks-record:
     vars:
       PASSWORD:
