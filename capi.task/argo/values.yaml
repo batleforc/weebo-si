@@ -26,4 +26,7 @@ global:
 server:
   ingress:
     enabled: true
-    tls: false
+    tls: true
+    annotations:
+      ingress.kubernetes.io/ssl-redirect: true
+      cert-manager.io/cluster-issuer: "vault-issuer"
