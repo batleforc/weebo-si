@@ -13,7 +13,7 @@ spec:
   controlPlaneConfig:
     controlplane:
       generateType: controlplane
-      talosVersion: v1.9
+      talosVersion: v1.10
       strategicPatches:
       - |
         - op: replace
