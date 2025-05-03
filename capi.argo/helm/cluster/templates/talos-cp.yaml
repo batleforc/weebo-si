@@ -13,7 +13,7 @@ spec:
   controlPlaneConfig:
     controlplane:
       generateType: controlplane
-      talosVersion: v1.10
+      talosVersion: {{ .Values.controlPlane.version }}
       strategicPatches:
       - |
         - op: replace
@@ -29,6 +29,9 @@ spec:
           path: /machine/install/extraKernelArgs
           value:
             - net.ifnames=0
+        - op: add
+          path: /machine/install/image
+          value: {{ .Values.controlPlane.installImage }}
         - op: add
           path: /machine/network/interfaces
           value:

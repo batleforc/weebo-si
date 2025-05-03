@@ -61,6 +61,8 @@ kubernetes:
     argoHelmInstall: enabled
 
 controlPlane:
+  installImage: factory.talos.dev/nocloud-installer/22300f9a27b3f9398e6cb13526ec528c03769c59b041f70515e0cbe4ad775912:v1.10.0
+  version: v1.10
   replicas: 1
   allowScheduling: true
   tccm: true
