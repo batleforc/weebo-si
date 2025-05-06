@@ -6,8 +6,8 @@ spec:
   sources:
   - useDefaultCAs: true
   - configMap:
-    name: "certificate"
-    includeAllKeys: true
+      name: "certificate"
+      includeAllKeys: true
   target:
     configMap:
       key: main-ca.crt
