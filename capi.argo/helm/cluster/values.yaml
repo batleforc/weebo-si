@@ -44,6 +44,10 @@ certManager:
   version: 1.17.2
   installCRDs: true
 
+trustManager:
+  enabled: true
+  version: 0.17.1
+
 traefik:
   enabled: true
   version: 35.2.0

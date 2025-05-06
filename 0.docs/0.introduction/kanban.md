@@ -206,6 +206,8 @@ kanban
   - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/)
   - Déployer les sous instances ArgoCD sur chaque cluster via l'ArgoCD principal
 - Sujet
+  - [Anubis](https://anubis.techaro.lol/)
+  - [Argocd V3](https://github.com/argoproj/argo-cd/releases/tag/v3.0.0)
 - Bilan
 
 ## Music
@@ -256,6 +258,7 @@ Ne pas oublier une migration vers OpenBao quand celui-ci sera supporté par le p
 - [Tuto OpenBao](https://openbao.org/docs/secrets/pki/quick-start-root-ca/)
 - [A suivre](https://github.com/bank-vaults/bank-vaults/issues/3077)
 - [Exemple](https://github.com/bank-vaults/bank-vaults/blob/main/vault-config.yml)
+- [Google trust ?](https://serverfault.com/questions/946756/ssl-certificate-in-system-store-not-trusted-by-chrome) - Maybe ?
 
 L'objectif est que chaque Cluster puisse avoir son propre IntermediateCA et que l'autorité RootCA soit présente sur CAPI dans la déclinaison Vault présente.
 

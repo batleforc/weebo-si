@@ -22,6 +22,7 @@ actions:
       description: |
         Bump `cert-manager` version
         - `cert-manager` version: {{ source "cert-manager" }}
+        - `trust-manager` version: {{ source "trust-manager" }}
       labels:
       - "Upgrade"
       - "UpdateCLI"
@@ -33,6 +34,18 @@ sources:
     spec:
       owner: cert-manager
       repository: cert-manager
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: semver
+    transformers:
+    - trimprefix: "v"
+  trust-manager:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: jetstack
+      repository: trust-manager
       token: "{{ requiredEnv .github.token }}"
       username: "{{ .github.username }}"
       versionFilter:
@@ -59,3 +72,12 @@ targets:
       file: capi.argo/helm/cluster/values.yaml
       key: "certManager.version"
       value: '{{ source "cert-manager" }}'
+  bumptrust-manager:
+    kind: yaml
+    name: "Bump trust-manager version"
+    scmid: default
+    sourceid: trust-manager
+    spec:
+      file: capi.argo/helm/cluster/values.yaml
+      key: "trustManager.version"
+      value: '{{ source "trust-manager" }}'
