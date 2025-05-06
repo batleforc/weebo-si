@@ -119,7 +119,10 @@ spec:
   externalConfig:
     policies:
     - name: allow_secrets
-      rules: path "secret/*" { capabilities = ["create", "read", "update", "delete", "list"] }
+      rules: |
+        path "secret/*" { capabilities = ["create", "read", "update", "delete", "list"] }
+        path "pki_int/*" { capabilities = ["read", "list"] }
+        path "pki/*" { capabilities = ["read", "list"] }
     - name: allow_pki
       rules: path "pki_int/*" { capabilities = ["create", "read", "update", "delete", "list"] }
     auth:
