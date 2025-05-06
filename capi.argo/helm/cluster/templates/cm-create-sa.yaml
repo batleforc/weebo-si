@@ -95,16 +95,18 @@ data:
             method: GET
             return_content: true
             ca_path: /ca/vault/ca.crt
+            body_format: raw
+            status_code: 200
           register: rootca
-          failed_when: rootca.status != 200
         - name: Fetch SubCA from Vault
           ansible.builtin.uri:
             url: "{{ .Values.certificate.subCA.url }}"
             method: GET
             return_content: true
             ca_path: /ca/vault/ca.crt
+            body_format: raw
+            status_code: 200
           register: subca
-          failed_when: subca.status != 200
         - name: Create Secret
           ansible.builtin.template:
             src: manifest.j2
