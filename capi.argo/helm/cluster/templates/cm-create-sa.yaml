@@ -63,8 +63,8 @@ data:
       labels:
         weebo.si/source-ca: "true"
     data:
-      root-ca.crt: {{"{{"}} rootca.content.certificate | b64encode }}
-      sub-ca.crt: {{"{{"}} subca.content.certificate | b64encode }}
+      root-ca.crt: {{"{{"}} rootca.content | from_json | json_query("certificate")  | b64encode }}
+      sub-ca.crt: {{"{{"}} subca.content | from_json | json_query("certificate") | b64encode }}
       vault-ca.crt: {{"{{"}} lookup('ansible.builtin.file', '/ca/vault/ca.crt') | b64encode }}
   secrets.j2: |
     apiVersion: v1
