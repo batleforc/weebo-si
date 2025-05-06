@@ -63,9 +63,9 @@ data:
       labels:
         weebo.si/source-ca: "true"
     data:
-      root-ca.crt: {{"{{"}} lookup('ansible.builtin.file', '/tmp/rootca.crt') | b64decode }}
-      sub-ca.crt: {{"{{"}} lookup('ansible.builtin.file', '/tmp/subca.crt') | b64decode }}
-      vault-ca.crt: {{"{{"}} lookup('ansible.builtin.file', '/ca/vault/ca.crt') | b64decode }}
+      root-ca.crt: {{"{{"}} lookup('ansible.builtin.file', '/tmp/rootca.crt') | b64encode }}
+      sub-ca.crt: {{"{{"}} lookup('ansible.builtin.file', '/tmp/subca.crt') | b64encode }}
+      vault-ca.crt: {{"{{"}} lookup('ansible.builtin.file', '/ca/vault/ca.crt') | b64encode }}
   secrets.j2: |
     apiVersion: v1
     kind: Secret
