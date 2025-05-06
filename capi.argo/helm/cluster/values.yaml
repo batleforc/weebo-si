@@ -34,6 +34,12 @@ cilium:
   - 10.96.0.0/12
   #- 2001:db8:7653:299:cafe:1::/96
 
+certificate:
+  rootCA:
+    url: https://vault.capi.weebo.poc/v1/pki/ca
+  subCA:
+    url: https://vault.capi.weebo.poc/v1/pki_int/ca
+
 kyverno:
   enabled: true
   version: 3.4.1

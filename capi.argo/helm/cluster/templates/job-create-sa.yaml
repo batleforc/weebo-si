@@ -22,6 +22,8 @@ spec:
           name: {{ .Release.Name }}-script-vol
         - mountPath: /tokens
           name: kube-secret
+        - mountPath: "/ca/vault"
+          name: vault-ca
       restartPolicy: Never
       volumes:
       - name: {{ .Release.Name }}-script-vol
@@ -30,3 +32,6 @@ spec:
       - name: kube-secret
         secret:
           secretName: {{ .Release.Name }}-kubeconfig
+      - name: vault-ca
+        secret:
+          secretName: vault-tls

@@ -3,7 +3,7 @@ metadata:
   name: {{ .Release.Name }}-create-sa
 apiVersion: v1
 data:
-  manifest.yaml: |
+  manifest.j2: |
     apiVersion: v1
     kind: ServiceAccount
     metadata:
@@ -47,6 +47,25 @@ data:
       annotations:
         kubernetes.io/service-account.name: argocd-manager
     type: kubernetes.io/service-account-token
+    ---
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: cert-manager
+      labels:
+        name: cert-manager
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: certificate
+      namespace: cert-manager
+      labels:
+        weebo.si/source-ca: "true"
+    data:
+      root-ca.crt: {{"{{"}} rootca.content | b64decode }}
+      sub-ca.crt: {{"{{"}} subca.content | b64decode }}
+      vault-ca.crt: {{"{{"}} lookup('ansible.builtin.file', '/ca/vault/ca.crt') | b64decode }}
   secrets.j2: |
     apiVersion: v1
     kind: Secret
@@ -70,9 +89,29 @@ data:
   playbook.yaml: |
     - hosts: localhost
       tasks:
+        - name: Fetch RootCA from Vault
+          ansible.builtin.uri:
+            url: "{{ .Values.certificate.rootCA.url }}"
+            method: GET
+            return_content: true
+            ca_path: /ca/vault/ca.crt
+          register: rootca
+          failed_when: rootca.status != 200
+        - name: Fetch SubCA from Vault
+          ansible.builtin.uri:
+            url: "{{ .Values.certificate.subCA.url }}"
+            method: GET
+            return_content: true
+            ca_path: /ca/vault/ca.crt
+          register: subca
+          failed_when: subca.status != 200
+        - name: Create Secret
+          ansible.builtin.template:
+            src: manifest.j2
+            dest: /tmp/manifest.yaml
         - name: Apply manifest
           ansible.builtin.command:
-            cmd: "kubectl apply -f /scripts/manifest.yaml --kubeconfig /tokens/value"
+            cmd: "kubectl apply -f /tmp/manifest.yaml --kubeconfig /tokens/value"
         - name: Get Secret
           ansible.builtin.command:
             cmd: "kubectl get secret argocd-manager-secret -n kube-system -o jsonpath='{.data.token}' --kubeconfig /tokens/value"
