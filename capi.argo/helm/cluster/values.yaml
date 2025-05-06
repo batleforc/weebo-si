@@ -36,9 +36,9 @@ cilium:
 
 certificate:
   rootCA:
-    url: https://vault.capi.weebo.poc/v1/pki/ca
+    url: https://vault.capi.weebo.poc/v1/pki/issuer/default/json
   subCA:
-    url: https://vault.capi.weebo.poc/v1/pki_int/ca
+    url: https://vault.capi.weebo.poc/v1/pki_int/issuer/default/json
 
 kyverno:
   enabled: true

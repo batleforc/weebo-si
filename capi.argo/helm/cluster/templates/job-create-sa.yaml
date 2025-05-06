@@ -7,13 +7,6 @@ metadata:
 spec:
   backoffLimit: 100
   template:
-    metadata:
-      annotations:
-        vault.security.banzaicloud.io/vault-addr: "https://vault.capi.weebo.poc"
-        vault.security.banzaicloud.io/vault-role: "default"
-        vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
-        vault.security.banzaicloud.io/vault-agent: "false"
-        vault.security.banzaicloud.io/vault-path: "kubernetes"
     spec:
       containers:
       - name: create-webhook
