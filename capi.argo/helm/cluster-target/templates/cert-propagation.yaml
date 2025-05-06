@@ -1,0 +1,21 @@
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: weebo.poc
+spec:
+  sources:
+  - useDefaultCAs: true
+  - configMap:
+    name: "certificate"
+    includeAllKeys: true
+  target:
+    configMap:
+      key: main-ca.crt
+      metadata:
+        labels:
+          weebo.si/source-ca: "true"
+    additionalFormats:
+      jks:
+        key: "main-ca.jks"
+      pkcs12:
+        key: "main-ca.p12"
