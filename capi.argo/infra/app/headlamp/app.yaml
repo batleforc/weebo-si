@@ -64,6 +64,20 @@ spec:
               kubernetes.io/service-account.name: headlamp-admin
           type: kubernetes.io/service-account-token
         - |
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: headlamp
+            namespace: default
+          spec:
+            secretName: headlamp-tls
+            issuerRef:
+              name: vault-issuer
+              kind: ClusterIssuer
+            commonName: headlamp.capi.weebo.poc
+            dnsNames:
+            - headlamp.capi.weebo.poc
+        - |
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
           metadata:
@@ -79,6 +93,8 @@ spec:
               services:
               - name: headlamp
                 port: 8080
+            tls:
+              secretName: headlamp-tls
   destination:
     server: "https://kubernetes.default.svc"
     namespace: default
