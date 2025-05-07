@@ -22,6 +22,7 @@ actions:
         Bump `Kyverno` version and plugins
         - `Kyverno` version: {{ source "kyverno" }}
         - `KyvernoPolicies` plugin version: {{ source "kyvernoPolicies" }}
+        - `PolicyReporter` plugin version: {{ source "policyReporter" }}
       automerge: false
       labels:
       - "Upgrade"
@@ -39,6 +40,13 @@ sources:
     kind: dockerimage
     spec:
       image: ghcr.io/kyverno/charts/kyverno-policies
+      architecture: "linux/amd64"
+      versionFilter:
+        kind: semver
+  policyReporter:
+    kind: dockerimage
+    spec:
+      image: ghcr.io/kyverno/charts/policy-reporter
       architecture: "linux/amd64"
       versionFilter:
         kind: semver
@@ -62,3 +70,12 @@ targets:
       file: capi.argo/helm/cluster/values.yaml
       key: "kyverno.policies"
       value: '{{ source "kyvernoPolicies" }}'
+  bumpPolicyReporterHelm:
+    name: "Update policy-reporter helm"
+    kind: yaml
+    scmid: default
+    sourceid: policyReporter
+    spec:
+      file: capi.argo/helm/cluster/values.yaml
+      key: "kyverno.reporter"
+      value: '{{ source "policyReporter" }}'

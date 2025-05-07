@@ -1,0 +1,38 @@
+{{- if .Values.kyverno.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-kyverno-policy-reporter
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: {{ .Release.Name }}-argo
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  - post-delete-finalizer.argocd.argoproj.io
+  - post-delete-finalizer.argocd.argoproj.io/cleanup
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - Replace=true
+  destination:
+    namespace: policy-reporter
+    name: {{ .Release.Name }}
+  project: {{ .Release.Name }}
+  source:
+    chart: policy-reporter
+    repoURL: https://kyverno.github.io/policy-reporter
+    targetRevision: {{ .Values.kyverno.reporter }}
+    helm:
+      releaseName: policy-reporter
+      valuesObject:
+        ui:
+          enabled: true
+        plugin:
+          kyverno:
+            enabled: true
+{{- end -}}
