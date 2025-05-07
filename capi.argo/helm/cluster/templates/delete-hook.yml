@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-delete-sa-job
+  annotations:
+    argocd.argoproj.io/hook: PostDelete
+spec:
+  backoffLimit: 100
+  template:
+    spec:
+      containers:
+      - name: delete-ressources
+        command:
+        - /bin/bash
+        - '-c'
+        - |
+          set -x
+          kubectl delete secret {{ .Release.Name }}-secret -n argocd
+        image: quay.io/agnosticd/ee-multicloud:latest
+      restartPolicy: Never
