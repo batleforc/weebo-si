@@ -44,7 +44,7 @@ sources:
     kind: githubrelease
     scmid: default
     spec:
-      owner: jetstack
+      owner: cert-manager
       repository: trust-manager
       token: "{{ requiredEnv .github.token }}"
       username: "{{ .github.username }}"
