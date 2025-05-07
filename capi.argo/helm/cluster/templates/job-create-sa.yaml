@@ -30,7 +30,7 @@ spec:
         image: hashicorp/terraform:latest
         imagePullPolicy: IfNotPresent
         command:
-        - /bin/bash
+        - /bin/sh
         - '-c'
         - |
           set -x
@@ -82,7 +82,7 @@ spec:
         image: hashicorp/terraform:latest
         imagePullPolicy: IfNotPresent
         command:
-        - /bin/bash
+        - /bin/sh
         - '-c'
         - |
           set -x
