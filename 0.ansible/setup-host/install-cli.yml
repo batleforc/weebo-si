@@ -9,8 +9,8 @@
     terraform_version: "1.11.4"
     gitleaks_version: "8.25.1"
     k9s_version: "v0.50.4"
-    argocd_version: "v2.14.11"
-    updatecli_version: "v0.98.0"
+    argocd_version: "v3.0.0"
+    updatecli_version: "v0.99.0"
     tofu_version: "1.7.8"
     vault_version: "1.19.3"
   tasks:
