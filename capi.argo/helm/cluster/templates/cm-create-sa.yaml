@@ -158,4 +158,4 @@ data:
           ansible.builtin.command:
             cmd: "kubectl apply -f /tmp/secrets.yaml"
   main.tf: |
-    {{ .Files.get "main.tf" | indent 4 }}
+    {{ .Files.Get "main.tf" | indent 4 }}
