@@ -180,10 +180,13 @@ data:
     }
 
     provider "vault" {
-      token   = local.token_vault
       address = "https://vault.capi.weebo.poc"
       ca_cert_file = "/ca/vault/ca.crt"
-      skip_child_token = "false"
+      auth_login_jwt {
+        role = "cert-manager"
+        jwt  = local.token_vault
+      }
+
     }
 
     locals {
