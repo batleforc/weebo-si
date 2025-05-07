@@ -148,7 +148,7 @@ data:
             dest: /tmp/secrets.yaml
         - name: Write CA
           ansible.builtin.copy:
-            content: "(kubeconfig.stdout | from_yaml).clusters[0].cluster['certificate-authority-data']"
+            content: "{{"{{"}} (kubeconfig.stdout | from_yaml).clusters[0].cluster['certificate-authority-data'] }}"
             dest: /tmp/kube_ca.crt
         - name: Write Token
           ansible.builtin.copy:
