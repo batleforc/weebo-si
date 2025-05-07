@@ -26,10 +26,10 @@ spec:
           - Pod
     preconditions:
       all:
-      - key: '\{{request.object.metadata.annotations."inject-certs" || ""}}'
+      - key: {{ printf "{{request.object.metadata.annotations.\"inject-certs\" || \"\"}}" }}
         operator: Equals
         value: enabled
-      - key: "\{{request.operation || 'BACKGROUND'}}"
+      - key: {{ printf "{{request.operation || 'BACKGROUND'}}" }}
         operator: AnyIn
         value:
           - CREATE
@@ -40,7 +40,7 @@ spec:
         patchStrategicMerge:
           spec:
             containers:
-            - name: "\{{ element.name }}"
+            - name: {{ printf "{{ element.name }}"}}
               volumeMounts:
               - name: etc-ssl-certs
                 mountPath: /etc/ssl/certs
