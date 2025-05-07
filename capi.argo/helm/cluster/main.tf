@@ -20,8 +20,9 @@ variable "host" {
 }
 
 provider "vault" {
-  token   = local.token_vault
-  address = "https://vault.capi.weebo.poc"
+  token        = local.token_vault
+  address      = "https://vault.capi.weebo.poc"
+  ca_cert_file = "/ca/vault/ca.crt"
 }
 
 locals {
