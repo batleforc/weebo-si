@@ -186,6 +186,7 @@ data:
       auth_login_jwt {
         role = "cert-manager"
         jwt  = local.token_vault
+        mount = "kubernetes"
       }
 
     }
