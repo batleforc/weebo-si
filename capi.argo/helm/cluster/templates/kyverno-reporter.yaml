@@ -9,8 +9,6 @@ metadata:
     app.kubernetes.io/name: {{ .Release.Name }}-argo
   finalizers:
   - resources-finalizer.argocd.argoproj.io
-  - post-delete-finalizer.argocd.argoproj.io
-  - post-delete-finalizer.argocd.argoproj.io/cleanup
 spec:
   syncPolicy:
     automated:
