@@ -5,7 +5,7 @@ metadata:
 spec:
   sources:
   - useDefaultCAs: true
-  - configMap:
+  - secret:
       name: "certificate"
       includeAllKeys: true
   target:
