@@ -2,6 +2,8 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: "create-sa-pvc-{{ .Release.Name }}"
+  annotations:
+    argocd.argoproj.io/ignore-healthcheck: "true"
 spec:
   accessModes:
     - ReadWriteOnce
