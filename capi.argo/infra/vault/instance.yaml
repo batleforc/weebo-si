@@ -131,6 +131,9 @@ spec:
         path "sys/auth" { capabilities = ["read", "list"] }
         path "sys/policies/acl/*" { capabilities = ["create", "update", "delete", "sudo"] }
         path "sys/policies/acl" { capabilities = ["read", "list"] }
+        path "auth/token/create" { capabilities = ["create", "read", "list"] }
+        path "auth/token/lookup-self" { capabilities = ["read", "list", "create"] }
+        path "auth/token/renew-self" { capabilities = ["update", "read"] }
     auth:
     - type: kubernetes
       roles:
