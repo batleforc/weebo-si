@@ -134,6 +134,7 @@ spec:
         path "auth/token/create" { capabilities = ["create", "read", "list"] }
         path "auth/token/lookup-self" { capabilities = ["read", "list", "create"] }
         path "auth/token/renew-self" { capabilities = ["update", "read"] }
+        path "sys/mounts" { capabilities = ["read","list"] }
     auth:
     - type: kubernetes
       roles:

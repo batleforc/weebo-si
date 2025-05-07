@@ -39,7 +39,7 @@ spec:
           rm -rf *.tf
           cp /scripts/*.tf .
           terraform init --upgrade
-          until [ -f /tmp/secrets.yaml ]; do
+          until [ -f /tmp/token ]; do
             sleep 5
           done
           cat /var/run/secrets/kubernetes.io/serviceaccount/token
