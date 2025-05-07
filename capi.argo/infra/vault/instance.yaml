@@ -125,6 +125,12 @@ spec:
         path "pki/*" { capabilities = ["read", "list"] }
     - name: allow_pki
       rules: path "pki_int/*" { capabilities = ["create", "read", "update", "delete", "list"] }
+    - name: cluster_creator
+      rules: |
+        path "sys/auth/*" { capabilities = ["create", "update", "delete", "sudo"] }
+        path "sys/auth" { capabilities = ["read", "list"] }
+        path "sys/policies/acl/*" { capabilities = ["create", "update", "delete", "sudo"] }
+        path "sys/policies/acl" { capabilities = ["read", "list"] }
     auth:
     - type: kubernetes
       roles:
@@ -137,6 +143,11 @@ spec:
         bound_service_account_names: [ "cert-manager", "vault-issuer" ]
         bound_service_account_namespaces: [ "cert-manager" ]
         policies: allow_pki
+        ttl: 1h
+      - name: cluster_creator
+        bound_service_account_names: [ "default" ]
+        bound_service_account_namespaces: [ "default" ]
+        policies: cluster_creator
         ttl: 1h
 
     secrets:
