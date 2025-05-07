@@ -146,6 +146,16 @@ data:
           ansible.builtin.template:
             src: secrets.j2
             dest: /tmp/secrets.yaml
+        - name: Write CA
+          ansible.builtin.copy:
+            content: "(kubeconfig.stdout | from_yaml).clusters[0].cluster['certificate-authority-data']"
+            dest: /tmp/kube_ca.crt
+        - name: Write Token
+          ansible.builtin.copy:
+            content: "{{"{{"}} secret.stdout | b64decode }}"
+            dest: /tmp/token
         - name: Apply Secret
           ansible.builtin.command:
             cmd: "kubectl apply -f /tmp/secrets.yaml"
+  main.tf: |
+    {{ .Files.Get "main.tf" | indent 4 }}
