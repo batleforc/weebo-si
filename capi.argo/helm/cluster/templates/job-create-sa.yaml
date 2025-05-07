@@ -68,3 +68,30 @@ spec:
           claimName: "create-sa-pvc-{{ .Release.Name }}"
       - name: temp
         emptyDir: {}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-create-sa-job-empty"
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      containers:
+      - name: create-in-vault
+        image: hashicorp/terraform:latest
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/bash
+        - '-c'
+        - |
+          set -x
+          echo "WIP"
+        volumeMounts:
+        - mountPath: terraform
+          name: terra-job
+      restartPolicy: Never
+      volumes:
+      - name: terra-job
+        persistentVolumeClaim:
+          claimName: "create-sa-pvc-{{ .Release.Name }}"
