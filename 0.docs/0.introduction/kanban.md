@@ -199,9 +199,9 @@ kanban
 - Musique: [NCS](https://ncs.io/)
   - [NCS: The Best of 2025 ⚡️](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgkDw2aMG2lM5heA8cbLvOoN)
 - Objectif (Pas dans l'ordre):
-  - Automatiser la mise en place de l'autorité de certification RootCA / IntermediateCA via [Bank Vaults](https://bank-vaults.dev/).
-  - Automatiser la création de certificats via le DNS01 et HTTP01
-  - Trust le RootCA sur mon ordinateur et [le propager sur les clusters](https://github.com/cert-manager/trust-manager) tout en l'injectant dans les pods via [Kyverno](https://kyverno.io/policies/other/add-certificates-volume/add-certificates-volume/)
+  - Automatiser la mise en place de l'autorité de certification RootCA / IntermediateCA via [Bank Vaults](https://bank-vaults.dev/). :white_check_mark: Passage en conf 100% Terraform ?
+  - Automatiser la création de certificats via le DNS01 ❎ et HTTP01 :white_check_mark:
+  - Trust le RootCA sur mon ordinateur et [le propager sur les clusters](https://github.com/cert-manager/trust-manager) tout en l'injectant dans les pods via [Kyverno](https://kyverno.io/policies/other/add-certificates-volume/add-certificates-volume/) :white_check_mark: Mode OPT-IN
   - Déployer un Auth Provider sur Main Cluster
   - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/)
   - Déployer les sous instances ArgoCD sur chaque cluster via l'ArgoCD principal
