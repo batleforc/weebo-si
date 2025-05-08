@@ -16,6 +16,7 @@ spec:
         {{ range $key, $value := .Values }}
         {{ $key }}: {{ $value | toJson | indent 8 }}
         {{- end }}
+        release: {{ .Release.Name }}
   destination:
     name: {{ .Release.Name }}
     namespace: 'default'

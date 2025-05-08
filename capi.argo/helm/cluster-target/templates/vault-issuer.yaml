@@ -12,7 +12,7 @@ spec:
     auth:
       kubernetes:
         role: cert-manager
-        mountPath: /v1/auth/kubernetes
+        mountPath: /v1/auth/{{.Values.release}}
         secretRef:
           name: vault-issuer
           key: token

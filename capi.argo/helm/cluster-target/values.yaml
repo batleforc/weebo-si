@@ -8,6 +8,8 @@ network:
   prefix: 20
   addresses: 192.168.100.41-192.168.100.50
 
+release: truc
+
 argo:
   local: false
   main: false
