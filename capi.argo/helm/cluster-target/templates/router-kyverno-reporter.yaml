@@ -1,0 +1,31 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: policy-reporter
+  namespace: policy-reporter
+spec:
+  secretName: policy-reporter-tls
+  issuerRef:
+    name: vault-issuer
+    kind: ClusterIssuer
+  commonName: headlamp.{{.Values.release}}.weebo.poc
+  dnsNames:
+  - headlamp.{{.Values.release}}.weebo.poc
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: policy-reporter
+  namespace: policy-reporter
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - kind: Rule
+    match: Host(`policy-reporter.{{.Values.release}}.weebo.poc`)
+    priority: 10
+    services:
+    - name: policy-reporter-ui
+      port: 8080
+  tls:
+    secretName: policy-reporter-tls
