@@ -8,9 +8,9 @@ spec:
   issuerRef:
     name: vault-issuer
     kind: ClusterIssuer
-  commonName: headlamp.{{.Values.release}}.weebo.poc
+  commonName: policy-reporter.{{.Values.release}}.weebo.poc
   dnsNames:
-  - headlamp.{{.Values.release}}.weebo.poc
+  - policy-reporter.{{.Values.release}}.weebo.poc
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
