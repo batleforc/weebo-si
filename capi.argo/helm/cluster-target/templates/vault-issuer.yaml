@@ -7,8 +7,8 @@ spec:
     path: pki_int/sign/default
     server: https://vault.capi.weebo.poc
     caBundleSecretRef:
-      key: ca.crt
-      name: vault-tls
+      key: main-ca.crt
+      name: weebo.poc
     auth:
       kubernetes:
         role: cert-manager
