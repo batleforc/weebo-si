@@ -92,3 +92,6 @@ spec:
         - op: add
           path: /machine/kubelet/extraArgs/rotate-server-certificates
           value: "true"
+        - op: add
+          path: /cluster/apiServer/certSANs/-
+          value: "{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
