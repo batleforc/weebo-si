@@ -105,6 +105,12 @@ export default defineConfig({
       },
       {
         text: "2. Gestion de l'infrastructure",
+        items: [
+          {
+            text: "Mise en place CAPI",
+            link: "/2.gestion/capi",
+          },
+        ],
       },
       {
         text: "3. Déployer des applications (MVP 1)",
