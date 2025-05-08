@@ -22,6 +22,8 @@ spec:
         ingressRoute:
           dashboard:
             enabled: true
+            entryPoints:
+            - web
         service:
           annotations:
             lbipam.cilium.io/sharing-key: "weebo-gate"
