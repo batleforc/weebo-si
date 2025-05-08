@@ -19,6 +19,8 @@ spec:
     helm:
       releaseName: traefik
       valuesObject:
+        image:
+          tag: {{ .Values.traefik.image.tag }}
         ingressRoute:
           dashboard:
             enabled: true

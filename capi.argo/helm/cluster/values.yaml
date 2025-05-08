@@ -58,6 +58,8 @@ trustManager:
 traefik:
   enabled: true
   version: 35.2.0
+  image:
+    tag: v3.4.0
   plugins:
     bouncer:
       moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
