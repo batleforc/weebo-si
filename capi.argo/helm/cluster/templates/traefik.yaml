@@ -49,13 +49,13 @@ spec:
             allowExternalNameServices: true
             publishedService:
               enabled: true
-        experimental:
-          {{- range $name, $plugin := .Values.traefik.plugins }}
-          plugins:
-            {{ $name }}:
-              moduleName: {{ $plugin.moduleName }}
-              version: {{ $plugin.version }}
-          {{- end }}
+        #experimental:
+          # {{- range $name, $plugin := .Values.traefik.plugins }}
+          # plugins:
+          #   {{ $name }}:
+          #     moduleName: {{ $plugin.moduleName }}
+          #     version: {{ $plugin.version }}
+          # {{- end }}
   destination:
     name: {{ .Release.Name }}
     namespace: traefik
