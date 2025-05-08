@@ -1,0 +1,18 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: vault-issuer
+spec:
+  vault:
+    path: pki_int/sign/default
+    server: https://vault.capi.weebo.poc
+    caBundleSecretRef:
+      key: ca.crt
+      name: vault-tls
+    auth:
+      kubernetes:
+        role: cert-manager
+        mountPath: /v1/auth/kubernetes
+        secretRef:
+          name: vault-issuer
+          key: token
