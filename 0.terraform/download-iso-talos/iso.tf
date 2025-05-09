@@ -3,7 +3,9 @@ data "talos_image_factory_extensions_versions" "extensions_list" {
   talos_version = "v${var.talos_version}"
   filters = {
     names = [
-      "qemu-guest-agent"
+      "qemu-guest-agent",
+      "iscsi-tools",
+      "util-linux-tools"
     ]
   }
 }

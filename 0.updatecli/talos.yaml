@@ -22,6 +22,8 @@ actions:
       description: |
         Bump Qemu Guest Agent
         - `qemuGuestAgent` version: {{ source "qemuGuestAgent" }}
+        - `factoryTalosV2` version: {{ source "factoryTalosV2" }}
+        - `talos` version: {{ source "talos" }}
       labels:
       - "Upgrade"
       - "UpdateCLI"
@@ -44,6 +46,16 @@ sources:
         latest_version=$(curl -s --data-binary @./0.updatecli/shell/talos-scheme.yaml https://factory.talos.dev/schematics | jq -r '.id')
         # Print the latest version
         echo "$latest_version"
+  talos:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: siderolabs
+      repository: talos
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: semver
 
 targets:
   bumpQemuGuestAgent:
@@ -63,4 +75,4 @@ targets:
     spec:
       file: capi.argo/helm/cluster/values.yaml
       key: "controlPlane.installImage"
-      value: 'factory.talos.dev/nocloud-installer/{{ source "factoryTalosV2" }}:v1.10.0'
+      value: 'factory.talos.dev/nocloud-installer/{{ source "factoryTalosV2" }}:{{ source "talos" }}'
