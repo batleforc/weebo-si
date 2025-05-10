@@ -36,7 +36,9 @@ spec:
             params:
               server.insecure: true
             rbac:
-              {{ .Values.argo.apps.rbac | nindent 12 }}
+              scopes: "{{ .Values.argo.apps.rbac.scopes }}"
+              policy.csv:
+                {{- .Values.argo.apps.rbac.policy | toYaml | indent 16 }}
         global:
           domain: "{{ .Values.argo.apps.prefix }}.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
         server:
