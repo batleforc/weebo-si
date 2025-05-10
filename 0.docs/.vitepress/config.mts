@@ -126,6 +126,33 @@ export default defineConfig({
       },
       {
         text: "7. Aller plus loin",
+        items: [
+          {
+            text: "Bilan des streams",
+            items: [
+              {
+                text: "Stream - 15/03/2025",
+                link: "/0.introduction/stream/15-03-2025",
+              },
+              {
+                text: "Stream - 22/03/2025",
+                link: "/0.introduction/stream/22-03-2025",
+              },
+              {
+                text: "Stream - 29/03/2025",
+                link: "/0.introduction/stream/29-03-2025",
+              },
+              {
+                text: "Stream - 12/04/2025",
+                link: "/0.introduction/stream/12-04-2025",
+              },
+              {
+                text: "Stream - 19/04/2025",
+                link: "/0.introduction/stream/19-04-2025",
+              },
+            ],
+          },
+        ],
       },
     ],
 
