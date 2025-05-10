@@ -22,15 +22,15 @@ spec:
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
-  project: default
+  project: {{ .Release.Name }}
   sources:
-    - chart: longhorn
-      repoURL: https://charts.longhorn.io/
-      targetRevision: {{ .Values.storage.longhorn.version }}
-      helm:
-        values: |
-          preUpgradeChecker:
-            jobEnabled: false
+    chart: longhorn
+    repoURL: https://charts.longhorn.io/
+    targetRevision: {{ .Values.storage.longhorn.version }}
+    helm:
+      valuesObject:
+        preUpgradeChecker:
+          jobEnabled: false
   destination:
     name: {{ .Release.Name }}
     namespace: longhorn-system
