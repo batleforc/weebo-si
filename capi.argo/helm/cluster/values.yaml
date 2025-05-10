@@ -31,6 +31,7 @@ storage:
     enabled: true
   longhorn:
     enabled: true
+    version: v1.8.1
 
 dns:
   enabled: true
