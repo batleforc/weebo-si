@@ -22,7 +22,7 @@ spec:
     helm:
       releaseName: argo-apps
       valuesObject:
-        config:
+        configs:
           cm:
             url: "https://{{ .Values.argo.apps.prefix }}.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
             resource.exclusions: |
