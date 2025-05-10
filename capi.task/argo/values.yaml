@@ -2,7 +2,7 @@
 configs:
   cm:
     url: http://argo.capi.weebo.poc
-    kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"
+    #kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"
     resource.exclusions: |
       - apiGroups:
           - tekton.dev

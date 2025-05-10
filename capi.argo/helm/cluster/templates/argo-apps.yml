@@ -1,0 +1,54 @@
+{{- if .Values.argo.apps.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-argo-apps
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: {{ .Release.Name }}-argo-apps
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated: {}
+  destination:
+    namespace: argocd-client
+    name: {{ .Release.Name }}
+  project: {{ .Release.Name }}
+  source:
+    chart: argo-cd
+    repoURL: https://argoproj.github.io/argo-helm
+    targetRevision: {{ .Values.argo.apps.version }}
+    helm:
+      releaseName: argo-apps
+      valuesObject:
+        config:
+          cm:
+            url: "https://{{ .Values.argo.apps.prefix }}.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
+            resource.exclusions: |
+              - apiGroups:
+                - tekton.dev
+              kinds:
+                - TaskRun
+                - PipelineRun
+              clusters:
+                - "*"
+            params:
+              server.insecure: true
+            rbac:
+              {{ .Values.argo.apps.rbac.scopes | indent 12 }}
+        global:
+          domain: "{{ .Values.argo.apps.prefix }}.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
+        server:
+          ingress:
+            enabled: true
+            tls: true
+            annotations:
+              cert-manager.io/cluster-issuer: "vault-issuer"
+              cert-manager.io/common-name: "{{ .Values.argo.apps.prefix }}.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
+              cert-manager.io/subject-organizations: "WeeboSI"
+              cert-manager.io/subject-organizationalunits: "{{ .Release.Name }}"
+              cert-manager.io/subject-countries: "FR"
+              cert-manager.io/subject-localities: "{{ .Release.Name }}"
+              cert-manager.io/subject-provinces: "Proxmox"
+{{- end -}}

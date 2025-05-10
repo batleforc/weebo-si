@@ -15,6 +15,10 @@ extensions:
 argo:
   local: false
   main: false
+  apps:
+    enabled: true
+    version: 8.0.0
+    prefix: argo
 
 dns:
   enabled: true

@@ -68,6 +68,9 @@ kanban
   - Trust le RootCA sur mon ordinateur et [le propager sur les clusters](https://github.com/cert-manager/trust-manager) tout en l'injectant dans les pods via [Kyverno](https://kyverno.io/policies/other/add-certificates-volume/add-certificates-volume/) :white_check_mark: Mode OPT-IN
   - Déployer un Auth Provider sur Main Cluster
   - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/)
+    - <https://external-secrets.io/latest/>
+    - <https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso>
+    - <https://bank-vaults.dev/docs/mutating-webhook/>
   - Déployer les sous instances ArgoCD sur chaque cluster via l'ArgoCD principal
 - Sujet
   - [Anubis](https://anubis.techaro.lol/)
