@@ -33,12 +33,12 @@ spec:
                 - PipelineRun
               clusters:
                 - "*"
-            params:
-              server.insecure: true
-            rbac:
-              scopes: "{{ .Values.argo.apps.rbac.scopes }}"
-              policy.csv:
-                {{- .Values.argo.apps.rbac.policy | toYaml | indent 16 }}
+          params:
+            server.insecure: true
+          rbac:
+            scopes: "{{ .Values.argo.apps.rbac.scopes }}"
+            policy.csv:
+              {{- .Values.argo.apps.rbac.policy | toYaml | indent 14 }}
         global:
           domain: "{{ .Values.argo.apps.prefix }}.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
         server:
