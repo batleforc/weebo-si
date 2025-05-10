@@ -27,12 +27,12 @@ spec:
             url: "https://{{ .Values.argo.apps.prefix }}.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
             resource.exclusions: |
               - apiGroups:
-                - tekton.dev
-              kinds:
-                - TaskRun
-                - PipelineRun
-              clusters:
-                - "*"
+                  - tekton.dev
+                kinds:
+                  - TaskRun
+                  - PipelineRun
+                clusters:
+                  - "*"
           params:
             server.insecure: true
           rbac:
