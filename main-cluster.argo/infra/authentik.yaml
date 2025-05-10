@@ -1,0 +1,62 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: authentik
+  namespace: argocd-client
+  labels:
+    app.kubernetes.io/name: authentik
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - Replace=true
+  destination:
+    namespace: authentik
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: authentik
+    repoURL: https://charts.goauthentik.io
+    targetRevision: 2025.4.0
+    helm:
+      releaseName: authentik
+      valuesObject:
+        authentik:
+          secret_key: "PleaseGenerateASecureKey"
+          error_reporting:
+            enabled: true
+          postgresql:
+            password: "ThisIsNotASecurePassword"
+
+        server:
+          ingress:
+            ingressClassName: traefik
+            enabled: true
+            annotations:
+              cert-manager.io/cluster-issuer: "vault-issuer"
+              cert-manager.io/common-name: "login.main-cluster.weebo.poc"
+              cert-manager.io/subject-organizations: "WeeboSI"
+              cert-manager.io/subject-organizationalunits: "main-cluster"
+              cert-manager.io/subject-countries: "FR"
+              cert-manager.io/subject-localities: "main-cluster"
+              cert-manager.io/subject-provinces: "Proxmox"
+            hosts:
+            - login.main-cluster.weebo.poc
+            https: true
+            tls:
+            - secretName: authentik-tls
+              hosts:
+              - login.main-cluster.weebo.poc
+
+        postgresql:
+          enabled: true
+          auth:
+            password: "ThisIsNotASecurePassword"
+        redis:
+          enabled: true
