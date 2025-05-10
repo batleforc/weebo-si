@@ -27,6 +27,9 @@ spec:
     helm:
       releaseName: authentik
       valuesObject:
+        global:
+          podAnnotations:
+            inject-certs: "enabled"
         authentik:
           secret_key: "PleaseGenerateASecureKey"
           error_reporting:
