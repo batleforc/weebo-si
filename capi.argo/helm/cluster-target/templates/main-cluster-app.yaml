@@ -13,7 +13,7 @@ spec:
   destination:
     namespace: argocd-client
     server: https://kubernetes.default.svc
-  project: {{ .Release.Name }}
+  project: default
   source:
     path: {{ .Release.Name }}.argo/infra
     repoURL: https://github.com/batleforc/weebo-si
