@@ -67,7 +67,7 @@ kanban
     - <https://external-secrets.io/latest/>
     - <https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso>
     - <https://bank-vaults.dev/docs/mutating-webhook/>
-  - Déployer un driver CSI (Longhorn ?) !
+  - Déployer un driver CSI ([Longhorn](https://www.talos.dev/v1.10/kubernetes-guides/configuration/storage/) ?) !
   - Configurer Authentik via une approche [GitOps](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs)
 - Sujet
   - [Anubis](https://anubis.techaro.lol/)

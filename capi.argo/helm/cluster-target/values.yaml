@@ -10,6 +10,12 @@ network:
 
 release: truc
 
+storage:
+  local:
+    enabled: true
+  longhorn:
+    enabled: true
+
 argo:
   local: false
   main: false

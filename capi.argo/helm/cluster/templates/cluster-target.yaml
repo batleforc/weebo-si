@@ -14,7 +14,11 @@ spec:
       releaseName: {{ .Release.Name }}-target
       valuesObject:
         {{ range $key, $value := .Values }}
+        {{- if eq $value "{{.Release.Name}}" }}
         {{ $key }}: {{ $value | toJson | indent 8 }}
+        {{- else }}
+        {{ $key }}: "{{ .Release.Name }}"
+        {{- end }}
         {{- end }}
         release: {{ .Release.Name }}
   destination:

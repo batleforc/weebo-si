@@ -1,8 +1,9 @@
+{{- if .Values.storage.local.enabled -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: local-storage
-  namespace: argocd-client
+  namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
@@ -55,3 +56,4 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 5m
+{{- end -}}

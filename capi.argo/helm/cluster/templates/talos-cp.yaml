@@ -86,6 +86,7 @@ spec:
           value:
             net.ipv4.ip_forward: 1
             net.ipv6.conf.all.forwarding: 1
+            vm.nr_hugepages: 2048
         - op: add
           path: /cluster/apiServer/admissionControl/0/configuration/exemptions/namespaces/-
           value: falco
@@ -95,13 +96,33 @@ spec:
         - op: add
           path: /cluster/apiServer/certSANs/-
           value: "{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
+        {{ if .Values.storage.local.enabled -}}
         - op: add
-          path: /machine/kubelet/extraMounts
+          path: /machine/kubelet/extraMounts/-
           value:
-            - source: /var/local-path-provisioner
-              destination: /var/local-path-provisioner
-              type: bind
-              options:
-                - bind
-                - rshared
-                - rw
+            source: /var/local-path-provisioner
+            destination: /var/local-path-provisioner
+            type: bind
+            options:
+              - bind
+              - rshared
+              - rw
+        {{- end }}
+        {{ if .Values.storage.longhorn.enabled -}}
+        - op: add
+          path: /machine/kubelet/extraMounts/-
+          value:
+            source: /var/lib/longhorn
+            destination: /var/lib/longhorn
+            type: bind
+            options:
+              - bind
+              - rshared
+              - rw
+        - op: add
+          path: /machine/kernel
+          value:
+            modules:
+              - name: nvme_tcp
+              - name: vfio_pci
+        {{- end }}

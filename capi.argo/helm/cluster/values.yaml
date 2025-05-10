@@ -26,6 +26,12 @@ argo:
         g, dev, role:dev
         g, reader, role:readonly
 
+storage:
+  local:
+    enabled: true
+  longhorn:
+    enabled: true
+
 dns:
   enabled: true
   wildcard: true

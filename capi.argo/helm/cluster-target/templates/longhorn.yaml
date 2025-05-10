@@ -1,0 +1,67 @@
+{{- if .Values.longhorn.enabled }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: longhorn-system
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: privileged
+    pod-security.kubernetes.io/warn-version: latest
+---
+apiVersion: v1
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: longhorn
+  namespace: argocd
+spec:
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  project: default
+  sources:
+    - chart: longhorn
+      repoURL: https://charts.longhorn.io/
+      targetRevision: v1.8.1
+      helm:
+        values: |
+          preUpgradeChecker:
+            jobEnabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: longhorn-system
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: longhorn-ingress
+  namespace: longhorn-system
+  annotations:
+    cert-manager.io/cluster-issuer: "vault-issuer"
+    cert-manager.io/common-name: "longhorn.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
+    cert-manager.io/subject-organizations: "WeeboSI"
+    cert-manager.io/subject-organizationalunits: "{{ .Release.Name }}"
+    cert-manager.io/subject-countries: "FR"
+    cert-manager.io/subject-localities: "{{ .Release.Name }}"
+    cert-manager.io/subject-provinces: "Proxmox"
+spec:
+  tls:
+  - hosts:
+    - "longhorn.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
+    secretName: longhorn-ingress-tls
+  rules:
+  - host: "longhorn.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: longhorn-frontend
+            port:
+              number: 8
+{{- end -}}
