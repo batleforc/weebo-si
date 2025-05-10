@@ -4,7 +4,7 @@ metadata:
   name: {{ .Values.release }}
   namespace: argocd-client
   labels:
-    app.kubernetes.io/name: {{ .Release.Name }}-argo
+    app.kubernetes.io/name: {{ .Values.release }}-argo
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -15,7 +15,7 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   source:
-    path: {{ .Release.Name }}.argo/infra
+    path: {{ .Values.release }}.argo/infra
     repoURL: https://github.com/batleforc/weebo-si
     targetRevision: HEAD
     directory:
