@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ .values.release }}
   namespace: argocd-client
   labels:
     app.kubernetes.io/name: {{ .Release.Name }}-argo
@@ -12,7 +12,7 @@ spec:
     automated: {}
   destination:
     namespace: argocd-client
-    name: {{ .Release.Name }}
+    server: https://kubernetes.default.svc
   project: {{ .Release.Name }}
   source:
     path: {{ .Release.Name }}.argo/infra
