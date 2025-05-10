@@ -32,7 +32,7 @@ spec:
           preUpgradeChecker:
             jobEnabled: false
   destination:
-    server: https://kubernetes.default.svc
+    name: {{ .Release.Name }}
     namespace: longhorn-system
 ---
 apiVersion: networking.k8s.io/v1

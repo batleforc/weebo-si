@@ -45,7 +45,7 @@ spec:
               pod-security.kubernetes.io/enforce: privileged
 
   destination:
-    server: 'https://kubernetes.default.svc'
+    name: {{ .Release.Name }}
     namespace: 'default'
   syncPolicy:
     automated:
