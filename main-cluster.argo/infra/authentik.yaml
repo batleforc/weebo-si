@@ -51,7 +51,7 @@ spec:
               cert-manager.io/subject-provinces: "Proxmox"
             hosts:
             - login.main-cluster.weebo.poc
-            https: true
+            https: false
             tls:
             - secretName: authentik-tls
               hosts:
