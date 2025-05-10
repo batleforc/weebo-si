@@ -177,7 +177,7 @@ kanban
 
 - Debut : 16h30
 - FIN : ~ 19H40 - [Stream 3H18]
-- Vod : [Twitch](https://www.twitch.tv/videos/2449245677) YouTube : SOON TM
+- Vod : [Twitch](https://www.twitch.tv/videos/2449245677) [YouTube](https://youtu.be/zbPGIamezNI)
 - Musique: [NCS](https://ncs.io/)
   - [NCS: The Best of 2025 ⚡️](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgkDw2aMG2lM5heA8cbLvOoN)
 - Objectif (Pas dans l'ordre):
