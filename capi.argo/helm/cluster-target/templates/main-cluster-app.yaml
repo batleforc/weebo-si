@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .values.release }}
+  name: {{ .Values.release }}
   namespace: argocd-client
   labels:
     app.kubernetes.io/name: {{ .Release.Name }}-argo
