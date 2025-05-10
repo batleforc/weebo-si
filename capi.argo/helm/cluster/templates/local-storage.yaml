@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: local-storage
+  name: {{ .Release.Name }}-local-storage
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "1"
