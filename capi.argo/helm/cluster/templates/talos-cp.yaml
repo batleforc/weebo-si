@@ -95,3 +95,13 @@ spec:
         - op: add
           path: /cluster/apiServer/certSANs/-
           value: "{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
+        - op: add
+          path: /machine/kubelet/extraMounts
+          value:
+            - source: /var/local-path-provisioner
+              destination: /var/local-path-provisioner
+              type: bind
+              options:
+                - bind
+                - rshared
+                - rw
