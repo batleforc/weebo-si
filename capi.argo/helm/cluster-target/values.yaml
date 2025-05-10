@@ -15,10 +15,17 @@ storage:
     enabled: true
   longhorn:
     enabled: true
+    version: v1.8.1
 
 argo:
   local: false
   main: false
+
+dns:
+  enabled: true
+  wildcard: true
+  base: weebo.poc
+  name: "{{.Release.Name}}"
 
 cilium:
   version: 1.17.2

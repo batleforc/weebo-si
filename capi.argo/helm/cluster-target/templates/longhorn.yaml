@@ -1,4 +1,4 @@
-{{- if .Values.longhorn.enabled }}
+{{- if .Values.storage.longhorn.enabled }}
 ---
 apiVersion: v1
 kind: Namespace
@@ -26,7 +26,7 @@ spec:
   sources:
     - chart: longhorn
       repoURL: https://charts.longhorn.io/
-      targetRevision: v1.8.1
+      targetRevision: {{ .Values.storage.longhorn.version }}
       helm:
         values: |
           preUpgradeChecker:
@@ -63,5 +63,5 @@ spec:
           service:
             name: longhorn-frontend
             port:
-              number: 8
+              number: 80
 {{- end -}}
