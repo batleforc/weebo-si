@@ -55,27 +55,48 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Stream 10 mai 2025 : SOON TM
+### Stream 17 mai 2025 - Soon TM
 
 - Debut : 16h30
 - FIN : ~ 18H30
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : SOON TM
+- Musique: [NCS](https://ncs.io/)
+- Objectif (Pas dans l'ordre):
+  - Explorer la mise en place de secrets
+    - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/)
+    - <https://external-secrets.io/latest/>
+    - <https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso>
+    - <https://bank-vaults.dev/docs/mutating-webhook/>
+  - Déployer un driver CSI (Longhorn ?) !
+  - Configurer Authentik via une approche [GitOps](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs)
+- Sujet
+  - [Anubis](https://anubis.techaro.lol/)
+- Bilan
+
+### Stream 10 mai 2025
+
+- Debut : 16h30
+- FIN : ~ 19H30
+- Vod : [Twitch 1](https://www.twitch.tv/videos/2455229336) [Twitch 2](https://www.twitch.tv/videos/2455248428) YouTube : SOON TM
 - Musique: [NCS](https://ncs.io/)
   - [NCS: The Best of 2025 ⚡️](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgkDw2aMG2lM5heA8cbLvOoN)
 - Objectif (Pas dans l'ordre):
   - Automatiser la mise en place de l'autorité de certification RootCA / IntermediateCA via [Bank Vaults](https://bank-vaults.dev/). :white_check_mark: Passage en conf 100% Terraform ?
   - Automatiser la création de certificats via le DNS01 ❎ et HTTP01 :white_check_mark:
   - Trust le RootCA sur mon ordinateur et [le propager sur les clusters](https://github.com/cert-manager/trust-manager) tout en l'injectant dans les pods via [Kyverno](https://kyverno.io/policies/other/add-certificates-volume/add-certificates-volume/) :white_check_mark: Mode OPT-IN
-  - Déployer un Auth Provider sur Main Cluster
-  - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/)
+  - Déployer un Auth Provider sur Main Cluster  :white_check_mark: mais avec le local storage !
+  - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/) :warning: pour la prochaine fois
     - <https://external-secrets.io/latest/>
     - <https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso>
     - <https://bank-vaults.dev/docs/mutating-webhook/>
-  - Déployer les sous instances ArgoCD sur chaque cluster via l'ArgoCD principal
+  - Déployer les sous instances ArgoCD sur chaque cluster via l'ArgoCD principal :white_check_mark:
 - Sujet
   - [Anubis](https://anubis.techaro.lol/)
   - [Argocd V3](https://github.com/argoproj/argo-cd/releases/tag/v3.0.0)
 - Bilan
+  - Déploiement d'ArgoCD en V3.0.0 sur Main Cluster
+  - Déploiement d'Authentik sur Main Cluster
+  - Beaucoup de documentation lue et validation de la configuration d'ArgoCD
 
 ### Stream 3 mai 2025
 
