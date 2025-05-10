@@ -98,7 +98,7 @@ spec:
           value: "{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
         - op: add
           path: /machine/kubelet/extraMounts
-          value: {}
+          value: []
         {{ if .Values.storage.local.enabled -}}
         - op: add
           path: /machine/kubelet/extraMounts/-
