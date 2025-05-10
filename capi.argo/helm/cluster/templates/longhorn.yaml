@@ -11,7 +11,7 @@ spec:
     syncOptions:
       - CreateNamespace=true
   project: {{ .Release.Name }}
-  sources:
+  source:
     chart: longhorn
     repoURL: https://charts.longhorn.io/
     targetRevision: {{ .Values.storage.longhorn.version }}
