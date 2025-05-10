@@ -47,4 +47,4 @@ spec:
             volumes:
             - name: etc-ssl-certs
               configMap:
-                name: ca-pemstore
+                name: weebo.poc
