@@ -1,0 +1,41 @@
+{{- if .Values.vault.enabled  -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-vault-webhook
+  namespace: argocd
+spec:
+  project: {{ .Release.Name }}
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - CreateNamespace=true
+  source:
+    chart: vault-secrets-webhook
+    repoURL: ghcr.io/bank-vaults/helm-charts
+    # https://github.com/bank-vaults/vault-operator/pkgs/container/helm-charts%2Fvault-secrets-webhook
+    targetRevision: {{ .Values.vault.version }}
+    helm:
+      releaseName: vault-webhook
+      valuesObject:
+        replicaCount: 1
+  destination:
+    name: {{ .Release.Name }}
+    namespace: vault-infra
+  ignoreDifferences:
+  - group: ''
+    kind: 'Secret'
+    name: 'vault-webhook-vault-secrets-webhook-webhook-tls'
+    jsonPointers:
+    - /data
+  - group: 'admissionregistration.k8s.io'
+    kind: 'MutatingWebhookConfiguration'
+    name: 'vault-webhook-vault-secrets-webhook'
+    jqPathExpressions:
+    - .webhooks[].clientConfig.caBundle
+  - group: 'apps'
+    kind: 'Deployment'
+    name: 'vault-webhook-vault-secrets-webhook'
+    jsonPointers:
+    - /spec/template/metadata/annotations
+{{- end -}}
