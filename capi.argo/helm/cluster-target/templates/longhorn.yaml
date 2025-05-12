@@ -19,7 +19,7 @@ metadata:
   namespace: longhorn-system
   annotations:
     cert-manager.io/cluster-issuer: "vault-issuer"
-    cert-manager.io/common-name: "longhorn.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
+    cert-manager.io/common-name: "longhorn.{{ .Values.release }}.{{.Values.dns.base}}"
     cert-manager.io/subject-organizations: "WeeboSI"
     cert-manager.io/subject-organizationalunits: "{{ .Release.Name }}"
     cert-manager.io/subject-countries: "FR"
@@ -28,10 +28,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - "longhorn.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
+    - "longhorn.{{ .Values.release }}.{{.Values.dns.base}}"
     secretName: longhorn-ingress-tls
   rules:
-  - host: "longhorn.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
+  - host: "longhorn.{{ .Values.release }}.{{.Values.dns.base}}"
     http:
       paths:
       - pathType: Prefix
@@ -41,5 +41,4 @@ spec:
             name: longhorn-frontend
             port:
               number: 80
-
 {{- end -}}

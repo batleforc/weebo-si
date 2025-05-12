@@ -1,26 +1,27 @@
-version: '3'
+version: "3"
 
 tasks:
   init-venv:
     cmds:
-    - echo "Install packages"
-    - sudo apt install python3-pip python3-venv -y
-    - echo "Create virtual environment"
-    - python3 -m venv .venv
+      - echo "Install packages"
+      - sudo apt install python3-pip python3-venv -y
+      - echo "Create virtual environment"
+      - python3 -m venv .venv
   install-ansible:
     cmds:
-    - echo "Please make sure you are in the virtual environment"
-    - pip install -r ./0.ansible/requirements.txt
+      - echo "Please make sure you are in the virtual environment"
+      - pip install -r ./0.ansible/requirements.txt
   install-cli:
     cmds:
-    - echo "Install needed cli"
-    - sudo ansible-playbook ./0.ansible/setup-host/site.yml
+      - echo "Install needed cli"
+      - sudo echo
+      - ansible-playbook ./0.ansible/setup-host/site.yml
   install-hook:
     cmds:
-    - echo "Install Git hook"
-    - cog install-hook --all
+      - echo "Install Git hook"
+      - cog install-hook --all
   update:
     cmds:
-    - echo "Update packages"
-    - pwd
-    - UPDATECLI_GITHUB_TOKEN="${ARGO_GITHUB_TOKEN}" updatecli diff --config ./0.updatecli/setup-host.yaml --values ./0.updatecli/values.yaml --debug
+      - echo "Update packages"
+      - pwd
+      - UPDATECLI_GITHUB_TOKEN="${ARGO_GITHUB_TOKEN}" updatecli diff --config ./0.updatecli/setup-host.yaml --values ./0.updatecli/values.yaml --debug

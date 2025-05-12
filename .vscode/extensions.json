@@ -20,6 +20,7 @@
     "streetsidesoftware.code-spell-checker-french",
     "usernamehw.errorlens",
     "eamodio.gitlens",
-    "oderwat.indent-rainbow"
+    "oderwat.indent-rainbow",
+    "redhat.vscode-yaml"
   ]
 }

@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 env:
   KUBECONFIG: "{{.ROOT_DIR}}/capi.terraform/kubeconfig"
@@ -8,28 +8,28 @@ env:
 tasks:
   get-ca:
     cmds:
-    - kubectl get -n vault secret vault-tls -o jsonpath="{.data.ca\.crt}" | base64 --decode > ./vault-ca.crt
+      - kubectl get -n vault secret vault-tls -o jsonpath="{.data.ca\.crt}" | base64 --decode > ./vault-ca.crt
   get-token:
     cmds:
-    - kubectl get -n vault secrets vault-unseal-keys -o jsonpath={.data.vault-root} | base64 --decode
+      - kubectl get -n vault secrets vault-unseal-keys -o jsonpath={.data.vault-root} | base64 --decode
   read-secret:
     vars:
       VAULT_TOKEN:
         sh: task vault:get-token
     cmds:
-    - VAULT_TOKEN={{.VAULT_TOKEN}} vault kv get {{ .CLI_ARGS }}
+      - VAULT_TOKEN={{.VAULT_TOKEN}} vault kv get {{ .CLI_ARGS }}
   write-secret:
     vars:
       VAULT_TOKEN:
         sh: task vault:get-token
     cmds:
-    - VAULT_TOKEN={{.VAULT_TOKEN}} vault kv put {{ .CLI_ARGS }}
+      - VAULT_TOKEN={{.VAULT_TOKEN}} vault kv put {{ .CLI_ARGS }}
   vault:
     vars:
       VAULT_TOKEN:
         sh: task vault:get-token
     cmds:
-    - VAULT_TOKEN={{.VAULT_TOKEN}} vault {{ .CLI_ARGS }}
+      - VAULT_TOKEN={{.VAULT_TOKEN}} vault {{ .CLI_ARGS }}
   init-pki-int:
     env:
       VAULT_CACERT: "{{.ROOT_DIR}}/capi.task/vault-ca.crt"
@@ -38,22 +38,22 @@ tasks:
         sh: task capi:vault:get-token
     dir: ../capi.vault_terraform
     cmds:
-    - task capi:vault:get-ca
-    - terraform init
-    - TF_VAR_vault_token={{.VAULT_TOKEN}} terraform apply -auto-approve
+      - task capi:vault:get-ca
+      - terraform init
+      - TF_VAR_vault_token={{.VAULT_TOKEN}} terraform apply -auto-approve
   trust-root:
     cmds:
-    #- task vault:vault -- read -field=certificate pki/root/signing/cert
-    - sudo cp root_ca.pem /usr/local/share/ca-certificates/weebo-si-root-ca.crt
-    - sudo update-ca-certificates
-  trust_intermediate:
+      #- task vault:vault -- read -field=certificate pki/root/signing/cert
+      - sudo cp root_ca.pem /usr/local/share/ca-certificates/weebo-si-root-ca.crt
+      - sudo update-ca-certificates
+  trust-intermediate:
     cmds:
-    - task vault:vault -- list -format=json pki_int/certs | jq .[] | awk '{print "task vault:vault -- read -format=json pki_int/cert/" $1 " | jq -r .data.certificate | cat >> weebo-si-int-ca.pem"}' | bash
-    - sudo cp weebo-si-int-ca.pem /usr/local/share/ca-certificates/weebo-si-int-ca.crt
-    - sudo update-ca-certificates
+      - task vault:vault -- list -format=json pki_int/certs | jq .[] | awk '{print "task vault:vault -- read -format=json pki_int/cert/" $1 " | jq -r .data.certificate | cat >> weebo-si-int-ca.pem"}' | bash
+      - sudo cp weebo-si-int-ca.pem /usr/local/share/ca-certificates/weebo-si-int-ca.crt
+      - sudo update-ca-certificates
   ks-record:
     vars:
       PASSWORD:
         sh: task vault:get-token
     cmds:
-    - cd .. && echo '{{.PASSWORD}}' | task ks:ks -- add -k 0.keepassxc/keyfile --no-password -p --url https://vault.capi.weebo.poc 0.keepassxc/weebo-si capi-vault
+      - cd .. && echo '{{.PASSWORD}}' | task ks:ks -- add -k 0.keepassxc/keyfile --no-password -p --url https://vault.capi.weebo.poc 0.keepassxc/weebo-si capi-vault
