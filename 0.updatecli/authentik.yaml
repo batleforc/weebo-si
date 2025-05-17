@@ -1,0 +1,53 @@
+name: Upgrade Authentik
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: batleforc
+      repository: weebo-si
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      branch: main
+
+actions:
+  bumpcert-manager:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      title: 'ci: Bump `Authentik` version to {{ source "authentik" }}'
+      automerge: false
+      description: |
+        Bump `Authentik` version
+        - `Authentik` version: {{ source "authentik" }}
+      labels:
+      - "Upgrade"
+      - "UpdateCLI"
+
+sources:
+  authentik:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: goauthentik
+      repository: authentik
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: latest
+    transformers:
+    - trimprefix: "version/"
+
+
+targets:
+  bumpauthentikCapi:
+    kind: file
+    name: "Bump authentik version"
+    scmid: default
+    sourceid: authentik
+    spec:
+      file: main-cluster.argo/infra/authentik.yaml
+      matchpattern: 'targetRevision: .*'
+      replacepattern: 'targetRevision: {{ source "authentik" }}'

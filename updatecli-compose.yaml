@@ -51,3 +51,8 @@ policies:
   - ./0.updatecli/cluster-api.yaml
   values:
   - ./0.updatecli/values.yaml
+- name: Upgrade Authentik
+  config:
+  - ./0.updatecli/authentik.yaml
+  values:
+  - ./0.updatecli/values.yaml

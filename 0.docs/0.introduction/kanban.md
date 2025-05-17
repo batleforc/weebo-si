@@ -55,7 +55,7 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Stream 17 mai 2025 - Soon TM
+### Stream 17 mai 2025 - In Progress
 
 - Debut : 16h30
 - FIN : ~ 18H30
@@ -69,6 +69,8 @@ kanban
     - <https://bank-vaults.dev/docs/mutating-webhook/>
   - Déployer un driver CSI ([Longhorn](https://www.talos.dev/v1.10/kubernetes-guides/configuration/storage/) ?) !
   - Configurer Authentik via une approche [GitOps](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs)
+    - [Bootstrap](https://docs.goauthentik.io/docs/install-config/automated-install)
+    - [ArgoCD](https://docs.goauthentik.io/integrations/services/argocd/)
 - Sujet
   - [Anubis](https://anubis.techaro.lol/)
 - Bilan
@@ -77,7 +79,7 @@ kanban
 
 - Debut : 16h30
 - FIN : ~ 19H30
-- Vod : [Twitch 1](https://www.twitch.tv/videos/2455229336) [Twitch 2](https://www.twitch.tv/videos/2455248428) YouTube : SOON TM
+- Vod : [Twitch 1](https://www.twitch.tv/videos/2455229336) [Twitch 2](https://www.twitch.tv/videos/2455248428) [YouTube 1](https://youtu.be/IxlazbMlPrE) [YouTube 2](https://youtu.be/X1O9Af9SCns)
 - Musique: [NCS](https://ncs.io/)
   - [NCS: The Best of 2025 ⚡️](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgkDw2aMG2lM5heA8cbLvOoN)
 - Objectif (Pas dans l'ordre):
