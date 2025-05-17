@@ -20,6 +20,8 @@ spec:
       valuesObject:
         preUpgradeChecker:
           jobEnabled: false
+        defaultSettings:
+          replicaAutoBalance: best-effort
   destination:
     name: {{ .Release.Name }}
     namespace: longhorn-system
