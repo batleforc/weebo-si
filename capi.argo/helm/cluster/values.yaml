@@ -91,7 +91,7 @@ bootstrap:
   vaultProviderVersion: "4.4.0"
 
 kubernetes:
-  version: v1.33.0
+  version: v1.33.1
   labels:
     argoHelmInstall: disabled
 
