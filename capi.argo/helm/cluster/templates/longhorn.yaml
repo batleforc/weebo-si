@@ -22,6 +22,7 @@ spec:
           jobEnabled: false
         defaultSettings:
           replicaAutoBalance: best-effort
+          defaultDataLocality: best-effort
   destination:
     name: {{ .Release.Name }}
     namespace: longhorn-system
