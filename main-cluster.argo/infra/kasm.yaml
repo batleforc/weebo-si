@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: kasm
-  namespace: argocd
+  namespace: argocd-client
   finalizers:
   - resources-finalizer.argocd.argoproj.io
 spec:
