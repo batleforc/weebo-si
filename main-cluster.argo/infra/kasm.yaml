@@ -22,7 +22,7 @@ spec:
             create: false
   destination:
     name: in-cluster
-    namespace: 'default'
+    namespace: 'kasm'
   syncPolicy:
     automated:
       prune: false
