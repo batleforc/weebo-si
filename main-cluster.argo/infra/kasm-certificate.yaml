@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kasm
+  namespace: kasm
+spec:
+  secretName: kasm-ingress-cert
+  issuerRef:
+    name: vault-issuer
+    kind: ClusterIssuer
+  commonName: kasm.main-cluster.weebo.poc
+  dnsNames:
+  - kasm.main-cluster.weebo.poc

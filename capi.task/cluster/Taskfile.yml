@@ -40,3 +40,13 @@ tasks:
       cluster: '{{.cluster}}'
     cmds:
     - cd .. && task capi:cluster:kubectl cluster="{{.cluster}}" -- -n argocd-client get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d | task ks:ks -- add -k 0.keepassxc/keyfile --no-password -p -u admin --url https://argo.{{.cluster}}.weebo.poc 0.keepassxc/weebo-si {{.cluster}}-argo
+  talosctl:
+    vars:
+      cluster: '{{.cluster}}'
+    preconditions:
+    - sh: '[ {{.cluster}} != "" ]'
+      msg: "cluster is required ex task capi:cluster:kubectl cluster='mono-node' -- get pods"
+    - sh: '[ -f talosconfig.{{.cluster}}.yml ]'
+      msg: "talosconfig.{{.cluster}}.yml is required please run get-talosconfig ex: 'task cluster:get-talosconfig -- mono-node' "
+    cmds:
+    - talosctl --talosconfig talosconfig.{{.cluster}}.yml {{.CLI_ARGS}}

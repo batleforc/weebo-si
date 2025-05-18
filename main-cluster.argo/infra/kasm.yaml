@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kasm
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: 'default'
+  source:
+    repoURL: 'https://github.com/kasmtech/kasm-helm'
+    path: 'kasm-single-zone'
+    targetRevision: release/1.17.0
+    helm:
+      releaseName: kasm
+      valuesObject:
+        global:
+          hostname: 'kasm.main-cluster.weebo.poc'
+          ingressClassName: traefik
+        kasmCerts:
+          ingress:
+            create: false
+  destination:
+    name: in-cluster
+    namespace: 'default'
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m

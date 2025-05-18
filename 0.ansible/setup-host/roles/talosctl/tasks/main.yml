@@ -2,7 +2,7 @@
 - name: "If talosctl is already installed, get the version"
   ansible.builtin.command:
     cmd: "talosctl version --short --client"
-  register: clusterctl_version_output
+  register: talosctl_version_output
   ignore_errors: true
   changed_when: false
 - name: "Download script to install talosctl"
@@ -10,15 +10,19 @@
     url: "https://talos.dev/install"
     dest: "/tmp/talos-install.sh"
     mode: '0755'
-  when: clusterctl_version in clusterctl_version_output.stdout
+  when: talosctl_version not in talosctl_version_output.stdout
 - name: "Install talosctl"
   ansible.builtin.command:
     cmd: "/tmp/talos-install.sh"
   register: talosctl_install_output
   changed_when: talosctl_install_output.rc != 0
-  when: clusterctl_version in clusterctl_version_output.stdout
+  when: talosctl_version not in talosctl_version_output.stdout
+- name: "Print install output"
+  ansible.builtin.debug:
+    msg: "talosctl install output: {{ talosctl_install_output.stdout }}"
+  when: talosctl_version not in talosctl_version_output.stdout
 - name: "Remove script to install talosctl"
   ansible.builtin.file:
     path: "/tmp/talos-install.sh"
     state: absent
-  when: clusterctl_version in clusterctl_version_output.stdout
+  when: talosctl_version not in talosctl_version_output.stdout
