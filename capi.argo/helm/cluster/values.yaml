@@ -111,7 +111,7 @@ proxmox:
     disk:
       name: scsi0
       sizeGb: 50
-    memoryMiB: 8192
+    memoryMiB: 12288
     network: vmbr1
     templateID: 9998
     cpu:
