@@ -13,7 +13,6 @@ spec:
     automated: {}
     syncOptions:
       - CreateNamespace=true
-      - Replace=true
   destination:
     namespace: argocd-client
     name: {{ .Release.Name }}
