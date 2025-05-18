@@ -11,9 +11,6 @@ metadata:
 spec:
   syncPolicy:
     automated: {}
-    syncOptions:
-      - CreateNamespace=true
-      - Replace=true
   destination:
     namespace: default
     server: https://kubernetes.default.svc
