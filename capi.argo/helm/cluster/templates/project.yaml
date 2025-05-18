@@ -1,16 +1,18 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: {{ .Release.Name }}
+  name: { { .Release.Name } }
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: PruneLast=true
 spec:
   sourceRepos:
-  - '*'
+    - "*"
   destinations:
-  - namespace: '*'
-    name: '{{ .Release.Name }}'
-  - namespace: '*'
-    name: 'in-cluster'
+    - namespace: "*"
+      name: "{{ .Release.Name }}"
+    - namespace: "*"
+      name: "in-cluster"
   clusterResourceWhitelist:
-  - group: '*'
-    kind: '*'
+    - group: "*"
+      kind: "*"

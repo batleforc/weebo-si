@@ -3,6 +3,8 @@ kind: Cluster
 metadata:
   name: {{ .Release.Name }}
   namespace: default
+  annotations:
+    argocd.argoproj.io/sync-options: PruneLast=true
   labels:
     {{- range $key, $value := .Values.kubernetes.labels }}
     {{ $key }}: {{ $value }}

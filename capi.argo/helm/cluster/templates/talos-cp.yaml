@@ -2,6 +2,8 @@ apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: TalosControlPlane
 metadata:
   name: {{ .Release.Name }}-talos-cp
+  annotations:
+    argocd.argoproj.io/sync-options: PruneLast=true
 spec:
   version: {{ .Values.kubernetes.version }}
   replicas: {{ .Values.controlPlane.replicas }}

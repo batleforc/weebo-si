@@ -3,6 +3,8 @@ kind: ProxmoxCluster
 metadata:
   name: {{ .Release.Name }}-proxmox-cluster
   namespace: default
+  annotations:
+    argocd.argoproj.io/sync-options: PruneLast=true
 spec:
   schedulerHints:
     memoryAdjustment: 0

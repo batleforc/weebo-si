@@ -17,6 +17,9 @@ spec:
       valuesObject:
         controlPlane:
           replicas: 3
+        proxmox:
+          nodeConf:
+            memoryMiB: 12288
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: 'default'

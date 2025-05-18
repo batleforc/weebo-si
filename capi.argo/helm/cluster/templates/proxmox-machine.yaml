@@ -3,6 +3,8 @@ kind: ProxmoxMachineTemplate
 metadata:
   name: {{ .Release.Name }}-cp
   namespace: default
+  annotations:
+    argocd.argoproj.io/sync-options: PruneLast=true
 spec:
   template:
     spec:
