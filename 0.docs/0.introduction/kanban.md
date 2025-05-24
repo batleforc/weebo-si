@@ -55,11 +55,13 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Stream 17 mai 2025 - In Progress
+### Stream 24 mai 2025 - Out Of Town
+
+### Stream 17 mai 2025
 
 - Debut : 16h30
 - FIN : ~ 18H30
-- Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : SOON TM
+- Vod : [Twitch](https://www.twitch.tv/batleforc) [YouTube](https://youtu.be/F-10nvHaUfg)
 - Musique: [NCS](https://ncs.io/)
 - Objectif (Pas dans l'ordre):
   - Explorer la mise en place de secrets
