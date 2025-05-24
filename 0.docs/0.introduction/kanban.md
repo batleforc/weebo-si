@@ -55,13 +55,11 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Stream 24 mai 2025 - Out Of Town
-
-### Stream 17 mai 2025
+### Stream 31 main 2025 - Soon TM
 
 - Debut : 16h30
 - FIN : ~ 18H30
-- Vod : [Twitch](https://www.twitch.tv/batleforc) [YouTube](https://youtu.be/F-10nvHaUfg)
+- Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif (Pas dans l'ordre):
   - Explorer la mise en place de secrets
@@ -74,51 +72,35 @@ kanban
     - [Bootstrap](https://docs.goauthentik.io/docs/install-config/automated-install)
     - [ArgoCD](https://docs.goauthentik.io/integrations/services/argocd/)
 - Sujet
-  - [Anubis](https://anubis.techaro.lol/)
+  - [WasmEdge](https://github.com/siderolabs/extensions/tree/main/container-runtime/wasmedge)
 - Bilan
 
-### Stream 10 mai 2025
+### Stream 24 mai 2025 - Out Of Town
+
+### Stream 17 mai 2025
 
 - Debut : 16h30
-- FIN : ~ 19H30
-- Vod : [Twitch 1](https://www.twitch.tv/videos/2455229336) [Twitch 2](https://www.twitch.tv/videos/2455248428) [YouTube 1](https://youtu.be/IxlazbMlPrE) [YouTube 2](https://youtu.be/X1O9Af9SCns)
+- FIN : ~ 18H30
+- Vod : [Twitch](https://www.twitch.tv/videos/2461155909) [YouTube](https://youtu.be/F-10nvHaUfg)
 - Musique: [NCS](https://ncs.io/)
-  - [NCS: The Best of 2025 ⚡️](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgkDw2aMG2lM5heA8cbLvOoN)
 - Objectif (Pas dans l'ordre):
-  - Automatiser la mise en place de l'autorité de certification RootCA / IntermediateCA via [Bank Vaults](https://bank-vaults.dev/). :white_check_mark: Passage en conf 100% Terraform ?
-  - Automatiser la création de certificats via le DNS01 ❎ et HTTP01 :white_check_mark:
-  - Trust le RootCA sur mon ordinateur et [le propager sur les clusters](https://github.com/cert-manager/trust-manager) tout en l'injectant dans les pods via [Kyverno](https://kyverno.io/policies/other/add-certificates-volume/add-certificates-volume/) :white_check_mark: Mode OPT-IN
-  - Déployer un Auth Provider sur Main Cluster  :white_check_mark: mais avec le local storage !
-  - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/) :warning: pour la prochaine fois
+  - Explorer la mise en place de secrets
+    - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/)
     - <https://external-secrets.io/latest/>
     - <https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso>
     - <https://bank-vaults.dev/docs/mutating-webhook/>
-  - Déployer les sous instances ArgoCD sur chaque cluster via l'ArgoCD principal :white_check_mark:
+  - Configurer Authentik via une approche [GitOps](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs)
+    - [Bootstrap](https://docs.goauthentik.io/docs/install-config/automated-install)
+    - [ArgoCD](https://docs.goauthentik.io/integrations/services/argocd/)
 - Sujet
   - [Anubis](https://anubis.techaro.lol/)
-  - [Argocd V3](https://github.com/argoproj/argo-cd/releases/tag/v3.0.0)
 - Bilan
-  - Déploiement d'ArgoCD en V3.0.0 sur Main Cluster
-  - Déploiement d'Authentik sur Main Cluster
-  - Beaucoup de documentation lue et validation de la configuration d'ArgoCD
+  - Stream chaotique avec un nœud parti vers d'autres cieux suivi d'un reset global de Main Cluster
+  - Rendez-vous le 31 mai pour la suite d'authentik !
 
-### Stream 3 mai 2025
+### [Stream 10 mai 2025](/0.introduction/stream/10-05-2025.html)
 
-- Debut : 16h30
-- FIN : ~ 19H40 - [Stream 3H18]
-- Vod : [Twitch](https://www.twitch.tv/videos/2449245677) [YouTube](https://youtu.be/zbPGIamezNI)
-- Musique: [NCS](https://ncs.io/)
-  - [NCS: The Best of 2025 ⚡️](https://www.youtube.com/playlist?list=PLRBp0Fe2GpgkDw2aMG2lM5heA8cbLvOoN)
-- Objectif (Pas dans l'ordre):
-  - Passage a Talos V1.10.0 progressif, créer un cluster en v1.9 puis le migrer vers v1.10.0, vérifier que tout fonctionne et ensuite faire la mise a jour de l'image de base/template
-    - [Talos Upgrade](https://www.talos.dev/v1.10/talos-guides/upgrading-talos/)
-    - [Kubernetes Upgrade](https://www.talos.dev/v1.10/kubernetes-guides/upgrading-kubernetes/)
-    - [Cluster API Upgrade](https://github.com/batleforc/weebo-si/pull/100)
-- Sujet
-  - [Talos v1.10.0](https://github.com/siderolabs/talos/releases/tag/v1.10.0)
-- Bilan
-  - Upgrade de Talos v1.10.0 fait sur le cluster Main et passage en kubernetes v1.33.0
-  - Automatisation de l'upgrade de Talos et Kubernetes effectué
+### [Stream 3 mai 2025](/0.introduction/stream/03-05-2025.html)
 
 ### Stream 26 avril 2025 - Pause (Out Of Town)
 
