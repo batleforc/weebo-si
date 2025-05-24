@@ -4,7 +4,7 @@
   become_method: ansible.builtin.sudo
   become: true
   vars:
-    clusterctl_version: "v1.10.1"
+    clusterctl_version: "v1.10.2"
     talosctl_version: "v1.9.4"
     terraform_version: "1.12.0"
     gitleaks_version: "8.26.0"
