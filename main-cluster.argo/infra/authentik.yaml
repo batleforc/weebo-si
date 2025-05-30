@@ -60,6 +60,13 @@ spec:
             - secretName: authentik-tls
               hosts:
               - login.main-cluster.weebo.poc
+          env:
+            - name: AUTHENTIK_BOOTSTRAP_PASSWORD
+              value: "vault:mc-authentik/data/main-config#AUTHENTIK_BOOTSTRAP_PASSWORD"
+            - name: AUTHENTIK_BOOTSTRAP_EMAIL
+              value: "vault:mc-authentik/data/main-config#AUTHENTIK_BOOTSTRAP_EMAIL"
+            - name: AUTHENTIK_BOOTSTRAP_TOKEN
+              value: "vault:mc-authentik/data/main-config#AUTHENTIK_BOOTSTRAP_TOKEN"
 
         postgresql:
           enabled: true
