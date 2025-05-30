@@ -16,6 +16,12 @@ spec:
     targetRevision: {{ .Values.trustManager.version }}
     helm:
       releaseName: trust-manager
+      valuesObject:
+        secretsTarget:
+          enabled: true
+          authorizedSecrets:
+            - "weebo-poc"
+            - "weebo.poc"
   destination:
     name: {{ .Release.Name }}
     namespace: cert-manager

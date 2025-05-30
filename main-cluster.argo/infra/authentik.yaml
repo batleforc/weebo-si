@@ -30,6 +30,10 @@ spec:
         global:
           podAnnotations:
             inject-certs: "enabled"
+            vault.security.banzaicloud.io/vault-addr: "https://vault.main-cluster.weebo.poc"
+            vault.security.banzaicloud.io/vault-role: "auth"
+            vault.security.banzaicloud.io/vault-path: "main-cluster"
+            vault.security.banzaicloud.io/vault-tls-secret: ""
         authentik:
           secret_key: "PleaseGenerateASecureKey"
           error_reporting:

@@ -73,6 +73,7 @@ kanban
     - [ArgoCD](https://docs.goauthentik.io/integrations/services/argocd/)
 - Sujet
   - [WasmEdge](https://github.com/siderolabs/extensions/tree/main/container-runtime/wasmedge)
+  - [Pangolin](https://docs.fossorial.io/Pangolin/overview)
 - Bilan
 
 ### Stream 24 mai 2025 - Out Of Town

@@ -4,12 +4,17 @@ metadata:
   name: weebo.poc
 spec:
   sources:
-  - useDefaultCAs: true
-  - secret:
-      name: "certificate"
-      includeAllKeys: true
+    - useDefaultCAs: true
+    - secret:
+        name: "certificate"
+        includeAllKeys: true
   target:
     configMap:
+      key: main-ca.crt
+      metadata:
+        labels:
+          weebo.si/source-ca: "true"
+    secret:
       key: main-ca.crt
       metadata:
         labels:
