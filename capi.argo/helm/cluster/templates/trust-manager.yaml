@@ -17,7 +17,7 @@ spec:
     helm:
       releaseName: trust-manager
       valuesObject:
-        secretsTarget:
+        secretTargets:
           enabled: true
           authorizedSecrets:
             - "weebo-poc"
