@@ -42,6 +42,7 @@ kanban
 - [Dex](https://dexidp.io/)
 - [WarpGate](https://warpgate.null.page/docs/)
 - [Kyverno Reporter](https://kyverno.github.io/policy-reporter-docs/getting-started/installation.html)
+- [Rook](https://rook.io/docs/rook/latest-release/Storage-Configuration/Object-Storage-RGW/object-storage/#create-local-object-stores-with-pool-placements)
 
 ## Actions récurrentes
 

@@ -19,7 +19,7 @@ spec:
   destination:
     namespace: authentik
     server: https://kubernetes.default.svc
-  project: default
+  project: authentik
   source:
     chart: authentik
     repoURL: https://charts.goauthentik.io

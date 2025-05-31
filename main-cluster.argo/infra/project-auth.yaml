@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: "authentik"
+  namespace: argocd-client
+  annotations:
+    argocd.argoproj.io/sync-options: PruneLast=true
+spec:
+  sourceRepos:
+    - "https://github.com/batleforc/weebo-si"
+  destinations:
+    - namespace: "authentik"
+      name: "in-cluster"
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"

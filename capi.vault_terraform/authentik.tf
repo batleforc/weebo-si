@@ -23,7 +23,7 @@ resource "vault_policy" "authentik_reader_policy" {
   name = "authentik_reader_policy"
 
   policy = <<EOT
-path "secret/data/{{identity.entity.aliases.auth_kubernetes_5a5c946d.metadata.service_account_namespace}}/*" {
+path "mc-authentik/data/{{identity.entity.aliases.auth_kubernetes_5a5c946d.metadata.service_account_namespace}}/*" {
   capabilities = ["read","list"]
 }
 EOT
