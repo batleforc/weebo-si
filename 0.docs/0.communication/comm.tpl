@@ -15,3 +15,11 @@ www.twitch.tv/batleforc
 - Kanban et Récap de stream https://batleforc.github.io/weebo-si/0.introduction/kanban.html
 - Github https://github.com/batleforc/weebo-si
 - Et toujours en musique https://batleforc.github.io/weebo-si/0.introduction/kanban.html#music
+
+
+
+###
+
+Et pour finir, le bilan du stream du jour, batleforc.github.io/weebo-si/0.i...
+
+See you soon

@@ -75,7 +75,7 @@ kanban
   - [Pangolin](https://docs.fossorial.io/Pangolin/overview)
 - Bilan
 
-### Stream 31 main 2025
+### Stream 31 mai 2025
 
 - Debut : 16h30
 - FIN : 19h00
