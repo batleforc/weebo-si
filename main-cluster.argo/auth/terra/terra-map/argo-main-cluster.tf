@@ -5,6 +5,7 @@ data "authentik_flow" "default-authorization-flow" {
 resource "authentik_provider_oauth2" "argo-main-cluster" {
   name               = "main-cluster.argo"
   client_id          = "main-cluster.argo"
+  invalidation_flow  = "default-provider-invalidation-flow"
   authorization_flow = data.authentik_flow.default-authorization-flow.id
   allowed_redirect_uris = [
     {
