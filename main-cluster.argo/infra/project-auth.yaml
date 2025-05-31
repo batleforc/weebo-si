@@ -8,6 +8,7 @@ metadata:
 spec:
   sourceRepos:
     - "https://github.com/batleforc/weebo-si"
+    - "https://charts.goauthentik.io"
   destinations:
     - namespace: "authentik"
       name: "in-cluster"
