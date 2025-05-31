@@ -12,7 +12,7 @@
     argocd_version: "v3.0.5"
     updatecli_version: "v0.101.0"
     tofu_version: "1.7.8"
-    vault_version: "1.19.4"
+    vault_version: "1.19.5"
   tasks:
     - name: "Update and upgrade apt packages"
       ansible.builtin.apt:
