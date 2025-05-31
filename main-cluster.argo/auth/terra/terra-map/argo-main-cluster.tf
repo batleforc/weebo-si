@@ -2,10 +2,14 @@ data "authentik_flow" "default-authorization-flow" {
   slug = "default-provider-authorization-implicit-consent"
 }
 
+data "authentik_flow" "default-invalidation-flow" {
+  slug = "default-provider-invalidation-flow"
+}
+
 resource "authentik_provider_oauth2" "argo-main-cluster" {
   name               = "main-cluster.argo"
   client_id          = "main-cluster.argo"
-  invalidation_flow  = "default-provider-invalidation-flow"
+  invalidation_flow  = data.authentik_flow.default-invalidation-flow.id
   authorization_flow = data.authentik_flow.default-authorization-flow.id
   allowed_redirect_uris = [
     {
