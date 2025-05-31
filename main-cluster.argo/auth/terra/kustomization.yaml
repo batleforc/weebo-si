@@ -19,3 +19,4 @@ configMapGenerator:
       - ./terra-map/main.tf
       - ./terra-map/group.tf
       - ./terra-map/user.tf
+      - ./terra-map/argo-main-cluster.tf
