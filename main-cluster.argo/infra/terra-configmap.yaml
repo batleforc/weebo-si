@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: terra-configmap
+  namespace: argocd-client
+spec:
+  project: authentik
+  source:
+    path: main-cluster.argo/auth/terra
+    repoURL: 'https://github.com/batleforc/weebo-si'
+    targetRevision: HEAD
+  destination:
+    namespace: authentik
+    server: 'https://kubernetes.default.svc'
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

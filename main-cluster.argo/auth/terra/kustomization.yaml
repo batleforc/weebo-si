@@ -7,11 +7,15 @@ namespace: authentik
 generatorOptions:
   disableNameSuffixHash: true
 
+resources:
+  - job.yaml
+  - volume.yaml
+
 
 configMapGenerator:
   - name: terra-auth-config
     namespace: authentik
     files:
-      - ./main.tf
-      - ./group.tf
-      - ./user.tf
+      - ./terra-map/main.tf
+      - ./terra-map/group.tf
+      - ./terra-map/user.tf
