@@ -56,7 +56,7 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Stream 31 main 2025 - Soon TM
+### Stream 07 juin 2025 - Soon TM
 
 - Debut : 16h30
 - FIN : ~ 18H30
@@ -68,22 +68,18 @@ kanban
     - <https://external-secrets.io/latest/>
     - <https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso>
     - <https://bank-vaults.dev/docs/mutating-webhook/>
-  - Déployer un driver CSI ([Longhorn](https://www.talos.dev/v1.10/kubernetes-guides/configuration/storage/) ?) !
   - Configurer Authentik via une approche [GitOps](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs)
-    - [Bootstrap](https://docs.goauthentik.io/docs/install-config/automated-install)
-    - [ArgoCD](https://docs.goauthentik.io/integrations/services/argocd/)
+    - Push des secrets d'application vers Vault et chargement dynamique de celui-ci
 - Sujet
   - [WasmEdge](https://github.com/siderolabs/extensions/tree/main/container-runtime/wasmedge)
   - [Pangolin](https://docs.fossorial.io/Pangolin/overview)
 - Bilan
 
-### Stream 24 mai 2025 - Out Of Town
-
-### Stream 17 mai 2025
+### Stream 31 main 2025
 
 - Debut : 16h30
-- FIN : ~ 18H30
-- Vod : [Twitch](https://www.twitch.tv/videos/2461155909) [YouTube](https://youtu.be/F-10nvHaUfg)
+- FIN : 19h00
+- Vod : [Twitch](https://www.twitch.tv/videos/2473394722) YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif (Pas dans l'ordre):
   - Explorer la mise en place de secrets
@@ -91,14 +87,18 @@ kanban
     - <https://external-secrets.io/latest/>
     - <https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso>
     - <https://bank-vaults.dev/docs/mutating-webhook/>
+  - Déployer un driver CSI ([Longhorn](https://www.talos.dev/v1.10/kubernetes-guides/configuration/storage/) ?) !
   - Configurer Authentik via une approche [GitOps](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs)
     - [Bootstrap](https://docs.goauthentik.io/docs/install-config/automated-install)
     - [ArgoCD](https://docs.goauthentik.io/integrations/services/argocd/)
-- Sujet
-  - [Anubis](https://anubis.techaro.lol/)
 - Bilan
-  - Stream chaotique avec un nœud parti vers d'autres cieux suivi d'un reset global de Main Cluster
-  - Rendez-vous le 31 mai pour la suite d'authentik !
+  - Beaucoup de questionnements sur la descente de l'authentification sur les différents clusters
+  - Création d'un premier utilisateur, de deux groupes admin et user ainsi que l'application Argo pour Main-Cluster
+  - Erreur lors de la suppression des mauvaises replicas au niveau de LongHorn
+
+### Stream 24 mai 2025 - Out Of Town
+
+### [Stream 17 mai 2025](/0.introduction/stream/17-05-2025.html)
 
 ### [Stream 10 mai 2025](/0.introduction/stream/10-05-2025.html)
 

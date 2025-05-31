@@ -158,6 +158,10 @@ export default defineConfig({
                 text: "Stream - 10/05/2025",
                 link: "/0.introduction/stream/10-05-2025",
               },
+              {
+                text: "Stream - 17/05/2025",
+                link: "/0.introduction/stream/17-05-2025",
+              },
             ],
           },
         ],
