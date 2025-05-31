@@ -4,15 +4,15 @@
   become_method: ansible.builtin.sudo
   become: true
   vars:
-    clusterctl_version: "v1.10.1"
+    clusterctl_version: "v1.10.2"
     talosctl_version: "v1.9.4"
-    terraform_version: "1.12.0"
+    terraform_version: "1.12.1"
     gitleaks_version: "8.26.0"
     k9s_version: "v0.50.6"
-    argocd_version: "v3.0.1"
-    updatecli_version: "v0.100.0"
+    argocd_version: "v3.0.5"
+    updatecli_version: "v0.101.0"
     tofu_version: "1.7.8"
-    vault_version: "1.19.4"
+    vault_version: "1.19.5"
   tasks:
     - name: "Update and upgrade apt packages"
       ansible.builtin.apt:
