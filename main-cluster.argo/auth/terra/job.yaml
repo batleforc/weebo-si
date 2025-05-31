@@ -30,7 +30,7 @@ spec:
           cp /scripts/*.tf .
           terraform init --upgrade
           terraform apply -auto-approve
-        environment:
+        env:
         - name: TF_VAR_authentik_url
           value: "https://login.main-cluster.weebo.poc"
         - name: TF_VAR_authentik_token
