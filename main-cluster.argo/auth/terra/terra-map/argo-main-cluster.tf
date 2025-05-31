@@ -21,6 +21,6 @@ resource "authentik_provider_oauth2" "argo-main-cluster" {
 
 resource "authentik_application" "argo-main-cluster" {
   name              = "main-cluster.argo"
-  slug              = "main-cluster.argo"
+  slug              = "main-cluster-argo"
   protocol_provider = authentik_provider_oauth2.argo-main-cluster.id
 }
