@@ -31,14 +31,10 @@ spec:
           terraform init --upgrade
           terraform apply -auto-approve
         volumeMounts:
-        - mountPath: /tmp
-          name: temp
         - mountPath: terraform
           name: terra-job
         - mountPath: /scripts
           name: "script-vol"
-        - mountPath: "/ca/vault"
-          name: vault-ca
       restartPolicy: Never
       volumes:
       - name: "script-vol"
