@@ -64,7 +64,7 @@ resource "vault_kubernetes_auth_backend_role" "auth-read" {
   backend                          = "main-cluster"
   role_name                        = "auth-read"
   bound_service_account_names      = ["authentik", "default"]
-  bound_service_account_namespaces = ["authentik"]
+  bound_service_account_namespaces = ["authentik", "argocd-client"]
   token_ttl                        = 3600
   token_policies                   = [vault_policy.authentik_reader_policy.name]
 }
