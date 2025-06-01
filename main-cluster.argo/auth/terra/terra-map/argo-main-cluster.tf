@@ -6,12 +6,16 @@ data "authentik_flow" "default-invalidation-flow" {
   slug = "default-provider-invalidation-flow"
 }
 
+data "authentik_certificate_key_pair" "generated" {
+  name = "authentik Self-signed Certificate"
+}
+
 resource "authentik_provider_oauth2" "argo-main-cluster" {
   name               = "main-cluster.argo"
   client_id          = "main-cluster.argo"
   invalidation_flow  = data.authentik_flow.default-invalidation-flow.id
   authorization_flow = data.authentik_flow.default-authorization-flow.id
-  signing_key        = "RS256"
+  signing_key        = data.authentik_certificate_key_pair.generated.id
   allowed_redirect_uris = [
     {
       matching_mode = "strict",

@@ -35,9 +35,7 @@ spec:
                     issuer: $argo-dev-auth:url
                     clientID: $argo-dev-auth:client_id
                     clientSecret: $argo-dev-auth:client_secret
-                    requestedIdTokenClaims:
-                      groups:
-                        essential: true
+                    insecureEnableGroups: true
                     requestedScopes:
                       - "openid"
                       - "profile"
