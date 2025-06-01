@@ -1,14 +1,39 @@
+release: truc
 network:
   vip: 192.168.100.40
   port: 6443
   dnsServers:
+  - 192.168.100.11
   - 8.8.8.8
-  - 8.8.4.4
   gateway: 192.168.100.1
   prefix: 20
   addresses: 192.168.100.41-192.168.100.50
 
-release: truc
+extensions:
+  qemuGuestAgent:
+    image: ghcr.io/siderolabs/qemu-guest-agent:10.0.0
+
+argo:
+  local: false
+  main: false
+  apps:
+    enabled: true
+    version: 8.0.14
+    prefix: argo
+    rbac:
+      scopes: '[roles]'
+      policy: |
+        g, admin, role:admin
+        g, dev, role:dev
+        g, reader, role:readonly
+        g, weebo_admin, role:admin
+
+externalSecrets:
+  enabled: true
+  version: 0.17.0
+  vault:
+    enabled: true
+    version: 4.4.0
 
 storage:
   local:
@@ -17,10 +42,6 @@ storage:
     enabled: true
     version: v1.8.1
 
-argo:
-  local: false
-  main: false
-
 dns:
   enabled: true
   wildcard: true
@@ -28,7 +49,7 @@ dns:
   name: "{{.Release.Name}}"
 
 cilium:
-  version: 1.17.2
+  version: 1.17.4
   enabled: true
   ipv6: false
   ipv4: true
@@ -39,11 +60,69 @@ cilium:
   - 10.96.0.0/12
   #- 2001:db8:7653:299:cafe:1::/96
 
+certificate:
+  rootCA:
+    url: https://vault.capi.weebo.poc/v1/pki/issuer/default/json
+  subCA:
+    url: https://vault.capi.weebo.poc/v1/pki_int/issuer/default/json
+
 kyverno:
   enabled: true
-  version: 3.3.7
+  version: 3.4.1
+  policies: 3.4.1
+  reporter: 3.1.4
+
+certManager:
+  enabled: true
+  version: 1.17.2
+  installCRDs: true
+
+trustManager:
+  enabled: true
+  version: 0.17.1
+
+traefik:
+  enabled: true
+  version: 35.4.0
+  plugins:
+    bouncer:
+      moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+      version: v1.4.2
+    sablier:
+      moduleName: github.com/sablierapp/sablier
+      version: v1.9.0
+
+vault:
+  enabled: true
+  version: 1.21.3
+
+bootstrap:
+  vaultProviderVersion: "4.4.0"
 
 kubernetes:
-  version: v1.32.2
+  version: v1.33.1
   labels:
-    argoHelmInstall: enabled
+    argoHelmInstall: disabled
+
+controlPlane:
+  installImage: factory.talos.dev/nocloud-installer/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3:v1.10.3
+  version: v1.10.1
+  replicas: 1
+  allowScheduling: true
+  tccm: true
+  cloudProvider: https://raw.githubusercontent.com/siderolabs/talos-cloud-controller-manager/main/docs/deploy/cloud-controller-manager.yml
+
+proxmox:
+  allowedNodes:
+  - weebo4
+  nodeConf:
+    node: weebo4
+    disk:
+      name: scsi0
+      sizeGb: 50
+    memoryMiB: 8192
+    network: vmbr1
+    templateID: 9998
+    cpu:
+      cores: 2
+      sockets: 1
