@@ -11,6 +11,7 @@ resource "authentik_provider_oauth2" "argo-main-cluster" {
   client_id          = "main-cluster.argo"
   invalidation_flow  = data.authentik_flow.default-invalidation-flow.id
   authorization_flow = data.authentik_flow.default-authorization-flow.id
+  signing_key        = "RS256"
   allowed_redirect_uris = [
     {
       matching_mode = "strict",
