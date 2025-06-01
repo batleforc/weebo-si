@@ -24,3 +24,15 @@ resource "authentik_application" "argo-main-cluster" {
   slug              = "main-cluster-argo"
   protocol_provider = authentik_provider_oauth2.argo-main-cluster.id
 }
+
+resource "vault_kv_secret_v2" "argo-main-cluster" {
+  mount = "main-cluster-authentik"
+  name  = "argo-main-cluster"
+  data_json = jsonencode(
+    {
+      AUTHENTIK_CLIENT_ID     = authentik_provider_oauth2.argo-main-cluster.client_id,
+      AUTHENTIK_CLIENT_SECRET = authentik_provider_oauth2.argo-main-cluster.client_secret,
+      AUTHENTIK_URL           = "https://login.main-cluster.weebo.poc",
+    }
+  )
+}

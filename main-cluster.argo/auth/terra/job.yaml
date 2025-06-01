@@ -35,6 +35,8 @@ spec:
           value: "https://login.main-cluster.weebo.poc"
         - name: TF_VAR_authentik_token
           value: "vault:mc-authentik/data/main-config#AUTHENTIK_BOOTSTRAP_TOKEN"
+        - name: TF_VAR_vault_addr
+          value: "https://vault.capi.weebo.poc"
         volumeMounts:
         - mountPath: terraform
           name: terra-job

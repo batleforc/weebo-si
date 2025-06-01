@@ -25,6 +25,8 @@ actions:
         - `proxmox` version: {{ source "proxmox" }}
         - `kubernetes` version: {{ source "kubernetes" }}
         - `wireguard` version: {{ source "wireguard" }}
+        - `vault` version: {{ source "vault" }}
+        - `authentik` version: {{ source "authentik" }}
       labels:
       - "Upgrade"
       - "UpdateCLI"
@@ -54,6 +56,18 @@ sources:
       type: provider
       namespace: OJFord
       name: wireguard
+  vault:
+    kind: terraform/registry
+    spec:
+      type: provider
+      namespace: hashicorp
+      name: vault
+  authentik:
+    kind: terraform/registry
+    spec:
+      type: provider
+      namespace: goauthentik
+      name: authentik
 
 targets:
   bumpTalosCapi:
@@ -104,3 +118,27 @@ targets:
     spec:
       file: 0.terraform/vpn-proxmox/main.tf
       provider: "wireguard"
+  bumpVaultCapi:
+    name: "Update Vault Provider CAPI"
+    kind: terraform/provider
+    scmid: default
+    sourceid: vault
+    spec:
+      file: capi.vault_terraform/main.tf
+      provider: "vault"
+  bumpVaultAuthentik:
+    name: "Update Vault Provider Authentik"
+    kind: terraform/provider
+    scmid: default
+    sourceid: vault
+    spec:
+      file: main-cluster.argo/auth/terra/terra-map/main.tf
+      provider: "vault"
+  bumpAuthentikAuthentik:
+    name: "Update Authentik Provider Authentik"
+    kind: terraform/provider
+    scmid: default
+    sourceid: authentik
+    spec:
+      file: main-cluster.argo/auth/terra/terra-map/main.tf
+      provider: "authentik"

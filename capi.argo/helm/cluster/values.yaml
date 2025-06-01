@@ -17,7 +17,7 @@ argo:
   main: false
   apps:
     enabled: true
-    version: 8.0.0
+    version: 8.0.14
     prefix: argo
     rbac:
       scopes: '[roles]'
@@ -25,6 +25,14 @@ argo:
         g, admin, role:admin
         g, dev, role:dev
         g, reader, role:readonly
+        g, weebo_admin, role:admin
+
+externalSecrets:
+  enabled: true
+  version: 0.17.0
+  vault:
+    enabled: true
+    version: 4.4.0
 
 storage:
   local:
