@@ -79,7 +79,7 @@ kanban
 
 - Debut : 16h30
 - FIN : 19h00
-- Vod : [Twitch](https://www.twitch.tv/videos/2473394722) YouTube : Soon
+- Vod : [Twitch](https://www.twitch.tv/videos/2473394722) [YouTube](https://youtu.be/GGYvtPEl194)
 - Musique: [NCS](https://ncs.io/)
 - Objectif (Pas dans l'ordre):
   - Explorer la mise en place de secrets
