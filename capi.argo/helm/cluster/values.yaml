@@ -20,7 +20,7 @@ argo:
     version: 8.0.14
     prefix: argo
     rbac:
-      scopes: '[roles]'
+      scopes: '[groups]'
       policy: |
         g, admin, role:admin
         g, dev, role:dev
