@@ -32,7 +32,7 @@ resource "vault_kv_secret_v2" "argo-main-cluster" {
     {
       AUTHENTIK_CLIENT_ID     = authentik_provider_oauth2.argo-main-cluster.client_id,
       AUTHENTIK_CLIENT_SECRET = authentik_provider_oauth2.argo-main-cluster.client_secret,
-      AUTHENTIK_URL           = "https://login.main-cluster.weebo.poc",
+      AUTHENTIK_URL           = "https://login.main-cluster.weebo.poc/application/o/${authentik_application.argo-main-cluster.slug}",
     }
   )
 }
