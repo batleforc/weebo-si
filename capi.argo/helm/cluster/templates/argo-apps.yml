@@ -37,8 +37,8 @@ spec:
               requestedScopes:
                 - "openid"
                 - "profile"
-              - "email"
-              - "groups"
+                - "email"
+                - "groups"
             url: "https://{{ .Values.argo.apps.prefix }}.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
           params:
             server.insecure: true
