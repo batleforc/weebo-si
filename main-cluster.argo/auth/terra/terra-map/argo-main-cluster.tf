@@ -14,7 +14,11 @@ resource "authentik_provider_oauth2" "argo-main-cluster" {
   allowed_redirect_uris = [
     {
       matching_mode = "strict",
-      url           = "https://argo.main-cluster.weebo.poc/auth/callback",
+      url           = "https://argo.main-cluster.weebo.poc/api/dex/callback",
+    },
+    {
+      matching_mode = "strict",
+      url           = "https://localhost:8085/auth/callback",
     },
   ]
 }
