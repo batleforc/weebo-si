@@ -48,6 +48,8 @@ spec:
               {{- .Values.argo.apps.rbac.policy | toYaml | indent 14 }}
         global:
           domain: "{{ .Values.argo.apps.prefix }}.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
+          podAnnotations:
+            inject-certs: "enabled"
         server:
           ingress:
             enabled: true
