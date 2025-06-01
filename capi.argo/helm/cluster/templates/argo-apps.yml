@@ -26,22 +26,22 @@ spec:
       valuesObject:
         configs:
           cm:
+            oidc.config: |
+              name: "WeeboSI"
+              issuer: $argo-dev-auth:url
+              clientID: $argo-dev-auth:client_id
+              clientSecret: $argo-dev-auth:client_secret
+              requestedIdTokenClaims:
+                groups:
+                  essential: true
+              requestedScopes:
+                - "openid"
+                - "profile"
+              - "email"
+              - "groups"
             url: "https://{{ .Values.argo.apps.prefix }}.{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}"
           params:
             server.insecure: true
-          oidc.config: |
-            name: "WeeboSI"
-            issuer: $argo-dev-auth:url
-            clientID: $argo-dev-auth:client_id
-            clientSecret: $argo-dev-auth:client_secret
-            requestdIdTokenClaims:
-              groups:
-                essential: true
-            requestedScopes:
-              - "openid"
-              - "profile"
-              - "email"
-              - "groups"
           rbac:
             scopes: "{{ .Values.argo.apps.rbac.scopes }}"
             policy.csv:
