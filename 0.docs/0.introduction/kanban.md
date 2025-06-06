@@ -73,6 +73,8 @@ kanban
 - Sujet
   - [WasmEdge](https://github.com/siderolabs/extensions/tree/main/container-runtime/wasmedge)
   - [Pangolin](https://docs.fossorial.io/Pangolin/overview)
+  - [Proxmox hardening](https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/post-pve-install.sh)
+  - [NetBird](https://github.com/netbirdio/netbird)
 - Bilan
 
 ### Stream 31 mai 2025

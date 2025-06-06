@@ -56,3 +56,8 @@ policies:
   - ./0.updatecli/authentik.yaml
   values:
   - ./0.updatecli/values.yaml
+- name: Upgrade ArgoCD
+  config:
+  - ./0.updatecli/argocd.yaml
+  values:
+  - ./0.updatecli/values.yaml

@@ -1,0 +1,53 @@
+name: Upgrade ArgoCD
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: batleforc
+      repository: weebo-si
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      branch: main
+
+actions:
+  bumpargocd:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      title: 'ci: Bump `ArgoCD` version to {{ source "argocd" }}'
+      automerge: false
+      description: |
+        Bump `ArgoCD` version
+        - `ArgoCD` version: {{ source "argocd" }}
+      labels:
+      - "Upgrade"
+      - "UpdateCLI"
+
+sources:
+  argocd:
+    kind: githubrelease
+    scmid: default
+    spec:
+      owner: argoproj
+      repository: argo-cd
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      versionFilter:
+        kind: latest
+    transformers:
+    - trimprefix: "v"
+
+
+targets:
+  bumpargocd:
+    kind: yaml
+    name: "Bump ArgoCD version"
+    scmid: default
+    sourceid: argocd
+    spec:
+      file: capi.argo/helm/cluster/values.yaml
+      key: 'argo.apps.version'
+      value: '{{ source "argocd" }}'
