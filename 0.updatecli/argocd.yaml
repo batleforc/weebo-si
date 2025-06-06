@@ -28,17 +28,13 @@ actions:
 
 sources:
   argocd:
-    kind: githubrelease
+    kind: dockerimage
     scmid: default
     spec:
-      owner: argoproj
-      repository: argo-cd
-      token: "{{ requiredEnv .github.token }}"
-      username: "{{ .github.username }}"
+      image: ghcr.io/argoproj/argo-helm/argo-cd
+      architecture: "linux/amd64"
       versionFilter:
-        kind: latest
-    transformers:
-    - trimprefix: "v"
+        kind: semver
 
 
 targets:
