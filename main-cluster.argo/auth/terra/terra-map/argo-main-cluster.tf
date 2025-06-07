@@ -1,15 +1,3 @@
-data "authentik_flow" "default-authorization-flow" {
-  slug = "default-provider-authorization-implicit-consent"
-}
-
-data "authentik_flow" "default-invalidation-flow" {
-  slug = "default-provider-invalidation-flow"
-}
-
-data "authentik_certificate_key_pair" "generated" {
-  name = "authentik Self-signed Certificate"
-}
-
 resource "authentik_provider_oauth2" "argo-main-cluster" {
   name               = "main-cluster.argo"
   client_id          = "main-cluster.argo"
@@ -25,6 +13,11 @@ resource "authentik_provider_oauth2" "argo-main-cluster" {
       matching_mode = "strict",
       url           = "https://localhost:8085/auth/callback",
     },
+  ]
+  property_mappings = [
+    data.authentik_property_mapping_provider_scope.scope-email.id,
+    data.authentik_property_mapping_provider_scope.scope-profile.id,
+    data.authentik_property_mapping_provider_scope.scope-openid.id,
   ]
 }
 

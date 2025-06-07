@@ -17,6 +17,7 @@ configMapGenerator:
     namespace: authentik
     files:
       - ./terra-map/main.tf
+      - ./terra-map/data.tf
       - ./terra-map/group.tf
       - ./terra-map/user.tf
       - ./terra-map/argo-main-cluster.tf
