@@ -26,6 +26,7 @@ argo:
         g, dev, role:dev
         g, reader, role:readonly
         g, weebo_admin, role:admin
+        g, authentik Admins, role:admin
 
 externalSecrets:
   enabled: true
