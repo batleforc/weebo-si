@@ -14,4 +14,4 @@ Why the hell do i have this kind of idea right now ?
 - [Setup a Proxy in Chrome](https://stackoverflow.com/questions/75533339/how-do-i-set-up-a-proxy-server-using-chromiumoxide)
 - [Wireguard UserNamespace in rust](https://github.com/cloudflare/boringtun)
 - [Use Chrome in Rust](https://crates.io/crates/chromiumoxide)
-- [Source of the idee](https://docs.netbird.io/how-to/netbird-on-faas)
+- [Source of the idea](https://docs.netbird.io/how-to/netbird-on-faas)
