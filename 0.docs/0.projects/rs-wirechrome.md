@@ -16,3 +16,14 @@ Why the hell do i have this kind of idea right now ?
 - [Use Chrome in Rust](https://crates.io/crates/chromiumoxide)
 - [Source of the idea](https://docs.netbird.io/how-to/netbird-on-faas)
 - [Port Forward in rust](https://github.com/aramperes/onetun)
+
+## Possible Wireguard Backend
+
+- [NetBird](https://github.com/netbirdio/netbird)
+- [FireZone](https://github.com/firezone/firezone)
+- [HeadScale](https://github.com/juanfont/headscale) [HeadScale TF](https://registry.terraform.io/providers/awlsring/headscale/latest/docs)
+
+### Pré-requis
+
+- Self Hosted
+- Wireguard
