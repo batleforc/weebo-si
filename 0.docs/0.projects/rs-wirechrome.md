@@ -19,9 +19,9 @@ Why the hell do i have this kind of idea right now ?
 
 ## Possible Wireguard Backend
 
-- [NetBird](https://github.com/netbirdio/netbird)
+- [NetBird](https://github.com/netbirdio/netbird) [NetBird TF](https://registry.terraform.io/providers/netbirdio/netbird/latest)
 - [FireZone](https://github.com/firezone/firezone)
-- [HeadScale](https://github.com/juanfont/headscale) [HeadScale TF](https://registry.terraform.io/providers/awlsring/headscale/latest/docs)
+- [HeadScale](https://github.com/juanfont/headscale) [HeadScale TF](https://registry.terraform.io/providers/awlsring/headscale/latest/docs) [HeadScale Helm](https://artifacthub.io/packages/helm/gabe565/headscale) [Headscale Tasse de Café](https://une-tasse-de.cafe/blog/headscale-hybrid/)
 
 ### Pré-requis
 
