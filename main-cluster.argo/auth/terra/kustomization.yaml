@@ -21,3 +21,4 @@ configMapGenerator:
       - ./terra-map/group.tf
       - ./terra-map/user.tf
       - ./terra-map/argo-main-cluster.tf
+      - ./terra-map/open-unison.tf

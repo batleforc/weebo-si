@@ -56,7 +56,7 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Stream 07 juin 2025 - Soon TM
+### Stream 21 juin 2025 - Soon TM
 
 - Debut : 16h30
 - FIN : ~ 18H30
@@ -69,13 +69,14 @@ kanban
     - <https://developer.hashicorp.com/vault/docs/deploy/kubernetes/vso>
     - <https://bank-vaults.dev/docs/mutating-webhook/>
   - Configurer Authentik via une approche [GitOps](https://registry.terraform.io/providers/goauthentik/authentik/latest/docs)
-    - Push des secrets d'application vers Vault et chargement dynamique de celui-ci
 - Sujet
   - [WasmEdge](https://github.com/siderolabs/extensions/tree/main/container-runtime/wasmedge)
   - [Pangolin](https://docs.fossorial.io/Pangolin/overview)
   - [Proxmox hardening](https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/post-pve-install.sh)
   - [NetBird](https://github.com/netbirdio/netbird)
 - Bilan
+
+### Stream 07 juin 2025 - Pause (Out Of Town)
 
 ### Stream 31 mai 2025
 

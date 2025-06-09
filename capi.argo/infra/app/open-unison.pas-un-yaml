@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: open-unison
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "7"
+spec:
+  syncPolicy:
+    automated: {}
+  destination:
+    namespace: open-unison
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: capi.argo/infra/open-unison
+    repoURL: https://github.com/batleforc/weebo-si.git
+    targetRevision: HEAD
+    directory:
+      recurse: false
