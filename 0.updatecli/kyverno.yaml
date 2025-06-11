@@ -59,7 +59,7 @@ targets:
     sourceid: kyverno
     spec:
       file: capi.argo/helm/cluster/values.yaml
-      key: "kyverno.version"
+      key: "$.kyverno.version"
       value: '{{ source "kyverno" }}'
   bumpKyvernoPoliciesHelm:
     name: "Update kyverno policies helm"
@@ -68,7 +68,7 @@ targets:
     sourceid: kyvernoPolicies
     spec:
       file: capi.argo/helm/cluster/values.yaml
-      key: "kyverno.policies"
+      key: "$.kyverno.policies"
       value: '{{ source "kyvernoPolicies" }}'
   bumpPolicyReporterHelm:
     name: "Update policy-reporter helm"
@@ -77,5 +77,5 @@ targets:
     sourceid: policyReporter
     spec:
       file: capi.argo/helm/cluster/values.yaml
-      key: "kyverno.reporter"
+      key: "$.kyverno.reporter"
       value: '{{ source "policyReporter" }}'

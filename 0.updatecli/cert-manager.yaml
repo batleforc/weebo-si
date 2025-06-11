@@ -70,7 +70,7 @@ targets:
     sourceid: cert-manager
     spec:
       file: capi.argo/helm/cluster/values.yaml
-      key: "certManager.version"
+      key: "$.certManager.version"
       value: '{{ source "cert-manager" }}'
   bumptrust-manager:
     kind: yaml
@@ -79,5 +79,5 @@ targets:
     sourceid: trust-manager
     spec:
       file: capi.argo/helm/cluster/values.yaml
-      key: "trustManager.version"
+      key: "$.trustManager.version"
       value: '{{ source "trust-manager" }}'

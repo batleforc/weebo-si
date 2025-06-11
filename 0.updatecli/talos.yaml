@@ -65,7 +65,7 @@ targets:
     sourceid: qemuGuestAgent
     spec:
       file: capi.argo/helm/cluster/values.yaml
-      key: "extensions.qemuGuestAgent.image"
+      key: "$.extensions.qemuGuestAgent.image"
       value: 'ghcr.io/siderolabs/qemu-guest-agent:{{ source "qemuGuestAgent" }}'
   bumpInstallImage:
     name: "Update Talos Install Image"
@@ -74,5 +74,5 @@ targets:
     sourceid: factoryTalosV2
     spec:
       file: capi.argo/helm/cluster/values.yaml
-      key: "controlPlane.installImage"
+      key: "$.controlPlane.installImage"
       value: 'factory.talos.dev/nocloud-installer/{{ source "factoryTalosV2" }}:{{ source "talos" }}'

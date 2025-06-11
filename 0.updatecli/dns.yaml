@@ -45,5 +45,5 @@ targets:
     scmid: default
     spec:
       file: capi.argo/helm/dns/values.yaml
-      key: "externalDns.version"
+      key: "$.externalDns.version"
       value: '{{ source "externalDns" }}'

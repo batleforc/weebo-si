@@ -79,7 +79,7 @@ targets:
     sourceid: traefik
     spec:
       file: capi.argo/helm/cluster/values.yaml
-      key: traefik.version
+      key: $.traefik.version
       value: '{{ source "traefik" }}'
   bumpCrowdSecPluginMultiNode:
     kind: yaml
@@ -88,7 +88,7 @@ targets:
     sourceid: pluginsCrowdSec
     spec:
       file: capi.argo/helm/cluster/values.yaml
-      key: traefik.plugins.bouncer.version
+      key: $.traefik.plugins.bouncer.version
       value: '{{ source "pluginsCrowdSec" }}'
   bumpSablierPluginMultiNode:
     kind: yaml
@@ -97,5 +97,5 @@ targets:
     sourceid: pluginsSablier
     spec:
       file: capi.argo/helm/cluster/values.yaml
-      key: traefik.plugins.sablier.version
+      key: $.traefik.plugins.sablier.version
       value: '{{ source "pluginsSablier" }}'

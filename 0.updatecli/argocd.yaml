@@ -45,5 +45,5 @@ targets:
     sourceid: argocd
     spec:
       file: capi.argo/helm/cluster/values.yaml
-      key: 'argo.apps.version'
+      key: '$.argo.apps.version'
       value: '{{ source "argocd" }}'

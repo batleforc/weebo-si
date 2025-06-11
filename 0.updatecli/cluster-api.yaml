@@ -114,7 +114,7 @@ targets:
     sourceid: coreClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
-      key: spec.source.helm.valuesObject.core.cluster-api.version
+      key: $.spec.source.helm.valuesObject.core.cluster-api.version
       value: '{{ source "coreClusterAPI" }}'
   bumpInfrastructureProxmoxClusterAPI:
     kind: yaml
@@ -123,7 +123,7 @@ targets:
     sourceid: infrastructureProxmoxClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
-      key: spec.source.helm.valuesObject.infrastructure.proxmox.version
+      key: $.spec.source.helm.valuesObject.infrastructure.proxmox.version
       value: '{{ source "infrastructureProxmoxClusterAPI" }}'
   bumpControlPlaneTalosClusterAPI:
     kind: yaml
@@ -132,7 +132,7 @@ targets:
     sourceid: controlPlaneTalosClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
-      key: spec.source.helm.valuesObject.controlPlane.talos.version
+      key: $.spec.source.helm.valuesObject.controlPlane.talos.version
       value: '{{ source "controlPlaneTalosClusterAPI" }}'
   bumpBootstrapTalosClusterAPI:
     kind: yaml
@@ -141,7 +141,7 @@ targets:
     sourceid: bootstrapTalosClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
-      key: spec.source.helm.valuesObject.bootstrap.talos.version
+      key: $.spec.source.helm.valuesObject.bootstrap.talos.version
       value: '{{ source "bootstrapTalosClusterAPI" }}'
   bumpIpamInClusterClusterAPI:
     kind: yaml
@@ -150,7 +150,7 @@ targets:
     sourceid: ipamInClusterClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
-      key: spec.source.helm.valuesObject.ipam.in-cluster.version
+      key: $.spec.source.helm.valuesObject.ipam.in-cluster.version
       value: '{{ source "ipamInClusterClusterAPI" }}'
   bumpAddonHelmClusterAPI:
     kind: yaml
@@ -159,7 +159,7 @@ targets:
     sourceid: addonHelmClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
-      key: spec.source.helm.valuesObject.addon.helm.version
+      key: $.spec.source.helm.valuesObject.addon.helm.version
       value: '{{ source "addonHelmClusterAPI" }}'
   bumpOperatorClusterAPI:
     kind: yaml
@@ -168,5 +168,5 @@ targets:
     sourceid: operatorClusterAPI
     spec:
       file: capi.argo/infra/app/cluster-api/app.yaml
-      key: spec.source.targetRevision
+      key: $.spec.source.targetRevision
       value: '{{ source "operatorClusterAPI" }}'

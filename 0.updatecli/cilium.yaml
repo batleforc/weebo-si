@@ -46,5 +46,5 @@ targets:
     scmid: default
     spec:
       file: capi.argo/helm/cluster/values.yaml
-      key: "cilium.version"
+      key: "$.cilium.version"
       value: '{{ source "cilium" }}'
