@@ -17,7 +17,7 @@ argo:
   main: false
   apps:
     enabled: true
-    version: 8.0.16
+    version: 8.0.17
     prefix: argo
     rbac:
       scopes: '[groups]'
