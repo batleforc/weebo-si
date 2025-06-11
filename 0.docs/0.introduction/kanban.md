@@ -74,6 +74,7 @@ kanban
   - [Pangolin](https://docs.fossorial.io/Pangolin/overview)
   - [Proxmox hardening](https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/post-pve-install.sh)
   - [NetBird](https://github.com/netbirdio/netbird)
+  - [Node Problem Detector](https://github.com/kubernetes/node-problem-detector)
 - Bilan
 
 ### Stream 07 juin 2025 - Pause (Out Of Town)
@@ -159,7 +160,7 @@ Mise en place d'un serveur DNS avec Bind9 et une automatisation via l'opérateur
 - Forwarding du reste des requêtes en fonction de mon envie a l'instant T
   - <https://www.baeldung.com/linux/bind9-dns-server-configuration>
 
-### us16 - Autorité de certification
+### us16 - Autorité de certification ✅
 
 Mise en place d'une autorité de Certification RootCA / IntermediateCA via [Bank Vaults](https://bank-vaults.dev/) et de son orchestrations.
 
@@ -176,3 +177,16 @@ L'objectif est que chaque Cluster puisse avoir son propre IntermediateCA et que 
 Via la RFC2136, il sera possible de faire du DNS01 et a défaut du HTTP01 pour la création des certificats et sans oublier via [CertManager](https://cert-manager.io/docs/) pour la gestion des certificats.
 
 Chaque cluster aura son propre sous-groupe de KV partageable.
+
+## usXX - Persistent Storage Cluster api Proof
+
+- Longhorn
+  - Nécessite de manuellement venir supprimer les replica avant la fin de refresh sinon perte de data
+  - Dans un cas d'upgrade massive des noeud, trop long ?
+- Rook
+  - Test a venir
+  - Installer les deux Helm Chart
+    - <https://rook.github.io/docs/rook/v1.9/helm-operator.html>
+    - <https://rook.github.io/docs/rook/v1.9/ceph-dashboard.html>
+    - <https://rook.github.io/docs/rook/v1.9/ceph-cluster-crd.html#pvc-based-cluster>
+    - <https://www.talos.dev/v1.10/kubernetes-guides/configuration/ceph-with-rook/>
