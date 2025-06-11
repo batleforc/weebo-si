@@ -74,7 +74,7 @@ kyverno:
 
 certManager:
   enabled: true
-  version: 1.17.2
+  version: 1.18.0
   installCRDs: true
 
 trustManager:
