@@ -33,7 +33,7 @@ spec:
             allowMultiplePerNode: false
             volumeClaimTemplate:
               spec:
-                storageClassName: "local-storage"
+                storageClassName: "local-path"
                 resources:
                   requests:
                     storage: 10Gi
@@ -50,7 +50,7 @@ spec:
                     resources:
                       requests:
                         storage: 10Gi
-                    storageClassName: "local-storage"
+                    storageClassName: "local-path"
                     volumeMode: Block
                     accessModes:
                       - ReadWriteOnce
