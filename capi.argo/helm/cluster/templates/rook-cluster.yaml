@@ -23,44 +23,38 @@ spec:
       valuesObject:
         operatorNamespace: rook-ceph
         cephClusterSpec:
-          apiVersion: ceph.rook.io/v1
-          kind: CephCluster
-          metadata:
-            name: rook-ceph
-            namespace: rook-ceph
-          spec:
-            dashboard:
-              enabled: true
-            cephVersion:
-              image: quay.io/ceph/ceph:{{ .Values.storage.rook.imageVersion }}
-            dataDirHostPath: /var/lib/rook
-            mon:
+          dashboard:
+            enabled: true
+          cephVersion:
+            image: quay.io/ceph/ceph:{{ .Values.storage.rook.imageVersion }}
+          dataDirHostPath: /var/lib/rook
+          mon:
+            count: 3
+            allowMultiplePerNode: false
+            volumeClaimTemplate:
+              spec:
+                storageClassName: local-storage
+                resources:
+                  requests:
+                    storage: 10Gi
+          storage:
+          storageClassDeviceSets:
+            - name: set1
               count: 3
-              allowMultiplePerNode: false
-              volumeClaimTemplate:
-                spec:
-                  storageClassName: local-storage
-                  resources:
-                    requests:
-                      storage: 10Gi
-            storage:
-            storageClassDeviceSets:
-              - name: set1
-                count: 3
-                portable: false
-                encrypted: false
-                volumeClaimTemplates:
-                  - metadata:
-                      name: data
-                    spec:
-                      resources:
-                        requests:
-                          storage: 10Gi
-                      storageClassName: local-storage
-                      volumeMode: Block
-                      accessModes:
-                        - ReadWriteOnce
-              onlyApplyOSDPlacement: false
+              portable: false
+              encrypted: false
+              volumeClaimTemplates:
+                - metadata:
+                    name: data
+                  spec:
+                    resources:
+                      requests:
+                        storage: 10Gi
+                    storageClassName: local-storage
+                    volumeMode: Block
+                    accessModes:
+                      - ReadWriteOnce
+            onlyApplyOSDPlacement: false
   destination:
     name: {{ .Release.Name }}
     namespace: rook-ceph
