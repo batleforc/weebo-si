@@ -1,0 +1,67 @@
+{{- if .Values.storage.rook.enabled }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-rook-cluster
+  namespace: argocd
+spec:
+  syncPolicy:
+    managedNamespaceMetadata:
+      annotations:
+        pod-security.kubernetes.io/enforce: privileged
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      selfHeal: true
+  project: {{ .Release.Name }}
+  source:
+    chart: rook-ceph-cluster
+    repoURL: https://charts.rook.io/release
+    targetRevision: {{ .Values.storage.rook.version }}
+    helm:
+      valuesObject:
+        operatorNamespace: rook-ceph
+        cephClusterSpec:
+          apiVersion: ceph.rook.io/v1
+          kind: CephCluster
+          metadata:
+            name: rook-ceph
+            namespace: rook-ceph
+          spec:
+            dashboard:
+              enabled: true
+            cephVersion:
+              image: quay.io/ceph/ceph:{{ .Values.storage.rook.imageVersion }}
+            dataDirHostPath: /var/lib/rook
+            mon:
+              count: 3
+              allowMultiplePerNode: false
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: local-storage
+                  resources:
+                    requests:
+                      storage: 10Gi
+            storage:
+            storageClassDeviceSets:
+              - name: set1
+                count: 3
+                portable: false
+                encrypted: false
+                volumeClaimTemplates:
+                - metadata:
+                    name: data
+                  spec:
+                    resources:
+                      requests:
+                        storage: 10Gi
+                    storageClassName: local-storage
+                    volumeMode: Block
+                    accessModes:
+                      - ReadWriteOnce
+              onlyApplyOSDPlacement: false
+  destination:
+    name: {{ .Release.Name }}
+    namespace: rook-ceph
+{{- end -}}

@@ -24,5 +24,5 @@ spec:
         truc: truc
   destination:
     name: {{ .Release.Name }}
-    namespace: rook-system
+    namespace: rook-ceph
 {{- end -}}

@@ -44,6 +44,7 @@ storage:
   rook:
     enabled: true
     version: v1.16.8
+    imageVersion: v19
 
 dns:
   enabled: true
