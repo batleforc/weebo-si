@@ -54,7 +54,7 @@ spec:
                     volumeMode: Block
                     accessModes:
                       - ReadWriteOnce
-            onlyApplyOSDPlacement: false
+          onlyApplyOSDPlacement: false
   destination:
     name: "{{ .Release.Name }}"
     namespace: rook-ceph
