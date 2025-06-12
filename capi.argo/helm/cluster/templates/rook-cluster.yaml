@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Release.Name }}-rook-cluster
+  name: "{{ .Release.Name }}-rook-cluster"
   namespace: argocd
 spec:
   syncPolicy:
@@ -14,11 +14,11 @@ spec:
       - CreateNamespace=true
     automated:
       selfHeal: true
-  project: {{ .Release.Name }}
+  project: "{{ .Release.Name }}"
   source:
     chart: rook-ceph-cluster
     repoURL: https://charts.rook.io/release
-    targetRevision: {{ .Values.storage.rook.version }}
+    targetRevision: "{{ .Values.storage.rook.version }}"
     helm:
       valuesObject:
         operatorNamespace: rook-ceph
@@ -26,7 +26,7 @@ spec:
           dashboard:
             enabled: true
           cephVersion:
-            image: quay.io/ceph/ceph:{{ .Values.storage.rook.imageVersion }}
+            image: "quay.io/ceph/ceph:{{ .Values.storage.rook.imageVersion }}"
           dataDirHostPath: /var/lib/rook
           mon:
             count: 3
@@ -56,6 +56,6 @@ spec:
                       - ReadWriteOnce
             onlyApplyOSDPlacement: false
   destination:
-    name: {{ .Release.Name }}
+    name: "{{ .Release.Name }}"
     namespace: rook-ceph
 {{- end -}}
