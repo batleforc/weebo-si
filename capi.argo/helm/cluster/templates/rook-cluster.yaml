@@ -50,16 +50,16 @@ spec:
                 portable: false
                 encrypted: false
                 volumeClaimTemplates:
-                - metadata:
-                    name: data
-                  spec:
-                    resources:
-                      requests:
-                        storage: 10Gi
-                    storageClassName: local-storage
-                    volumeMode: Block
-                    accessModes:
-                      - ReadWriteOnce
+                  - metadata:
+                      name: data
+                    spec:
+                      resources:
+                        requests:
+                          storage: 10Gi
+                      storageClassName: local-storage
+                      volumeMode: Block
+                      accessModes:
+                        - ReadWriteOnce
               onlyApplyOSDPlacement: false
   destination:
     name: {{ .Release.Name }}
