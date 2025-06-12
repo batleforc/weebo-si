@@ -1,0 +1,28 @@
+{{- if .Values.storage.rook.enabled }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-rook
+  namespace: argocd
+spec:
+  syncPolicy:
+    managedNamespaceMetadata:
+      annotations:
+        pod-security.kubernetes.io/enforce: privileged
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      selfHeal: true
+  project: {{ .Release.Name }}
+  source:
+    chart: rook-ceph
+    repoURL: https://charts.rook.io/release
+    targetRevision: {{ .Values.storage.rook.version }}
+    helm:
+      valuesObject:
+        truc: truc
+  destination:
+    name: {{ .Release.Name }}
+    namespace: rook-system
+{{- end -}}
