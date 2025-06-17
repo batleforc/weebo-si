@@ -63,6 +63,15 @@ kanban
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif (Pas dans l'ordre):
+  - Passer d'un cluster main SelfSchedulable a non SelfSchedulable
+    - 1 CP (contre 3)
+      - 4Gb Ram
+      - 2 Cores
+      - 10Gb de Stockages
+    - x Worker (Gabarit différent ?)
+      - 10Gb Ram
+      - 4 Cores
+      - 50Gb de Stockages
   - Explorer la mise en place de secrets
     - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/)
     - <https://external-secrets.io/latest/>
