@@ -42,7 +42,7 @@ storage:
     enabled: true
     version: v1.8.1
   rook:
-    enabled: true
+    enabled: false
     version: v1.16.8
     imageVersion: v19
 
