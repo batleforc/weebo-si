@@ -1,0 +1,32 @@
+{{- if .Values.worker.enabled-}}
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: ProxmoxMachineTemplate
+metadata:
+  name: {{ .Release.Name }}-worker
+  namespace: default
+  annotations:
+    argocd.argoproj.io/sync-options: PruneLast=true
+spec:
+  template:
+    spec:
+      disks:
+        bootVolume:
+          disk: {{ .Values.proxmox.workerConf.disk.name }}
+          sizeGb: {{ .Values.proxmox.workerConf.disk.sizeGb }}
+      format: qcow2
+      full: true
+      memoryMiB: {{ .Values.proxmox.workerConf.memoryMiB }}
+      network:
+        default:
+          bridge: {{ .Values.proxmox.workerConf.network }}
+          model: virtio
+      numCores: {{ .Values.proxmox.workerConf.cpu.cores }}
+      numSockets: {{ .Values.proxmox.workerConf.cpu.sockets }}
+      sourceNode: {{ .Values.proxmox.workerConf.node }}
+      templateID: {{ .Values.proxmox.workerConf.templateID }}
+      checks:
+        skipCloudInitStatus: true
+        skipQemuGuestAgent: false
+      metadataSettings:
+        providerIDInjection: true
+{{- end -}}

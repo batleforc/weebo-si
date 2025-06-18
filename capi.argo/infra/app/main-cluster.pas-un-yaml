@@ -16,10 +16,13 @@ spec:
       releaseName: main-cluster
       valuesObject:
         controlPlane:
-          replicas: 3
+          replicas: 1
+          allowScheduling: false
+        worker:
+          enabled: true
         proxmox:
           nodeConf:
-            memoryMiB: 12288
+            memoryMiB: 4096
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: 'default'

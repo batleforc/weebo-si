@@ -1,0 +1,24 @@
+{{- if .Values.worker.enabled-}}
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: {{ .Release.Name }}-workers
+spec:
+  clusterName: {{ .Release.Name }}
+  replicas: {{ .Values.worker.replicas}}
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+          kind: TalosConfigTemplate
+          name: {{ .Release.Name }}-worker
+      clusterName: {{ .Release.Name }}
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+        kind: ProxmoxMachineTemplate
+        name: {{ .Release.Name }}-worker
+      version: {{ .Values.kubernetes.version }}
+{{- end -}}

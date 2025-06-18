@@ -116,6 +116,12 @@ controlPlane:
   tccm: true
   cloudProvider: https://raw.githubusercontent.com/siderolabs/talos-cloud-controller-manager/main/docs/deploy/cloud-controller-manager.yml
 
+worker:
+  installImage: factory.talos.dev/nocloud-installer/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3:v1.10.4
+  version: v1.10.1
+  replicas: 1
+  enabled: false
+
 proxmox:
   allowedNodes:
   - weebo4
@@ -123,10 +129,21 @@ proxmox:
     node: weebo4
     disk:
       name: scsi0
-      sizeGb: 50
-    memoryMiB: 8192
+      sizeGb: 10
+    memoryMiB: 4096
     network: vmbr1
     templateID: 9998
     cpu:
       cores: 2
       sockets: 1
+  workerConf:
+    node: weebo4
+    templateID: 9998
+    disk:
+      name: scsi0
+      sizeGb: 50
+    memoryMiB: 8192
+    network: vmbr1
+    cpu:
+      cores: 2
+      sockets: 2
