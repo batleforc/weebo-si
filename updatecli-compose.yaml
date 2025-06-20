@@ -61,3 +61,8 @@ policies:
   - ./0.updatecli/argocd.yaml
   values:
   - ./0.updatecli/values.yaml
+- name: Upgrade TerraTry
+  config:
+  - ./0.updatecli/terra-try.yaml
+  values:
+  - ./0.updatecli/values.yaml
