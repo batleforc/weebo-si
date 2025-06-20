@@ -23,6 +23,7 @@ actions:
 autodiscovery:
   # scmid is applied to all crawlers
   scmid: default
+  actionid: talos
   crawlers:
     argocd:
       # platforms to request package checksums for, defaults to:
