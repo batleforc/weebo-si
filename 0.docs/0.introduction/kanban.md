@@ -63,7 +63,7 @@ kanban
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif (Pas dans l'ordre):
-  - Passer d'un cluster main SelfSchedulable a non SelfSchedulable
+  - Passer d'un cluster main avec les CP SelfSchedulable a non.
     - 1 CP (contre 3)
       - 4Gb Ram
       - 2 Cores
@@ -72,6 +72,7 @@ kanban
       - 10Gb Ram
       - 4 Cores
       - 50Gb de Stockages
+    - Si le nouveau model ne résous pas le problème... passage a [Omni](https://une-tasse-de.cafe/blog/omni/) qui le résoudra via le In-Place Upgrade
   - Explorer la mise en place de secrets
     - [Try ArgoCD Vault](https://argocd-vault-plugin.readthedocs.io/en/stable/installation/)
     - <https://external-secrets.io/latest/>
@@ -84,6 +85,7 @@ kanban
   - [Proxmox hardening](https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/post-pve-install.sh)
   - [NetBird](https://github.com/netbirdio/netbird)
   - [Node Problem Detector](https://github.com/kubernetes/node-problem-detector)
+  - [Kargo](https://kargo.io/)
 - Bilan
 
 ### Stream 07 juin 2025 - Pause (Out Of Town)
