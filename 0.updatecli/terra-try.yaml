@@ -26,5 +26,3 @@ autodiscovery:
   crawlers:
     terraform:
       # platforms to request package checksums for, defaults to:
-      platforms:
-        - linux_amd64
