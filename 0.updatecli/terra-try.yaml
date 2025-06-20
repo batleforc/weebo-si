@@ -17,12 +17,12 @@ actions:
     kind: github/pullrequest
     scmid: default
     spec:
-      title: 'ci: Bump `Terraform provider` autodiscovery'
+      title: 'ci: Bump `Argocd app` autodiscovery'
       automerge: false
 
 autodiscovery:
   # scmid is applied to all crawlers
   scmid: default
   crawlers:
-    terraform:
+    argocd:
       # platforms to request package checksums for, defaults to:
