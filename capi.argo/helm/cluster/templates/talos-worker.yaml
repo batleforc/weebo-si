@@ -8,7 +8,8 @@ spec:
     spec:
       generateType: worker
       talosVersion: {{ .Values.controlPlane.version }}
-      configPatches:
+      strategicPatches:
+      - |
         - op: add
           path: /machine/install/extraKernelArgs
           value:
