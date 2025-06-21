@@ -10,6 +10,10 @@ spec:
       talosVersion: {{ .Values.controlPlane.version }}
       strategicPatches:
       - |
+        - op: replace
+          path: /machine/install
+          value:
+            disk: /dev/sda
         - op: add
           path: /machine/install/extraKernelArgs
           value:
