@@ -56,7 +56,7 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Stream 21 juin 2025 - Soon TM
+### Stream 21 juin 2025
 
 - Debut : 16h30
 - FIN : ~ 18H30
