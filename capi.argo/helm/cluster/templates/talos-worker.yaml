@@ -32,6 +32,7 @@ spec:
           path: /machine/kubelet/extraArgs
           value:
               cloud-provider: external
+              rotate-server-certificates: "true"
         {{- end }}
         {{ if .Values.cilium.enabled -}}
         - op: add
