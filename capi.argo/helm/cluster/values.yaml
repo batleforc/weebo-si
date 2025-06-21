@@ -129,7 +129,7 @@ proxmox:
     node: weebo4
     disk:
       name: scsi0
-      sizeGb: 10
+      sizeGb: 20
     memoryMiB: 4096
     network: vmbr1
     templateID: 9998
