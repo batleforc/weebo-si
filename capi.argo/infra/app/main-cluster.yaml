@@ -19,7 +19,7 @@ spec:
           replicas: 3
           allowScheduling: true
         worker:
-          enabled: false
+          enabled: true
           replicas: 2
   destination:
     server: 'https://kubernetes.default.svc'
