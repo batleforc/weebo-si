@@ -110,7 +110,7 @@ kubernetes:
 
 controlPlane:
   installImage: factory.talos.dev/nocloud-installer/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3:v1.10.4
-  version: v1.10.1
+  version: v1.10.4
   replicas: 1
   allowScheduling: true
   tccm: true
@@ -118,7 +118,7 @@ controlPlane:
 
 worker:
   installImage: factory.talos.dev/nocloud-installer/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3:v1.10.4
-  version: v1.10.1
+  version: v1.10.4
   replicas: 1
   enabled: false
 
