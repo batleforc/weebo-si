@@ -29,17 +29,17 @@ argo:
         g, authentik Admins, role:admin
 
 externalSecrets:
-  enabled: true
+  enabled: false
   version: 0.17.0
   vault:
-    enabled: true
+    enabled: false
     version: 4.4.0
 
 storage:
   local:
     enabled: true
   longhorn:
-    enabled: true
+    enabled: false
     version: v1.8.1
   rook:
     enabled: false
@@ -71,7 +71,7 @@ certificate:
     url: https://vault.capi.weebo.poc/v1/pki_int/issuer/default/json
 
 kyverno:
-  enabled: true
+  enabled: false
   version: 3.4.2
   policies: 3.4.2
   reporter: 3.1.4
@@ -82,11 +82,11 @@ certManager:
   installCRDs: true
 
 trustManager:
-  enabled: true
+  enabled: false
   version: 0.17.1
 
 traefik:
-  enabled: true
+  enabled: false
   version: 36.1.0
   plugins:
     bouncer:
@@ -97,7 +97,7 @@ traefik:
       version: v1.9.0
 
 vault:
-  enabled: true
+  enabled: false
   version: 1.21.3
 
 bootstrap:
