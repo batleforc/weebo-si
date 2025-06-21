@@ -27,9 +27,6 @@ spec:
             net.ipv4.ip_forward: 1
             net.ipv6.conf.all.forwarding: 1
             vm.nr_hugepages: 2048
-        - op: add
-          path: /cluster/apiServer/admissionControl/0/configuration/exemptions/namespaces/-
-          value: falco
         {{ if .Values.controlPlane.tccm -}}
         - op: add
           path: /machine/kubelet/extraArgs
