@@ -82,8 +82,8 @@ kanban
 - Sujet
   - [WasmEdge](https://github.com/siderolabs/extensions/tree/main/container-runtime/wasmedge)
   - [Pangolin](https://docs.fossorial.io/Pangolin/overview)
-  - [Proxmox hardening](https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/post-pve-install.sh)
   - [NetBird](https://github.com/netbirdio/netbird)
+  - [Proxmox hardening](https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/post-pve-install.sh)
   - [Node Problem Detector](https://github.com/kubernetes/node-problem-detector)
   - [Kargo](https://kargo.io/)
 - Bilan
