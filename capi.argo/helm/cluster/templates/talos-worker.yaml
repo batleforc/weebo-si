@@ -8,8 +8,7 @@ spec:
     spec:
       generateType: worker
       talosVersion: {{ .Values.controlPlane.version }}
-      strategicPatches:
-      - |
+      configPatches:
         - op: replace
           path: /machine/install
           value:
