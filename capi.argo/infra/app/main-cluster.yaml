@@ -16,8 +16,8 @@ spec:
       releaseName: main-cluster
       valuesObject:
         controlPlane:
-          replicas: 2
-          allowScheduling: false
+          replicas: 3
+          allowScheduling: true
         worker:
           enabled: false
           replicas: 2
