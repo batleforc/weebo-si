@@ -135,7 +135,7 @@ proxmox:
     templateID: 9998
     cpu:
       cores: 2
-      sockets: 1
+      sockets: 2
   workerConf:
     node: weebo4
     templateID: 9998
