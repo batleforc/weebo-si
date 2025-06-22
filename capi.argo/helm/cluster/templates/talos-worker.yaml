@@ -13,11 +13,15 @@ spec:
           path: /machine/install
           value:
             disk: /dev/sda
+            extensions:
+              - image: {{ .Values.extensions.qemuGuestAgent.image }}
         - op: add
           path: /machine/install/extraKernelArgs
           value:
             - net.ifnames=0
-
+        - op: add
+          path: /machine/install/image
+          value: {{ .Values.worker.installImage }}
         - op: add
           path: /machine/kubelet/extraMounts
           value: []
