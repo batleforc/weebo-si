@@ -1,3 +1,4 @@
+{{- if .Values.trustManager.enabled -}}
 apiVersion: trust.cert-manager.io/v1alpha1
 kind: Bundle
 metadata:
@@ -24,3 +25,4 @@ spec:
         key: "main-ca.jks"
       pkcs12:
         key: "main-ca.p12"
+{{- end -}}
