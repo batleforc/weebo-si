@@ -32,3 +32,15 @@ tasks:
     cmds:
     - echo "Remove old ssh keys"
     - ssh-keygen -R "${PROXMOX_DNS}"
+  restart:
+    dir: ./0.terraform/restart-vm
+    silent: true
+    cmds:
+      - echo "Start VM"
+      - TF_VAR_ssh_public_key="${SSH_KEY}" TF_VAR_ovh_server_name="${SERVER_NAME}" terraform apply
+  reinstall:
+    dir: ./0.terraform/install-vm
+    silent: true
+    cmds:
+      - echo "Start VM"
+      - TF_VAR_ssh_public_key="${SSH_KEY}" TF_VAR_ovh_server_name="${SERVER_NAME}" terraform apply
