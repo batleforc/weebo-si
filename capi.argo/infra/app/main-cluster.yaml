@@ -17,7 +17,7 @@ spec:
       valuesObject:
         controlPlane:
           replicas: 3
-          allowScheduling: true
+          allowScheduling: false
         worker:
           enabled: true
           replicas: 2
