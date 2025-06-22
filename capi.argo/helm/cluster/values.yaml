@@ -16,7 +16,7 @@ argo:
   local: false
   main: false
   apps:
-    enabled: true
+    enabled: false
     version: 8.0.17
     prefix: argo
     rbac:
