@@ -82,7 +82,7 @@ certManager:
   installCRDs: true
 
 trustManager:
-  enabled: false
+  enabled: true
   version: 0.17.1
 
 traefik:
