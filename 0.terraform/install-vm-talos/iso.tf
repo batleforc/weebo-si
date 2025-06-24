@@ -17,7 +17,7 @@ resource "talos_image_factory_schematic" "schematic_qemu" {
           officialExtensions = data.talos_image_factory_extensions_versions.extensions_list.extensions_info.*.name
         },
         extraKernelArgs = [
-          "-net.ifnames=0"
+          "net.ifnames=0"
         ]
       }
     }

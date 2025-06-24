@@ -37,10 +37,19 @@ tasks:
     silent: true
     cmds:
       - echo "Start VM"
+      - terraform init
       - TF_VAR_ssh_public_key="${SSH_KEY}" TF_VAR_ovh_server_name="${SERVER_NAME}" terraform apply
-  reinstall:
-    dir: ./0.terraform/install-vm
+  install-proxmox:
+    dir: ./0.terraform/install-vm-proxmox
     silent: true
     cmds:
-      - echo "Start VM"
+      - echo "Install Proxmox"
+      - terraform init
+      - TF_VAR_ssh_public_key="${SSH_KEY}" TF_VAR_ovh_server_name="${SERVER_NAME}" terraform apply
+  install-talos:
+    dir: ./0.terraform/install-vm-talos
+    silent: true
+    cmds:
+      - echo "Install Talos"
+      - terraform init
       - TF_VAR_ssh_public_key="${SSH_KEY}" TF_VAR_ovh_server_name="${SERVER_NAME}" terraform apply

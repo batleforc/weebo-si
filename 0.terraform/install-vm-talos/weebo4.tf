@@ -15,9 +15,30 @@ data "ovh_dedicated_installation_template" "proxmox" {
 
 resource "ovh_dedicated_server_reinstall_task" "server_reinstall" {
   service_name = data.ovh_dedicated_server.server.service_name
-  os           = "byolinux_64"
+  os           = "byoi_64"
   customizations {
-    hostname  = "weebo4"
-    image_url = data.talos_image_factory_urls.metal.urls.disk_image
+    hostname            = "weebo4"
+    image_url           = "https://factory.talos.dev/image/b1ba84be4f5193a24085cc7e22fce31105e1583504d7d5aef494318f7cb1abd0/v1.10.4/metal-amd64.qcow2"
+    efi_bootloader_path = "/usr/install/amd64/systemd-boot.efi"
+    image_type          = "qcow2"
+
   }
+
+  # storage {
+  #   partitioning {
+  #     disks = 2
+  #     layout {
+  #       file_system = "ext4"
+  #       mount_point = "/boot"
+  #       raid_level  = 0
+  #       size        = 1024
+  #     }
+  #     layout {
+  #       file_system = "ext4"
+  #       mount_point = "/"
+  #       raid_level  = 1
+  #       size        = 913480
+  #     }
+  #   }
+  # }
 }
