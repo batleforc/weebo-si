@@ -25,3 +25,34 @@ tasks:
     - echo "Download Talos ISO"
     - terraform init -upgrade
     - TF_VAR_proxmox_api="${PROXMOX_URL}" TF_VAR_proxmox_api_token="${PROXMOX_USER}!${PROXMOX_TOKEN_ID}=${PROXMOX_TOKEN_SECRET}" TF_VAR_proxmox_ssh_username="${PROXMOX_NODE}" TF_VAR_proxmox_node_name="${PROXMOX_NODE}" terraform apply {{ .CLI_ARGS }}
+  install-talos:
+    dir: ./0.terraform/install-vm-talos
+    silent: true
+    cmds:
+      - echo "Install Talos"
+      - terraform init
+      - TF_VAR_ssh_public_key="${SSH_KEY}" TF_VAR_fqdn="${PROXMOX_DNS}" TF_VAR_ovh_server_name="${SERVER_NAME}" terraform apply
+  install-talos2:
+    dir: ./0.terraform/install-vm-talos-2
+    silent: true
+    cmds:
+      - echo "Install Talos"
+      - terraform init
+      - TF_VAR_ssh_public_key="${SSH_KEY}" TF_VAR_fqdn="${PROXMOX_DNS}" TF_VAR_ovh_server_name="${SERVER_NAME}" terraform apply
+  k9s:
+    env:
+      KUBECONFIG: ./0.terraform/install-vm-talos/kubeconfig
+    cmds:
+      - k9s {{ .CLI_ARGS }}
+  talosctl:
+    env:
+      TALOSCONFIG: ./0.terraform/install-vm-talos/talos-config.yaml
+    cmds:
+      - echo $TALOSCONFIG
+      - talosctl {{ .CLI_ARGS }}
+  kubectl:
+    env:
+      KUBECONFIG: ./0.terraform/install-vm-talos/kubeconfig
+    cmds:
+    - echo $KUBECONFIG
+    - kubectl {{ .CLI_ARGS }}
