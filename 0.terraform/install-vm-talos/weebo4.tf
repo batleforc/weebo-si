@@ -19,7 +19,7 @@ resource "ovh_dedicated_server_reinstall_task" "server_reinstall" {
   customizations {
     hostname            = "weebo4"
     image_url           = "https://factory.talos.dev/image/b1ba84be4f5193a24085cc7e22fce31105e1583504d7d5aef494318f7cb1abd0/v1.10.4/metal-amd64.qcow2"
-    efi_bootloader_path = "/usr/install/amd64/systemd-boot.efi"
+    efi_bootloader_path = "\\EFI\\BOOT\\BOOTX64.EFI"
     image_type          = "qcow2"
 
   }
