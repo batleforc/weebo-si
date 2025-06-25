@@ -15,5 +15,10 @@ variable "talos_version" {
   default = "1.10.4"
 }
 
+variable "fqdn" {
+  type    = string
+  default = "talos.local"
+}
+
 
 provider "ovh" {}

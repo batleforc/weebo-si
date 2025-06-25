@@ -16,8 +16,37 @@ data "talos_machine_configuration" "capi_config_controlplane" {
     yamlencode({
       cluster = {
         allowSchedulingOnControlPlanes = true
+        extraManifests = [
+          "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml",
+          "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml",
+        ]
+        network = {
+          cni = {
+            name = "none"
+          }
+          podSubnets = [
+            "10.244.0.0/16"
+          ]
+          serviceSubnets = [
+            "10.96.0.0/12"
+          ]
+        }
+        proxy = {
+          disabled = true
+        }
+        apiServer = {
+          certSANs = [
+            local.node_ip,
+            var.fqdn,
+          ]
+        }
       },
       machine = {
+        sysctls = {
+          "net.ipv4.ip_forward"          = 1
+          "net.ipv6.conf.all.forwarding" = 1
+          "vm.nr_hugepages"              = 2048
+        }
         kubelet = {
           extraArgs = {
             rotate-server-certificates = "true"
@@ -41,6 +70,7 @@ data "talos_machine_configuration" "capi_config_controlplane" {
             "net.ifnames=0"
           ],
         },
+
         #   network = {
         #     nameservers = [
         #       "8.8.8.8"

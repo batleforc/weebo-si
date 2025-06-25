@@ -23,7 +23,6 @@ resource "ovh_dedicated_server_reinstall_task" "server_reinstall" {
     image_type          = "qcow2"
 
   }
-
   # storage {
   #   partitioning {
   #     disks = 2
