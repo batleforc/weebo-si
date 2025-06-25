@@ -4,7 +4,7 @@ resource "talos_machine_secrets" "capi_secret" {
 
 locals {
   cluster_name = "weebo4"
-  node_ip      = data.ovh_dedicated_server.server.ip
+  node_ip      = local.ipv4
 }
 
 data "talos_machine_configuration" "capi_config_controlplane" {
@@ -25,10 +25,12 @@ data "talos_machine_configuration" "capi_config_controlplane" {
             name = "none"
           }
           podSubnets = [
-            "10.244.0.0/16"
+            "10.244.0.0/16",
+            "fd00:10:244::/56"
           ]
           serviceSubnets = [
-            "10.96.0.0/12"
+            "10.96.0.0/12",
+            "fd00:10:96::/112"
           ]
         }
         proxy = {
@@ -36,7 +38,8 @@ data "talos_machine_configuration" "capi_config_controlplane" {
         }
         apiServer = {
           certSANs = [
-            local.node_ip,
+            local.ipv4,
+            local.ipv6,
             var.fqdn,
           ]
         }
@@ -46,6 +49,8 @@ data "talos_machine_configuration" "capi_config_controlplane" {
           "net.ipv4.ip_forward"          = 1
           "net.ipv6.conf.all.forwarding" = 1
           "vm.nr_hugepages"              = 2048
+          "net.ipv6.conf.all.autoconf"   = 0
+          "net.ipv6.conf.all.accept_ra"  = 0
         }
         kubelet = {
           extraArgs = {
@@ -65,31 +70,39 @@ data "talos_machine_configuration" "capi_config_controlplane" {
           ]
         }
         install = {
-          image = data.talos_image_factory_urls.metal.urls.installer,
+          image = data.talos_image_factory_urls.metal.urls.installer_secureboot,
           extraKernelArgs = [
             "net.ifnames=0"
           ],
         },
 
-        #   network = {
-        #     nameservers = [
-        #       "8.8.8.8"
-        #     ]
-        #     interfaces = [
-        #       {
-        #         interface = "eth0",
-        #         addresses = [
-        #           "${local.node_ip}/24"
-        #         ],
-        #         routes = [
-        #           {
-        #             network = "0.0.0.0/0"
-        #             gateway = "192.168.100.1"
-        #           }
-        #         ]
-        #       }
-        #     ]
-        #   }
+        network = {
+          hostname = "weebo4-controlplane"
+          nameservers = [
+            "213.186.33.99",
+            "2001:41d0:3:163::1"
+          ]
+          interfaces = [
+            {
+              interface = "eth0",
+              addresses = [
+                "${local.ipv4}/24",
+                "${local.ipv6}/128"
+              ],
+              dhcp = true,
+              dhcpOptions = {
+                ipv4 = true
+                ipv6 = false
+              },
+              routes = [
+                {
+                  network = "0.0.0.0/0"
+                  gateway = data.ovh_dedicated_server_specifications_network.spec.routing.ipv4.gateway
+                },
+              ]
+            }
+          ]
+        }
       }
     })
   ]

@@ -1,0 +1,31 @@
+---
+- name: "Install Cilium CLI"
+  ansible.builtin.get_url:
+    url: "https://github.com/cilium/cilium-cli/releases/download/{{ ciliumcli_version }}/cilium-linux-amd64.tar.gz"
+    dest: "/tmp/cilium-linux-amd64.tar.gz"
+    mode: '0644'
+- name: "Create Cilium CLI folder"
+  ansible.builtin.file:
+    path: "/tmp/cilium"
+    state: directory
+    mode: '0755'
+- name: "Unzip Cilium CLI"
+  ansible.builtin.unarchive:
+    src: "/tmp/cilium-linux-amd64.tar.gz"
+    dest: "/tmp/cilium"
+    mode: '0755'
+    remote_src: true
+    keep_newer: true
+- name: "Move Cilium CLI to /usr/bin"
+  ansible.builtin.command:
+    cmd: "mv /tmp/cilium/cilium /usr/bin/cilium"
+  register: cilium_move_output
+  changed_when: cilium_move_output is changed
+- name: "Clean up Cilium CLI tar"
+  ansible.builtin.file:
+    path: "/tmp/cilium-linux-amd64.tar.gz"
+    state: absent
+- name: "Clean up Cilium CLI folder"
+  ansible.builtin.file:
+    path: "/tmp/cilium"
+    state: absent

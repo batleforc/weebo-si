@@ -26,3 +26,7 @@ cgroup:
 k8sServicePort: 6443
 ipv4:
   enabled: true
+ipv6:
+  enabled: true
+commonLabels:
+  pod-security.kubernetes.io/enforce: privileged

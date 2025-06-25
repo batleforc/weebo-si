@@ -9,6 +9,18 @@ data "ovh_dedicated_server" "server" {
   service_name = var.ovh_server_name
 }
 
+data "ovh_dedicated_server_specifications_network" "spec" {
+  service_name = var.ovh_server_name
+}
+
+output "network" {
+  value = {
+    spec = data.ovh_dedicated_server_specifications_network.spec
+    ipv4 = local.ipv4
+    ipv6 = local.ipv6
+  }
+}
+
 data "ovh_dedicated_installation_template" "proxmox" {
   template_name = "proxmox8_64"
 }
@@ -18,7 +30,7 @@ resource "ovh_dedicated_server_reinstall_task" "server_reinstall" {
   os           = "byoi_64"
   customizations {
     hostname            = "weebo4"
-    image_url           = "https://factory.talos.dev/image/b1ba84be4f5193a24085cc7e22fce31105e1583504d7d5aef494318f7cb1abd0/v1.10.4/metal-amd64.qcow2"
+    image_url           = "https://factory.talos.dev/image/${data.talos_image_factory_urls.metal.schematic_id}/${data.talos_image_factory_urls.metal.talos_version}/${data.talos_image_factory_urls.metal.platform}-amd64.qcow2"
     efi_bootloader_path = "\\EFI\\BOOT\\BOOTX64.EFI"
     image_type          = "qcow2"
 
@@ -40,4 +52,10 @@ resource "ovh_dedicated_server_reinstall_task" "server_reinstall" {
   #     }
   #   }
   # }
+}
+
+locals {
+  ipv4 = replace(data.ovh_dedicated_server_specifications_network.spec.routing.ipv4.ip, "/32", "")
+  # Only keep the first IPV6 address in the .ips that end with /128
+  ipv6 = one(toset([for ip in data.ovh_dedicated_server.server.ips : replace(ip, "/128", "") if can(regex("/128", ip))]))
 }

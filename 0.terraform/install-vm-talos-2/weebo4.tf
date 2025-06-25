@@ -8,3 +8,12 @@ variable "ovh_server_name" {
 data "ovh_dedicated_server" "server" {
   service_name = var.ovh_server_name
 }
+
+
+data "ovh_dedicated_server_specifications_network" "spec" {
+  service_name = var.ovh_server_name
+}
+
+output "name" {
+  value = data.ovh_dedicated_server_specifications_network.spec
+}

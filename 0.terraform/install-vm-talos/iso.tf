@@ -4,7 +4,8 @@ data "talos_image_factory_extensions_versions" "extensions_list" {
   filters = {
     names = [
       "iscsi-tools",
-      "util-linux-tools"
+      "util-linux-tools",
+      "intel-ucode"
     ]
   }
 }

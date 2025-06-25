@@ -13,6 +13,7 @@
     updatecli_version: "v0.101.0"
     tofu_version: "1.7.8"
     vault_version: "1.19.5"
+    ciliumcli_version: "v0.18.4"
   tasks:
     - name: "Update and upgrade apt packages"
       ansible.builtin.apt:
@@ -49,3 +50,6 @@
     - name: Install vault
       ansible.builtin.include_role:
         name: vault
+    - name: Install Cilium CLI
+      ansible.builtin.include_role:
+        name: cilium

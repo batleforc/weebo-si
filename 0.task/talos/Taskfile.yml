@@ -48,11 +48,14 @@ tasks:
     env:
       TALOSCONFIG: ./0.terraform/install-vm-talos/talos-config.yaml
     cmds:
-      - echo $TALOSCONFIG
       - talosctl {{ .CLI_ARGS }}
   kubectl:
     env:
       KUBECONFIG: ./0.terraform/install-vm-talos/kubeconfig
     cmds:
-    - echo $KUBECONFIG
     - kubectl {{ .CLI_ARGS }}
+  cilium:
+    env:
+      KUBECONFIG: ./0.terraform/install-vm-talos/kubeconfig
+    cmds:
+      - cilium {{ .CLI_ARGS }}
