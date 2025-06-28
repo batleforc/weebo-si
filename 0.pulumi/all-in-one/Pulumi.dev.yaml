@@ -1,1 +1,7 @@
 encryptionsalt: v1:IcAtaB31Jho=:v1:niv1+sJWvo6mh9x0:hJ+hNbXcZad/gdSE8I2XU8EZGGV08w==
+config:
+  one-for-all:talosVersion: v1.10.4
+  one-for-all:kubeVersion: v1.33.2
+  one-for-all:ciliumVersion: v1.17.4
+  one-for-all:argoAppsVersion: 8.1.2
+  cilium:configPath: kubeconfig.yaml

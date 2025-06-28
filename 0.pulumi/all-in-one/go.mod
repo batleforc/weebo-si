@@ -7,6 +7,11 @@ toolchain go1.23.10
 require github.com/pulumi/pulumi/sdk/v3 v3.172.0
 
 require (
+	github.com/littlejo/pulumi-cilium/sdk v0.0.0-20250605082208-db3e35123824 // indirect
+	github.com/pulumi/pulumi-kubernetes/sdk/v4 v4.23.0 // indirect
+)
+
+require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
@@ -60,6 +65,8 @@ require (
 	github.com/pkg/term v1.1.0 // indirect
 	github.com/pulumi/appdash v0.0.0-20231130102222-75f619a67231 // indirect
 	github.com/pulumi/esc v0.14.2 // indirect
+	github.com/pulumi/pulumi-local/sdk v0.1.6
+	github.com/pulumi/pulumi-random/sdk/v4 v4.18.2
 	github.com/pulumiverse/pulumi-talos/sdk v0.6.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect

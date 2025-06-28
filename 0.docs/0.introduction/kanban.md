@@ -56,11 +56,36 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Stream 21 juin 2025
+### Stream XX XXXX XXXX - Vacance In Progress See you soon !
 
 - Debut : 16h30
 - FIN : ~ 18H30
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
+- Musique: [NCS](https://ncs.io/)
+- Objectif not Found ! The SI HAS BEEN CORRUPTED ?!
+
+### Stream 28 Juin 2025
+
+- Debut : 16h30
+- FIN : 19H30
+- Vod : [Twitch](https://www.twitch.tv/videos/2498250846) YouTube : Soon
+- Musique: [NCS](https://ncs.io/)
+- Objectif not Found ! The SI HAS BEEN CORRUPTED ?!
+- Sujet
+  - Pulumi Vs Terraform ?
+  - Kubevirt !
+- Bilan
+  - Installation de l'infra en one commande via Pulumi
+    - Talos
+    - Cilium
+    - ArgoCD
+  - Passage de l'installe au format GitOps !
+
+### Stream 21 juin 2025
+
+- Debut : 16h30
+- FIN : ~ 18H30
+- Vod : [Twitch](https://www.twitch.tv/videos/2492048185) YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif (Pas dans l'ordre):
   - Passer d'un cluster main avec les CP SelfSchedulable a non.
@@ -87,6 +112,7 @@ kanban
   - [Node Problem Detector](https://github.com/kubernetes/node-problem-detector)
   - [Kargo](https://kargo.io/)
 - Bilan
+  - Nothing did go well !
 
 ### Stream 07 juin 2025 - Pause (Out Of Town)
 

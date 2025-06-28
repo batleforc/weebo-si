@@ -59,3 +59,21 @@ tasks:
       KUBECONFIG: ./0.terraform/install-vm-talos/kubeconfig
     cmds:
       - cilium {{ .CLI_ARGS }}
+  pulumi:
+    dir: ./0.pulumi/all-in-one
+    env:
+      PULUMI_CONFIG_PASSPHRASE: ""
+      KUBECONFIG: ./kubeconfig.yaml
+    cmds:
+      - pulumi {{ .CLI_ARGS }}
+  pulu-talosctl:
+    silent: true
+    env:
+      TALOSCONFIG: ./0.pulumi/all-in-one/talos-config.yaml
+    cmds:
+      - talosctl {{ .CLI_ARGS }}
+  pulu-k9s:
+    env:
+      KUBECONFIG: ./0.pulumi/all-in-one/kubeconfig.yaml
+    cmds:
+      - k9s {{ .CLI_ARGS }}
