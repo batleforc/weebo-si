@@ -1,0 +1,15 @@
+apiVersion: kubevirt.io/v1
+kind: KubeVirt
+metadata:
+  name: kubevirt
+  namespace: kubevirt
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  configuration:
+    smbios:
+      sku: "TalosCloud"
+      version: "v0.1.0"
+      manufacturer: "Talos Virtualization"
+      product: "talosvm"
+      family: "ccio"
