@@ -12,7 +12,7 @@
     argocd_version: "v2.14.15"
     updatecli_version: "v0.102.0"
     tofu_version: "1.10.1"
-    vault_version: "1.19.5"
+    vault_version: "1.20.0"
     ciliumcli_version: "v0.18.4"
   tasks:
     - name: "Update and upgrade apt packages"
