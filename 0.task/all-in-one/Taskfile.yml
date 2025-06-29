@@ -1,0 +1,25 @@
+version: '3'
+
+env:
+  PULUMI_CONFIG_PASSPHRASE: ""
+  KUBECONFIG: ./0.pulumi/all-in-one/kubeconfig.yaml
+  TALOSCONFIG: ./0.pulumi/all-in-one/talos-config.yaml
+
+tasks:
+  pulumi:
+    dir: ./0.pulumi/all-in-one
+    cmds:
+      - pulumi {{ .CLI_ARGS }}
+  talosctl:
+    silent: true
+    cmds:
+      - talosctl {{ .CLI_ARGS }}
+  k9s:
+    cmds:
+      - k9s {{ .CLI_ARGS }}
+  get-pwd:
+    cmds:
+    - kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+  port-forward:
+    cmds:
+    - kubectl port-forward svc/argocd-server -n argocd 8080:443

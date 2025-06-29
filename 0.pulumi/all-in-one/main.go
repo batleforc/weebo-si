@@ -404,7 +404,7 @@ func main() {
 			return err
 		}
 
-		_, err = helmv4.NewChart(ctx, "argocd", &helmv4.ChartArgs{
+		argocd, err := helmv4.NewChart(ctx, "argocd", &helmv4.ChartArgs{
 			Chart:   pulumi.String("argo-cd"),
 			Version: pulumi.String(argoAppsVersion),
 			Namespace: ns.Metadata.ApplyT(func(metadata metav1.ObjectMeta) (*string, error) {
@@ -421,6 +421,45 @@ func main() {
 		}))
 		if err != nil {
 			return err
+		}
+
+		// Create argoCD app
+		_, err = yamlv2.NewConfigGroup(ctx, "argoCDApp", &yamlv2.ConfigGroupArgs{
+			Objs: pulumi.Array{
+				pulumi.Any(map[string]interface{}{
+					"apiVersion": "argoproj.io/v1alpha1",
+					"kind":       "Application",
+					"metadata": map[string]interface{}{
+						"name": "main",
+						"namespace": ns.Metadata.ApplyT(func(metadata metav1.ObjectMeta) (*string, error) {
+							return metadata.Name, nil
+						}).(pulumi.StringPtrOutput),
+					},
+					"spec": map[string]interface{}{
+						"syncPolicy": map[string]interface{}{
+							"automated": map[string]interface{}{},
+						},
+						"destination": map[string]interface{}{
+							"namespace": "default",
+							"server":    "https://kubernetes.default.svc",
+						},
+						"project": "default",
+						"source": map[string]interface{}{
+							"repoURL":        "https://github.com/batleforc/weebo-si.git",
+							"path":           "all-in-one.argo/app",
+							"targetRevision": "HEAD",
+							"directory": map[string]interface{}{
+								"recurse": true,
+							},
+						},
+					},
+				}),
+			},
+		}, pulumi.DependsOn([]pulumi.Resource{
+			argocd,
+		}))
+		if err != nil {
+			return fmt.Errorf("failed to create argocd app: %w", err)
 		}
 
 		return nil
