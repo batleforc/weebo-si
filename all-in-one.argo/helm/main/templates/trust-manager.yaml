@@ -1,0 +1,28 @@
+{{- if .Values.trustManager.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-trust-manager
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Release.Name }}
+  syncPolicy:
+    automated: {}
+  source:
+    chart: trust-manager
+    repoURL: https://charts.jetstack.io
+    targetRevision: {{ .Values.trustManager.version }}
+    helm:
+      releaseName: trust-manager
+      valuesObject:
+        secretTargets:
+          enabled: true
+          authorizedSecrets:
+            - "weebo-poc"
+            - "weebo.poc"
+  destination:
+    name: {{ .Release.Name }}
+    namespace: cert-manager
+{{- end -}}

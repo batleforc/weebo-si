@@ -1,0 +1,36 @@
+{{- if .Values.dns.inbound.enabled -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: indns
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: in-dns
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/batleforc/weebo-si'
+    path: 'capi.argo/helm/dns'
+    helm:
+      releaseName: in-dns
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'indns'
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

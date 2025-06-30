@@ -1,0 +1,37 @@
+storage:
+  local-storage:
+    enabled: true
+
+kubevirt:
+  enabled: true
+  storageClass: local-storage
+
+dns:
+  outbound:
+    enabled: true
+    name: ""
+  inbound:
+    enabled: true
+    wildcard: true
+    base: weebo.poc
+    name: "{{.Release.Name}}"
+
+certManager:
+  enabled: true
+  version: 1.18.0
+  installCRDs: true
+
+trustManager:
+  enabled: true
+  version: 0.17.1
+
+traefik:
+  enabled: true
+  version: 36.1.0
+  plugins:
+    bouncer:
+      moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+      version: v1.4.2
+    sablier:
+      moduleName: github.com/sablierapp/sablier
+      version: v1.9.0

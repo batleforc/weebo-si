@@ -6,10 +6,10 @@ env:
   TALOSCONFIG: ./0.pulumi/all-in-one/talos-config.yaml
 
 tasks:
-  pulumi:
-    dir: ./0.pulumi/all-in-one
+  up:
     cmds:
-      - pulumi {{ .CLI_ARGS }}
+      - task up-aio
+      - task up-app
   talosctl:
     silent: true
     cmds:
@@ -26,3 +26,17 @@ tasks:
   kubectl:
     cmds:
       - kubectl {{ .CLI_ARGS }}
+  up-aio:
+    dir: ./0.pulumi/all-in-one
+    env:
+      PULUMI_CONFIG_PASSPHRASE: ""
+      KUBECONFIG: ./kubeconfig.yaml
+    cmds:
+      - pulumi up
+  up-app:
+    dir: ./0.pulumi/app
+    env:
+      PULUMI_CONFIG_PASSPHRASE: ""
+      KUBECONFIG: ../all-in-one/kubeconfig.yaml
+    cmds:
+      - pulumi up

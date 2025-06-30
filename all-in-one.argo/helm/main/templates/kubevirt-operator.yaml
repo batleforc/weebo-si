@@ -1,0 +1,35 @@
+{{- if .Values.kubevirt.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubevirt-operator
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  info:
+    - name: "Source:"
+      value: >-
+        https://github.com/kubevirt/kubevirt
+  source:
+    repoURL: 'https://github.com/batleforc/weebo-si'
+    path: 'all-in-one.argo/helm/kubevirt-operator'
+    helm:
+      releaseName: kubevirt-operator
+  destination:
+    name: in-cluster
+    namespace: 'default'
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

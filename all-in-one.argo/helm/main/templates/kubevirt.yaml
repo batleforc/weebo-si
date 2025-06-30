@@ -1,3 +1,4 @@
+{{- if .Values.kubevirt.enabled -}}
 apiVersion: kubevirt.io/v1
 kind: KubeVirt
 metadata:
@@ -13,3 +14,4 @@ spec:
       manufacturer: "Talos Virtualization"
       product: "talosvm"
       family: "ccio"
+{{- end -}}

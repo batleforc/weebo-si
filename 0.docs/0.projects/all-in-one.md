@@ -28,3 +28,5 @@ Le but est de provisionner un noeud Dédié OVH avec une iso Talos et de rentre 
 - [Kubernetes Pulumi](https://www.pulumi.com/registry/packages/kubernetes/)
 - [ArgoCD Pulumi](https://www.pulumi.com/registry/packages/argocd/)
 - [UpdateCLI Golang](https://www.updatecli.io/docs/plugins/autodiscovery/golang/)
+- [Github Action](https://www.pulumi.com/docs/iac/using-pulumi/continuous-delivery/github-actions/)
+- [Argocd x Pulumi](https://www.pulumi.com/docs/iac/using-pulumi/continuous-delivery/argocd/)
