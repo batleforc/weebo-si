@@ -26,17 +26,37 @@ tasks:
   kubectl:
     cmds:
       - kubectl {{ .CLI_ARGS }}
-  up-aio:
+  aio:
     dir: ./0.pulumi/all-in-one
     env:
       PULUMI_CONFIG_PASSPHRASE: ""
       KUBECONFIG: ./kubeconfig.yaml
     cmds:
-      - pulumi up
-  up-app:
+      - pulumi {{ .CLI_ARGS }}
+  app:
     dir: ./0.pulumi/app
     env:
       PULUMI_CONFIG_PASSPHRASE: ""
-      KUBECONFIG: ../all-in-one/kubeconfig.yaml
+      KUBECONFIG: "../all-in-one/kubeconfig.yaml"
+      KUBERNETES_MASTER: "../all-in-one/kubeconfig.yaml"
     cmds:
-      - pulumi up
+      - pulumi {{ .CLI_ARGS }}
+  up-aio:
+    env:
+      PULUMI_CONFIG_PASSPHRASE: ""
+      KUBECONFIG: ./kubeconfig.yaml
+    cmds:
+      - task aio:aio -- up
+  up-app:
+    env:
+      PULUMI_CONFIG_PASSPHRASE: ""
+      KUBECONFIG: "../all-in-one/kubeconfig.yaml"
+      KUBERNETES_MASTER: "../all-in-one/kubeconfig.yaml"
+    cmds:
+      - task aio:app -- up
+  reset-aio:
+    cmds:
+      - task aio:aio -- state delete --all
+  reset-app:
+    cmds:
+      - task aio:app -- state delete --all

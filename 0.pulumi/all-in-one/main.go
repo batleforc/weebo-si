@@ -132,7 +132,7 @@ func main() {
 				pulumi.String(serverNetwork.Routing.Ipv4.Ip),
 			},
 			Endpoints: pulumi.StringArray{
-				configuration.ClusterEndpoint(),
+				pulumi.String(serverNetwork.Routing.Ipv4.Ip),
 			},
 		}, nil)
 
@@ -223,6 +223,10 @@ func main() {
 									serverNetwork.Routing.Ipv6.Ip,
 								},
 								"dhcp": true,
+								"dhcpOptions": map[string]interface{}{
+									"ipv4": true,
+									"ipv6": false,
+								},
 								"routes": []map[string]interface{}{
 									{
 										"network": "0.0.0.0/0",
