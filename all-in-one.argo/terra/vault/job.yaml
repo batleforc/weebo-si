@@ -10,7 +10,7 @@ spec:
     metadata:
       annotations:
         inject-certs: "enabled"
-        vault.security.banzaicloud.io/vault-addr: "https://vault.weebo.poc"
+        vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
         vault.security.banzaicloud.io/vault-role: "auth"
         vault.security.banzaicloud.io/vault-path: "kubernetes"
         vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
@@ -32,7 +32,7 @@ spec:
           terraform apply -auto-approve
         env:
         - name: TF_VAR_vault_addr
-          value: "https://vault.weebo.poc"
+          value: "https://vault.vault:8200"
         volumeMounts:
         - mountPath: terraform
           name: terra-job

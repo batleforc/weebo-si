@@ -13,7 +13,7 @@ locals {
 
 
 provider "vault" {
-  address          = "https://vault.weebo.poc"
+  address          = "https://vault.vault:8200"
   ca_cert_file     = "/etc/ssl/vault/ca.crt"
   skip_child_token = "true"
   auth_login_jwt {
