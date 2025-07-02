@@ -29,6 +29,9 @@ spec:
       releaseName: authentik
       valuesObject:
         global:
+          env:
+            - name: AUTHENTIK_POSTGRESQL__PASSWORD
+              value: "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_PASSWORD"
           podAnnotations:
             inject-certs: "enabled"
             vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
@@ -41,8 +44,6 @@ spec:
           secret_key: "vault:mc-authentik/data/main-config#AUTHENTIK_SECRET_KEY"
           error_reporting:
             enabled: true
-          postgresql:
-            password: "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_PASSWORD"
 
         server:
           ingress:
