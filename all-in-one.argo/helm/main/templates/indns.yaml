@@ -20,6 +20,11 @@ spec:
     path: 'capi.argo/helm/dns'
     helm:
       releaseName: in-dns
+      valuesObject:
+        annotations:
+          lbipam.cilium.io/sharing-key: "weebo-gate"
+          lbipam.cilium.io/ips: "{{ .Values.traefik.ips }}"
+          lbipam.cilium.io/sharing-cross-namespace: "*"
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: 'indns'
