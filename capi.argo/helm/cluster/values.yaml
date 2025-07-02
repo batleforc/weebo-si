@@ -78,12 +78,12 @@ kyverno:
 
 certManager:
   enabled: true
-  version: 1.18.0
+  version: 1.18.2
   installCRDs: true
 
 trustManager:
   enabled: true
-  version: 0.17.1
+  version: 0.18.0
 
 traefik:
   enabled: false
