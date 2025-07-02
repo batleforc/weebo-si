@@ -59,6 +59,12 @@ spec:
               - login.4.weebo.fr
         postgresql:
           enabled: true
+          primary:
+            podAnnotations:
+              vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
+              vault.security.banzaicloud.io/vault-role: "auth"
+              vault.security.banzaicloud.io/vault-path: "kubernetes"
+              vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
           auth:
             password: "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_PASSWORD"
         redis:
