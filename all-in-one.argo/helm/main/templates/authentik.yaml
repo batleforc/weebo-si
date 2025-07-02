@@ -69,7 +69,6 @@ spec:
             existingSecret: "authentik-postgresql"
             secretKeys:
               adminPasswordKey: "password-admin"
-            password: "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_PASSWORD"
         redis:
           enabled: true
         additionalObjects:
