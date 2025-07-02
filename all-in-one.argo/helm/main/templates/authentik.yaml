@@ -60,6 +60,7 @@ spec:
         postgresql:
           enabled: true
           primary:
+            automountServiceAccountToken: true
             extraEnvVars:
               - name: POSTGRES_PASSWORD
                 value: "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_USER_PASSWORD"
