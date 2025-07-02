@@ -9,7 +9,7 @@ kubevirt:
 dns:
   outbound:
     enabled: true
-    name: ""
+    name: "4.weebo.fr"
   inbound:
     enabled: true
     wildcard: true

@@ -110,7 +110,52 @@ func main() {
 				Repo: pulumi.String("https://argoproj.github.io/argo-helm"),
 			},
 			Values: pulumi.Map{
-				"fullnameOverride": pulumi.Any(""),
+				"configs": pulumi.Map{
+					"cm": pulumi.Map{
+						"dex.config": pulumi.String(`
+connectors:
+		- type: oidc
+			name: Weebo-SI
+			id: weebo-si
+			config:
+				issuer: $argo-dev-auth:url
+				clientID: $argo-dev-auth:client_id
+				clientSecret: $argo-dev-auth:client_secret
+				insecureEnableGroups: true
+				requestedScopes:
+					- "openid"
+					- "profile"
+					- "email"
+					- "groups"
+						`),
+						"url": pulumi.String("https://argo.4.weebo.fr"),
+					},
+					"params": pulumi.Map{
+						"server.insecure": pulumi.String("true"),
+					},
+					"rbac": pulumi.Map{
+						"scopes": pulumi.String("groups"),
+						"policy.csv": pulumi.String(`
+g, admin, role:admin
+g, dev, role:dev
+g, reader, role:readonly
+g, weebo_admin, role:admin
+g, authentik Admins, role:admin
+						`),
+					},
+				},
+				"global": pulumi.Map{
+					"domain": pulumi.String("argo.4.weebo.fr"),
+				},
+				"server": pulumi.Map{
+					"ingress": pulumi.Map{
+						"enabled": pulumi.Bool(true),
+						"tls":     pulumi.Bool(true),
+						"annotations": pulumi.StringMap{
+							"cert-manager.io/cluster-issuer": pulumi.String("outbound"),
+						},
+					},
+				},
 			},
 		}, pulumi.DependsOn([]pulumi.Resource{
 			argoRedisSecret,
