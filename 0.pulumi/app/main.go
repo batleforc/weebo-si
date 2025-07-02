@@ -112,36 +112,32 @@ func main() {
 			Values: pulumi.Map{
 				"configs": pulumi.Map{
 					"cm": pulumi.Map{
-						"dex.config": pulumi.String(`
-connectors:
-		- type: oidc
-			name: Weebo-SI
-			id: weebo-si
-			config:
-				issuer: $argo-dev-auth:url
-				clientID: $argo-dev-auth:client_id
-				clientSecret: $argo-dev-auth:client_secret
-				insecureEnableGroups: true
-				requestedScopes:
-					- "openid"
-					- "profile"
-					- "email"
-					- "groups"
-						`),
+						"dex.config": pulumi.String(`connectors:
+	- type: oidc
+		name: Weebo-SI
+		id: weebo-si
+		config:
+			issuer: $argo-dev-auth:url
+			clientID: $argo-dev-auth:client_id
+			clientSecret: $argo-dev-auth:client_secret
+			insecureEnableGroups: true
+			requestedScopes:
+				- "openid"
+				- "profile"
+				- "email"
+				- "groups"`),
 						"url": pulumi.String("https://argo.4.weebo.fr"),
 					},
 					"params": pulumi.Map{
-						"server.insecure": pulumi.String("true"),
+						"server.insecure": pulumi.Bool(true),
 					},
 					"rbac": pulumi.Map{
-						"scopes": pulumi.String("groups"),
-						"policy.csv": pulumi.String(`
-g, admin, role:admin
+						"scopes": pulumi.String("[groups]"),
+						"policy.csv": pulumi.String(`g, admin, role:admin
 g, dev, role:dev
 g, reader, role:readonly
 g, weebo_admin, role:admin
-g, authentik Admins, role:admin
-						`),
+g, authentik Admins, role:admin`),
 					},
 				},
 				"global": pulumi.Map{
