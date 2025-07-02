@@ -38,11 +38,11 @@ spec:
         authentik:
           bootstrap_token: "vault:mc-authentik/data/main-config#AUTHENTIK_BOOTSTRAP_TOKEN"
           bootstrap_password: "vault:mc-authentik/data/main-config#AUTHENTIK_BOOTSTRAP_PASSWORD"
-          secret_key: "PleaseGenerateASecureKey"
+          secret_key: "vault:mc-authentik/data/main-config#AUTHENTIK_SECRET_KEY"
           error_reporting:
             enabled: true
           postgresql:
-            password: "ThisIsNotASecurePassword"
+            password: "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_PASSWORD"
 
         server:
           ingress:
@@ -60,7 +60,7 @@ spec:
         postgresql:
           enabled: true
           auth:
-            password: "ThisIsNotASecurePassword"
+            password: "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_PASSWORD"
         redis:
           enabled: true
 
