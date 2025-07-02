@@ -2,12 +2,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Release.Name }}-trust-manager
+  name: trust-manager
   namespace: argocd
   finalizers:
   - resources-finalizer.argocd.argoproj.io
 spec:
-  project: {{ .Release.Name }}
+  project: default
   syncPolicy:
     automated: {}
   source:
@@ -23,6 +23,6 @@ spec:
             - "weebo-poc"
             - "weebo.poc"
   destination:
-    name: {{ .Release.Name }}
+    name: in-cluster
     namespace: cert-manager
 {{- end -}}
