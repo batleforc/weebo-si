@@ -66,8 +66,21 @@ spec:
               vault.security.banzaicloud.io/vault-path: "kubernetes"
               vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
           auth:
+            existingSecret: "authentik-postgresql"
+            secretKeys:
+              adminPasswordKey: "password-admin"
             password: "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_PASSWORD"
         redis:
           enabled: true
+        additionalObjects:
+          - |
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: authentik-postgresql
+              namespace: authentik
+            type: Opaque
+            data:
+              password-admin: {{ "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_PASSWORD" | b64enc }}
 
 {{- end -}}
