@@ -41,6 +41,7 @@ provider "authentik" {
 provider "vault" {
   address          = var.vault_address
   ca_cert_file     = "/etc/ssl/vault/ca.crt"
+  skip_tls_verify  = "true"
   skip_child_token = "true"
   auth_login_jwt {
     role = "auth"
