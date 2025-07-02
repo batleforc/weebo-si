@@ -1,5 +1,5 @@
 storage:
-  local-storage:
+  local:
     enabled: true
 
 kubevirt:
