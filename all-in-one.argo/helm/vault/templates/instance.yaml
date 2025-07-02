@@ -6,8 +6,6 @@ metadata:
     app.kubernetes.io/name: vault
     vault_cr: vault
   namespace: "vault"
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
 spec:
   size: 1
   image: hashicorp/vault:1.19
