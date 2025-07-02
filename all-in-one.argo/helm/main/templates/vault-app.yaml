@@ -12,7 +12,7 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/batleforc/weebo-si'
-    path: 'all-in-one.argo/helm/vault-app'
+    path: 'all-in-one.argo/helm/vault'
     helm:
       releaseName: vault-app
   destination:
