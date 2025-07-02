@@ -1,0 +1,67 @@
+{{- if .Values.auth.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: authentik
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: authentik
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - Replace=true
+  destination:
+    namespace: authentik
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: authentik
+    repoURL: https://charts.goauthentik.io
+    targetRevision: 2025.6.3
+    helm:
+      releaseName: authentik
+      valuesObject:
+        global:
+          podAnnotations:
+            inject-certs: "enabled"
+            vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
+            vault.security.banzaicloud.io/vault-role: "auth"
+            vault.security.banzaicloud.io/vault-path: "kubernetes"
+            vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
+        authentik:
+          bootstrap_token: "vault:mc-authentik/data/main-config#AUTHENTIK_BOOTSTRAP_TOKEN"
+          bootstrap_password: "vault:mc-authentik/data/main-config#AUTHENTIK_BOOTSTRAP_PASSWORD"
+          secret_key: "PleaseGenerateASecureKey"
+          error_reporting:
+            enabled: true
+          postgresql:
+            password: "ThisIsNotASecurePassword"
+
+        server:
+          ingress:
+            ingressClassName: traefik
+            enabled: true
+            annotations:
+              cert-manager.io/cluster-issuer: "outbound"
+            hosts:
+            - login.4.weebo.fr
+            https: false
+            tls:
+            - secretName: authentik-tls
+              hosts:
+              - login.4.weebo.fr
+        postgresql:
+          enabled: true
+          auth:
+            password: "ThisIsNotASecurePassword"
+        redis:
+          enabled: true
+
+{{- end -}}

@@ -28,6 +28,9 @@ trustManager:
   enabled: true
   version: 0.17.1
 
+auth:
+  enabled: true
+
 traefik:
   enabled: true
   version: 36.1.0
