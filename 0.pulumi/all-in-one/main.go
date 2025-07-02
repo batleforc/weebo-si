@@ -169,6 +169,13 @@ func main() {
 							"10.96.0.0/12",
 							"fd00:10:96::/112",
 						},
+						// "controllerManager": map[string]interface{}{
+						// 	"extraArgs": map[string]interface{}{
+						// 		"node-cidr-mask-size-ipv4": "24",
+						// 		"node-cidr-mask-size-ipv6": "112",
+						// 		"controllers":              "*,tokencleaner,-node-ipam-controller",
+						// 	},
+						// },
 					},
 					"proxy": map[string]interface{}{
 						"disabled": true,
@@ -217,24 +224,43 @@ func main() {
 						},
 						"interfaces": []map[string]interface{}{
 							{
-								"interface": "eth0",
 								"addresses": []string{
-									fmt.Sprintf("%s/24", serverNetwork.Routing.Ipv4.Ip),
-									serverNetwork.Routing.Ipv6.Ip,
+									strings.ReplaceAll(serverNetwork.Routing.Ipv6.Ip, "/128", "/48"),
 								},
-								"dhcp": true,
+								"interface": "eth0",
+								"dhcp":      true,
 								"dhcpOptions": map[string]interface{}{
 									"ipv4": true,
 									"ipv6": false,
 								},
 								"routes": []map[string]interface{}{
 									{
-										"network": "0.0.0.0/0",
-										"gateway": serverNetwork.Routing.Ipv4.Gateway,
+										"network": "::/0",
+										"gateway": serverNetwork.Routing.Ipv6.Gateway,
 									},
 								},
 							},
 						},
+						// "interfaces": []map[string]interface{}{
+						// 	{
+						// 		"interface": "eth0",
+						// 		"addresses": []string{
+						// 			fmt.Sprintf("%s/24", serverNetwork.Routing.Ipv4.Ip),
+						// 			serverNetwork.Routing.Ipv6.Ip,
+						// 		},
+						// 		"dhcp": false,
+						// 		"dhcpOptions": map[string]interface{}{
+						// 			"ipv4": true,
+						// 			"ipv6": false,
+						// 		},
+						// 		"routes": []map[string]interface{}{
+						// 			{
+						// 				"network": "0.0.0.0/0",
+						// 				"gateway": serverNetwork.Routing.Ipv4.Gateway,
+						// 			},
+						// 		},
+						// 	},
+						// },
 					},
 				},
 			})

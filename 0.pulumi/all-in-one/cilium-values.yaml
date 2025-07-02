@@ -24,6 +24,9 @@ cgroup:
     enabled: false
   hostRoot: /sys/fs/cgroup
 k8sServicePort: 6443
+k8s:
+  requireIPv4PodCIDR: true
+  requireIPv6PodCIDR: true
 ipv4:
   enabled: true
 ipv6:
