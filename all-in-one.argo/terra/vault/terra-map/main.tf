@@ -11,10 +11,6 @@ locals {
   token_vault = file("/var/run/secrets/kubernetes.io/serviceaccount/token")
 }
 
-variable "vault_token" {
-  description = "The token to authenticate with Vault"
-  type        = string
-}
 
 provider "vault" {
   address          = "https://vault.weebo.poc"
