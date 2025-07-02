@@ -30,7 +30,7 @@ resource "vault_pki_secret_backend_root_sign_intermediate" "intermediate" {
   csr         = vault_pki_secret_backend_intermediate_cert_request.csr-request.csr
   format      = "pem_bundle"
   ttl         = 15480000
-  issuer_ref  = "098bc894-b1b1-55f0-3879-bb09b1a4ee1f"
+  issuer_ref  = "7ba978da-bc38-337a-cc03-d6c6279abf62"
 }
 
 resource "vault_pki_secret_backend_intermediate_set_signed" "intermediate" {
