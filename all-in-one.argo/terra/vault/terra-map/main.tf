@@ -8,7 +8,7 @@ terraform {
 }
 
 locals {
-  token_vault = file("/var/run/secrets/kubernetes.io/serviceaccount/token")
+  token_vault = file("/var/run/vault/vault-root")
 }
 
 

@@ -40,6 +40,8 @@ spec:
           name: "script-vol"
         - mountPath: /etc/ssl/vault
           name: vault-tls
+        - mountPath: /var/run/vault
+          name: vault-token
       restartPolicy: Never
       volumes:
       - name: "script-vol"
@@ -51,6 +53,9 @@ spec:
       - name: vault-tls
         secret:
           secretName: "vault-tls"
+      - name: vault-token
+        secret:
+          secretName: "vault-unseal-keys"
 ---
 apiVersion: batch/v1
 kind: Job
