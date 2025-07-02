@@ -9,12 +9,15 @@ kubevirt:
 dns:
   outbound:
     enabled: true
-    name: ""
+    name: "4.weebo.fr"
   inbound:
     enabled: true
     wildcard: true
     base: weebo.poc
     name: "{{.Release.Name}}"
+
+vault:
+  enabled: true
 
 certManager:
   enabled: true

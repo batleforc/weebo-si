@@ -16,6 +16,9 @@ dns:
     base: weebo.poc
     name: "{{.Release.Name}}"
 
+vault:
+  enabled: true
+
 certManager:
   enabled: true
   version: 1.18.0
