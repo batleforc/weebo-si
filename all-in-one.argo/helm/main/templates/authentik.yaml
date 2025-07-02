@@ -73,6 +73,9 @@ spec:
             existingSecret: "authentik-postgresql-auth"
             secretKeys:
               adminPasswordKey: "password-admin"
+          serviceAccount:
+            name: authentik
+            create: false
         redis:
           enabled: true
         additionalObjects:
