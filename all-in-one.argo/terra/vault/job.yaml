@@ -1,0 +1,80 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "terra-job-vault"
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      annotations:
+        inject-certs: "enabled"
+        vault.security.banzaicloud.io/vault-addr: "https://vault.weebo.poc"
+        vault.security.banzaicloud.io/vault-role: "auth"
+        vault.security.banzaicloud.io/vault-path: "kubernetes"
+        vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
+    spec:
+      containers:
+      - name: terraform
+        image: hashicorp/terraform:latest
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/sh
+        - '-c'
+        - |
+          set -x
+          cd /terraform
+          touch anotherNameThatSoundNothing.tf
+          rm -rf *.tf
+          cp /scripts/*.tf .
+          terraform init --upgrade
+          terraform apply -auto-approve
+        env:
+        - name: TF_VAR_vault_addr
+          value: "https://vault.weebo.poc"
+        volumeMounts:
+        - mountPath: terraform
+          name: terra-job
+        - mountPath: /scripts
+          name: "script-vol"
+        - mountPath: /etc/ssl/vault
+          name: vault-tls
+      restartPolicy: Never
+      volumes:
+      - name: "script-vol"
+        configMap:
+          name: "terra-vault-config"
+      - name: terra-job
+        persistentVolumeClaim:
+          claimName: "terra-job-vault"
+      - name: vault-tls
+        secret:
+          secretName: "vault-tls"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "terra-job-vault-empty"
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      containers:
+      - name: create-in-vault
+        image: hashicorp/terraform:latest
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/sh
+        - '-c'
+        - |
+          set -x
+          echo "WIP"
+        volumeMounts:
+        - mountPath: terraform
+          name: terra-job
+      restartPolicy: Never
+      volumes:
+      - name: terra-job
+        persistentVolumeClaim:
+          claimName: "terra-job-vault"

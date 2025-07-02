@@ -150,8 +150,8 @@ spec:
             policies: allow_pki
             ttl: 1h
           - name: cluster_creator
-            bound_service_account_names: ["default"]
-            bound_service_account_namespaces: ["default"]
+            bound_service_account_names: ["default", "vault"]
+            bound_service_account_namespaces: ["default", "vault"]
             policies: cluster_creator
             ttl: 1h
 

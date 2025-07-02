@@ -20,12 +20,18 @@ tasks:
   k9s:
     cmds:
       - k9s {{ .CLI_ARGS }}
-  get-pwd:
+  argo-pwd:
     cmds:
     - kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-  port-forward:
+  argo-forward:
     cmds:
     - kubectl port-forward svc/argocd-server -n argocd 8080:443
+  vault-pwd:
+    cmds:
+    - kubectl -n vault get secret vault-unseal-keys -o jsonpath="{.data.vault-root}" | base64 -d
+  vault-forward:
+    cmds:
+    - kubectl port-forward svc/vault -n vault 8200:8200
   kubectl:
     cmds:
       - kubectl {{ .CLI_ARGS }}
