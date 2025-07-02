@@ -9,14 +9,12 @@ metadata:
     app.kubernetes.io/created-by: vault-operator
     app.kubernetes.io/part-of: vault-operator
     app.kubernetes.io/managed-by: kustomize
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
   name: leader-election-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: leader-election-role
 subjects:
-- kind: ServiceAccount
-  name: vault
-  namespace: vault
+  - kind: ServiceAccount
+    name: vault
+    namespace: vault

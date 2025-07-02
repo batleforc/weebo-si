@@ -3,8 +3,6 @@ kind: Application
 metadata:
   name: vault-webhook
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "3"
 spec:
   project: default
   syncPolicy:
@@ -22,18 +20,18 @@ spec:
     server: "https://kubernetes.default.svc"
     namespace: vault-infra
   ignoreDifferences:
-  - group: ''
-    kind: 'Secret'
-    name: 'vault-webhook-vault-secrets-webhook-webhook-tls'
-    jsonPointers:
-    - /data
-  - group: 'admissionregistration.k8s.io'
-    kind: 'MutatingWebhookConfiguration'
-    name: 'vault-webhook-vault-secrets-webhook'
-    jqPathExpressions:
-    - .webhooks[].clientConfig.caBundle
-  - group: 'apps'
-    kind: 'Deployment'
-    name: 'vault-webhook-vault-secrets-webhook'
-    jsonPointers:
-    - /spec/template/metadata/annotations
+    - group: ""
+      kind: "Secret"
+      name: "vault-webhook-vault-secrets-webhook-webhook-tls"
+      jsonPointers:
+        - /data
+    - group: "admissionregistration.k8s.io"
+      kind: "MutatingWebhookConfiguration"
+      name: "vault-webhook-vault-secrets-webhook"
+      jqPathExpressions:
+        - .webhooks[].clientConfig.caBundle
+    - group: "apps"
+      kind: "Deployment"
+      name: "vault-webhook-vault-secrets-webhook"
+      jsonPointers:
+        - /spec/template/metadata/annotations
