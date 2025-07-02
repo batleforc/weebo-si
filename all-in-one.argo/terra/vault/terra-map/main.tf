@@ -13,13 +13,9 @@ locals {
 
 
 provider "vault" {
-  address          = "https://vault.vault:8200"
-  ca_cert_file     = "/etc/ssl/vault/ca.crt"
-  skip_child_token = "true"
-  auth_login_jwt {
-    role = "auth"
-    jwt  = local.token_vault
-  }
+  address      = "https://vault.vault:8200"
+  ca_cert_file = "/etc/ssl/vault/ca.crt"
+  token        = local.token_vault
 }
 
 resource "vault_pki_secret_backend_intermediate_cert_request" "csr-request" {
