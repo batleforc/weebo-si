@@ -87,11 +87,11 @@ trustManager:
 
 traefik:
   enabled: false
-  version: 36.1.0
+  version: 36.3.0
   plugins:
     bouncer:
       moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
-      version: v1.4.2
+      version: v1.4.4
     sablier:
       moduleName: github.com/sablierapp/sablier
       version: v1.9.0
