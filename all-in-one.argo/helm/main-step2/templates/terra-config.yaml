@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: terra-authentik
+  namespace: argocd
+spec:
+  project: default
+  source:
+    path: all-in-one.argo/terra/auth
+    repoURL: "https://github.com/batleforc/weebo-si"
+    targetRevision: HEAD
+  destination:
+    namespace: authentik
+    server: "https://kubernetes.default.svc"
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
