@@ -30,7 +30,7 @@ spec:
       valuesObject:
         global:
           env:
-            - name: AUTHENTIK_POSTGRESQL__PASSWORD
+            - name: POSTGRES_PASSWORD
               value: "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_PASSWORD"
           podAnnotations:
             inject-certs: "enabled"
