@@ -73,8 +73,7 @@ spec:
         redis:
           enabled: true
         additionalObjects:
-          - |
-            apiVersion: v1
+          - apiVersion: v1
             kind: Secret
             metadata:
               name: authentik-postgresql
