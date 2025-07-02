@@ -31,7 +31,7 @@ spec:
         global:
           env:
             - name: POSTGRES_PASSWORD
-              value: "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_PASSWORD"
+              value: "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_USER_PASSWORD"
           podAnnotations:
             inject-certs: "enabled"
             vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
