@@ -80,6 +80,6 @@ spec:
             type: Opaque
             data:
               password-admin: {{ "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_PASSWORD" | b64enc }}
-              password: admin: {{ "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_USER_PASSWORD" | b64enc }}
+              password: {{ "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_USER_PASSWORD" | b64enc }}
 
 {{- end -}}
