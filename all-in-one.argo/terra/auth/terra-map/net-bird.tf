@@ -40,7 +40,7 @@ resource "random_password" "netbird_sa_password" {
 }
 
 resource "authentik_user" "netbird_sa" {
-  username = "NetBird"
+  username = "netbird"
   type     = "service_account"
   groups   = [authentik_group.weebo_admin.id]
   password = random_password.netbird_sa_password.result
