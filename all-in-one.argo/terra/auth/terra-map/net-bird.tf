@@ -33,11 +33,20 @@ resource "authentik_provider_oauth2" "netbird" {
   sub_mode             = "user_id"
 }
 
+resource "random_password" "netbird_sa_password" {
+  length           = 32
+  special          = true
+  override_special = "_-"
+}
+
 resource "authentik_user" "netbird_sa" {
   username = "NetBird"
   type     = "service_account"
   groups   = [authentik_group.weebo_admin.id]
+  password = random_password.netbird_sa_password.result
 }
+
+
 
 resource "authentik_application" "netbird" {
   name              = "netbird"
