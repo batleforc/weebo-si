@@ -68,6 +68,7 @@ resource "vault_kv_secret_v2" "netbird" {
   data_json = jsonencode(
     {
       NETBIRD_AUTH_OIDC_CONFIGURATION_ENDPOINT = "https://login.4.weebo.fr/application/o/${authentik_application.netbird.slug}/.well-known/openid-configuration",
+      NETBIRD_AUTH_BASE_URL                    = "https://login.4.weebo.fr/application/o/${authentik_application.netbird.slug}",
       NETBIRD_USE_AUTH0                        = "false",
       NETBIRD_AUTH_CLIENT_ID                   = authentik_provider_oauth2.netbird.client_id,
       NETBIRD_AUTH_SUPPORTED_SCOPES            = "openid profile email offline_access api",
