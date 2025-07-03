@@ -29,7 +29,7 @@ resource "authentik_application" "argo-main-cluster" {
 
 resource "vault_kv_secret_v2" "argo-main-cluster" {
   mount = "mc-authentik"
-  name  = "argocd-client/auth"
+  name  = "argocd/auth"
   data_json = jsonencode(
     {
       AUTHENTIK_CLIENT_ID     = authentik_provider_oauth2.argo-main-cluster.client_id,
