@@ -56,6 +56,12 @@ resource "random_password" "netbird_turn_server_password" {
   override_special = "_-"
 }
 
+resource "random_password" "netbird_relay_password" {
+  length           = 32
+  special          = true
+  override_special = "_-"
+}
+
 resource "vault_kv_secret_v2" "netbird" {
   mount = "mc-authentik"
   name  = "netbird/auth"
@@ -75,6 +81,7 @@ resource "vault_kv_secret_v2" "netbird" {
       NETBIRD_DATASTORE_ENCRYPTION_KEY         = random_string.encryption_key.result,
       NETBIRD_TURN_SERVER_USER                 = "netbirdturnserveruser"
       NETBIRD_TURN_SERVER_PASSWORD             = random_password.netbird_turn_server_password.result,
+      NETBIRD_REPLAY_PASSWORD                  = random_password.netbird_relay_password.result,
     }
   )
 }
