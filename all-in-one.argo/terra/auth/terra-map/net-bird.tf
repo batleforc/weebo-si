@@ -88,7 +88,7 @@ resource "vault_kv_secret_v2" "netbird" {
       NETBIRD_IDP_MGMT_CLIENT_ID               = authentik_provider_oauth2.netbird.client_id,
       NETBIRD_IDP_MGMT_EXTRA_USERNAME          = authentik_user.netbird_sa.username,
       NETBIRD_IDP_MGMT_EXTRA_PASSWORD          = authentik_user.netbird_sa.password,
-      NETBIRD_DATASTORE_ENCRYPTION_KEY         = random_string.encryption_key.result,
+      NETBIRD_DATASTORE_ENCRYPTION_KEY         = base64encode(random_string.encryption_key.result),
       NETBIRD_TURN_SERVER_USER                 = "netbirdturnserveruser"
       NETBIRD_TURN_SERVER_PASSWORD             = random_password.netbird_turn_server_password.result,
       NETBIRD_REPLAY_PASSWORD                  = random_password.netbird_relay_password.result,
