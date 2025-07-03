@@ -126,9 +126,8 @@ spec:
           image:
             tag: 0.32.0
           persistentVolume:
-            enabled: false
+            enabled: true
           envFromSecret:
-            NETBIRD_STORE_ENGINE_POSTGRES_DSN: netbird-auth/postgresDSN
             STUN_SERVER: netbird-auth/stunServer
             TURN_SERVER: netbird-auth/turnServer
             TURN_SERVER_USER: netbird-auth/turnServerUser
