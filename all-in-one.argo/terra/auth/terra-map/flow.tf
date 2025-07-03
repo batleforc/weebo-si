@@ -11,7 +11,9 @@ data "authentik_brand" "authentik-default" {
 }
 
 resource "authentik_brand" "default" {
-  domain           = data.authentik_brand.authentik-default.domain
+  domain           = "weebo"
   default          = true
-  flow_device_code = authentik_flow.token-authentik-flow.id
+  flow_device_code = authentik_flow.token-authentik-flow.uuid
+  branding_logo    = data.authentik_brand.authentik-default.branding_logo
+  branding_favicon = data.authentik_brand.authentik-default.branding_favicon
 }
