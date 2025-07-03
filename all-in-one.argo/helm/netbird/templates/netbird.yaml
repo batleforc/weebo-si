@@ -24,7 +24,7 @@ spec:
               "Stuns": [
                 {
                   "Proto": "udp",
-                  "URI": "{{ .STUN_SERVER }}",
+                  "URI": "{{ printf "{{"}} .STUN_SERVER }}",
                   "Username": "",
                   "Password": ""
                 }
@@ -36,16 +36,16 @@ spec:
                 "Turns": [
                   {
                     "Proto": "udp",
-                    "URI": "{{ .TURN_SERVER }}",
-                    "Username": "{{ .TURN_SERVER_USER }}",
-                    "Password": "{{ .TURN_SERVER_PASSWORD }}"
+                    "URI": "{{ printf "{{"}} .TURN_SERVER }}",
+                    "Username": "{{ printf "{{"}} .TURN_SERVER_USER }}",
+                    "Password": "{{ printf "{{"}} .TURN_SERVER_PASSWORD }}"
                   }
                 ]
               },
               "Relay": {
                 "Addresses": ["rels://netbird.4.weebo.fr:443/relay"],
                 "CredentialsTTL": "24h",
-                "Secret": "{{ .RELAY_PASSWORD }}"
+                "Secret": "{{ printf "{{"}} .RELAY_PASSWORD }}"
               },
               "Signal": {
                 "Proto": "https",
@@ -54,16 +54,16 @@ spec:
                 "Password": ""
               },
               "Datadir": "/var/lib/netbird/",
-              "DataStoreEncryptionKey": "{{ .DATASTORE_ENCRYPTION_KEY }}",
+              "DataStoreEncryptionKey": "{{ printf "{{"}} .DATASTORE_ENCRYPTION_KEY }}",
               "HttpConfig": {
                 "LetsEncryptDomain": "",
                 "CertFile": "",
                 "CertKey": "",
-                "AuthAudience": "{{ .IDP_CLIENT_ID }}",
+                "AuthAudience": "{{ printf "{{"}} .IDP_CLIENT_ID }}",
                 "AuthIssuer": "https://login.4.weebo.fr/application/o/netbird/",
                 "AuthUserIDClaim": "",
                 "AuthKeysLocation": "https://login.4.weebo.fr/application/o/netbird/jwks/",
-                "OIDCConfigEndpoint": "{{ .OIDC_CONFIG_ENDPOINT }}",
+                "OIDCConfigEndpoint": "{{ printf "{{"}} .OIDC_CONFIG_ENDPOINT }}",
                 "IdpSignKeyRefreshEnabled": false
               },
               "IdpManagerConfig": {
@@ -71,13 +71,13 @@ spec:
                 "ClientConfig": {
                   "Issuer": "https://login.4.weebo.fr/application/o/netbird",
                   "TokenEndpoint": "https://login.4.weebo.fr/application/o/token/",
-                  "ClientID": "{{ .IDP_CLIENT_ID }}",
+                  "ClientID": "{{ printf "{{"}} .IDP_CLIENT_ID }}",
                   "ClientSecret": "",
                   "GrantType": "client_credentials"
                 },
                 "ExtraConfig": {
-                  "Password": "{{ .IDP_SERVICE_ACCOUNT_PASSWORD }}",
-                  "Username": "{{ .IDP_SERVICE_ACCOUNT_USER }}"
+                  "Password": "{{ printf "{{"}} .IDP_SERVICE_ACCOUNT_PASSWORD }}",
+                  "Username": "{{ printf "{{"}} .IDP_SERVICE_ACCOUNT_USER }}"
                 },
                 "Auth0ClientCredentials": null,
                 "AzureClientCredentials": null,
@@ -87,10 +87,10 @@ spec:
               "DeviceAuthorizationFlow": {
                 "Provider": "hosted",
                 "ProviderConfig": {
-                  "ClientID": "{{ .IDP_CLIENT_ID }}",
+                  "ClientID": "{{ printf "{{"}} .IDP_CLIENT_ID }}",
                   "ClientSecret": "",
                   "Domain": "login.4.weebo.fr",
-                  "Audience": "{{ .IDP_CLIENT_ID }}",
+                  "Audience": "{{ printf "{{"}} .IDP_CLIENT_ID }}",
                   "TokenEndpoint": "https://login.4.weebo.fr/application/o/token/",
                   "DeviceAuthEndpoint": "https://login.4.weebo.fr/application/o/device/",
                   "AuthorizationEndpoint": "",
@@ -101,10 +101,10 @@ spec:
               },
               "PKCEAuthorizationFlow": {
                 "ProviderConfig": {
-                  "ClientID": "{{ .IDP_CLIENT_ID }}",
+                  "ClientID": "{{ printf "{{"}} .IDP_CLIENT_ID }}",
                   "ClientSecret": "",
                   "Domain": "",
-                  "Audience": "{{ .IDP_CLIENT_ID }}",
+                  "Audience": "{{ printf "{{"}} .IDP_CLIENT_ID }}",
                   "TokenEndpoint": "https://login.4.weebo.fr/application/o/token/",
                   "DeviceAuthEndpoint": "",
                   "AuthorizationEndpoint": "https://login.4.weebo.fr/application/o/authorize/",
