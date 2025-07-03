@@ -112,20 +112,21 @@ func main() {
 			Values: pulumi.Map{
 				"configs": pulumi.Map{
 					"cm": pulumi.Map{
-						"dex.config": pulumi.String(`connectors:
-	- type: oidc
-		name: Weebo-SI
-		id: weebo-si
-		config:
-			issuer: $argo-dev-auth:url
-			clientID: $argo-dev-auth:client_id
-			clientSecret: $argo-dev-auth:client_secret
-			insecureEnableGroups: true
-			requestedScopes:
-				- "openid"
-				- "profile"
-				- "email"
-				- "groups"`),
+						"dex.config": pulumi.String(`
+connectors:
+  - type: oidc
+    name: Weebo-SI
+    id: weebo-si
+    config:
+      issuer: $argo-dev-auth:url
+      clientID: $argo-dev-auth:client_id
+      clientSecret: $argo-dev-auth:client_secret
+      insecureEnableGroups: true
+      requestedScopes:
+        - "openid"
+        - "profile"
+        - "email"
+        - "groups"`),
 						"url": pulumi.String("https://argo.4.weebo.fr"),
 					},
 					"params": pulumi.Map{
