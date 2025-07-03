@@ -15,6 +15,7 @@ spec:
         vault.security.banzaicloud.io/vault-path: "kubernetes"
         vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
     spec:
+      serviceAccountName: "authentik"
       containers:
       - name: terraform
         image: hashicorp/terraform:latest

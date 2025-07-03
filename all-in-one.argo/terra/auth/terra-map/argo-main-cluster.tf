@@ -7,7 +7,7 @@ resource "authentik_provider_oauth2" "argo-main-cluster" {
   allowed_redirect_uris = [
     {
       matching_mode = "strict",
-      url           = "https://argo.main-cluster.weebo.poc/api/dex/callback",
+      url           = "https://argo.4.weebo.fr/api/dex/callback",
     },
     {
       matching_mode = "strict",
@@ -34,7 +34,7 @@ resource "vault_kv_secret_v2" "argo-main-cluster" {
     {
       AUTHENTIK_CLIENT_ID     = authentik_provider_oauth2.argo-main-cluster.client_id,
       AUTHENTIK_CLIENT_SECRET = authentik_provider_oauth2.argo-main-cluster.client_secret,
-      AUTHENTIK_URL           = "https://login.main-cluster.weebo.poc/application/o/${authentik_application.argo-main-cluster.slug}/",
+      AUTHENTIK_URL           = "https://login.4.weebo.fr/application/o/${authentik_application.argo-main-cluster.slug}/",
     }
   )
 }
