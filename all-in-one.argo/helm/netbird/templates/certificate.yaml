@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "netbird-certificate"
+  namespace: "netbird"
+spec:
+  commonName: "netbird.4.weebo.fr"
+  secretName: "netbird-certificate"
+  dnsNames:
+    - "netbird.4.weebo.fr"
+  issuerRef:
+    kind: ClusterIssuer
+    name: "outbound"
