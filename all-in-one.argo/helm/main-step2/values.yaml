@@ -28,6 +28,16 @@ trustManager:
   enabled: true
   version: 0.17.1
 
+externalSecrets:
+  enabled: true
+  version: 0.17.0
+  vault:
+    enabled: true
+    version: 4.4.0
+
+auth:
+  enabled: true
+
 traefik:
   enabled: true
   version: 36.1.0
