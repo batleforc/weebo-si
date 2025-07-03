@@ -63,7 +63,7 @@ spec:
                 "AuthIssuer": "https://login.4.weebo.fr/application/o/netbird/",
                 "AuthUserIDClaim": "",
                 "AuthKeysLocation": "https://login.4.weebo.fr/application/o/netbird/jwks/",
-                "OIDCConfigEndpoint": "https://login.4.weebo.fr/application/o/netbird/.well-known/openid-configuration",
+                "OIDCConfigEndpoint": "{{ .OIDC_CONFIG_ENDPOINT }}",
                 "IdpSignKeyRefreshEnabled": false
               },
               "IdpManagerConfig": {
@@ -137,6 +137,7 @@ spec:
             IDP_SERVICE_ACCOUNT_USER: netbird-auth/idpServiceAccountUser
             IDP_SERVICE_ACCOUNT_PASSWORD: netbird-auth/idpServiceAccountPassword
             DATASTORE_ENCRYPTION_KEY: netbird-auth/datastoreEncryptionKey
+            OIDC_CONFIG_ENDPOINT: netbird-auth/oidcConfigEndpoint
 
         signal:
           image:

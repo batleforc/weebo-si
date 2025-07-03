@@ -40,8 +40,8 @@ resource "authentik_user" "netbird_sa" {
 }
 
 resource "authentik_application" "netbird" {
-  name              = "main-cluster.netbird"
-  slug              = "main-cluster-netbird"
+  name              = "netbird"
+  slug              = "netbird"
   protocol_provider = authentik_provider_oauth2.netbird.id
 }
 
