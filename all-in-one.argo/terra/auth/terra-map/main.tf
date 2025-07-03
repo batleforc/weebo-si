@@ -27,7 +27,7 @@ variable "authentik_token" {
   default     = "foo-bar"
 }
 
-variable "vault_address" {
+variable "vault_addr" {
   type        = string
   description = "The address of the Vault instance"
   default     = "https://vault.capi.weebo.poc"
@@ -39,7 +39,7 @@ provider "authentik" {
 }
 
 provider "vault" {
-  address          = var.vault_address
+  address          = var.vault_addr
   ca_cert_file     = "/etc/ssl/vault/ca.crt"
   skip_tls_verify  = "true"
   skip_child_token = "true"
