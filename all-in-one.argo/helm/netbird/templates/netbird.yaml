@@ -69,7 +69,7 @@ spec:
               "IdpManagerConfig": {
                 "ManagerType": "authentik",
                 "ClientConfig": {
-                  "Issuer": "https://login.4.weebo.fr/application/o/netbird",
+                  "Issuer": "https://login.4.weebo.fr/application/o/netbird/",
                   "TokenEndpoint": "https://login.4.weebo.fr/application/o/token/",
                   "ClientID": "{{ printf "{{"}} .IDP_CLIENT_ID }}",
                   "ClientSecret": "{{ printf "{{"}} .IDP_CLIENT_SECRET }}",
