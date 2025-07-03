@@ -174,8 +174,6 @@ spec:
               labels:
                 argocd.argoproj.io/instance: netbird
             spec:
-              tls:
-                secretName: "netbird-certificate"
               entryPoints:
                 - websecure
               routes:
@@ -217,7 +215,7 @@ spec:
                       port: 80
                       scheme: h2c
               tls:
-                secretName: netbird-tls
+                secretName: "netbird-certificate"
   destination:
     server: "https://kubernetes.default.svc"
     namespace: netbird
