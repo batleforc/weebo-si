@@ -72,7 +72,7 @@ spec:
                   "Issuer": "https://login.4.weebo.fr/application/o/netbird",
                   "TokenEndpoint": "https://login.4.weebo.fr/application/o/token/",
                   "ClientID": "{{ printf "{{"}} .IDP_CLIENT_ID }}",
-                  "ClientSecret": "",
+                  "ClientSecret": "{{ printf "{{"}} .IDP_CLIENT_SECRET }}",
                   "GrantType": "client_credentials"
                 },
                 "ExtraConfig": {
