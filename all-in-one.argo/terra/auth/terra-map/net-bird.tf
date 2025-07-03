@@ -74,7 +74,7 @@ resource "vault_kv_secret_v2" "netbird" {
       NETBIRD_IDP_MGMT_EXTRA_PASSWORD          = authentik_user.netbird_sa.password,
       NETBIRD_DATASTORE_ENCRYPTION_KEY         = random_string.encryption_key.result,
       NETBIRD_TURN_SERVER_USER                 = "netbirdturnserveruser"
-      NETBIRD_TURN_SERVER_PASSWORD             = random_string.netbird_turn_server_password.result,
+      NETBIRD_TURN_SERVER_PASSWORD             = random_password.netbird_turn_server_password.result,
     }
   )
 }
