@@ -45,6 +45,17 @@ resource "authentik_application" "netbird" {
   protocol_provider = authentik_provider_oauth2.netbird.id
 }
 
+resource "random_string" "encryption_key" {
+  length  = 32
+  special = true
+}
+
+resource "random_password" "netbird_turn_server_password" {
+  length           = 32
+  special          = true
+  override_special = "_-"
+}
+
 resource "vault_kv_secret_v2" "netbird" {
   mount = "mc-authentik"
   name  = "netbird/auth"
@@ -61,6 +72,9 @@ resource "vault_kv_secret_v2" "netbird" {
       NETBIRD_IDP_MGMT_CLIENT_ID               = authentik_provider_oauth2.netbird.client_id,
       NETBIRD_IDP_MGMT_EXTRA_USERNAME          = authentik_user.netbird_sa.username,
       NETBIRD_IDP_MGMT_EXTRA_PASSWORD          = authentik_user.netbird_sa.password,
+      NETBIRD_DATASTORE_ENCRYPTION_KEY         = random_string.encryption_key.result,
+      NETBIRD_TURN_SERVER_USER                 = "netbirdturnserveruser"
+      NETBIRD_TURN_SERVER_PASSWORD             = random_string.netbird_turn_server_password.result,
     }
   )
 }
