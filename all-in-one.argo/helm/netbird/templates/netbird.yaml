@@ -135,7 +135,7 @@ spec:
             IDP_SERVICE_ACCOUNT_PASSWORD: netbird-auth/idpServiceAccountPassword
             DATASTORE_ENCRYPTION_KEY: netbird-auth/datastoreEncryptionKey
             OIDC_CONFIG_ENDPOINT: netbird-auth/oidcConfigEndpoint
-            IDP_CLIENT_SECRET: netbird-auth/idpClientSecret
+            IDP_CLIENT_SECRET: netbird-auth/clientSecret
 
         relay:
           envFromSecret:
