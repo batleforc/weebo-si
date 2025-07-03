@@ -19,6 +19,9 @@ dns:
 vault:
   enabled: true
 
+netbird:
+  enabled: true
+
 certManager:
   enabled: true
   version: 1.18.0
