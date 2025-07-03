@@ -122,9 +122,6 @@ spec:
                 "TrustedPeers": null
               }
             }
-
-          image:
-            tag: 0.32.0
           persistentVolume:
             enabled: true
           envFromSecret:
@@ -138,14 +135,9 @@ spec:
             IDP_SERVICE_ACCOUNT_PASSWORD: netbird-auth/idpServiceAccountPassword
             DATASTORE_ENCRYPTION_KEY: netbird-auth/datastoreEncryptionKey
             OIDC_CONFIG_ENDPOINT: netbird-auth/oidcConfigEndpoint
-
-        signal:
-          image:
-            tag: 0.32.0
+            IDP_CLIENT_SECRET: netbird-auth/idpClientSecret
 
         relay:
-          image:
-            tag: 0.32.0
           envFromSecret:
             NB_AUTH_SECRET: netbird-auth/relayPassword
           env:
@@ -155,8 +147,6 @@ spec:
 
         dashboard:
           enabled: true
-          image:
-            tag: v2.9.0
           env:
             # Endpoints
             NETBIRD_MGMT_API_ENDPOINT: https://netbird.4.weebo.fr:443
