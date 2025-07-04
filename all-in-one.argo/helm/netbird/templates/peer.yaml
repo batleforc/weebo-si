@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird
+  namespace: netbird
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netbird
+  template:
+    metadata:
+      labels:
+        app: netbird
+      annotations:
+        vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
+        vault.security.banzaicloud.io/vault-role: "auth-read"
+        vault.security.banzaicloud.io/vault-path: "kubernetes"
+        vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
+    spec:
+      containers:
+        - name: netbird
+          image: netbirdio/netbird:latest
+          env:
+            - name: NB_SETUP_KEY
+              value: "vault:mc-authentik/data/netbird/sub#KUBERNETES_SETUP_KEY" # replace with your setup key
+            - name: NB_HOSTNAME
+              value: "netbird-k8s-router" # name that will appear in the management UI
+            - name: NB_LOG_LEVEL
+              value: "info"
+            - name: NB_MANAGEMENT_URL
+              value: "https://netbird.4.weebo.fr:443"
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_RESOURCE
+                - SYS_ADMIN
