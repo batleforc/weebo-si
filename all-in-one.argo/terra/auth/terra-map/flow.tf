@@ -13,6 +13,7 @@ data "authentik_brand" "authentik-default" {
 resource "authentik_brand" "default" {
   domain              = "weebo"
   default             = true
+  branding_title      = "Weebo Authentik"
   flow_device_code    = authentik_flow.token-authentik-flow.uuid
   branding_logo       = data.authentik_brand.authentik-default.branding_logo
   branding_favicon    = data.authentik_brand.authentik-default.branding_favicon
