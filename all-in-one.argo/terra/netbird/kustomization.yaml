@@ -18,3 +18,4 @@ configMapGenerator:
     files:
       - ./terra-map/main.tf
       - ./terra-map/group.tf
+      - ./terra-map/kubernetes-peer.tf
