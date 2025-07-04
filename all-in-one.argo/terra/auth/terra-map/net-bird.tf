@@ -46,6 +46,12 @@ resource "authentik_user" "netbird_sa" {
   password = random_password.netbird_sa_password.result
 }
 
+resource "authentik_token" "netbird_sa" {
+  identifier   = "netbirdr"
+  user         = authentik_user.netbird_sa.id
+  description  = "My super token"
+  retrieve_key = true
+}
 
 
 resource "authentik_application" "netbird" {
@@ -87,7 +93,7 @@ resource "vault_kv_secret_v2" "netbird" {
       NETBIRD_MGMT_IDP                         = "authentik",
       NETBIRD_IDP_MGMT_CLIENT_ID               = authentik_provider_oauth2.netbird.client_id,
       NETBIRD_IDP_MGMT_EXTRA_USERNAME          = authentik_user.netbird_sa.username,
-      NETBIRD_IDP_MGMT_EXTRA_PASSWORD          = authentik_user.netbird_sa.password,
+      NETBIRD_IDP_MGMT_EXTRA_PASSWORD          = authentik_token.netbird_sa.key,
       NETBIRD_DATASTORE_ENCRYPTION_KEY         = base64encode(random_string.encryption_key.result),
       NETBIRD_TURN_SERVER_USER                 = "netbirdturnserveruser"
       NETBIRD_TURN_SERVER_PASSWORD             = random_password.netbird_turn_server_password.result,
