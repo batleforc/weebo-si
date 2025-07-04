@@ -94,7 +94,7 @@ spec:
                   "TokenEndpoint": "https://login.4.weebo.fr/application/o/token/",
                   "DeviceAuthEndpoint": "https://login.4.weebo.fr/application/o/device/",
                   "AuthorizationEndpoint": "",
-                  "Scope": "openid",
+                  "Scope": "openid profile email offline_access api",
                   "UseIDToken": false,
                   "RedirectURLs": null
                 }
