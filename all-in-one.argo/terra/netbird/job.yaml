@@ -15,7 +15,7 @@ spec:
         vault.security.banzaicloud.io/vault-path: "kubernetes"
         vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
     spec:
-      serviceAccountName: "netbird"
+      serviceAccountName: "default"
       containers:
       - name: terraform
         image: hashicorp/terraform:latest
@@ -32,10 +32,8 @@ spec:
           terraform init --upgrade
           terraform apply -auto-approve
         env:
-        - name: TF_VAR_authentik_url
-          value: "https://login.4.weebo.fr"
-        - name: TF_VAR_authentik_token
-          value: "vault:mc-authentik/data/main-config#AUTHENTIK_BOOTSTRAP_TOKEN"
+        - name: TF_VAR_netbird_token
+          value: "vault:mc-authentik/data/netbird/config#TERRAFORM_TOKEN"
         - name: TF_VAR_vault_addr
           value: "https://vault.vault:8200"
         volumeMounts:

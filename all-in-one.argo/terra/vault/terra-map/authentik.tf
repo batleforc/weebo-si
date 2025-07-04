@@ -26,6 +26,9 @@ resource "vault_policy" "authentik_reader_policy" {
 path "mc-authentik/data/{{identity.entity.aliases.auth_kubernetes_225a14d3.metadata.service_account_namespace}}/*" {
   capabilities = ["read","list"]
 }
+path "mc-authentik/data/{{identity.entity.aliases.auth_kubernetes_225a14d3.metadata.service_account_namespace}}/config" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
 EOT
 }
 

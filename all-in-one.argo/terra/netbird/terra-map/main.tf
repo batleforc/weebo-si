@@ -10,6 +10,10 @@ terraform {
   }
 }
 
+locals {
+  token_vault = file("/var/run/secrets/kubernetes.io/serviceaccount/token")
+}
+
 variable "netbird_token" {
   sensitive   = true
   description = "NetBird Management Access Token"
@@ -19,6 +23,18 @@ variable "netbird_management_url" {
   description = "NetBird Management URL"
   default     = "https://netbird.4.weebo.fr:443"
 }
+
+provider "vault" {
+  address          = "https://vault.vault:8200"
+  ca_cert_file     = "/etc/ssl/vault/ca.crt"
+  skip_child_token = "true"
+  auth_login_jwt {
+    role  = "auth"
+    jwt   = local.token_vault
+    mount = "kubernetes"
+  }
+}
+
 
 
 provider "netbird" {

@@ -17,3 +17,4 @@ configMapGenerator:
     namespace: netbird
     files:
       - ./terra-map/main.tf
+      - ./terra-map/group.tf
