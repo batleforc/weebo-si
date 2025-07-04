@@ -2,3 +2,5 @@ kind: Namespace
 apiVersion: v1
 metadata:
   name: netbird
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
