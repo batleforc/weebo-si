@@ -36,3 +36,14 @@ resource "netbird_policy" "kubernetes-peer" {
     destinations  = [netbird_group.kubernetes-peer.id]
   }
 }
+
+
+resource "vault_kv_secret_v2" "netbird" {
+  mount = "mc-authentik"
+  name  = "netbird/sub"
+  data_json = jsonencode(
+    {
+      KUBERNETES_SETUP_KEY = netbird_setup_key.kube-peer.setup_key
+    }
+  )
+}
