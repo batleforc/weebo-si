@@ -19,7 +19,7 @@ resource "netbird_route" "kubernetes-peer" {
   access_control_groups = [netbird_group.kubernetes-peer.id]
   peer_groups           = [netbird_group.kubernetes-peer.id]
   description           = "Kubernetes Peer Route"
-  network               = ["10.244.0.0/16", "10.96.0.0/12", "fd00:10:244::/56", "fd00:10:96::/112"]
+  network               = "10.244.0.0/16,10.96.0.0/12,fd00:10:244::/56,fd00:10:96::/112"
 }
 
 resource "netbird_policy" "kubernetes-peer" {
