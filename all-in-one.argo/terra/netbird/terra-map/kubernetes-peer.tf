@@ -15,9 +15,9 @@ resource "netbird_setup_key" "kube-peer" {
 
 resource "netbird_route" "kubernetes-peer" {
   network_id            = "kubernetes peer"
-  groups                = [data.netbird_group.kubernetes-peer.id]
-  access_control_groups = [data.netbird_group.kubernetes-peer.id]
-  peer_groups           = [data.netbird_group.kubernetes-peer.id]
+  groups                = [netbird_group.kubernetes-peer.id]
+  access_control_groups = [netbird_group.kubernetes-peer.id]
+  peer_groups           = [netbird_group.kubernetes-peer.id]
   description           = "Kubernetes Peer Route"
   networks              = ["10.244.0.0/16", "10.96.0.0/12", "fd00:10:244::/56", "fd00:10:96::/112"]
 }
@@ -43,7 +43,7 @@ resource "vault_kv_secret_v2" "netbird" {
   name  = "netbird/sub"
   data_json = jsonencode(
     {
-      KUBERNETES_SETUP_KEY = netbird_setup_key.kube-peer.setup_key
+      KUBERNETES_SETUP_KEY = netbird_setup_key.kube-peer.key
     }
   )
 }
