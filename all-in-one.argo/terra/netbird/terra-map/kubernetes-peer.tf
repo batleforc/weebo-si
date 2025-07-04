@@ -15,8 +15,8 @@ resource "netbird_setup_key" "kube-peer" {
 
 resource "netbird_route" "kubernetes-peer" {
   network_id  = "kubernetes peer"
-  groups      = [netbird_group.kubernetes-peer.id]
-  peer_groups = [netbird_group.batleforc.id]
+  groups      = [netbird_group.batleforc.id]
+  peer_groups = [netbird_group.kubernetes-peer.id]
   description = "Kubernetes Peer Route"
   network     = "10.244.0.0/16" #,10.96.0.0/12,fd00:10:244::/56,fd00:10:96::/112"
 }
