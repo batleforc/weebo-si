@@ -64,7 +64,7 @@ spec:
                 "AuthUserIDClaim": "",
                 "AuthKeysLocation": "https://login.4.weebo.fr/application/o/netbird/jwks/",
                 "OIDCConfigEndpoint": "{{ printf "{{"}} .OIDC_CONFIG_ENDPOINT }}",
-                "IdpSignKeyRefreshEnabled": true
+                "IdpSignKeyRefreshEnabled": false
               },
               "IdpManagerConfig": {
                 "ManagerType": "authentik",
