@@ -29,6 +29,9 @@ path "mc-authentik/data/{{identity.entity.aliases.auth_kubernetes_225a14d3.metad
 path "mc-authentik/data/{{identity.entity.aliases.auth_kubernetes_225a14d3.metadata.service_account_namespace}}/config" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
+path "mc-authentik/data/{{identity.entity.aliases.auth_kubernetes_225a14d3.metadata.service_account_namespace}}/sub" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
 EOT
 }
 
