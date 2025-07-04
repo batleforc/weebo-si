@@ -15,7 +15,7 @@ resource "authentik_provider_oauth2" "netbird" {
     },
     {
       matching_mode = "strict",
-      url           = "https://localhost:53000",
+      url           = "http://localhost:53000",
     },
     {
       matching_mode = "regex",
