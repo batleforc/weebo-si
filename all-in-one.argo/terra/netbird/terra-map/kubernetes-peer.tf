@@ -4,7 +4,7 @@ resource "netbird_group" "kubernetes-peer" {
 
 resource "netbird_setup_key" "kube-peer" {
   name                   = "Kubernetes Peer Setup Key"
-  expiry_seconds         = 60 * 24 * 30 # 30 days
+  expiry_seconds         = 0 # 30 days
   type                   = "reusable"
   allow_extra_dns_labels = true
   auto_groups            = [netbird_group.kubernetes-peer.id]

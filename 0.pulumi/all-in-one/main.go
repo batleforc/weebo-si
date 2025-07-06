@@ -190,11 +190,12 @@ func main() {
 				},
 				"machine": map[string]interface{}{
 					"sysctls": map[string]interface{}{
-						"net.ipv4.ip_forward":          1,
-						"net.ipv6.conf.all.forwarding": 1,
-						"vm.nr_hugepages":              2048,
-						"net.ipv6.conf.all.autoconf":   0,
-						"net.ipv6.conf.all.accept_ra":  0,
+						"net.ipv4.ip_forward":              1,
+						"net.ipv6.conf.all.forwarding":     1,
+						"vm.nr_hugepages":                  2048,
+						"net.ipv6.conf.all.autoconf":       0,
+						"net.ipv6.conf.all.accept_ra":      0,
+						"net.ipv4.conf.all.src_valid_mark": 1,
 					},
 					"kubelet": map[string]interface{}{
 						"extraArgs": map[string]interface{}{
