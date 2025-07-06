@@ -30,6 +30,8 @@ spec:
               value: "info"
             - name: NB_MANAGEMENT_URL
               value: "https://netbird.4.weebo.fr:443"
+            - name: NB_ADMIN_URL
+              value: "https://netbird.4.weebo.fr:443"
           securityContext:
             capabilities:
               add:
