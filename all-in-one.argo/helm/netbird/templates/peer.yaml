@@ -29,7 +29,7 @@ spec:
             - name: NB_LOG_LEVEL
               value: "info"
             - name: NB_MANAGEMENT_URL
-              value: "https://netbird.4.weebo.fr:443"
+              value: "https://netbird.4.weebo.fr:443/api"
             - name: NB_ADMIN_URL
               value: "https://netbird.4.weebo.fr:443"
           securityContext:
