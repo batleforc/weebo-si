@@ -21,7 +21,7 @@ variable "netbird_token" {
 
 variable "netbird_management_url" {
   description = "NetBird Management URL"
-  default     = "https://netbird.4.weebo.fr/api"
+  default     = "https://netbird.4.weebo.fr"
 }
 
 provider "vault" {
