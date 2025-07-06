@@ -14,11 +14,20 @@ resource "netbird_setup_key" "kube-peer" {
 }
 
 resource "netbird_route" "kubernetes-peer" {
-  network_id  = "kubernetes peer"
-  groups      = [netbird_group.batleforc.id]
-  peer_groups = [netbird_group.kubernetes-peer.id]
-  description = "Kubernetes Peer Route"
-  network     = "10.244.0.0/16" #,10.96.0.0/12,fd00:10:244::/56,fd00:10:96::/112"
+  network_id            = "kubernetes peer"
+  access_control_groups = [netbird_group.batleforc.id]
+  peer_groups           = [netbird_group.kubernetes-peer.id]
+  description           = "Kubernetes Peer Route"
+  network               = "10.244.0.0/16" #,10.96.0.0/12,fd00:10:244::/56,fd00:10:96::/112"
+}
+
+resource "netbird_route" "kubernetes-exit-node" {
+  network_id            = "kubernetes exit node"
+  access_control_groups = [netbird_group.batleforc.id]
+  peer_groups           = [netbird_group.kubernetes-peer.id]
+  description           = "Kubernetes Exit Node Route"
+  network               = "0.0.0.0/0"
+
 }
 
 resource "netbird_policy" "kubernetes-peer" {
