@@ -2,16 +2,16 @@ resource "netbird_group" "kubernetes-peer" {
   name = "kubernetes-peer"
 }
 
-resource "netbird_setup_key" "kube-peer" {
-  name                   = "Kubernetes Peer Setup Key"
-  expiry_seconds         = 60 * 24 * 30 # 30 days
-  type                   = "reusable"
-  allow_extra_dns_labels = true
-  auto_groups            = [netbird_group.kubernetes-peer.id]
-  ephemeral              = true
-  revoked                = false
-  usage_limit            = 0
-}
+# resource "netbird_setup_key" "kube-peer" {
+#   name                   = "Kubernetes Peer Setup Key"
+#   expiry_seconds         = 60 * 24 * 30 # 30 days
+#   type                   = "reusable"
+#   allow_extra_dns_labels = true
+#   auto_groups            = [netbird_group.kubernetes-peer.id]
+#   ephemeral              = true
+#   revoked                = false
+#   usage_limit            = 0
+# }
 
 resource "netbird_route" "kubernetes-peer" {
   network_id  = "kubernetes peer"
@@ -42,7 +42,7 @@ resource "vault_kv_secret_v2" "netbird" {
   name  = "netbird/sub"
   data_json = jsonencode(
     {
-      KUBERNETES_SETUP_KEY = netbird_setup_key.kube-peer.key
+      KUBERNETES_SETUP_KEY = "" #netbird_setup_key.kube-peer.key
     }
   )
 }
