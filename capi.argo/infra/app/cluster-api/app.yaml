@@ -21,7 +21,7 @@ spec:
             version: v1.10.3
         infrastructure:
           proxmox:
-            version: v0.7.1
+            version: v0.7.2
         controlPlane:
           talos:
             version: v0.5.10
