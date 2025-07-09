@@ -22,12 +22,12 @@ resource "netbird_route" "kubernetes-peer" {
 }
 
 resource "netbird_route" "kubernetes-exit-node" {
-  network_id            = "kubernetes exit node"
-  access_control_groups = [netbird_group.batleforc.id]
-  groups                = [netbird_group.batleforc.id]
-  peer_groups           = [netbird_group.kubernetes-peer.id]
-  description           = "Kubernetes Exit Node Route"
-  network               = "0.0.0.0/0"
+  network_id = "kubernetes exit node"
+  #access_control_groups = [netbird_group.batleforc.id]
+  groups      = [netbird_group.batleforc.id]
+  peer_groups = [netbird_group.kubernetes-peer.id]
+  description = "Kubernetes Exit Node Route"
+  network     = "0.0.0.0/0"
 }
 
 resource "netbird_policy" "kubernetes-peer" {
