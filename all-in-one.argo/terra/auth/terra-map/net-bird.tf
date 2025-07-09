@@ -47,11 +47,12 @@ resource "authentik_user" "netbird_sa" {
 }
 
 resource "authentik_token" "netbird_sa" {
-  identifier   = "netbirdr"
+  identifier   = "netbird"
   user         = authentik_user.netbird_sa.id
   description  = "My super token"
   retrieve_key = true
   intent       = "app_password"
+  expiring     = false
 }
 
 
