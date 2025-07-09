@@ -18,7 +18,12 @@ spec:
       releaseName: netbird
       valuesObject:
         fullnameOverride: netbird
+        signal:
+          image:
+            tag: "{{ .Values.netbird.version }}"
         management:
+          image:
+            tag: "{{ .Values.netbird.version }}"
           configmap: |-
             {
               "Stuns": [
@@ -138,6 +143,8 @@ spec:
             IDP_CLIENT_SECRET: netbird-auth/clientSecret
 
         relay:
+          image:
+            tag: "{{ .Values.netbird.version }}"
           envFromSecret:
             NB_AUTH_SECRET: netbird-auth/relayPassword
           env:
@@ -146,6 +153,8 @@ spec:
             NB_EXPOSED_ADDRESS: rels://netbird.4.weebo.fr:443/relay
 
         dashboard:
+          image:
+            tag: "{{ .Values.netbird.version }}"
           enabled: true
           env:
             # Endpoints
