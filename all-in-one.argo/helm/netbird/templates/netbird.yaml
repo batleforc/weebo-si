@@ -154,7 +154,7 @@ spec:
 
         dashboard:
           image:
-            tag: "{{ .Values.netbird.version }}"
+            tag: "{{ .Values.netbird.dashboard }}"
           enabled: true
           env:
             # Endpoints
