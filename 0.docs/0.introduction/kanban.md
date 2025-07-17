@@ -8,30 +8,15 @@ config:
 ---
 
 kanban
-  todoS[To Do On Stream]
   todo[To Do]
-    us3[Définir les règles de sécurité pour les clusters]@{ assigned: Pre-Nuke, priority: 'High'}
-    us7[Gestion PKI partagé avec DNS bind9]@{ assigned: Post-Nuke, priority: 'Low'}
-    use10[Setup Cilium V6 et V4 pour les LoadBalancer]@{ assigned: Post-Nuke, priority: 'Low'}
-    us11[Comparer Falco et Tetragon]@{ assigned: Post-Nuke, priority: 'Low'}
-    us14[Déployer Dex sur tous les clusters via ArgoCD]@{ assigned: Post-Nuke, priority: 'Low'}
+    us1[Refonte de la doc pour avoir une partit Proxmox et une partit TalosVirt]@{ assigned: MVP, priority: 'High'}
+    us2[Refonte de l'architecture TalosVirt]@{ assigned: MVP, priority: 'High'}
+    us3[Lister les application a intégrer PROPREMENT]@{ assigned: MVP, priority: 'High'}
+    us4[Lister les cluster et leur objectif]@{ assigned: MVP, priority: 'High'}
+    us5[Tester un fonctionnement en Hosted Control Plane pour les cluster]@{ assigned: MVP1, priority: 'High'}
+    us6[Try to fix proxmox with the csi driver]@{ assigned: Proxmox, priority: 'High'}
   doing[Doing]
-    use12[Centraliser l'authentification et l'appliquer au différent service]@{ assigned: Post-Nuke, priority: 'Low'}
-    us8[Définir les règles d'identité]@{ assigned: Pre-Nuke, priority: 'High'}
-    us16[Autorité de certification]@{ assigned: Post-Nuke, priority: 'Low'}
-    use17[Déployer OpenUnison sur tous les clusters via ArgoCD]@{ assigned: Post-Nuke, priority: 'Low'}
-    us18[Déployer WarpGate sur tous les clusters via ArgoCD]@{ assigned: Post-Nuke, priority: 'Low'}
   done[Done]
-    us7[Exposer dashboard Traefik]@{ assigned: Pre-Nuke, priority: 'High'}
-    us1[Créer un cluster multi master self schedulable]
-    us2[Déployer Traefik et CertManager sur tous les clusters via ArgoCD]
-    us9[Mettre en place updatecli]@{ assigned: Post-Nuke, priority: 'Low'}
-    us13[Hardening SSH]@{ assigned: Pre-Nuke, priority: 'High'}
-    use8[Check if HeadLamp can be used to access dynamically each cluster]@{ assigned: Pre-Nuke, priority: 'High'}
-    us15[Faire une gestion DNS avec alias dynamique]@{ assigned: Post-Nuke, priority: 'Low'}
-    us4[Nuke le Proxmox et automatisé la configuration réseau DHCP]@{ assigned: Post-Nuke, priority: 'Low'}
-    us5[Créer le cluster CAPI avec un CloudInit]@{ assigned: Post-Nuke, priority: 'Low'}
-    us6[Passer les cluster sous cilium]@{ assigned: Post-Nuke, priority: 'Low'}
 ```
 
 - [Talos Kubernetes configuration](https://www.talos.dev/v1.9/reference/configuration/v1alpha1/config/)
@@ -44,6 +29,7 @@ kanban
 - [Kyverno Reporter](https://kyverno.github.io/policy-reporter-docs/getting-started/installation.html)
 - [Rook](https://rook.io/docs/rook/latest-release/Storage-Configuration/Object-Storage-RGW/object-storage/#create-local-object-stores-with-pool-placements)
 - [Multi Auth](https://une-tasse-de.cafe/blog/apiserver-multi-idp/)
+- [Proxmox CSI Driver](https://github.com/sergelogvinov/proxmox-csi-plugin)
 
 ## Actions récurrentes
 

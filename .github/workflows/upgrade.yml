@@ -3,8 +3,8 @@ name: Updatecli Workflow
 
 on:
   # Trigger Updatecli if a new commit land on the main branch
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
   # Trigger Updatecli if a pullrequest is open targeting the main branch.
   # This is useful to test Updatecli manifest change
   pull_request:
