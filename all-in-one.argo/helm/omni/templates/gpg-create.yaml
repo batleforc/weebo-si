@@ -20,10 +20,17 @@ spec:
           volumeMounts:
             - name: swap
               mountPath: /tmp
+          env:
+            - name: GPG_TTY
+              value: "/dev/tty"
+            - name: HOME
+              value: "/home/omni"
           command: ["/bin/sh", "-c"]
           args:
             - |
               set -x
+              mkdir -p /home/omni/.gnupg
+              chmod 700 /home/omni/.gnupg
               export GPG_TTY=$(tty)
               echo $GPG_TTY
               gpg --batch --no-tty --debug-all --quick-generate-key "omni@weebo.si" rsa4096 cert never
