@@ -1,0 +1,31 @@
+# Create ServiceAccount omni-sa and allow it to handle secrets
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: omni-sa
+  namespace: omni
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: omni-sa-role
+  namespace: omni
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "create", "update", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: omni-sa-rolebinding
+  namespace: omni
+subjects:
+  - kind: ServiceAccount
+    name: omni-sa
+    namespace: omni
+roleRef:
+  kind: Role
+  name: omni-sa-role
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,6 @@
+gpg:
+  enabled: true
+  create:
+    image: "buildpack-deps:bookworm-curl"
+    imagePullPolicy: "IfNotPresent"
+    kubectlImage: "quay.io/agnosticd/ee-multicloud:latest"

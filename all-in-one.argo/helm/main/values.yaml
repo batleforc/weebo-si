@@ -16,6 +16,9 @@ dns:
     base: weebo.poc
     name: "{{.Release.Name}}"
 
+omni:
+  enabled: true
+
 vault:
   enabled: true
 

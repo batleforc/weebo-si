@@ -1,0 +1,50 @@
+{{- if .Values.gpg.enabled -}}
+# Kubernetes job meant to create a secret containing the GPG key
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: omni-gpg-create
+  namespace: omni
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: "omni-sa"
+      volumes:
+        - name: swap
+          emptyDir: {}
+      containers:
+        - name: gpg-create
+          image: "{{ .Values.gpg.create.image }}"
+          imagePullPolicy: "{{ .Values.gpg.create.imagePullPolicy }}"
+          volumeMounts:
+            - name: swap
+              mountPath: /tmp
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              gpg --quick-generate-key "Omni (Used for etcd data encryption) omni@weebo.si" rsa4096 cert never
+              fingerprint=$(gpg --fingerprint --with-colons omni@weebo.si | awk -F: '/^pub:.*/ { getline; print $10}')
+              gpg --quick-add-key "$fingerprint" rsa4096 encr never
+              gpg --export-secret-keys --armor omni@weebo.si > /tmp/omni.asc
+        - name: kubectl-create-secret
+          image: "{{ .Values.gpg.create.kubectlImage }}"
+          imagePullPolicy: "{{ .Values.gpg.create.imagePullPolicy }}"
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              until [ -f /tmp/omni.asc ]; do
+                echo "Waiting for GPG key to be created..."
+                sleep 5
+              done
+              kubectl create secret generic gpg \
+                --namespace omni \
+                --from-file=omni.asc=/tmp/omni.asc \
+                --dry-run=client -o yaml | kubectl apply -f -
+          volumeMounts:
+            - name: swap
+              mountPath: /tmp
+
+{{- end -}}

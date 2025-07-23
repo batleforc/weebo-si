@@ -1,0 +1,31 @@
+{{- if .Values.omni.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: omni
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/batleforc/weebo-si'
+    path: 'all-in-one.argo/helm/omni'
+    helm:
+      releaseName: omni-app
+  destination:
+    name: in-cluster
+    namespace: 'default'
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}
