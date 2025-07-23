@@ -24,8 +24,7 @@ spec:
           args:
             - |
               set -x
-              export GPG_TTY=$(tty)
-              gpg --quick-generate-key --batch "Omni (Used for etcd data encryption) omni@weebo.si" rsa4096 cert never
+              gpg --quick-generate-key --batch \"Omni (Used for etcd data encryption) omni@weebo.si\" rsa4096 cert never
               fingerprint=$(gpg --fingerprint --with-colons omni@weebo.si | awk -F: '/^pub:.*/ { getline; print $10}')
               gpg --quick-add-key --batch "$fingerprint" rsa4096 encr never
               gpg --export-secret-keys --batch --armor omni@weebo.si > /tmp/omni.asc
