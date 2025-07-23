@@ -24,6 +24,8 @@ spec:
           args:
             - |
               set -x
+              export GPG_TTY=$(tty)
+              echo $GPG_TTY
               gpg --batch --no-tty --debug-all --quick-generate-key "omni@weebo.si" rsa4096 cert never
               fingerprint=$(gpg --fingerprint --with-colons omni@weebo.si | awk -F: '/^pub:.*/ { getline; print $10}')
               gpg --quick-add-key --batch "$fingerprint" rsa4096 encr never
