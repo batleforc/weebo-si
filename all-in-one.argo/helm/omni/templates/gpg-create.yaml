@@ -33,7 +33,16 @@ spec:
               chmod 700 /home/omni/.gnupg
               unset GPG_TTY
               echo $GPG_TTY
-              gpg  --debug-all --quick-generate-key --batch --no-tty "omni@weebo.si" rsa4096 cert never
+              gpg --batch --gen-key <<EOF
+              Key-Type: 1
+              Key-Length: 4096
+              Subkey-Type: 1
+              Subkey-Length: 4096
+              Name-Real: Omni User
+              Name-Email: omni@weebo.si
+              Expire-Date: 0
+              %no-protection
+              EOF
               fingerprint=$(gpg --fingerprint --with-colons omni@weebo.si | awk -F: '/^pub:.*/ { getline; print $10}')
               gpg --quick-add-key --batch "$fingerprint" rsa4096 encr never
               gpg --export-secret-keys --batch --armor omni@weebo.si > /tmp/omni.asc
