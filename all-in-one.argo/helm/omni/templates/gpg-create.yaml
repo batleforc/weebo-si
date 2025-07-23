@@ -23,7 +23,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              set -euo pipefail
+              set -x
               gpg --quick-generate-key "Omni (Used for etcd data encryption) omni@weebo.si" rsa4096 cert never
               fingerprint=$(gpg --fingerprint --with-colons omni@weebo.si | awk -F: '/^pub:.*/ { getline; print $10}')
               gpg --quick-add-key "$fingerprint" rsa4096 encr never
@@ -34,7 +34,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              set -euo pipefail
+              set -x
               until [ -f /tmp/omni.asc ]; do
                 echo "Waiting for GPG key to be created..."
                 sleep 5
