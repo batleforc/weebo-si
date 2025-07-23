@@ -43,8 +43,6 @@ spec:
               Expire-Date: 0
               %no-protection
               EOF
-              fingerprint=$(gpg --fingerprint --with-colons omni@weebo.si | awk -F: '/^pub:.*/ { getline; print $10}')
-              gpg --quick-add-key --batch "$fingerprint" rsa4096 encr never
               gpg --export-secret-keys --batch --armor omni@weebo.si > /tmp/omni.asc
         - name: kubectl-create-secret
           image: "{{ .Values.gpg.create.kubectlImage }}"
