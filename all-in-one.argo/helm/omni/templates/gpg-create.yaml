@@ -31,7 +31,6 @@ spec:
               set -x
               mkdir -p /home/omni/.gnupg
               chmod 700 /home/omni/.gnupg
-              export GPG_TTY=$(tty)
               echo $GPG_TTY
               gpg  --debug-all --quick-generate-key --batch --no-tty "omni@weebo.si" rsa4096 cert never
               fingerprint=$(gpg --fingerprint --with-colons omni@weebo.si | awk -F: '/^pub:.*/ { getline; print $10}')
