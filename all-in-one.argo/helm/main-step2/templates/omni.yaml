@@ -28,4 +28,9 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 5m
+  ignoreDifferences:
+  - group: 'argoproj.io/v1alpha1'
+    kind: Application
+    name: omni
+    jsonPointers: /spec/source/helm/valuesObject/accountUuid
 {{- end -}}
