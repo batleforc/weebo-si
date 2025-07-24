@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "siderolink-certificate"
+  namespace: "omni"
+spec:
+  commonName: "siderolink.omni.4.weebo.fr"
+  secretName: "siderolink-certificate"
+  dnsNames:
+    - "siderolink.omni.4.weebo.fr"
+  issuerRef:
+    kind: ClusterIssuer
+    name: "outbound"

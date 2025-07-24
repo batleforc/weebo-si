@@ -1,0 +1,18 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: kubernetes-proxy
+  namespace: omni
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`kubernetes.omni.example.com`) && PathPrefix(`/`)
+      services:
+        - name: internal
+          namespace: omni
+          passHostHeader: true
+          port: 8095
+  tls:
+    secretName: kube-certificate

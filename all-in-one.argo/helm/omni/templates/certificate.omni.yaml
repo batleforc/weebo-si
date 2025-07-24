@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "omni-certificate"
+  namespace: "omni"
+spec:
+  commonName: "omni.4.weebo.fr"
+  secretName: "omni-certificate"
+  dnsNames:
+    - "omni.4.weebo.fr"
+  issuerRef:
+    kind: ClusterIssuer
+    name: "outbound"

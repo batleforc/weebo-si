@@ -1,0 +1,19 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: siderolink
+  namespace: omni
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`siderolink.omni.example.com`) && PathPrefix(`/`)
+      services:
+        - name: internal-grpc
+          namespace: omni
+          passHostHeader: true
+          port: 8090
+          scheme: h2c
+  tls:
+    secretName: siderolink-certificate

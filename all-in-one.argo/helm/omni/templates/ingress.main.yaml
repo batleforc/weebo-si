@@ -1,0 +1,85 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: api
+  namespace: omni
+  labels:
+    app.kubernetes.io/name: omni
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`omni.4.weebo.fr`) && (PathPrefix(`/cosi.resource.State`) || PathPrefix(`/management.ManagementService`) || PathPrefix(`/machine.MachineService`) || PathPrefix(`/cluster.ClusterService`) || PathPrefix(`/inspect.InspectService`) || PathPrefix(`/resource.ResourceService`) || PathPrefix(`/storage.StorageService`) || PathPrefix(`/auth.AuthService`) || PathPrefix(`/time.TimeService`) || PathPrefix(`/oicd.`))
+      services:
+        - name: omni-internal-grpc
+          namespace: omni
+          passHostHeader: true
+          port: 8080
+          scheme: h2c
+    # - kind: Rule
+    #   match: Host(`omni.4.weebo.fr`) && PathPrefix(`/machine.MachineService`)
+    #   services:
+    #     - name: internal-grpc
+    #       namespace: omni
+    #       passHostHeader: true
+    #       port: 8080
+    #       scheme: h2c
+    # - kind: Rule
+    #   match: Host(`omni.4.weebo.fr`) && PathPrefix(`/cluster.ClusterService`)
+    #   services:
+    #     - name: internal-grpc
+    #       namespace: omni
+    #       passHostHeader: true
+    #       port: 8080
+    #       scheme: h2c
+    # - kind: Rule
+    #   match: Host(`omni.4.weebo.fr`) && PathPrefix(`/inspect.InspectService`)
+    #   services:
+    #     - name: internal-grpc
+    #       namespace: omni
+    #       passHostHeader: true
+    #       port: 8080
+    #       scheme: h2c
+    # - kind: Rule
+    #   match: Host(`omni.4.weebo.fr`) && PathPrefix(`/resource.ResourceService`)
+    #   services:
+    #     - name: internal-grpc
+    #       namespace: omni
+    #       passHostHeader: true
+    #       port: 8080
+    #       scheme: h2c
+    # - kind: Rule
+    #   match: Host(`omni.4.weebo.fr`) && PathPrefix(`/storage.StorageService`)
+    #   services:
+    #     - name: internal-grpc
+    #       namespace: omni
+    #       passHostHeader: true
+    #       port: 8080
+    #       scheme: h2c
+    # - kind: Rule
+    #   match: Host(`omni.4.weebo.fr`) && PathPrefix(`/auth.AuthService`)
+    #   services:
+    #     - name: internal-grpc
+    #       namespace: omni
+    #       passHostHeader: true
+    #       port: 8080
+    #       scheme: h2c
+    # - kind: Rule
+    #   match: Host(`omni.4.weebo.fr`) && PathPrefix(`/time.TimeService`)
+    #   services:
+    #     - name: internal-grpc
+    #       namespace: omni
+    #       passHostHeader: true
+    #       port: 8080
+    #       scheme: h2c
+    # - kind: Rule
+    #   match: Host(`omni.4.weebo.fr`) && PathPrefix(`/oicd.`)
+    #   services:
+    #     - name: internal-grpc
+    #       namespace: omni
+    #       passHostHeader: true
+    #       port: 8080
+    #       scheme: h2c
+  tls:
+    secretName: "omni-certificate"
