@@ -5,7 +5,7 @@ metadata:
 spec:
   vault:
     path: pki_int/sign/default
-    server: https://vault.weebo.poc
+    server: https://vault.vault:8200
     caBundleSecretRef:
       key: ca.crt
       name: vault-tls
