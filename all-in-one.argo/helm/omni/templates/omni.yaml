@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: omni-app
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: omni
+  source:
+    chart: omni
+    repoURL: ghcr.io/siderolabs/charts
+    targetRevision: 0.0.2
+    helm:
+      releaseName: omni
+      valuesObject:
+        domainName: omni.4.weebo.fr
+        accountUuid: "{{ uuidv4 }}"
+        name: Omni Weebo-Si
+        auth:
+          auth0:
+            enabled: false
+          saml:
+            enabled: true
+            url: https://login.4.weebo.fr/application/saml/omni/metadata/
+        initialUsers:
+          - batleforc@weebo.poc
+        service:
+          siderolink:
+            domainName: siderolink.omni.4.weebo.fr
+            wireguard:
+              address: 37.187.255.5
+          k8sProxy:
+            domainName: kube.omni.4.weebo.fr
