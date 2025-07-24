@@ -13,9 +13,11 @@ spec:
     server: "https://kubernetes.default.svc"
     namespace: omni
   source:
-    chart: omni
-    repoURL: ghcr.io/siderolabs/charts
-    targetRevision: 0.0.2
+    # chart: omni
+    # repoURL: ghcr.io/siderolabs/charts
+    # targetRevision: 0.0.2
+    repoURL: "https://github.com/batleforc/weebo-si"
+    path: "all-in-one.argo/helm/omni-app"
     helm:
       releaseName: omni
       valuesObject:
