@@ -32,5 +32,6 @@ spec:
   - group: 'argoproj.io/v1alpha1'
     kind: Application
     name: omni
-    jsonPointers: /spec/source/helm/valuesObject/accountUuid
+    jsonPointers:
+      - /spec/source/helm/valuesObject/accountUuid
 {{- end -}}
