@@ -27,7 +27,7 @@ spec:
             enabled: false
           saml:
             enabled: true
-            url: https://login.4.weebo.fr/application/saml/omni/metadata
+            url: https://login.4.weebo.fr/application/saml/omni/metadata/
         initialUsers:
           - batleforc@weebo.poc
         service:
