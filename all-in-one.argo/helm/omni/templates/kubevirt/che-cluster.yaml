@@ -70,3 +70,4 @@ spec:
             #- "--omni-service-account-key $OMNI_SERVICE_ACCOUNT_KEY"
             - --id=che
             - --namespace=kubevirt-omni
+            - --data-volume-mode=FileSystem
