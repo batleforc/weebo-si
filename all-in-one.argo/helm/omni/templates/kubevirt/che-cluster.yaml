@@ -64,9 +64,9 @@ spec:
             #- --kubeconfig-file "/kubeconfig/config"
           args:
             - --kubeconfig-file=/kubeconfig/.kube/config
-          #  - "--help"
-          #
-          #- "--omni-api-endpoint $OMNI_ENDPOINT"
-          #- "--omni-service-account-key $OMNI_SERVICE_ACCOUNT_KEY"
-          - --id=che
-          - -n=kubevirt-omni
+            #  - "--help"
+            #
+            #- "--omni-api-endpoint $OMNI_ENDPOINT"
+            #- "--omni-service-account-key $OMNI_SERVICE_ACCOUNT_KEY"
+            - --id=che
+            - -n=kubevirt-omni
