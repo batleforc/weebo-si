@@ -60,6 +60,7 @@ spec:
             - name: HOME
               value: "/kubeconfig"
           command:
+            - ls /kubeconfig/.kube &&
             - /omni-infra-provider-kubevirt
             #- --kubeconfig-file "/kubeconfig/config"
           #args:
