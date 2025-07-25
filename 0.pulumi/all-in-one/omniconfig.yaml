@@ -1,0 +1,7 @@
+contexts:
+    default:
+        url: https://omni.4.weebo.fr/
+        auth:
+            siderov1:
+                identity: batleforc@weebo.poc
+context: default

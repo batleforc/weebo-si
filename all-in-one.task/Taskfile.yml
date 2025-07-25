@@ -6,6 +6,18 @@ env:
   TALOSCONFIG: ./0.pulumi/all-in-one/talos-config.yaml
 
 tasks:
+  omni:
+    silent: true
+    env:
+      OMNICONFIG: ./0.pulumi/all-in-one/omniconfig.yaml
+    cmds:
+      - omnictl {{ .CLI_ARGS }}
+  omnitalosctl:
+    silent: true
+    env:
+      TALOSCONFIG: ./0.pulumi/all-in-one/talos-config.omni.yaml
+    cmds:
+      - talosctl {{ .CLI_ARGS }}
   up:
     cmds:
       - task up-aio

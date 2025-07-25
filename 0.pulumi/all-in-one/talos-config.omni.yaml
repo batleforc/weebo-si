@@ -1,0 +1,8 @@
+context: Omni Weebo-Si
+contexts:
+    Omni Weebo-Si:
+        endpoints:
+            - https://omni.4.weebo.fr/
+        auth:
+            siderov1:
+                identity: batleforc@weebo.poc

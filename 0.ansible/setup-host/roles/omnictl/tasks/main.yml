@@ -1,0 +1,13 @@
+---
+- name: "If omnictl is already installed, get the version"
+  ansible.builtin.command:
+    cmd: "omnictl version"
+  register: omnictl_version_output
+  ignore_errors: true
+  changed_when: false
+- name: "Download omnictl"
+  ansible.builtin.get_url:
+    url: "https://github.com/siderolabs/omni/releases/download/{{ omnictl_version }}/omnictl-linux-amd64"
+    dest: "/usr/bin/omnictl"
+    mode: '0755'
+  when: omnictl_version_output.stdout != omnictl_version

@@ -14,6 +14,7 @@
     tofu_version: "1.7.9"
     vault_version: "1.20.1"
     ciliumcli_version: "v0.18.4"
+    omnictl_version: "v1.0.0"
   tasks:
     - name: "Update and upgrade apt packages"
       ansible.builtin.apt:
@@ -53,3 +54,6 @@
     - name: Install Cilium CLI
       ansible.builtin.include_role:
         name: cilium
+    - name: Install omnictl
+      ansible.builtin.include_role:
+        name: omnictl
