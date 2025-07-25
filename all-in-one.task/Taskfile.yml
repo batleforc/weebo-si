@@ -6,18 +6,6 @@ env:
   TALOSCONFIG: ./0.pulumi/all-in-one/talos-config.yaml
 
 tasks:
-  omni:
-    silent: true
-    env:
-      OMNICONFIG: ./0.pulumi/all-in-one/omniconfig.yaml
-    cmds:
-      - omnictl {{ .CLI_ARGS }}
-  omnitalosctl:
-    silent: true
-    env:
-      TALOSCONFIG: ./0.pulumi/all-in-one/talos-config.omni.yaml
-    cmds:
-      - talosctl {{ .CLI_ARGS }}
   up:
     cmds:
       - task up-aio
@@ -81,3 +69,29 @@ tasks:
   reset-app:
     cmds:
       - task aio:app -- state delete --all
+
+# Omni tasks
+  omni:ctl:
+    silent: true
+    env:
+      OMNICONFIG: ./0.pulumi/all-in-one/omniconfig.yaml
+    cmds:
+      - omnictl {{ .CLI_ARGS }}
+  omni:talos:
+    silent: true
+    env:
+      TALOSCONFIG: ./0.pulumi/all-in-one/talos-config.omni.yaml
+    cmds:
+      - talosctl {{ .CLI_ARGS }}
+  omni:create-sa:
+    vars:
+      cluster: '{{.cluster}}'
+    env:
+      OMNICONFIG: ./0.pulumi/all-in-one/omniconfig.yaml
+    preconditions:
+      - sh: '[ {{.cluster}} != "" ]'
+        msg: "cluster is required ex task omni:create-sa cluster='mono-node'"
+    cmds:
+      - omnictl serviceaccount create --role=InfraProvider --use-user-role=false infra-provider:{{.cluster}}
+      - echo "Service account 'infra-provider:{{.cluster}}' created successfully. please add it in the vault with path like mc-authentik/{{.cluster}}/config"
+

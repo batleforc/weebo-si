@@ -1,0 +1,62 @@
+# Create a deployment for the omni provider
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: che-cluster
+  namespace: kubevirt-omni
+  labels:
+    app: che-cluster
+spec:
+  replicas: 1
+  serviceAccountName: kubevirt-omni
+  template:
+    metadata:
+      labels:
+        app: che-cluster
+      annotations:
+        vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
+        vault.security.banzaicloud.io/vault-role: "auth"
+        vault.security.banzaicloud.io/vault-path: "kubernetes"
+        vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
+    spec:
+      volumes:
+        - name: kubeconfig
+          emptyDir: {}
+        - name: kubeconfig-maker
+          configMap:
+            name: kubeconfig-maker
+            defaultMode: 0777
+      initContainers:
+        # Create an init container to turn the service account into a kubeconfig
+        - name: create-kubeconfig
+          image: alpine:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: kubeconfig
+              mountPath: /kubeconfig
+            - name: kubeconfig-maker
+              mountPath: /kubeconfig-maker
+          env:
+            - name: KUBE_SERVER
+              value: "https://kubernetes.default.svc"
+          command: ["/bin/sh", "-c"]
+          args:
+            - "/kubeconfig-maker/makeKubeconfig.sh"
+      containers:
+        - name: omni-provider
+          image: ghcr.io/siderolabs/omni-infra-provider-kubevirt
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: kubeconfig
+              mountPath: /kubeconfig
+          env:
+            - name: OMNI_ENDPOINT
+              value: "vault:mc-authentik/data/kubevirt-omni/config#OMNI_ENDPOINT"
+            - name: OMNI_SERVICE_ACCOUNT_KEY
+              value: "vault:mc-authentik/data/kubevirt-omni/config#OMNI_SERVICE_ACCOUNT_KEY"
+          args:
+            - "--kubeconfig=/kubeconfig/kubeconfig.yaml"
+            - "--omni-api-endpoint $OMNI_ENDPOINT"
+            - "--omni-service-account-key $OMNI_SERVICE_ACCOUNT_KEY"
+            - "--id che"
+            - "-n kubevirt-omni"
