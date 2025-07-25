@@ -7,10 +7,15 @@ metadata:
   labels:
     app: che-cluster
 spec:
+  selector:
+    matchLabels:
+      app: che-cluster
   replicas: 1
   serviceAccountName: kubevirt-omni
   template:
     metadata:
+      labels:
+        app: che-cluster
       annotations:
         vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
         vault.security.banzaicloud.io/vault-role: "auth"
