@@ -60,7 +60,7 @@ spec:
           command: ["/omni-infra-provider-kubevirt"]
           args:
             - "--help"
-            - "--kubeconfig-file /kubeconfig/kubeconfig.yaml"
+            #- "--kubeconfig-file /kubeconfig/kubeconfig.yaml"
             #- "--omni-api-endpoint $OMNI_ENDPOINT"
             #- "--omni-service-account-key $OMNI_SERVICE_ACCOUNT_KEY"
             #- "--id che"
