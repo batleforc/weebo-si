@@ -63,7 +63,7 @@ spec:
             - /omni-infra-provider-kubevirt
             #- --kubeconfig-file "/kubeconfig/config"
           args:
-            - --kubeconfig-file "/kubeconfig/.kube/config"
+            - --kubeconfig-file=/kubeconfig/.kube/config
           #  - "--help"
           #
           #- "--omni-api-endpoint $OMNI_ENDPOINT"
