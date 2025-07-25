@@ -68,5 +68,5 @@ spec:
           #
           #- "--omni-api-endpoint $OMNI_ENDPOINT"
           #- "--omni-service-account-key $OMNI_SERVICE_ACCOUNT_KEY"
-          #- "--id che"
-          #- "-n kubevirt-omni"
+          - --id=che
+          - -n=kubevirt-omni
