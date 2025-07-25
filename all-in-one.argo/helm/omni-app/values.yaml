@@ -7,7 +7,7 @@ deployment:
   tag: "latest"
   replicaCount: 1
   annotations: {}
-  imagePullPolicy: IfNotPresent
+  imagePullPolicy: Always
 auth:
   auth0:
     enabled: true

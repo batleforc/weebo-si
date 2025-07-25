@@ -19,7 +19,7 @@ includes:
   ks:
     taskfile: 0.task/keystore/Taskfile.yml
   aio:
-    taskfile: 0.task/all-in-one/Taskfile.yml
+    taskfile: all-in-one.task/Taskfile.yml
 
 tasks:
   ssh-proxmox:
