@@ -22,12 +22,8 @@ spec:
     automated:
       prune: false
       selfHeal: true
-    retry:
-      limit: 5
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 5m
+    syncOptions:
+    - RespectIgnoreDifferences=true
   ignoreDifferences:
   - group: 'argoproj.io/v1alpha1'
     kind: Application
