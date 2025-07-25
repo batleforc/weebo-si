@@ -51,7 +51,7 @@ spec:
           imagePullPolicy: Always
           volumeMounts:
             - name: kubeconfig
-              mountPath: /kubeconfig/.kube
+              mountPath: /kubeconfig
           env:
             - name: OMNI_ENDPOINT
               value: "vault:mc-authentik/data/kubevirt-omni/config#OMNI_ENDPOINT"
