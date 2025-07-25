@@ -8,6 +8,9 @@ metadata:
     argocd.argoproj.io/sync-wave: "1"
 spec:
   configuration:
+    developerConfiguration:
+      featureGates:
+        - ExpandDisks
     smbios:
       sku: "TalosCloud"
       version: "v0.1.0"
