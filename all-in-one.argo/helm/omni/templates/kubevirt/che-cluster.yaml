@@ -57,9 +57,10 @@ spec:
               value: "vault:mc-authentik/data/kubevirt-omni/config#OMNI_ENDPOINT"
             - name: OMNI_SERVICE_ACCOUNT_KEY
               value: "vault:mc-authentik/data/kubevirt-omni/config#OMNI_SERVICE_ACCOUNT_KEY"
+          command: ["/omni-infra-provider-kubevirt"]
           args:
             #- "--kubeconfig-file /kubeconfig/kubeconfig.yaml"
-            - "--omni-api-endpoint $OMNI_ENDPOINT"
-            - "--omni-service-account-key $OMNI_SERVICE_ACCOUNT_KEY"
+            #- "--omni-api-endpoint $OMNI_ENDPOINT"
+            #- "--omni-service-account-key $OMNI_SERVICE_ACCOUNT_KEY"
             - "--id che"
             - "-n kubevirt-omni"
