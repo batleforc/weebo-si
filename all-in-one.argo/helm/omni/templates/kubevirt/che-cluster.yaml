@@ -11,7 +11,6 @@ spec:
     matchLabels:
       app: che-cluster
   replicas: 1
-  serviceAccountName: kubevirt-omni
   template:
     metadata:
       labels:
@@ -22,6 +21,7 @@ spec:
         vault.security.banzaicloud.io/vault-path: "kubernetes"
         vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
     spec:
+      serviceAccountName: kubevirt-omni
       volumes:
         - name: kubeconfig
           emptyDir: {}
