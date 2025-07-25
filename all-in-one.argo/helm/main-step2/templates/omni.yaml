@@ -31,7 +31,6 @@ spec:
   ignoreDifferences:
   - group: 'argoproj.io/v1alpha1'
     kind: Application
-    name: omni-app
     jsonPointers:
       - /spec/source/helm/valuesObject/accountUuid
 {{- end -}}
