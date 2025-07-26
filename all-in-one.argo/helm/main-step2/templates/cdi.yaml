@@ -7,6 +7,9 @@ metadata:
     argocd.argoproj.io/sync-wave: "2"
 spec:
   config:
+    featureGates:
+      - HonorWaitForFirstConsumer
+      - ExpandDisks
     scratchSpaceStorageClass: {{ .Values.kubevirt.storageClass }}
     podResourceRequirements:
       requests:

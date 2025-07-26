@@ -33,3 +33,6 @@ ipv6:
   enabled: true
 commonLabels:
   pod-security.kubernetes.io/enforce: privileged
+socketLB:
+  enabled: true
+  hostNamespaceOnly: true
