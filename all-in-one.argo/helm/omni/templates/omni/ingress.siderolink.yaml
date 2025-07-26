@@ -8,7 +8,7 @@ spec:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`siderolink.omni.example.com`) && PathPrefix(`/`)
+      match: Host(`siderolink.omni.4.weebo.fr`) && PathPrefix(`/`)
       services:
         - name: internal-grpc
           namespace: omni
