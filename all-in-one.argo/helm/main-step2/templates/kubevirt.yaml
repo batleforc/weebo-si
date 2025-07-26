@@ -11,10 +11,4 @@ spec:
     developerConfiguration:
       featureGates:
         - ExpandDisks
-    smbios:
-      sku: "TalosCloud"
-      version: "v0.1.0"
-      manufacturer: "Talos Virtualization"
-      product: "talosvm"
-      family: "ccio"
 {{- end -}}
