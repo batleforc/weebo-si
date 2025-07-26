@@ -23,6 +23,8 @@ spec:
     name: in-cluster
     namespace: 'default'
   syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
     automated:
       prune: false
       selfHeal: true
