@@ -1,0 +1,32 @@
+{{- if and .Values.kubevirt.enabled .Values.kubevirt.manager -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubevirt-manager
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/batleforc/weebo-si'
+    path: 'all-in-one.argo/helm/kubevirt-manager'
+    helm:
+      releaseName: kubevirt-manager
+  destination:
+    name: in-cluster
+    namespace: 'default'
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}
