@@ -9,5 +9,7 @@ resource "netbird_nameserver_group" "main-test" {
     }
   ]
   groups                 = [netbird_group.batleforc.id]
-  search_domains_enabled = false
+  search_domains_enabled = true
+  enabled                = true
+  primary                = true
 }
