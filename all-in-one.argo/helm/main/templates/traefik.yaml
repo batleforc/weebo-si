@@ -22,6 +22,9 @@ spec:
         ingressRoute:
           dashboard:
             enabled: true
+            middlewares:
+              - name: vpn-only
+                namespace: traefik
             entryPoints:
             - web
         service:

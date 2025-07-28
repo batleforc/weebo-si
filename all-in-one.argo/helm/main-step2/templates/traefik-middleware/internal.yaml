@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: vpn-only
+  namespace: traefik
+spec:
+  ipWhitelist:
+    sourceRange:
+      - 100.113.84.92/16
