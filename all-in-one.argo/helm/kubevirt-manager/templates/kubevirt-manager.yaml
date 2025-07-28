@@ -1,4 +1,3 @@
-{{- if and .Values.kubevirt.enabled .Values.kubevirt.manager -}}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -77,7 +76,7 @@ spec:
     singular: image
     kind: Image
     shortNames:
-    - img
+      - img
 ---
 apiVersion: v1
 kind: Namespace
@@ -115,7 +114,15 @@ rules:
     resources: ["networkpolicies"]
     verbs: ["*"]
   - apiGroups: [""]
-    resources: ["persistentvolumeclaims", "persistentvolumes", "services", "secrets", "serviceaccounts", "configmaps"]
+    resources:
+      [
+        "persistentvolumeclaims",
+        "persistentvolumes",
+        "services",
+        "secrets",
+        "serviceaccounts",
+        "configmaps",
+      ]
     verbs: ["*"]
   - apiGroups: ["apps"]
     resources: ["deployments"]
@@ -136,7 +143,12 @@ rules:
     resources: ["network-attachment-definitions"]
     verbs: ["get", "list"]
   - apiGroups: ["kubevirt.io"]
-    resources: ["virtualmachines", "virtualmachineinstances", "virtualmachineinstancemigrations"]
+    resources:
+      [
+        "virtualmachines",
+        "virtualmachineinstances",
+        "virtualmachineinstancemigrations",
+      ]
     verbs: ["*"]
   - apiGroups: ["subresources.kubevirt.io"]
     resources: ["*"]
@@ -188,9 +200,9 @@ roleRef:
   kind: ClusterRole
   name: kubevirt-manager
 subjects:
-- kind: ServiceAccount
-  name: kubevirt-manager
-  namespace: kubevirt-manager
+  - kind: ServiceAccount
+    name: kubevirt-manager
+    namespace: kubevirt-manager
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -224,9 +236,9 @@ roleRef:
   kind: ClusterRole
   name: kubevirt-manager-kccm
 subjects:
-- kind: ServiceAccount
-  name: kubevirt-manager
-  namespace: kubevirt-manager
+  - kind: ServiceAccount
+    name: kubevirt-manager
+    namespace: kubevirt-manager
 
 ---
 kind: ClusterRole
@@ -235,7 +247,16 @@ metadata:
   name: kubevirt-manager-cas-workload
 rules:
   - apiGroups: [""]
-    resources: ["namespaces", "persistentvolumeclaims", "persistentvolumes", "pods", "replicationcontrollers", "services", "secrets"]
+    resources:
+      [
+        "namespaces",
+        "persistentvolumeclaims",
+        "persistentvolumes",
+        "pods",
+        "replicationcontrollers",
+        "services",
+        "secrets",
+      ]
     verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["nodes"]
@@ -247,7 +268,8 @@ rules:
     resources: ["poddisruptionbudgets"]
     verbs: ["list", "watch"]
   - apiGroups: ["storage.k8s.io"]
-    resources: ["csinodes", "storageclasses", "csidrivers", "csistoragecapacities"]
+    resources:
+      ["csinodes", "storageclasses", "csidrivers", "csistoragecapacities"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["batch"]
     resources: ["jobs"]
@@ -272,10 +294,18 @@ metadata:
   name: kubevirt-manager-cas-management
 rules:
   - apiGroups: ["cluster.x-k8s.io"]
-    resources: ["machinedeployments", "machinedeployments/scale", "machines", "machinesets", "machinepools"]
+    resources:
+      [
+        "machinedeployments",
+        "machinedeployments/scale",
+        "machines",
+        "machinesets",
+        "machinepools",
+      ]
     verbs: ["get", "list", "watch", "udate"]
   - apiGroups: ["infrastructure.cluster.x-k8s.io"]
-    resources: ["kubevirtcluster", "kubevirtmachinetemplate", "kubevirtmachinetemplates"]
+    resources:
+      ["kubevirtcluster", "kubevirtmachinetemplate", "kubevirtmachinetemplates"]
     verbs: ["get", "list", "watch", "udate"]
 
 ---
@@ -291,9 +321,9 @@ roleRef:
   kind: ClusterRole
   name: kubevirt-manager-cas-workload
 subjects:
-- kind: ServiceAccount
-  name: kubevirt-manager
-  namespace: kubevirt-manager
+  - kind: ServiceAccount
+    name: kubevirt-manager
+    namespace: kubevirt-manager
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -308,9 +338,9 @@ roleRef:
   kind: ClusterRole
   name: kubevirt-manager-cas-management
 subjects:
-- kind: ServiceAccount
-  name: kubevirt-manager
-  namespace: kubevirt-manager
+  - kind: ServiceAccount
+    name: kubevirt-manager
+    namespace: kubevirt-manager
 
 ---
 apiVersion: scheduling.k8s.io/v1
@@ -366,24 +396,24 @@ spec:
           image: kubevirtmanager/kubevirt-manager:1.5.1
           imagePullPolicy: IfNotPresent
           ports:
-          - name: http
-            containerPort: 8080
+            - name: http
+              containerPort: 8080
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsUser: 10000
             runAsGroup: 30000
           volumeMounts:
-          - name: cache-volume
-            mountPath: /var/cache/nginx
-          - name: run-volume
-            mountPath: /var/run
-          - name: auth-config
-            mountPath: /etc/nginx/auth.d/
-          - name: auth-secret
-            mountPath: /etc/nginx/secret.d/
-          - name: prometheus-config
-            mountPath: /etc/nginx/location.d/
+            - name: cache-volume
+              mountPath: /var/cache/nginx
+            - name: run-volume
+              mountPath: /var/run
+            - name: auth-config
+              mountPath: /etc/nginx/auth.d/
+            - name: auth-secret
+              mountPath: /etc/nginx/secret.d/
+            - name: prometheus-config
+              mountPath: /etc/nginx/location.d/
       serviceAccountName: kubevirt-manager
       restartPolicy: Always
       volumes:
@@ -421,4 +451,3 @@ spec:
     - protocol: TCP
       port: 8080
       targetPort: 8080
-{{- end -}}
