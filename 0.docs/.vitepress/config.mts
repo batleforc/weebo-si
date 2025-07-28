@@ -80,6 +80,21 @@ export default defineConfig({
           { text: "Etape", link: "/0.introduction/etape" },
           { text: "Kanban", link: "/0.introduction/kanban" },
           { text: "Architecture", link: "/0.introduction/architecture" },
+          {
+            text: "Projects",
+            items: [
+              { text: "Capi Vs Omni ?", link: "/0.projects/capi-vs-omni" },
+              { text: "AllInOne Argo", link: "/0.projects/all-in-one" },
+              {
+                text: "ProxyAuthK8S",
+                link: "/0.projects/reverse-api-kube-oidc-based",
+              },
+              {
+                text: "WireChromium",
+                link: "/0.projects/rs-wirechrome",
+              },
+            ],
+          },
         ],
       },
       {
