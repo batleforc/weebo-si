@@ -4,6 +4,6 @@ metadata:
   name: vpn-only
   namespace: traefik
 spec:
-  ipWhitelist:
+  ipWhiteList:
     sourceRange:
       - 100.113.84.92/16
