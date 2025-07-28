@@ -30,13 +30,22 @@ resource "netbird_route" "kubernetes-exit-node" {
   network     = "0.0.0.0/0"
 }
 
+resource "netbird_route" "kubernetes-exit-node-ipv6" {
+  network_id = "kubernetes exit node ipv6"
+  #access_control_groups = [netbird_group.batleforc.id]
+  groups      = [netbird_group.batleforc.id]
+  peer_groups = [netbird_group.kubernetes-peer.id]
+  description = "Kubernetes Exit Node IPv6 Route"
+  network     = "::/0"
+}
+
 resource "netbird_policy" "kubernetes-peer" {
   name    = "Kubernetes Peer Policy"
   enabled = true
 
   rule {
     action        = "accept"
-    bidirectional = true
+    bidirectional = false
     enabled       = true
     protocol      = "all"
     name          = "Access Kubernetes Peer"
