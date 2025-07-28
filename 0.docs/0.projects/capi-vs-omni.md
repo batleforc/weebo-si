@@ -16,7 +16,7 @@ Comparer dans des condition similaire [Omni](https://omni.siderolabs.com/) et [C
 - Configuration:
   - Mono Node
     - 1 Control Plane / Worker
-  - Multi Node
+  - Multi Node - Si on a le temps
     - 2 Control Plane
     - 1 Worker
 - CNI : [Cilium](https://cilium.io/)
