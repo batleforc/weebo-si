@@ -21,6 +21,14 @@ resource "netbird_route" "kubernetes-peer" {
   network     = "10.244.0.0/16" #,10.96.0.0/12,fd00:10:244::/56,fd00:10:96::/112"
 }
 
+resource "netbird_route" "kubernetes-peer-service" {
+  network_id  = "kubernetes peer service"
+  peer_groups = [netbird_group.kubernetes-peer.id]
+  groups      = [netbird_group.batleforc.id]
+  description = "Kubernetes Peer Service Route"
+  network     = "10.96.0.0/12"
+}
+
 resource "netbird_route" "kubernetes-exit-node" {
   network_id = "kubernetes exit node"
   #access_control_groups = [netbird_group.batleforc.id]
