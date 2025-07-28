@@ -38,3 +38,7 @@ Comparer dans des condition similaire [Omni](https://omni.siderolabs.com/) et [C
   - 1 Sous DNS par cluster
     - *.[Cluster NAME].cluster.4.weebo.fr
 - [Game Server](https://github.com/awesome-selfhosted/awesome-selfhosted#games)
+
+## Lien
+
+- <https://cidr.xyz/>

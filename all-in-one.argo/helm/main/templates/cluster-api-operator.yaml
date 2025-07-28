@@ -1,0 +1,45 @@
+{{- if .Values.clusterApi.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cluster-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - CreateNamespace=true
+  source:
+    chart: cluster-api-operator
+    repoURL: https://kubernetes-sigs.github.io/cluster-api-operator
+    targetRevision: {{ .Values.clusterApi.version.operator }}
+    helm:
+      releaseName: cluster-operator
+      valuesObject:
+        core:
+          cluster-api:
+            version: {{ .Values.clusterApi.version.clusterApi }}
+        infrastructure:
+          kubevirt:
+            version: {{ .Values.clusterApi.version.kubevirt }}
+        controlPlane:
+          talos:
+            version: {{ .Values.clusterApi.version.talosCP }}
+        bootstrap:
+          talos:
+            version: {{ .Values.clusterApi.version.talosBootstrap }}
+        ipam:
+          in-cluster:
+            version: {{ .Values.clusterApi.version.ipam }}
+        addon:
+          helm:
+            version: {{ .Values.clusterApi.version.helmAddon }}
+        cert-manager:
+          enabled: true
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: cluster-api-operator-system
+{{- end -}}

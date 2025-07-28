@@ -34,6 +34,7 @@ tasks:
     - kubectl port-forward svc/vault -n vault 8200:8200
   kubectl:
     cmds:
+      - echo ${KUBECONFIG}
       - kubectl {{ .CLI_ARGS }}
   aio:
     dir: ./0.pulumi/all-in-one

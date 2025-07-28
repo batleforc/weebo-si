@@ -1,7 +1,7 @@
 version: "3"
 
 env:
-  KUBECONFIG: "{{.ROOT_DIR}}/capi.terraform/kubeconfig"
+  #KUBECONFIG: "{{.ROOT_DIR}}/capi.terraform/kubeconfig"
   VAULT_ADDR: "https://vault.capi.weebo.poc"
   VAULT_CACERT: "{{.ROOT_DIR}}/capi.task/vault-ca.crt"
 

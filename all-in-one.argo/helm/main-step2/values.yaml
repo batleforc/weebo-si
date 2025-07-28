@@ -19,6 +19,10 @@ dns:
 omni:
   enabled: true
 
+clusterApi:
+  enabled: true
+  version: 0.22.0
+
 vault:
   enabled: true
 

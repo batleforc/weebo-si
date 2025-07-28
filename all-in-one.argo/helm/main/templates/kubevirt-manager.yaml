@@ -10,6 +10,10 @@ metadata:
     argocd.argoproj.io/sync-wave: "3"
 spec:
   project: default
+    info:
+    - name: "Source:"
+      value: >-
+        https://github.com/kubevirt-manager/kubevirt-manager/blob/main/kubernetes/bundled.yaml
   source:
     repoURL: 'https://github.com/batleforc/weebo-si'
     path: 'all-in-one.argo/helm/kubevirt-manager'
