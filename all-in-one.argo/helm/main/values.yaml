@@ -4,6 +4,7 @@ storage:
 
 kubevirt:
   enabled: true
+  manager: true
   storageClass: local-storage
 
 dns:
