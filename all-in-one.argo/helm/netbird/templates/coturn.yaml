@@ -16,7 +16,7 @@ spec:
     chart: coturn
     repoURL: https://small-hack.github.io/coturn-chart
     # https://github.com/bank-vaults/vault-operator/pkgs/container/helm-charts%2Fvault-operator
-    targetRevision: 1.8.0
+    targetRevision: 9.1.0
     helm:
       releaseName: coturn
       valuesObject:
