@@ -20,6 +20,8 @@ spec:
     helm:
       releaseName: coturn
       valuesObject:
+        service:
+          type: NodePort
         coturn:
           realm: "turn.4.weebo.fr"
           auth:
