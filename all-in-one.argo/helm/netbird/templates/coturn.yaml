@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: coturn-app
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: netbird
+  source:
+    chart: coturn
+    repoURL: https://small-hack.github.io/coturn-chart
+    # https://github.com/bank-vaults/vault-operator/pkgs/container/helm-charts%2Fvault-operator
+    targetRevision: 1.8.0
+    helm:
+      releaseName: coturn
+      valuesObject:
+        coturn:
+          realm: "turn.4.weebo.fr"
+          auth:
+            existingSecret: "netbird-auth"
+            secretKeys:
+              username: "turnServerUser"
+              password: "turnServerPassword"
