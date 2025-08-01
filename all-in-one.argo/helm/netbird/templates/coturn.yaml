@@ -23,7 +23,7 @@ spec:
           type: LoadBalancer
           annotations:
             lbipam.cilium.io/sharing-key: "weebo-gate"
-            lbipam.cilium.io/ips: "{{ .Values.traefik.ips }}"
+            lbipam.cilium.io/ips: "{{ .Values.outboundIps }}"
             lbipam.cilium.io/sharing-cross-namespace: "*"
         coturn:
           realm: "turn.4.weebo.fr"
