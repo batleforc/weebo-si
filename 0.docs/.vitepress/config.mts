@@ -3,7 +3,6 @@ import { RSSOptions, RssPlugin } from "vitepress-plugin-rss";
 import MermaidExample from "./mermaid-markdown-all.js";
 
 /// Umami
-
 const umamiScript: HeadConfig = [
   "script",
   {
@@ -36,9 +35,9 @@ const RSS: RSSOptions = {
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "Weebo-Env",
+  title: "Weebo SI",
   description:
-    "A Weebo Env made to test new cool stuff and in the make the next Gen WeeboGitOps env",
+    "The nearly pefect dev env made to test new cool stuff and further",
   base: "/weebo-si/",
   head: headers,
   markdown: {

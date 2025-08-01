@@ -89,7 +89,7 @@ const renderChart = async () => {
   const hasDarkClass = document.documentElement.classList.contains('dark');
   const mermaidConfig = {
     securityLevel: 'loose',
-    startOnLoad: false,
+    startOnLoad: true,
     theme: hasDarkClass ? 'dark' : 'default',
   };
   let svgCode = await render(props.id, code.value, mermaidConfig);

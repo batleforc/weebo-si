@@ -16,6 +16,7 @@ Why the hell do i have this kind of idea right now ?
 - [Use Chrome in Rust](https://crates.io/crates/chromiumoxide)
 - [Source of the idea](https://docs.netbird.io/how-to/netbird-on-faas)
 - [Port Forward in rust](https://github.com/aramperes/onetun)
+- [Set proxy](https://stackoverflow.com/questions/75533339/how-do-i-set-up-a-proxy-server-using-chromiumoxide)
 
 ## Possible Wireguard Backend
 

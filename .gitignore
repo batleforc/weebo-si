@@ -30,6 +30,8 @@ weebo-si-int-ca.pem
 0.docs/.vitepress/dist
 0.docs/.vitepress/cache
 
+0.docs_old/.vitepress/dist
+0.docs_old/.vitepress/cache
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/yarn,node
