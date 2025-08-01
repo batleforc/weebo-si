@@ -16,8 +16,8 @@ spec:
     #chart: coturn
     #repoURL: https://small-hack.github.io/coturn-chart
     #targetRevision: 9.1.0
-    repoURL: 'https://github.com/batleforc/weebo-si'
-    path: 'all-in-one.argo/helm/coturn-app
+    repoURL: "https://github.com/batleforc/weebo-si"
+    path: "all-in-one.argo/helm/coturn-app"
     helm:
       releaseName: coturn
       valuesObject:
