@@ -15,13 +15,16 @@ spec:
   source:
     chart: coturn
     repoURL: https://small-hack.github.io/coturn-chart
-    # https://github.com/bank-vaults/vault-operator/pkgs/container/helm-charts%2Fvault-operator
     targetRevision: 9.1.0
     helm:
       releaseName: coturn
       valuesObject:
         service:
-          type: NodePort
+          type: LoadBalancer
+          annotations:
+            lbipam.cilium.io/sharing-key: "weebo-gate"
+            lbipam.cilium.io/ips: "{{ .Values.traefik.ips }}"
+            lbipam.cilium.io/sharing-cross-namespace: "*"
         coturn:
           realm: "turn.4.weebo.fr"
           auth:
@@ -29,3 +32,7 @@ spec:
             secretKeys:
               username: "turnServerUser"
               password: "turnServerPassword"
+        certificate:
+          enabled: true
+          issuerName: outbound
+          host: "turn.4.weebo.fr"
