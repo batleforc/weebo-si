@@ -12,16 +12,16 @@ spec:
   source:
     chart: cluster-api-operator
     repoURL: https://kubernetes-sigs.github.io/cluster-api-operator
-    targetRevision: 0.20.0
+    targetRevision: 0.22.0
     helm:
       releaseName: cluster-operator
       valuesObject:
         core:
           cluster-api:
-            version: v1.10.3
+            version: v1.10.4
         infrastructure:
           proxmox:
-            version: v0.7.1
+            version: v0.7.3
         controlPlane:
           talos:
             version: v0.5.10
@@ -30,10 +30,10 @@ spec:
             version: v0.6.9
         ipam:
           in-cluster:
-            version: v1.0.2
+            version: v1.0.3
         addon:
           helm:
-            version: v0.3.1
+            version: v0.3.2
         configSecret:
           name: "infra-provider"
           namespace: "cluster-api"
