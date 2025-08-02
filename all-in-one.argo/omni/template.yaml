@@ -1,0 +1,31 @@
+kind: Cluster
+name: kubevirt
+labels:
+  template: true
+kubernetes:
+  version: v1.33.3
+talos:
+  version: v1.10.5
+features:
+  diskEncryption: true
+  useEmbeddedDiscoveryService: true
+patches:
+  - name: workload-on-cp
+    file: all-in-one.argo/omni/patches/workload-on-cp.yaml
+  - name: network-cidr
+    file: all-in-one.argo/omni/patches/network-cidr.yaml
+  - name: metrics-server
+    file: all-in-one.argo/omni/patches/metrics-server.yaml
+  - name: extraManifests
+    file: all-in-one.argo/omni/patches/extraManifests.yaml
+systemExtensions:
+  - siderolabs/qemu-guest-agent
+  - siderolabs/iscsi-tools
+  - siderolabs/util-linux-tools
+---
+kind: ControlPlane
+labels:
+  type: control-plane
+machineClass:
+  name: che
+  size: 1

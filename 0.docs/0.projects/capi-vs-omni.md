@@ -17,7 +17,7 @@ Comparer dans des condition similaire [Omni](https://omni.siderolabs.com/) et [C
   - Mono Node
     - 1 Control Plane / Worker
       - CPU: 4
-      - RAM: 32Gi
+      - RAM: 16Gi
   - Multi Node - Si on a le temps
     - 2 Control Plane
     - 1 Worker

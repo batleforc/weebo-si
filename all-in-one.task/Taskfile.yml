@@ -84,6 +84,11 @@ tasks:
       TALOSCONFIG: ./0.pulumi/all-in-one/talos-config.omni.yaml
     cmds:
       - talosctl {{ .CLI_ARGS }}
+  omni:kubectl:
+    env:
+      KUBECONFIG: ./all-in-one.argo/omni/kubeconfig.yaml
+    cmds:
+      - kubectl {{ .CLI_ARGS }}
   omni:create-sa:
     vars:
       cluster: '{{.cluster}}'

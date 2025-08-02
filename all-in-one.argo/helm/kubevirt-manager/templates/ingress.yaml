@@ -13,7 +13,6 @@ spec:
       match: Host(`kubevirt-manager.4.weebo.fr`)
       services:
         - name: kubevirt-manager
-
           namespace: kubevirt-manager
           port: 8080
           passHostHeader: true

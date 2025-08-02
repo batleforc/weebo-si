@@ -8,7 +8,7 @@ spec:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`kubernetes.omni.4.weebo.fr`) && PathPrefix(`/`)
+      match: Host(`kube.omni.4.weebo.fr`) && PathPrefix(`/`)
       services:
         - name: internal
           namespace: omni
