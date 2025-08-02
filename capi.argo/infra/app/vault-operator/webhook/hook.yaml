@@ -13,7 +13,7 @@ spec:
     chart: vault-secrets-webhook
     repoURL: ghcr.io/bank-vaults/helm-charts
     # https://github.com/bank-vaults/vault-operator/pkgs/container/helm-charts%2Fvault-secrets-webhook
-    targetRevision: 1.21.3
+    targetRevision: 1.22.0
     helm:
       releaseName: vault-webhook
       valuesObject:
