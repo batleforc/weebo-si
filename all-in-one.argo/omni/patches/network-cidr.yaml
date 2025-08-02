@@ -1,5 +1,9 @@
 cluster:
+  proxy:
+    disabled: true
   network:
+    cni:
+      name: "none"
     dnsDomain: cluster.local
     podSubnets:
       - 10.245.0.0/16
