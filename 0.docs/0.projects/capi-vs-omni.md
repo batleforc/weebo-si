@@ -16,6 +16,8 @@ Comparer dans des condition similaire [Omni](https://omni.siderolabs.com/) et [C
 - Configuration:
   - Mono Node
     - 1 Control Plane / Worker
+      - CPU: 4
+      - RAM: 32Gi
   - Multi Node - Si on a le temps
     - 2 Control Plane
     - 1 Worker
@@ -32,7 +34,7 @@ Comparer dans des condition similaire [Omni](https://omni.siderolabs.com/) et [C
 ## Feature a déployer
 
 - [CertManager](https://cert-manager.io/)
-  - Vault Certificate
+  - Vault Certificate (OPT)
   - Lets Encrypt
 - [Traefik](https://traefik.io/traefik)
   - 1 Sous DNS par cluster

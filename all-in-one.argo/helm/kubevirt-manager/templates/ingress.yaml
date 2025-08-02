@@ -1,0 +1,23 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: dashboard
+  namespace: kubevirt-manager
+  labels:
+    app.kubernetes.io/name: kubevirt-manager
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`kubevirt-manager.4.weebo.fr`)
+      services:
+        - name: kubevirt-manager-service
+          namespace: kubevirt-manager
+          port: 8080
+          passHostHeader: true
+      middlewares:
+        - name: vpn-only
+          namespace: traefik
+  tls:
+    secretName: kubevirt-manager-certificate

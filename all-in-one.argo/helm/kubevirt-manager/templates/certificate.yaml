@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "kubevirt-manager-certificate"
+  namespace: "kubevirt-manager"
+spec:
+  commonName: "kubevirt-manager.4.weebo.fr"
+  secretName: "kubevirt-manager-certificate"
+  dnsNames:
+    - "kubevirt-manager.4.weebo.fr"
+  issuerRef:
+    kind: ClusterIssuer
+    name: "outbound"
