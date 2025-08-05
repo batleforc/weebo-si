@@ -25,4 +25,4 @@ Is it possible to search directly in the app ?
 - <https://vault.4.weebo.fr>
 - <https://argo.4.weebo.fr>
 - <https://omni.4.weebo.fr>
-- <https://4.weebo.fr/dashboard/>
+- <http://4.weebo.fr/dashboard/>
