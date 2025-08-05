@@ -18,10 +18,8 @@ spec:
           port: 8080
           passHostHeader: true
       middlewares:
-        - name: authentik
+        - name: authentik-vpn
           namespace: authentik
-        - name: vpn-only
-          namespace: traefik
     - kind: Rule
       match: Host(`kubevirt-manager.4.weebo.fr`) && PathPrefix(`/outpost.goauthentik.io/`)"
       priority: 15
