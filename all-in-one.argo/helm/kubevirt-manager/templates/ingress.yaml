@@ -11,10 +11,24 @@ spec:
   routes:
     - kind: Rule
       match: Host(`kubevirt-manager.4.weebo.fr`)
+      priority: 10
       services:
         - name: kubevirt-manager
           namespace: kubevirt-manager
           port: 8080
+          passHostHeader: true
+      middlewares:
+        - name: vpn-only
+          namespace: traefik
+        - name: authentik
+          namespace: authentik
+    - kind: Rule
+      match: Host(`kubevirt-manager.4.weebo.fr`) && PathPrefix(`/outpost.goauthentik.io/`)"
+      priority: 15
+      services:
+        - name: authentik-server
+          namespace: authentik-server
+          port: 80
           passHostHeader: true
       middlewares:
         - name: vpn-only
