@@ -1,0 +1,70 @@
+{{- if .Values.cilium.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-cilium
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: {{ .Release.Name }}-argo
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated: {}
+  destination:
+    namespace: kube-system
+    name: {{ .Release.Name }}
+  project: {{ .Release.Name }}
+  source:
+    chart: cilium
+    repoURL: https://helm.cilium.io/
+    targetRevision: {{ .Values.cilium.version }}
+    helm:
+      releaseName: cilium
+      valuesObject:
+        ipam:
+          mode: kubernetes
+        kubeProxyReplacement: true
+        securityContext:
+          capabilities:
+            ciliumAgent:
+              - CHOWN
+              - KILL
+              - NET_ADMIN
+              - NET_RAW
+              - IPC_LOCK
+              - SYS_ADMIN
+              - SYS_RESOURCE
+              - DAC_OVERRIDE
+              - FOWNER
+              - SETGID
+              - SETUID
+            cleanCiliumState:
+            - NET_ADMIN
+            - SYS_ADMIN
+            - SYS_RESOURCE
+        cgroup:
+          autoMount:
+            enabled: false
+          hostRoot: /sys/fs/cgroup
+        k8sServiceHost: "localhost"
+        k8sServicePort: 6443
+        ipv4:
+          enabled: {{ .Values.cilium.ipv4 }}
+        ipv6:
+          enabled: {{ .Values.cilium.ipv6 }}
+  ignoreDifferences:
+  - group: ''
+    kind: Secret
+    name: hubble-server-certs
+    jsonPointers:
+    - /data/ca.crt
+    - /data/tls.crt
+    - /data/tls.key
+  - group: ''
+    kind: Secret
+    name: cilium-ca
+    jsonPointers:
+    - /data/ca.crt
+    - /data/ca.key
+{{- end -}}

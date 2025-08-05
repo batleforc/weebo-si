@@ -12,5 +12,15 @@ spec:
       services:
         - name: vault
           port: 8200
+      middlewares:
+        - name: vpn-only
+          namespace: traefik
+    - match: HostSNI("vault.4.weebo.fr")
+      services:
+        - name: vault
+          port: 8200
+      middlewares:
+        - name: vpn-only
+          namespace: traefik
   tls:
     passthrough: true

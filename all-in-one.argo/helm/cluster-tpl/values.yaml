@@ -1,0 +1,54 @@
+cluster:
+  talosVersion: "v1.10.6"
+  kubernetesVersion: "v1.33.3"
+  namespace: "che"
+  annotations:
+    argocd.argoproj.io/sync-options: PruneLast=true
+  labels:
+    weebo.si/engine: "talos"
+  network:
+    podsCidr:
+      - 10.245.0.0/16
+    servicesCidr:
+      - 15.112.0.0/12
+  kubevirt:
+    rootVolumeSize: 50Gi
+    storageClassName: local-path
+    talosQcow2: https://factory.talos.dev/image/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3/v1.10.6/nocloud-amd64.qcow2
+  controlPlane:
+    replicas: 1
+    allowScheduling: true
+    ram: 16Gi
+    cpu:
+      cores: 2
+      sockets: 2
+  worker:
+    replicas: 0
+  talos:
+    installImage: factory.talos.dev/nocloud-installer/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3:v1.10.6
+    qemuGuestAgent:
+      image: ghcr.io/siderolabs/qemu-guest-agent:10.0.2
+    manifests:
+      - https://raw.githubusercontent.com/siderolabs/talos-cloud-controller-manager/main/docs/deploy/cloud-controller-manager.yml
+      - https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml
+      - https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+cilium:
+  enabled: true
+  version: "v1.18.0"
+  ipv6: false
+  ipv4: true
+
+dns:
+  wildcard: true
+  name: "{{ .Release.Name }}"
+  in:
+    base: weebo.poc
+  out:
+    base: "cluster.4.weebo.fr"
+
+storage:
+  local:
+    enabled: true
+  longhorn:
+    enabled: false

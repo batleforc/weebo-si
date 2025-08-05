@@ -1,0 +1,222 @@
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-create-sa
+  namespace: "{{ .Values.cluster.namespace }}"
+apiVersion: v1
+data:
+  manifest.j2: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: argocd-manager
+      namespace: kube-system
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: argocd-manager-role
+    rules:
+    - apiGroups:
+      - '*'
+      resources:
+      - '*'
+      verbs:
+      - '*'
+    - nonResourceURLs:
+      - '*'
+      verbs:
+      - '*'
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: argocd-manager-role-binding
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: argocd-manager-role
+    subjects:
+    - kind: ServiceAccount
+      name: argocd-manager
+      namespace: kube-system
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: role-tokenreview-binding
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: system:auth-delegator
+    subjects:
+    - kind: ServiceAccount
+      name: argocd-manager
+      namespace: kube-system
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: argocd-manager-secret
+      namespace: kube-system
+      annotations:
+        kubernetes.io/service-account.name: argocd-manager
+    type: kubernetes.io/service-account-token
+    ---
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: cert-manager
+      labels:
+        name: cert-manager
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: certificate
+      namespace: cert-manager
+      labels:
+        weebo.si/source-ca: "true"
+    data:
+      root-ca.crt: {{"{{"}} rootca.content | from_json | json_query("data.certificate")  | b64encode }}
+      sub-ca.crt: {{"{{"}} subca.content | from_json | json_query("data.certificate") | b64encode }}
+      vault-ca.crt: {{"{{"}} lookup('ansible.builtin.file', '/ca/vault/ca.crt') | b64encode }}
+  secrets.j2: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: {{ .Release.Name }}-cluster
+      namespace: argocd
+      labels:
+        argocd.argoproj.io/secret-type: cluster
+    type: Opaque
+    stringData:
+      name: {{ .Release.Name }}
+      server: {{"{{"}} (kubeconfig.stdout | from_yaml).clusters[0].cluster.server }}
+      config: |
+        {
+          "bearerToken": "{{"{{"}}  secret.stdout | b64decode }}",
+          "tlsClientConfig": {
+            "serverName": "kubernetes.default.svc",
+            "caData": "{{"{{"}} (kubeconfig.stdout | from_yaml).clusters[0].cluster['certificate-authority-data'] }}"
+          }
+        }
+  playbook.yaml: |
+    - hosts: localhost
+      tasks:
+        - name: Fetch RootCA from Vault
+          ansible.builtin.uri:
+            url: "{{ .Values.certificate.rootCA.url }}"
+            method: GET
+            return_content: true
+            ca_path: /ca/vault/ca.crt
+            body_format: json
+            status_code: 200
+          register: rootca
+        - name: Fetch SubCA from Vault
+          ansible.builtin.uri:
+            url: "{{ .Values.certificate.subCA.url }}"
+            method: GET
+            return_content: true
+            ca_path: /ca/vault/ca.crt
+            body_format: json
+            status_code: 200
+          register: subca
+        - name: Create Secret
+          ansible.builtin.template:
+            src: manifest.j2
+            dest: /tmp/manifest.yaml
+        - name: Apply manifest
+          ansible.builtin.command:
+            cmd: "kubectl apply -f /tmp/manifest.yaml --kubeconfig /tokens/value"
+        - name: Get Secret
+          ansible.builtin.command:
+            cmd: "kubectl get secret argocd-manager-secret -n kube-system -o jsonpath='{.data.token}' --kubeconfig /tokens/value"
+          register: secret
+        - name: Fail if token is empty
+          ansible.builtin.fail:
+            msg: "Token is empty"
+          when: secret.stdout == "" or secret.stdout is not defined or "Error from server (NotFound)" in secret.stdout
+        - name: "Print token"
+          ansible.builtin.debug:
+            msg: "Please copy token : {{"{{"}}  secret.stdout | b64decode }}"
+        - name: Read Kubeconfig
+          ansible.builtin.command:
+            cmd: "cat /tokens/value"
+          register: kubeconfig
+        - name: Create Secret
+          ansible.builtin.template:
+            src: secrets.j2
+            dest: /tmp/secrets.yaml
+        - name: Write CA
+          ansible.builtin.copy:
+            content: "{{"{{"}} (kubeconfig.stdout | from_yaml).clusters[0].cluster['certificate-authority-data'] | b64decode }}"
+            dest: /tmp/kube_ca.crt
+        - name: Write Token
+          ansible.builtin.copy:
+            content: "{{"{{"}} secret.stdout | b64decode }}"
+            dest: /tmp/token
+        - name: Apply Secret
+          ansible.builtin.command:
+            cmd: "kubectl apply -f /tmp/secrets.yaml"
+  main.tf: |-
+    terraform {
+      required_providers {
+        vault = {
+          source  = "hashicorp/vault"
+          version = "{{ .Values.bootstrap.vaultProviderVersion }}"
+        }
+      }
+    }
+
+    variable "cluster_name" {
+      description = "The name of the cluster."
+      type        = string
+      default     = "example-cluster"
+    }
+
+    variable "host" {
+      description = "The host for the Kubernetes API server."
+      type        = string
+      default     = "http://example.com:443"
+    }
+
+    provider "vault" {
+      address = "https://vault.capi.weebo.poc"
+      ca_cert_file = "/ca/vault/ca.crt"
+      skip_child_token = "true"
+      auth_login_jwt {
+        role = "cluster_creator"
+        jwt  = local.token_vault
+        mount = "kubernetes"
+      }
+
+    }
+
+    locals {
+      token       = file("/tmp/token")
+      certificate = file("/tmp/kube_ca.crt")
+      token_vault = file("/var/run/secrets/kubernetes.io/serviceaccount/token")
+    }
+
+    resource "vault_auth_backend" "kubernetes" {
+      type = "kubernetes"
+      path = var.cluster_name
+    }
+
+    resource "vault_kubernetes_auth_backend_config" "kube-auth" {
+      backend                = vault_auth_backend.kubernetes.path
+      kubernetes_host        = var.host
+      kubernetes_ca_cert     = local.certificate
+      token_reviewer_jwt     = local.token
+      disable_iss_validation = "true"
+    }
+
+    resource "vault_kubernetes_auth_backend_role" "cert-manager" {
+      backend                          = vault_auth_backend.kubernetes.path
+      role_name                        = "cert-manager"
+      bound_service_account_names      = ["cert-manager", "vault-issuer"]
+      bound_service_account_namespaces = ["cert-manager"]
+      token_ttl                        = 3600
+      token_policies                   = ["allow_pki"]
+    }
+

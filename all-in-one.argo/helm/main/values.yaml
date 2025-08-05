@@ -28,7 +28,7 @@ clusterApi:
     kubevirt: v0.1.10
     talosCP: v0.5.10
     talosBootstrap: v0.6.9
-    ipam: v1.0.2
+    ipam: v1.0.3
     helmAddon: v0.3.2
 
 vault:

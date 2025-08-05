@@ -1,0 +1,99 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-create-sa-job"
+  namespace: "{{ .Values.cluster.namespace }}"
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      containers:
+        - name: create-webhook
+          command:
+            - /bin/bash
+            - "-c"
+            - |
+              set -x
+              ansible-playbook -i localhost /scripts/playbook.yaml
+          image: quay.io/agnosticd/ee-multicloud:latest
+          volumeMounts:
+            - mountPath: /scripts
+              name: "{{ .Release.Name }}-script-vol"
+            - mountPath: /tokens
+              name: kube-secret
+            - mountPath: "/ca/vault"
+              name: vault-ca
+            - mountPath: /tmp
+              name: temp
+        - name: create-in-vault
+          image: hashicorp/terraform:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - "-c"
+            - |
+              set -x
+              cd /terraform
+              touch anotherNameThatSoundNothing.tf
+              rm -rf *.tf
+              cp /scripts/*.tf .
+              terraform init --upgrade
+              until [ -f /tmp/token ]; do
+                sleep 5
+              done
+              cat /tmp/kube_ca.crt
+              TF_VAR_cluster_name="{{ .Release.Name }}" TF_VAR_host="https://{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}:6443" terraform apply -auto-approve
+          volumeMounts:
+            - mountPath: /tmp
+              name: temp
+            - mountPath: terraform
+              name: terra-job
+            - mountPath: /scripts
+              name: "{{ .Release.Name }}-script-vol"
+            - mountPath: "/ca/vault"
+              name: vault-ca
+      restartPolicy: Never
+      volumes:
+        - name: "{{ .Release.Name }}-script-vol"
+          configMap:
+            name: "{{ .Release.Name }}-create-sa"
+        - name: kube-secret
+          secret:
+            secretName: "{{ .Release.Name }}-kubeconfig"
+        - name: vault-ca
+          secret:
+            secretName: vault-tls
+        - name: terra-job
+          persistentVolumeClaim:
+            claimName: "create-sa-pvc-{{ .Release.Name }}"
+        - name: temp
+          emptyDir: {}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-create-sa-job-empty"
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      containers:
+        - name: create-in-vault
+          image: hashicorp/terraform:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - "-c"
+            - |
+              set -x
+              echo "WIP"
+          volumeMounts:
+            - mountPath: terraform
+              name: terra-job
+      restartPolicy: Never
+      volumes:
+        - name: terra-job
+          persistentVolumeClaim:
+            claimName: "create-sa-pvc-{{ .Release.Name }}"

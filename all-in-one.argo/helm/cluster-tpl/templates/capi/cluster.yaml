@@ -1,0 +1,35 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: "{{ .Release.Name }}"
+  namespace: "{{ .Values.cluster.namespace }}"
+  labels:
+    {{- range $key, $value := .Values.kubernetes.labels }}
+    {{ $key }}: {{ $value }}
+    {{- end }}
+  annotations:
+    {{- range $key, $value := .Values.cluster.annotations }}
+    {{ $key }}: {{ $value }}
+    {{- end }}
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+        {{- range $cidr := .Values.cluster.network.podsCidr }}
+        - {{ $cidr }}
+        {{- end }}
+    services:
+      cidrBlocks:
+        {{- range $cidr := .Values.cluster.network.servicesCidr }}
+        - {{ $cidr }}
+        {{- end }}
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+    kind: KubevirtCluster
+    name: "{{ .Release.Name }}-infra"
+    namespace: "{{ .Values.cluster.namespace }}"
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+    kind: TalosControlPlane
+    name: "{{ .Release.Name }}-cp"
+    namespace: "{{ .Values.cluster.namespace }}"
