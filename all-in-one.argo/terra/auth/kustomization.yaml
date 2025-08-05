@@ -25,3 +25,4 @@ configMapGenerator:
       - ./terra-map/flow.tf
       - ./terra-map/omni.tf
       - ./terra-map/kubevirt-manager.tf
+      - ./terra-map/outpost.tf
