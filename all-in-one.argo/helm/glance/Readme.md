@@ -16,7 +16,7 @@ Is it possible to search directly in the app ?
 
 ## [Todo](https://github.com/glanceapp/glance/blob/main/docs/configuration.md#todo)
 
-## [Monitor](https://github.com/glanceapp/glance/blob/main/docs/configuration.md#monitor)
+## [Monitor](https://github.com/glanceapp/glance/blob/main/docs/configuration.md#monitor)
 
 - <https://github.com/batleforc/weebo-si>
 - <https://kubevirt-manager.4.weebo.fr>
