@@ -5,7 +5,7 @@ metadata:
   namespace: "{{ .Release.Namespace }}"
 spec:
   version: "{{ .Values.cluster.kubernetesVersion }}"
-  replicas: {{ .Values.cluster.controlPlane.replicas }}
+  replicas: { { .Values.cluster.controlPlane.replicas } }
   infrastructureTemplate:
     kind: KubevirtMachineTemplate
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
@@ -20,7 +20,6 @@ spec:
           - op: replace
             path: /machine/install
             value:
-              disk: /dev/sda
               extensions:
                 - image: {{ .Values.cluster.talos.qemuGuestAgent.image }}
           - op: replace
