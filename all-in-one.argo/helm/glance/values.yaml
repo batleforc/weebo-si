@@ -20,10 +20,10 @@ content: |
               bangs:
                 - type: Youtube
                   shortcut: "!yt"
-                  query: "https://www.youtube.com/results?search_query={QUERY}"
+                  url: "https://www.youtube.com/results?search_query={QUERY}"
                 - type: Reddit
                   shortcut: "!rdt"
-                  query: "https://www.reddit.com/search?q={QUERY}"
+                  url: "https://www.reddit.com/search?q={QUERY}"
 
             - type: monitor
               cache: 1m
