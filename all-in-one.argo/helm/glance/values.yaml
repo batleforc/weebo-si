@@ -24,6 +24,9 @@ content: |
                 - type: Reddit
                   shortcut: "!rdt"
                   url: "https://www.reddit.com/search?q={QUERY}"
+                - type: Github
+                  shortcut: "!gh"
+                  url: "https://github.com/search?q={QUERY}"
 
             - type: monitor
               cache: 1m
@@ -79,3 +82,23 @@ content: |
                       url: https://github.com/batleforc
                     - title: Reddit
                       url: https://www.reddit.com/user/Maxweebo/
+            - type: Release
+              groups:
+                - type: releases
+                  show-source-icon: true
+                  repositories:
+                    - siderolabs/talos
+                    - kubernetes-sigs/cluster-api
+                    - kubernetes-sigs/cluster-api-provider-kubevirt
+                    - kubernetes-sigs/cluster-api-ipam-provider-in-cluster
+                    - siderolabs/cluster-api-control-plane-provider-talos
+                    - siderolabs/cluster-api-bootstrap-provider-talos
+                - type: releases
+                  show-source-icon: true
+                  repositories:
+                    - traefik/traefik
+                    - traefik/traefik-helm-chart
+                    - cert-manager/cert-manager
+                    - eclipse-che/che
+                    - netbirdio/netbird
+                    - netbirdio/dashboard
