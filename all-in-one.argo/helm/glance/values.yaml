@@ -88,7 +88,6 @@ content: |
                 - type: releases
                   show-source-icon: true
                   repositories:
-                    - siderolabs/talos
                     - kubernetes-sigs/cluster-api
                     - kubernetes-sigs/cluster-api-provider-kubevirt
                     - kubernetes-sigs/cluster-api-ipam-provider-in-cluster
@@ -97,9 +96,13 @@ content: |
                 - type: releases
                   show-source-icon: true
                   repositories:
+                    - siderolabs/talos
                     - traefik/traefik
                     - traefik/traefik-helm-chart
                     - cert-manager/cert-manager
                     - eclipse-che/che
+                - type: releases
+                  show-source-icon: true
+                  repositories:
                     - netbirdio/netbird
                     - netbirdio/dashboard
