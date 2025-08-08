@@ -32,7 +32,7 @@ content: |
                   url: https://vault.4.weebo.fr/
                   icon: si:vault
                 - title: ArgoCD
-                  url: https://argocd.4.weebo.fr/
+                  url: https://argo.4.weebo.fr/
                   icon: si:argocd
                 - title: Omni
                   url: https://omni.4.weebo.fr/
