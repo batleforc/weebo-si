@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: glance-app
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+  source:
+    chart: glance
+    repoURL: https://rubxkube.github.io/charts
+    targetRevision: "{{ .Values.version.helm }}"
+    helm:
+      releaseName: glance-app
+      valuesObject:
+        common:
+          image:
+            repository: "{{ .Values.repo }}"
+            pullPolicy: "{{ .Values.pullPolicy }}"
+            tag: "{{ .Values.version.app }}"
+          ingress:
+            enabled: false
+          configMap:
+            data:
+              - name: "config"
+                mountPath: "/mnt"
+                data:
+                  - content:
+                      glance.yml: |
+                      {{ .Values.content | indent 20 }}
+
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: glance

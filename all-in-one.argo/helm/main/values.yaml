@@ -56,10 +56,19 @@ externalSecrets:
 auth:
   enabled: true
 
+glance:
+  enable: true
+
 traefik:
   enabled: true
   version: 37.0.0
   ips: "37.187.255.5,2001:41d0:c:705::1"
+  kubeCRD:
+    enabled: true
+  kubeIngress:
+    enabled: true
+  gatewayAPI:
+    enabled: false
   plugins:
     bouncer:
       moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin

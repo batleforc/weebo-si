@@ -1,0 +1,28 @@
+{{ if .Values.traefik.gatewayAPI.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cluster-api-traefik
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/kubernetes-sigs/gateway-api'
+    path: 'config/crd'
+    kustomize:
+
+  destination:
+    name: "in-cluster"
+    namespace: 'default'
+  syncPolicy:
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

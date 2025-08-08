@@ -1,0 +1,25 @@
+{{- if .Values.glance.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: glance
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/batleforc/weebo-si'
+    path: 'all-in-one.argo/helm/glance'
+    helm:
+      releaseName: glance
+  destination:
+    name: in-cluster
+    namespace: 'glance'
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+    - RespectIgnoreDifferences=true
+{{- end -}}

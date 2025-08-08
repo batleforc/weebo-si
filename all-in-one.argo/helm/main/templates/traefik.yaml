@@ -45,13 +45,16 @@ spec:
                   Authorization: redact
         providers:
           kubernetesCRD:
-            enabled: true
+            enabled: {{ .Values.traefik.kubeCRD.enabled }}
             allowCrossNamespace: true
           kubernetesIngress:
+            enabled: {{ .Values.traefik.kubeIngress.enabled }}
             allowEmptyServices: true
             allowExternalNameServices: true
             publishedService:
               enabled: true
+          kubernetesGateway:
+            enabled: {{ .Values.traefik.gatewayAPI.enabled }}
         #experimental:
           # {{- range $name, $plugin := .Values.traefik.plugins }}
           # plugins:
