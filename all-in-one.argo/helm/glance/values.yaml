@@ -84,6 +84,7 @@ content: |
                       url: https://www.reddit.com/user/Maxweebo/
 
             - type: split-column
+              max-columns: 3
               widgets:
                 - type: releases
                   show-source-icon: true
