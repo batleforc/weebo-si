@@ -181,7 +181,7 @@ data:
     }
 
     provider "vault" {
-      address = "https://vault.capi.weebo.poc"
+      address = "https://vault.vault:8200"
       ca_cert_file = "/ca/vault/ca.crt"
       skip_child_token = "true"
       auth_login_jwt {
