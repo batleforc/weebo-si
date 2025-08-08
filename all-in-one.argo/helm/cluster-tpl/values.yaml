@@ -21,6 +21,8 @@ cluster:
     cpu:
       cores: 2
       sockets: 2
+  bootstrap:
+    vaultProviderVersion: "4.4.0"
   worker:
     replicas: 0
   talos:
