@@ -51,3 +51,9 @@ storage:
     enabled: true
   longhorn:
     enabled: false
+
+certificate:
+  rootCA:
+    url: https://vault.4.weebo.fr/v1/pki/issuer/default/json
+  subCA:
+    url: https://vault.4.weebo.fr/v1/pki_int/issuer/default/json
