@@ -151,7 +151,7 @@ spec:
             ttl: 1h
           - name: cluster_creator
             bound_service_account_names: ["default", "vault"]
-            bound_service_account_namespaces: ["default", "vault"]
+            bound_service_account_namespaces: ["default", "che", "vault"]
             policies: cluster_creator
             ttl: 1h
 
