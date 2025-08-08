@@ -100,4 +100,10 @@ tasks:
     cmds:
       - omnictl serviceaccount create --role=InfraProvider --use-user-role=false infra-provider:{{.cluster}}
       - echo "Service account 'infra-provider:{{.cluster}}' created successfully. please add it in the vault with path like mc-authentik/{{.cluster}}/config"
-
+  ## CAPI
+  capi:get-kubeconfig:
+    vars:
+      cluster: '{{.cluster}}'
+      ns: '{{.ns}}'
+    cmds:
+      - kubectl -n {{.ns}} get secret {{.cluster}}-kubeconfig -o yaml | yq .data.value | base64 -d > ./kubeconfig.{{.cluster}}.yaml
