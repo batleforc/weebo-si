@@ -18,6 +18,7 @@ cluster:
     replicas: 1
     allowScheduling: true
     ram: 16Gi
+    storage: 50Gi
     cpu:
       cores: 2
       sockets: 2

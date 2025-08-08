@@ -22,7 +22,7 @@ spec:
                     - ReadWriteOnce
                   resources:
                     requests:
-                      storage: "{{ .Values.cluster.kubevirt.talosQcow2 }}"
+                      storage: "{{ .Values.cluster.controlPlane.storage }}"
                   storageClassName: "{{ .Values.cluster.kubevirt.storageClassName }}"
                 source:
                   http:
