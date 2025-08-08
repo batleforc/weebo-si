@@ -83,7 +83,7 @@ content: |
                     - title: Reddit
                       url: https://www.reddit.com/user/Maxweebo/
 
-            - size: full
+            - type: split-column
               widgets:
                 - type: releases
                   show-source-icon: true
