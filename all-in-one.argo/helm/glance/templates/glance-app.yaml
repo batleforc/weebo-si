@@ -28,7 +28,7 @@ spec:
                 data:
                   - content:
                       glance.yml: |
-                        {{ .Values.content | indent 40 }}
+{{ .Values.content | indent 24 }}
 
   destination:
     server: "https://kubernetes.default.svc"
