@@ -9,7 +9,6 @@ spec:
   config:
     featureGates:
       - HonorWaitForFirstConsumer
-      - ExpandDisks
     scratchSpaceStorageClass: {{ .Values.kubevirt.storageClass }}
     podResourceRequirements:
       requests:
