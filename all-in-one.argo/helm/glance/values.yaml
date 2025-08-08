@@ -22,24 +22,27 @@ content: |
               cache: 1m
               title: Services
               sites:
-                - title: Jellyfin
-                  url: https://yourdomain.com/
-                  icon: si:jellyfin
-                - title: Gitea
-                  url: https://yourdomain.com/
-                  icon: si:gitea
-                - title: qBittorrent # only for Linux ISOs, of course
-                  url: https://yourdomain.com/
-                  icon: si:qbittorrent
-                - title: Immich
-                  url: https://yourdomain.com/
-                  icon: si:immich
-                - title: AdGuard Home
-                  url: https://yourdomain.com/
-                  icon: si:adguard
-                - title: Vaultwarden
-                  url: https://yourdomain.com/
-                  icon: si:vaultwarden
+                - title: Netbird
+                  url: https://netbird.4.weebo.fr
+                  icon: si:netbird
+                - title: Authentik
+                  url: https://login.4.weebo.fr/
+                  icon: si:authentik
+                - title: Vault
+                  url: https://vault.4.weebo.fr/
+                  icon: si:vault
+                - title: ArgoCD
+                  url: https://argocd.4.weebo.fr/
+                  icon: si:argocd
+                - title: Omni
+                  url: https://omni.4.weebo.fr/
+                  icon: si:omni
+                - title: Traefik Dashboard
+                  url: http://4.weebo.fr/dashboard/
+                  icon: si:traefik
+                - title: Kubevirt Manager
+                  url: https://kubevirt-manager.4.weebo.fr/
+                  icon: si:kubevirt
 
             - type: bookmarks
               groups:
