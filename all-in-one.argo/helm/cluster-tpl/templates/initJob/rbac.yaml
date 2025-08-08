@@ -6,7 +6,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "1"
 rules:
   - apiGroups: ["*"]
-    resources: ["secrets"]
+    resources: ["secret"]
     resourceNames: ["{{ .Release.Name }}-cluster"]
     verbs:
       - list
