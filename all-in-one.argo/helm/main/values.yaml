@@ -57,7 +57,7 @@ auth:
   enabled: true
 
 glance:
-  enable: true
+  enabled: true
 
 traefik:
   enabled: true
