@@ -4,7 +4,7 @@ metadata:
   name: "{{ .Release.Name }}"
   namespace: "{{ .Release.Namespace }}"
   labels:
-    {{- range $key, $value := .Values.kubernetes.labels }}
+    {{- range $key, $value := .Values.cluster.labels }}
     {{ $key }}: {{ $value }}
     {{- end }}
   annotations:
