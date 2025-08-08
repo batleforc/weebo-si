@@ -24,7 +24,7 @@ content: |
               sites:
                 - title: Netbird
                   url: https://netbird.4.weebo.fr
-                  icon: si:netbird
+                  icon: si:wireguard
                 - title: Authentik
                   url: https://login.4.weebo.fr/
                   icon: si:authentik
@@ -33,16 +33,16 @@ content: |
                   icon: si:vault
                 - title: ArgoCD
                   url: https://argo.4.weebo.fr/
-                  icon: si:argocd
+                  icon: si:argo
                 - title: Omni
                   url: https://omni.4.weebo.fr/
-                  icon: si:omni
+                  icon: si:talos
                 - title: Traefik Dashboard
                   url: http://4.weebo.fr/dashboard/
-                  icon: si:traefik
+                  icon: si:traefikproxy
                 - title: Kubevirt Manager
                   url: https://kubevirt-manager.4.weebo.fr/
-                  icon: si:kubevirt
+                  icon: mdi:server-outline
 
             - type: bookmarks
               groups:
