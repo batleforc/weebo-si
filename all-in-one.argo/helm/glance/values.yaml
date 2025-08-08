@@ -17,6 +17,13 @@ content: |
           widgets:
             - type: search
               autofocus: true
+              bangs:
+                - type: Youtube
+                  shortcut: "!yt"
+                  query: "https://www.youtube.com/results?search_query={QUERY}"
+                - type: Reddit
+                  shortcut: "!rdt"
+                  query: "https://www.reddit.com/search?q={QUERY}"
 
             - type: monitor
               cache: 1m
@@ -46,27 +53,29 @@ content: |
 
             - type: bookmarks
               groups:
-                - title: General
+                - title: Projet Weebo SI
                   links:
-                    - title: Gmail
-                      url: https://mail.google.com/mail/u/0/
-                    - title: Amazon
-                      url: https://www.amazon.com/
-                    - title: Github
-                      url: https://github.com/
-                - title: Entertainment
+                    - title: Weebo SI Github
+                      url: https://github.com/batleforc/weebo-si
+                    - title: Doc
+                      url: https://batleforc.github.io/weebo-si/?utm_source=Glance&utm_medium=about_link&utm_campaign=weebo-si
+                    - title: Twitch
+                      url: https://www.twitch.tv/collections/Gha3LW0WLRh8hg
+                    - title: Youtube
+                      url: https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo
+                - title: Inspiration
                   links:
-                    - title: YouTube
-                      url: https://www.youtube.com/
-                    - title: Prime Video
-                      url: https://www.primevideo.com/
-                    - title: Disney+
-                      url: https://www.disneyplus.com/
+                    - title: Une tasse de café
+                      url: https://une-tasse-de.cafe/
+                    - title: Stephane Robert
+                      url: https://blog.stephane-robert.info/
+                    - title: Other
+                      url: https://batleforc.github.io/weebo-si/0.introduction/sources.html
                 - title: Social
                   links:
+                    - title: BlueSky
+                      url: https://bsky.app/profile/maxweebo.bsky.social
+                    - title: Github
+                      url: https://github.com/batleforc
                     - title: Reddit
-                      url: https://www.reddit.com/
-                    - title: Twitter
-                      url: https://twitter.com/
-                    - title: Instagram
-                      url: https://www.instagram.com/
+                      url: https://www.reddit.com/user/Maxweebo/
