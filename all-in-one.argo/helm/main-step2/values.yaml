@@ -51,6 +51,10 @@ auth:
 glance:
   enabled: true
 
+cluster:
+  che:
+    enabled: true
+
 traefik:
   enabled: true
   version: 36.1.0

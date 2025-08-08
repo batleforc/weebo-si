@@ -1,8 +1,8 @@
-{{- if .Values.cluster.che.enabled -}}
+{{- if .Values.glance.enabled -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: che-cluster
+  name: glance
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "1"
@@ -10,12 +10,12 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/batleforc/weebo-si'
-    path: 'all-in-one.argo/helm/cluster-tpl'
+    path: 'all-in-one.argo/helm/glance'
     helm:
-      releaseName: che-cluster
+      releaseName: glance
   destination:
     name: in-cluster
-    namespace: 'che'
+    namespace: 'glance'
   syncPolicy:
     automated:
       prune: false

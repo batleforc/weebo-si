@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: "{{ .Release.Name }}-create-sa-job"
-  namespace: "{{ .Values.cluster.namespace }}"
+  namespace: "{{ .Release.Namespace }}"
   annotations:
     argocd.argoproj.io/hook: PostSync
 spec:

@@ -1,7 +1,7 @@
 kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-create-sa
-  namespace: "{{ .Values.cluster.namespace }}"
+  namespace: "{{ .Release.Namespace }}"
 apiVersion: v1
 data:
   manifest.j2: |

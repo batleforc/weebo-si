@@ -2,7 +2,7 @@ apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
 kind: KubevirtMachineTemplate
 metadata:
   name: "{{ .Release.Name }}-infra"
-  namespace: "{{ .Values.cluster.namespace }}"
+  namespace: "{{ .Release.Namespace }}"
 spec:
   template:
     spec:
@@ -10,7 +10,7 @@ spec:
         checkStrategy: none
       virtualMachineTemplate:
         metadata:
-          namespace: "{{ .Values.cluster.namespace }}"
+          namespace: "{{ .Release.Namespace }}"
         spec:
           dataVolumeTemplates:
             - metadata:

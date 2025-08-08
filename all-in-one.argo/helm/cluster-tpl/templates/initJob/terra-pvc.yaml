@@ -2,7 +2,7 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: "create-sa-pvc-{{ .Release.Name }}"
-  namespace: "{{ .Values.cluster.namespace }}"
+  namespace: "{{ .Release.Namespace }}"
   annotations:
     argocd.argoproj.io/ignore-healthcheck: "true"
 spec:
