@@ -33,7 +33,7 @@ spec:
               domain:
                 cpu:
                   cores: {{ .Values.cluster.controlPlane.cpu.cores }}
-                  sockets: {{ .Values.cluster.controlPlane.cpu.sockets }}
+                  threads: {{ .Values.cluster.controlPlane.cpu.threads }}
                 devices:
                   networkInterfaceMultiqueue: true
                   disks:

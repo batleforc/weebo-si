@@ -21,7 +21,7 @@ cluster:
     storage: 50Gi
     cpu:
       cores: 2
-      sockets: 2
+      threads: 2
   bootstrap:
     vaultProviderVersion: "4.4.0"
   worker:
