@@ -33,10 +33,10 @@ spec:
               domain:
                 resources:
                   requests:
-                    memory: { { .Values.cluster.controlPlane.ram } }
+                    memory: {{ .Values.cluster.controlPlane.ram }}
                 cpu:
-                  cores: { { .Values.cluster.controlPlane.cpu.cores } }
-                  threads: { { .Values.cluster.controlPlane.cpu.threads } }
+                  cores: {{ .Values.cluster.controlPlane.cpu.cores }}
+                  threads: {{ .Values.cluster.controlPlane.cpu.threads }}
                 devices:
                   networkInterfaceMultiqueue: true
                   disks:
