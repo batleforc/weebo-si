@@ -17,9 +17,6 @@ spec:
     name: in-cluster
     namespace: 'glance'
   syncPolicy:
-    automated:
-      prune: false
-      selfHeal: false
     syncOptions:
     - RespectIgnoreDifferences=true
 {{- end -}}
