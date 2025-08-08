@@ -31,6 +31,9 @@ spec:
           template:
             spec:
               domain:
+                resources:
+                  requests:
+                    memory: {{ .Values.cluster.controlPlane.ram }}
                 cpu:
                   cores: {{ .Values.cluster.controlPlane.cpu.cores }}
                   threads: {{ .Values.cluster.controlPlane.cpu.threads }}
