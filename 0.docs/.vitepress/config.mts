@@ -39,6 +39,7 @@ export default defineConfig({
     "The nearly pefect dev env made to test new cool stuff and further",
   base: "/weebo-si/",
   head: headers,
+  lastUpdated: true,
   markdown: {
     theme: {
       dark: "catppuccin-mocha",
