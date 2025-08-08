@@ -17,13 +17,12 @@ spec:
                 name: "boot-volume"
               spec:
                 pvc:
-                  volumeMode: Block
+                  volumeMode: Filesystem
                   accessModes:
                     - ReadWriteOnce
                   resources:
                     requests:
                       storage: "{{ .Values.cluster.controlPlane.storage }}"
-                  storageClassName: "{{ .Values.cluster.kubevirt.storageClassName }}"
                 source:
                   http:
                     url: "{{ .Values.cluster.kubevirt.talosQcow2 }}"
