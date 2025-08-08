@@ -82,8 +82,9 @@ content: |
                       url: https://github.com/batleforc
                     - title: Reddit
                       url: https://www.reddit.com/user/Maxweebo/
-            - type: Release
-              groups:
+
+            - size: full
+              widgets:
                 - type: releases
                   show-source-icon: true
                   repositories:
