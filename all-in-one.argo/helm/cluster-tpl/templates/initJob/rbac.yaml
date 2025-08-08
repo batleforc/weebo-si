@@ -2,6 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: {{ .Release.Name }}-cluster-role
+  namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 rules:
