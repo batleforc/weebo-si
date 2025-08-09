@@ -18,7 +18,7 @@ resource "netbird_setup_key" "che-cluster-peer" {
   usage_limit            = 0
 }
 
-resource "vault_kv_secret_v2" "netbird" {
+resource "vault_kv_secret_v2" "che-cluster-peer" {
   mount = "mc-authentik"
   name  = "che/sub"
   data_json = jsonencode(
