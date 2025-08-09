@@ -20,3 +20,4 @@ configMapGenerator:
       - ./terra-map/group.tf
       - ./terra-map/kubernetes-peer.tf
       - ./terra-map/dns.tf
+      - ./terra-map/che-cluster.tf

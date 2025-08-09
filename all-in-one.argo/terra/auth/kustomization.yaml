@@ -27,3 +27,4 @@ configMapGenerator:
       - ./terra-map/kubevirt-manager.tf
       - ./terra-map/outpost.tf
       - ./terra-map/glance.tf
+      - ./terra-map/che-cluster.tf
