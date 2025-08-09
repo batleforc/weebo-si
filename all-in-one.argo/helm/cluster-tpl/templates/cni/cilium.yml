@@ -20,6 +20,8 @@ spec:
     helm:
       releaseName: cilium
       valuesObject:
+        operator:
+          replicas: {{ .Values.cluster.controlPlane.replicas}}
         ipam:
           mode: kubernetes
         kubeProxyReplacement: true
