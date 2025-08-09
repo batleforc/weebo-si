@@ -94,7 +94,7 @@ traefik:
       version: v1.4.4
     sablier:
       moduleName: github.com/sablierapp/sablier
-      version: v1.9.0
+      version: v1.10.1
 
 vault:
   enabled: false
