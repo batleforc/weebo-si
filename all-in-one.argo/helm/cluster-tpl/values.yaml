@@ -37,7 +37,7 @@ cluster:
 
 cilium:
   enabled: true
-  version: "v1.17.4"
+  version: "v1.17.6"
   ipv6: false
   ipv4: true
 
@@ -54,6 +54,22 @@ storage:
     enabled: true
   longhorn:
     enabled: false
+
+traefik:
+  enabled: true
+  version: 37.0.0
+  ips: "uneipv6"
+  kubeCRD:
+    enabled: true
+  kubeIngress:
+    enabled: true
+  gatewayAPI:
+    enabled: false
+
+certManager:
+  enabled: true
+  version: 1.18.0
+  installCRDs: true
 
 certificate:
   rootCA:

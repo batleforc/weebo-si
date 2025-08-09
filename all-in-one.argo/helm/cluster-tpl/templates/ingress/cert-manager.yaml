@@ -1,0 +1,32 @@
+{{- if .Values.certManager.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - CreateNamespace=true
+  source:
+    chart: cert-manager
+    repoURL: https://charts.jetstack.io
+    targetRevision: {{ .Values.certManager.version }}
+    helm:
+      releaseName: cert-manager
+      valuesObject:
+        crds:
+          enabled: {{ .Values.certManager.installCRDs }}
+        prometheus:
+          enabled: false
+          servicemonitor:
+            enabled: true
+  destination:
+    name: in-cluster
+    namespace: cert-manager
+
+{{- end -}}

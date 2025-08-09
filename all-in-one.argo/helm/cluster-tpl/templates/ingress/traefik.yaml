@@ -1,0 +1,68 @@
+{{- if .Values.traefik.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-traefik
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - CreateNamespace=true
+  source:
+    chart: traefik
+    repoURL: https://traefik.github.io/charts
+    targetRevision: {{ .Values.traefik.version }}
+    helm:
+      releaseName: traefik
+      valuesObject:
+        ingressRoute:
+          dashboard:
+            enabled: true
+            middlewares:
+              - name: vpn-only
+                namespace: traefik
+            entryPoints:
+            - web
+        service:
+          annotations:
+            lbipam.cilium.io/sharing-key: "weebo-gate"
+            lbipam.cilium.io/ips: "{{ .Values.traefik.ips }}"
+            lbipam.cilium.io/sharing-cross-namespace: "*"
+        logs:
+          general:
+            format: json
+          access:
+            enabled: true
+            format: json
+            fields:
+              headers:
+                defaultMode: keep
+                names:
+                  Authorization: redact
+        providers:
+          kubernetesCRD:
+            enabled: {{ .Values.traefik.kubeCRD.enabled }}
+            allowCrossNamespace: true
+          kubernetesIngress:
+            enabled: {{ .Values.traefik.kubeIngress.enabled }}
+            allowEmptyServices: true
+            allowExternalNameServices: true
+            publishedService:
+              enabled: true
+          kubernetesGateway:
+            enabled: {{ .Values.traefik.gatewayAPI.enabled }}
+        #experimental:
+          # {{- range $name, $plugin := .Values.traefik.plugins }}
+          # plugins:
+          #   {{ $name }}:
+          #     moduleName: {{ $plugin.moduleName }}
+          #     version: {{ $plugin.version }}
+          # {{- end }}
+  destination:
+    name: {{ .Release.Name }}
+    namespace: 'default'
+{{- end -}}

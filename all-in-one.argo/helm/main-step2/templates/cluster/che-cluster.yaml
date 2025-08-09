@@ -13,6 +13,9 @@ spec:
     path: 'all-in-one.argo/helm/cluster-tpl'
     helm:
       releaseName: che-cluster
+      valuesObject:
+        traefik:
+          ips: "10.96.166.39"
   destination:
     name: in-cluster
     namespace: 'che'
