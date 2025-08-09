@@ -7,7 +7,7 @@ resource "netbird_group" "batleforc" {
 }
 
 data "netbird_peer" "phone" {
-  ip = "100.113.141.65"
+  ip = "100.113.51.239"
 }
 
 data "netbird_peer" "pc" {
