@@ -46,7 +46,7 @@ spec:
             enabled: false
           hostRoot: /sys/fs/cgroup
         k8sServiceHost: "localhost"
-        k8sServicePort: 6443
+        k8sServicePort: 7445
         ipv4:
           enabled: {{ .Values.cilium.ipv4 }}
         ipv6:
