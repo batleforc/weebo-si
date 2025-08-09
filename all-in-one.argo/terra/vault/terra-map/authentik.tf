@@ -54,10 +54,10 @@ path "mc-authentik/data/{{identity.entity.aliases.auth_kubernetes_225a14d3.metad
 path "mc-authentik/metadata/{{identity.entity.aliases.auth_kubernetes_225a14d3.metadata.service_account_namespace}}/sub" {
   capabilities = ["read","list"]
 }
-path "mc-authentik/metadata/*/vpn" {
+path "mc-authentik/metadata/+/vpn" {
   capabilities = ["read","list"]
 }
-path "mc-authentik/data/*/vpn" {
+path "mc-authentik/data/+/vpn" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
 EOT
