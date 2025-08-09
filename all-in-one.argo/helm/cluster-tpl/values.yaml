@@ -37,7 +37,7 @@ cluster:
 
 cilium:
   enabled: true
-  version: "v1.18.0"
+  version: "v1.17.4"
   ipv6: false
   ipv4: true
 
