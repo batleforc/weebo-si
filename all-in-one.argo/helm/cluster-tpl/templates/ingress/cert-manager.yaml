@@ -26,7 +26,7 @@ spec:
           servicemonitor:
             enabled: true
   destination:
-    name: in-cluster
+    name: {{ .Release.Name }}
     namespace: cert-manager
 
 {{- end -}}
