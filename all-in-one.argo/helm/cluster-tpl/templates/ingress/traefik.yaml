@@ -55,13 +55,6 @@ spec:
               enabled: true
           kubernetesGateway:
             enabled: {{ .Values.traefik.gatewayAPI.enabled }}
-        #experimental:
-          # {{- range $name, $plugin := .Values.traefik.plugins }}
-          # plugins:
-          #   {{ $name }}:
-          #     moduleName: {{ $plugin.moduleName }}
-          #     version: {{ $plugin.version }}
-          # {{- end }}
   destination:
     name: {{ .Release.Name }}
     namespace: 'default'
