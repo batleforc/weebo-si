@@ -59,9 +59,9 @@ data:
                 value:
                   enabled: true
                   manifests:
-                    {{ range .Values.cluster.talos.manifests }}
+                    {{- range .Values.cluster.talos.manifests }}
                     - {{ . }}
-                    {{ end }}
+                    {{- end }}
               {{ if .Values.cilium.enabled -}}
               - op: add
                 path: /cluster/network/cni
