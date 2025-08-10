@@ -1,0 +1,67 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ .Release.Name }}-auth-secret
+  namespace: {{ .Release.Namespace }}
+spec:
+  refreshPolicy: Periodic
+  refreshInterval: 24h
+  secretStoreRef:
+    name: {{ .Release.Name }}-store
+  target:
+    name: {{ .Release.Name }}-auth-patch
+    template:
+      type: Opaque
+      data:
+        auth-patch.yaml: |
+          - |
+            - op: add
+              path: /cluster/apiServer/extraArgs
+              value:
+                authentication-config: /var/lib/apiserver/authentication.yaml
+            - op: add
+              path: /cluster/apiServer/extraVolumes
+              value:
+                - hostPath: /var/lib/apiserver
+                  mountPath: /var/lib/apiserver
+                  readonly: true
+            - op: add
+              path: /machine/files
+              value:
+                - content: |
+                    apiVersion: apiserver.config.k8s.io/v1beta1
+                    kind: AuthenticationConfiguration
+                    jwt:
+                    - issuer:
+                        url: '{{ printf "{{"}} .url }}'
+                        audiences:
+                            - '{{ printf "{{"}} .client_id }}'
+                        audienceMatchPolicy: MatchAny
+                        claimValidationRules:
+                        - expression: "claims.email_verified == true"
+                            message: "email must be verified"
+                        claimMappings:
+                        username:
+                            expression: '"weebsso:" + claims.email' # équivalent de oidc-username-claim (+ un suffixe)
+                        groups:
+                            expression: "claims.groups" # équivalent de oidc-groups-claim
+                        uid:
+                            expression: "claims.sub"
+                        userValidationRules:
+                        - expression: "!user.username.startsWith('system:')"
+                            message: "username cannot used reserved system: prefix"
+                        - expression: "user.groups.all(group, !group.startsWith('system:'))"
+                            message: "groups cannot used reserved system: prefix"
+                  permissions: 0o444
+                  path: /var/lib/apiserver/authentication.yaml
+                  op: create
+
+  data:
+    - secretKey: url
+      remoteRef:
+        key: mc-authentik/{{ .Release.Namespace }}/auth
+        property: AUTHENTIK_URL
+    - secretKey: client_id
+      remoteRef:
+        key: mc-authentik/{{ .Release.Namespace }}/auth
+        property: AUTHENTIK_CLIENT_ID
