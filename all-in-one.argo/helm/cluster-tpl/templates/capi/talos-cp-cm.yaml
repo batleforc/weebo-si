@@ -12,7 +12,7 @@ data:
       name: "{{ .Release.Name }}-cp-test"
       namespace: "{{ .Release.Namespace }}"
       annotations:
-        argocd.argoproj.io/tracking-id: "{{ .Release.Name }}:controlplane.cluster.x-k8s.io/TalosControlPlane:{{ .Release.Namespace }}/{{ .Release.Name }}-cp"
+        argocd.argoproj.io/tracking-id: "{{ .Release.Name }}:controlplane.cluster.x-k8s.io/TalosControlPlane:{{ .Release.Namespace }}/{{ .Release.Name }}-cp-test"
     spec:
       version: "{{ .Values.cluster.kubernetesVersion }}"
       replicas: {{ .Values.cluster.controlPlane.replicas }}
