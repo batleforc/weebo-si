@@ -9,7 +9,7 @@ data:
     kind: TalosControlPlane
     apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
     metadata:
-      name: "{{ .Release.Name }}-cp"
+      name: "{{ .Release.Name }}-cp-test"
       namespace: "{{ .Release.Namespace }}"
       annotations:
         argocd.argoproj.io/tracking-id: "{{ .Release.Name }}:controlplane.cluster.x-k8s.io/TalosControlPlane:{{ .Release.Namespace }}/{{ .Release.Name }}-cp"
