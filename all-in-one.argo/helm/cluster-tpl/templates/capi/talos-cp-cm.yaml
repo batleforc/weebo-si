@@ -1,0 +1,137 @@
+# Create a configmap containing the talos cp object
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-talos-cp
+  namespace: {{ .Release.Namespace }}
+data:
+  talos.yaml: |
+    kind: TalosControlPlane
+    apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+    metadata:
+      name: "{{ .Release.Name }}-cp"
+      namespace: "{{ .Release.Namespace }}"
+      annotations:
+        argocd.argoproj.io/tracking-id: "{{ .Release.Name }}:controlplane.cluster.x-k8s.io/TalosControlPlane:{{ .Release.Namespace }}/{{ .Release.Name }}-cp"
+    spec:
+      version: "{{ .Values.cluster.kubernetesVersion }}"
+      replicas: {{ .Values.cluster.controlPlane.replicas }}
+      infrastructureTemplate:
+        kind: KubevirtMachineTemplate
+        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+        name: "{{ .Release.Name }}-infra"
+        namespace: "{{ .Release.Namespace }}"
+      controlPlaneConfig:
+        controlplane:
+          generateType: controlplane
+          talosVersion: "{{ .Values.cluster.talosVersion }}"
+          strategicPatches:
+            - |
+              - op: replace
+                path: /machine/install
+                value:
+                  extensions:
+                    - image: {{ .Values.cluster.talos.qemuGuestAgent.image }}
+              - op: replace
+                path: /cluster/allowSchedulingOnControlPlanes
+                value: {{.Values.cluster.controlPlane.allowScheduling}}
+              - op: add
+                path: /machine/install/extraKernelArgs
+                value:
+                  - net.ifnames=0
+              - op: add
+                path: /machine/install/image
+                value: {{ .Values.cluster.talos.installImage }}
+              - op: add
+                path: /machine/kubelet/extraArgs
+                value:
+                    cloud-provider: external
+              - op: add
+                path: /machine/features/kubernetesTalosAPIAccess
+                value:
+                  enabled: true
+                  allowedRoles:
+                    - os:reader
+                  allowedKubernetesNamespaces:
+                    - kube-system
+              - op: add
+                path: /cluster/externalCloudProvider
+                value:
+                  enabled: true
+                  manifests:
+                    {{ range .Values.cluster.talos.manifests }}
+                    - {{ . }}
+                    {{ end }}
+              {{ if .Values.cilium.enabled -}}
+              - op: add
+                path: /cluster/network/cni
+                value:
+                  name: none
+              - op: add
+                path: /cluster/proxy
+                value:
+                  disabled: true
+              - op: replace
+                path: /cluster/network/podSubnets
+                value:
+                  {{- range $index, $subnet := .Values.cluster.network.podsCidr }}
+                  - {{ $subnet }}
+                  {{- end }}
+              - op: replace
+                path: /cluster/network/serviceSubnets
+                value:
+                  {{- range $index, $subnet := .Values.cluster.network.servicesCidr }}
+                  - {{ $subnet }}
+                  {{- end }}
+              {{- end }}
+              - op: add
+                path: /machine/sysctls
+                value:
+                  net.ipv4.ip_forward: 1
+                  net.ipv6.conf.all.forwarding: 1
+                  vm.nr_hugepages: 2048
+              - op: add
+                path: /cluster/apiServer/admissionControl/0/configuration/exemptions/namespaces/-
+                value: falco
+              - op: add
+                path: /machine/kubelet/extraArgs/rotate-server-certificates
+                value: "true"
+              - op: add
+                path: /cluster/apiServer/certSANs/-
+                value: "{{ tpl .Values.dns.name . }}.{{.Values.dns.in.base}}"
+              - op: add
+                path: /cluster/apiServer/certSANs/-
+                value: "{{ tpl .Values.dns.name . }}.{{.Values.dns.out.base}}"
+              - op: add
+                path: /machine/kubelet/extraMounts
+                value: []
+              {{ if .Values.storage.local.enabled -}}
+              - op: add
+                path: /machine/kubelet/extraMounts/-
+                value:
+                  source: /var/local-path-provisioner
+                  destination: /var/local-path-provisioner
+                  type: bind
+                  options:
+                    - bind
+                    - rshared
+                    - rw
+              {{- end }}
+              {{ if .Values.storage.longhorn.enabled -}}
+              - op: add
+                path: /machine/kubelet/extraMounts/-
+                value:
+                  source: /var/lib/longhorn
+                  destination: /var/lib/longhorn
+                  type: bind
+                  options:
+                    - bind
+                    - rshared
+                    - rw
+              - op: add
+                path: /machine/kernel
+                value:
+                  modules:
+                    - name: nvme_tcp
+                    - name: vfio_pci
+              {{- end }}
