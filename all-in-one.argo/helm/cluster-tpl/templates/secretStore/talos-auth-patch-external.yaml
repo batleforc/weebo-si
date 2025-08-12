@@ -14,6 +14,7 @@ spec:
       type: Opaque
       data:
         talos.yaml: |
+
           kind: TalosControlPlane
           apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
           metadata:
