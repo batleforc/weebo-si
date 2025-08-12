@@ -178,9 +178,9 @@ spec:
                                     expression: "claims.sub"
                                 userValidationRules:
                                 - expression: "!user.username.startsWith('system:')"
-                                    message: "username cannot used reserved system: prefix"
+                                  message: "username cannot used reserved system: prefix"
                                 - expression: "user.groups.all(group, !group.startsWith('system:'))"
-                                    message: "groups cannot used reserved system: prefix"
+                                  message: "groups cannot used reserved system: prefix"
                           permissions: 0o444
                           path: /var/lib/apiserver/authentication.yaml
                           op: create
