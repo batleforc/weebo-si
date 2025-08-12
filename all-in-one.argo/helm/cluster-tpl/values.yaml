@@ -13,7 +13,7 @@ cluster:
   kubevirt:
     rootVolumeSize: 50Gi
     storageClassName: local-path
-    talosQcow2: https://factory.talos.dev/image/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3/v1.10.6/openstack-amd64.qcow2 #https://factory.talos.dev/image/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3/v1.10.6/nocloud-amd64.qcow2
+    talosQcow2: https://factory.talos.dev/image/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3/v1.10.6/nocloud-amd64.qcow2 #https://factory.talos.dev/image/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3/v1.10.6/openstack-amd64.qcow2 #
   controlPlane:
     replicas: 1
     allowScheduling: true
@@ -27,7 +27,7 @@ cluster:
   worker:
     replicas: 0
   talos:
-    installImage: factory.talos.dev/openstack-installer/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3:v1.10.6 #factory.talos.dev/nocloud-installer/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3:v1.10.6
+    installImage: factory.talos.dev/nocloud-installer/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3:v1.10.6 #factory.talos.dev/openstack-installer/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3:v1.10.6 #
     qemuGuestAgent:
       image: ghcr.io/siderolabs/qemu-guest-agent:10.0.2
     manifests:
