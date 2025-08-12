@@ -107,3 +107,9 @@ tasks:
       ns: '{{.ns}}'
     cmds:
       - kubectl -n {{.ns}} get secret {{.cluster}}-kubeconfig -o yaml | yq .data.value | base64 -d > ./kubeconfig.{{.cluster}}.yaml
+  capi:get-talosconfig:
+    vars:
+      cluster: '{{.cluster}}'
+      ns: '{{.ns}}'
+    cmds:
+      - kubectl -n {{.ns}} get secret {{.cluster}}-talosconfig -o yaml | yq .data.talosconfig | base64 -d > ./talosconfig.{{.cluster}}.yaml
