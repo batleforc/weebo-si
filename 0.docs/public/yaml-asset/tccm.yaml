@@ -52,7 +52,7 @@ data:
               values:
                 - openstack
         platformMetadata:
-          ProviderID: "kubevirt://{{ .hostname }}"
+          ProviderID: "kubevirt://{{ .Hostname }}"
 ---
 # Source: talos-cloud-controller-manager/templates/role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
