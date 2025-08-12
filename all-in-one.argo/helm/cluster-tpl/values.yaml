@@ -58,7 +58,7 @@ storage:
   local:
     enabled: true
   longhorn:
-    enabled: false
+    enabled: true
 
 traefik:
   enabled: true
