@@ -17,6 +17,7 @@ terraform.tfstate.backup
 kubeconfig
 talos-config.yaml
 kubeconfig.*.yml
+kubeconfig.*.yaml
 talosconfig.*.yml
 
 0.keepassxc
