@@ -57,5 +57,5 @@ spec:
             enabled: {{ .Values.traefik.gatewayAPI.enabled }}
   destination:
     name: {{ .Release.Name }}
-    namespace: 'default'
+    namespace: 'traefik'
 {{- end -}}
