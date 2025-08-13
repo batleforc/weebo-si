@@ -268,12 +268,28 @@ func main() {
 			if err != nil {
 				return "", fmt.Errorf("failed to marshal JSON patch config: %w", err)
 			}
+
 			return string(swapJsonPatchConfig), nil
 		}).(pulumi.StringOutput)
 
 		_, err = local.NewFile(ctx, "patchJson", &local.FileArgs{
 			Content:  jsonPatchConfig,
 			Filename: pulumi.String("patch.json"),
+		})
+		if err != nil {
+			return err
+		}
+
+		jsonPatchUserVolume, err := json.Marshal(map[string]interface{}{
+			"apiVersion": "v1alpha1",
+			"kind":       "UserVolumeConfig",
+			"name":       "longhorn",
+			"provisioning": map[string]interface{}{
+				"diskSelector": map[string]interface{}{
+					"match": "disk.dev_path == '/dev/sdb'",
+				},
+				"minSize": "450GB",
+			},
 		})
 		if err != nil {
 			return err
@@ -287,6 +303,7 @@ func main() {
 			Endpoint:                  pulumi.String(serverNetwork.Routing.Ipv4.Ip),
 			ConfigPatches: pulumi.StringArray{
 				jsonPatchConfig,
+				pulumi.String(string(jsonPatchUserVolume)),
 			},
 		}, pulumi.DependsOn([]pulumi.Resource{
 			reinstall,
