@@ -24,7 +24,7 @@ spec:
       valueFiles:
       - $values/capi.argo/infra/open-unison/val/values.yaml
     repoURL: https://nexus.tremolo.io/repository/helm
-    targetRevision: 3.0.16
+    targetRevision: 3.0.18
 
   - chart: orchestra
     helm:
