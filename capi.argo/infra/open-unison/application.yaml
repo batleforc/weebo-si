@@ -40,7 +40,7 @@ spec:
       valueFiles:
       - $values/capi.argo/infra/open-unison/val/values.yaml
     repoURL: https://nexus.tremolo.io/repository/helm
-    targetRevision: 2.3.67
+    targetRevision: 2.3.71
 
   - repoURL: https://github.com/batleforc/weebo-si.git
     path: capi.argo/infra/open-unison/val/
