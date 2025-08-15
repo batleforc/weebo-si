@@ -5,10 +5,12 @@ metadata:
   namespace: "{{ .Release.Namespace }}"
 spec:
   ports:
-    - port: 8080
+    - name: http
+      port: 8080
       protocol: TCP
       targetPort: 80
-    - port: 8443
+    - name: https
+      port: 8443
       protocol: TCP
       targetPort: 443
   selector:
