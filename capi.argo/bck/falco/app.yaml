@@ -10,7 +10,7 @@ spec:
   source:
     chart: falco
     repoURL: https://falcosecurity.github.io/charts
-    targetRevision: 4.21.3
+    targetRevision: 6.2.5
     helm:
       releaseName: falco
       valuesObject:
@@ -41,9 +41,9 @@ spec:
           config:
             artifact:
               install:
-                refs: [ falco-rules:latest, falco-incubating-rules:latest, k8saudit-rules:latest ]
+                refs: [falco-rules:latest, falco-incubating-rules:latest, k8saudit-rules:latest]
               follow:
-                refs: [ falco-rules:latest, falco-incubating-rules:latest, k8saudit-rules:latest ]
+                refs: [falco-rules:latest, falco-incubating-rules:latest, k8saudit-rules:latest]
 
         services:
         - name: k8saudit-webhook
@@ -68,7 +68,7 @@ spec:
           - name: json
             library_path: libjson.so
             init_config: ""
-          load_plugins: [ k8saudit, json ]
+          load_plugins: [k8saudit, json]
 
           customRules:
             allow_argo_capi.yaml: |
