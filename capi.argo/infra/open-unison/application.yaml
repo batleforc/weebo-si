@@ -32,7 +32,7 @@ spec:
       valueFiles:
       - $values/capi.argo/infra/open-unison/val/values.yaml
     repoURL: https://nexus.tremolo.io/repository/helm
-    targetRevision: 3.1.14
+    targetRevision: 3.1.17
 
   - chart: orchestra-login-portal
     helm:
