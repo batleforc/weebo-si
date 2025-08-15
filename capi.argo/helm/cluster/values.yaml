@@ -53,7 +53,7 @@ dns:
   name: "{{.Release.Name}}"
 
 cilium:
-  version: 1.17.5
+  version: 1.18.0
   enabled: true
   ipv6: false
   ipv4: true
