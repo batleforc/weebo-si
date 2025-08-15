@@ -72,9 +72,9 @@ certificate:
 
 kyverno:
   enabled: false
-  version: 3.4.4
-  policies: 3.4.4
-  reporter: 3.2.1
+  version: 3.5.0
+  policies: 3.5.0
+  reporter: 3.4.0
 
 certManager:
   enabled: true
