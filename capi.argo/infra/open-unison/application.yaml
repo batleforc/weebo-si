@@ -24,7 +24,7 @@ spec:
       valueFiles:
       - $values/capi.argo/infra/open-unison/val/values.yaml
     repoURL: https://nexus.tremolo.io/repository/helm
-    targetRevision: 3.0.16
+    targetRevision: 3.0.18
 
   - chart: orchestra
     helm:
@@ -32,7 +32,7 @@ spec:
       valueFiles:
       - $values/capi.argo/infra/open-unison/val/values.yaml
     repoURL: https://nexus.tremolo.io/repository/helm
-    targetRevision: 3.1.14
+    targetRevision: 3.1.17
 
   - chart: orchestra-login-portal
     helm:
@@ -40,7 +40,7 @@ spec:
       valueFiles:
       - $values/capi.argo/infra/open-unison/val/values.yaml
     repoURL: https://nexus.tremolo.io/repository/helm
-    targetRevision: 2.3.67
+    targetRevision: 2.3.71
 
   - repoURL: https://github.com/batleforc/weebo-si.git
     path: capi.argo/infra/open-unison/val/
