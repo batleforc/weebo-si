@@ -12,7 +12,7 @@
     argocd_version: "v3.1.0"
     updatecli_version: "v0.105.1"
     tofu_version: "1.10.5"
-    vault_version: "1.20.1"
+    vault_version: "1.20.2"
     ciliumcli_version: "v0.18.4"
     omnictl_version: "v1.0.0"
   tasks:
