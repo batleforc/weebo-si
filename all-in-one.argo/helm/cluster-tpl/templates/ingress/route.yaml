@@ -39,7 +39,7 @@ spec:
       middlewares:
         - name: vpn-only
           namespace: traefik
-    - match: HostSNI("{{ $outDns }}") || HostSNIRegexp(`^.+{{ regexReplaceAll "." $outDns "\\." }}$`)
+    - match: HostSNI("{{ $outDns }}") || HostSNIRegexp(`^.+{{ regexReplaceAll "." $outDns "\." }}$`)
       services:
         - name: "{{ .Release.Name }}"
           port: 8080
