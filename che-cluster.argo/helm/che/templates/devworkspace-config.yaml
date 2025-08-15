@@ -1,0 +1,10 @@
+apiVersion: controller.devfile.io/v1alpha1
+kind: DevWorkspaceOperatorConfig
+metadata:
+  name: devworkspace-operator-config
+  namespace: devworkspace-controller
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+config:
+  routing:
+    clusterHostSuffix: "cluster.local"
