@@ -9,7 +9,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: HostSNI("{{ .$inDns }}") || HostSNIRegexp(`^.+{{ regexReplaceAll "\." .$inDns "\\." }}$`)
+    - match: HostSNI("{{ .$inDns }}") || HostSNIRegexp(`^.+{{ regexReplaceAll "\." .$inDns "\\." }}\$`)
       services:
         - name: "{{ .Release.Name }}"
           port: 8443
