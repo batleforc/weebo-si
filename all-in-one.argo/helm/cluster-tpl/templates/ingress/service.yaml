@@ -1,10 +1,12 @@
+{{ $inDns := print (tpl .Values.dns.name .) "." .Values.dns.in.base }}
+
 apiVersion: v1
 kind: Service
 metadata:
   name: "{{ .Release.Name }}"
   namespace: "{{ .Release.Namespace }}"
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: "{{ .Values.dns.name }}.{{ .Values.dns.in.base }},*.{{ .Values.dns.name }}.{{ .Values.dns.in.base }}"
+    external-dns.alpha.kubernetes.io/hostname: "{{ $inDns }},*.{{ $inDns }}"
 spec:
   ports:
     - name: http
