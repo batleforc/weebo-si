@@ -31,6 +31,7 @@ spec:
         - --source=crd
         - --domain-filter=weebo.poc
         - --managed-record-types=A
+        - --managed-record-types=AAAA
         - --managed-record-types=CNAME
         - --managed-record-types=NS
         - --managed-record-types=TXT

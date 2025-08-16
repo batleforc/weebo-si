@@ -1,0 +1,30 @@
+{{ $ip := split "," .Values.traefik.ips }}
+
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: weebo-poc
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  endpoints:
+  - dnsName: weebo.poc
+    recordTTL: 60
+    recordType: A
+    targets:
+    - {{ $ip[0] }}
+  - dnsName: "*.weebo.poc"
+    recordTTL: 60
+    recordType: A
+    targets:
+    - {{ $ip[0] }}
+  - dnsName: weebo.poc
+    recordTTL: 60
+    recordType: AAAA
+    targets:
+    - {{ $ip[1] }}
+  - dnsName: "*.weebo.poc"
+    recordTTL: 60
+    recordType: AAAA
+    targets:
+    - {{ $ip[1] }}
