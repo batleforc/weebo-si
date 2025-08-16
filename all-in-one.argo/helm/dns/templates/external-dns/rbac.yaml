@@ -16,6 +16,10 @@ rules:
   - watch
   - list
 - apiGroups:
+  - "discovery.k8s.io"
+  resources:
+  - endpointslices
+- apiGroups:
   - extensions
   - networking.k8s.io
   resources:
