@@ -9,6 +9,7 @@ metadata:
     external-dns.alpha.kubernetes.io/hostname: "{{ $inDns }},*.{{ $inDns }}"
     external-dns.alpha.kubernetes.io/internal-hostname: "{{ $inDns }},*.{{ $inDns }}"
 spec:
+  ipFamilyPolicy: DualStack
   ports:
     - name: http
       port: 8080
