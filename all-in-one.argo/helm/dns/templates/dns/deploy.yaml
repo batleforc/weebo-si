@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: dns-server
-          image: ubuntu/bind9:{{ .Values.bind9Version }}
+          image: {{ .Values.bind9.image }}:{{ .Values.bind9.tag }}
           ports:
             - name: dns-tcp
               containerPort: 53

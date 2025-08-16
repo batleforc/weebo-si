@@ -20,6 +20,10 @@ forwarders:
   #- 8.8.8.8
   #- 1.1.1.1
 
+bind9:
+  image: internetsystemsconsortium/bind9
+  tag: 9.21
+
 bind9Version: 9.18-22.04_beta
 
 externalDns:
