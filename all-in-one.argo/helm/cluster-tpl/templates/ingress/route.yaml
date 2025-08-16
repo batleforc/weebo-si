@@ -12,14 +12,14 @@ spec:
     - match: HostSNI("{{ $inDns }}") || HostSNIRegexp(`^.+\.{{ regexReplaceAll "\\." $inDns "\\." }}$`)
       services:
         - name: "{{ .Release.Name }}"
-          port: 8443
+          port: 443
       middlewares:
         - name: vpn-only
           namespace: traefik
     - match: HostSNI("{{ $outDns }}") || HostSNIRegexp(`^.\.+{{ regexReplaceAll "\\." $outDns "\\." }}$`)
       services:
         - name: "{{ .Release.Name }}"
-          port: 8443
+          port: 443
   tls:
     passthrough: true
 ---
@@ -35,13 +35,13 @@ spec:
     - match: HostSNI("{{ $inDns }}") || HostSNIRegexp(`^.+\.{{ regexReplaceAll "\\." $inDns "\\." }}$`)
       services:
         - name: "{{ .Release.Name }}"
-          port: 8080
+          port: 80
       middlewares:
         - name: vpn-only
           namespace: traefik
     - match: HostSNI("{{ $outDns }}") || HostSNIRegexp(`^.+\.{{ regexReplaceAll "\\." $outDns "\\." }}$`)
       services:
         - name: "{{ .Release.Name }}"
-          port: 8080
+          port: 80
   tls:
     passthrough: true
