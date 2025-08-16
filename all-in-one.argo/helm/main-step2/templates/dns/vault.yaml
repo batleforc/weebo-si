@@ -13,19 +13,19 @@ spec:
     recordTTL: 60
     recordType: A
     targets:
-    - {{ $ip[0] }}
+    - {{ $ip._0 }}
   - dnsName: "*.weebo.poc"
     recordTTL: 60
     recordType: A
     targets:
-    - {{ $ip[0] }}
+    - {{ $ip._0 }}
   - dnsName: weebo.poc
     recordTTL: 60
     recordType: AAAA
     targets:
-    - {{ $ip[1] }}
+    - {{ $ip._1 }}
   - dnsName: "*.weebo.poc"
     recordTTL: 60
     recordType: AAAA
     targets:
-    - {{ $ip[1] }}
+    - {{ $ip._1 }}
