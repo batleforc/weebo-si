@@ -11,6 +11,8 @@ zone:
                               60; expire
                               60 ) ; minimum
               IN      NS      ns.weebo.poc.
+      weebo.poc. 3600 IN      A       37.187.255.5
+      weebo.poc. 3600 IN      AAAA    2001:41d0:c:705::1
       ns              A       10.96.0.11
 
 forwarders:
