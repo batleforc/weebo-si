@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: "{{ .Release.Name }}"
   namespace: "{{ .Release.Namespace }}"
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "{{ .Values.dns.name }}.{{ .Values.dns.in.base }},*.{{ .Values.dns.name }}.{{ .Values.dns.in.base }}"
 spec:
   ports:
     - name: http
