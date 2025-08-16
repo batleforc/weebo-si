@@ -17,6 +17,9 @@ data:
         {{ . }};
         {{ end }}
       };
+      dnssec-validation auto;
+      dnssec-enable yes;
+      dnssec-lookaside auto;
     };
     {{ range $key, $value := .Values.zone }}
     zone "{{ $value.zone }}" {
