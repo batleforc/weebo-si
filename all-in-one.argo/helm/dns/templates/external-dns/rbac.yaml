@@ -19,6 +19,10 @@ rules:
   - "discovery.k8s.io"
   resources:
   - endpointslices
+  verbs:
+  - get
+  - watch
+  - list
 - apiGroups:
   - extensions
   - networking.k8s.io
