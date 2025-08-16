@@ -3,7 +3,7 @@ resource "netbird_nameserver_group" "main-test" {
   description = "Test Nameserver Group for Netbird"
   nameservers = [
     {
-      ip      = "10.96.0.10"
+      ip      = "10.96.0.11"
       ns_type = "udp"
       port    = 53
     }
