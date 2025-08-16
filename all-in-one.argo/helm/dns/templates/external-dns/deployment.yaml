@@ -29,6 +29,7 @@ spec:
         - --rfc2136-tsig-keyname=tsig-key
         - --rfc2136-tsig-axfr
         - --source=crd
+        - --source=service
         - --domain-filter=weebo.poc
         - --managed-record-types=A
         - --managed-record-types=AAAA
