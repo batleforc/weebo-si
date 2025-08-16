@@ -17,7 +17,7 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/batleforc/weebo-si'
-    path: 'capi.argo/helm/dns'
+    path: 'all-in-one.argo/helm/dns'
     helm:
       releaseName: in-dns
       valuesObject:

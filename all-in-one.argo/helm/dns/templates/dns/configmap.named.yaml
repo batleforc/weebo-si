@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: named-map
+  namespace: {{ .Release.Namespace }}
+data:
+  named.conf: |
+    include "/val/lib/bind/pri/tsig.key";
+    options {
+      directory "/var/cache/bind";
+      querylog yes;
+      listen-on port 53 { any; };
+      forwarders {
+        {{ range .Values.forwarders }}
+        {{ . }};
+        {{ end }}
+      };
+    };
+    {{ range $key, $value := .Values.zone }}
+    zone "{{ $value.zone }}" {
+      type primary;
+      file "/var/lib/bind/pri/{{$value.zone}}/{{ $key}}";
+      allow-transfer {
+        key "tsig-key";
+      };
+      update-policy {
+        grant tsig-key zonesub ANY;
+      };
+    };
+    {{ end }}

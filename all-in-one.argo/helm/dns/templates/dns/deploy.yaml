@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dns-server
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: dns-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dns-server
+  template:
+    metadata:
+      annotations:
+        checksum/config: '{{ include (print $.Template.BasePath "/dns/configmap.zone.yaml") . | sha256sum }}'
+        checksum/named: '{{ include (print $.Template.BasePath "/dns/configmap.named.yaml") . | sha256sum }}'
+      labels:
+        app: dns-server
+    spec:
+      containers:
+        - name: dns-server
+          image: ubuntu/bind9:{{ .Values.bind9Version }}
+          ports:
+            - name: dns-tcp
+              containerPort: 53
+              protocol: TCP
+            - name: dns-udp
+              containerPort: 53
+              protocol: UDP
+            - name: loopback
+              containerPort: 953
+          volumeMounts:
+            - name: named-map
+              mountPath: /etc/bind/named.conf
+              subPath: named.conf
+            # Create a volumeMount for each zone
+            {{- range $key, $value := .Values.zone }}
+            - name: zone-map
+              mountPath: "/var/lib/bind/pri/{{ $value.zone }}/{{ $key }}"
+              subPath: {{ $key }}
+            {{- end }}
+            - name: tsig-key
+              mountPath: /val/lib/bind/pri/tsig.key
+              subPath: tsig.key
+            - name: empty-dir
+              mountPath: /var/lib/bind/pri/weebo.poc
+          readinessProbe:
+            tcpSocket:
+              port: dns-tcp
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: dns-udp
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+      volumes:
+        - name: zone-map
+          configMap:
+            name: zone-map
+            defaultMode: 0755
+        - name: named-map
+          configMap:
+            name: named-map
+        - name: tsig-key
+          secret:
+            secretName: tsig-key-secret
+        - name: empty-dir
+          emptyDir: {}

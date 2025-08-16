@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: external-dns
+  template:
+    metadata:
+      labels:
+        app: external-dns
+    spec:
+      serviceAccountName: external-dns
+      containers:
+      - name: external-dns
+        image: registry.k8s.io/external-dns/external-dns:{{ .Values.externalDns.version }}
+        args:
+        - --registry=txt
+        - --txt-prefix=external-dns-
+        - --txt-owner-id=k8s
+        - --provider=rfc2136
+        - --rfc2136-host=dns-server.{{ .Release.Namespace }}.svc.cluster.local
+        - --rfc2136-port=53
+        - --rfc2136-zone=weebo.poc
+        - --rfc2136-tsig-secret=$(TSIG_KEY)
+        - --rfc2136-tsig-secret-alg=hmac-sha512
+        - --rfc2136-tsig-keyname=tsig-key
+        - --rfc2136-tsig-axfr
+        - --source=crd
+        - --domain-filter=weebo.poc
+        - --managed-record-types=A
+        - --managed-record-types=CNAME
+        - --managed-record-types=NS
+        - --managed-record-types=TXT
+        - --log-level=debug
+        env:
+        - name: TSIG_KEY
+          valueFrom:
+            secretKeyRef:
+              name: tsig-key-secret
+              key: tsig.key.secret

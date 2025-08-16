@@ -1,0 +1,29 @@
+zone:
+  "db.weebo":
+    zone: "weebo.poc"
+    file: |
+      $TTL 60 ;
+      $ORIGIN weebo.poc.
+      @       IN      SOA     weebo.poc. root.weebo.poc. (
+                              10; serial
+                              60; refresh
+                              60; retry
+                              60; expire
+                              60 ) ; minimum
+              IN      NS      ns.weebo.poc.
+      ns              A       10.96.0.11
+
+forwarders:
+  - 10.96.0.10
+  - 8.8.8.8
+  - 1.1.1.1
+
+bind9Version: 9.18-22.04_beta
+
+externalDns:
+  version: v0.18.0
+
+annotations:
+  metallb.universe.tf/address-pool: one
+  metallb.io/ip-allocated-from-pool: one
+  metallb.universe.tf/allow-shared-ip: one
