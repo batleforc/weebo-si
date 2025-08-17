@@ -5,8 +5,10 @@ metadata:
   name: "first-pool"
 spec:
   blocks:
-  - start: "{{ .Values.traefik.ips }}"
-    stop: "{{ .Values.traefik.ips }}"
+  {{ _, ip := range split "," .Values.traefik.ips }}
+  - start: "{{ ip }}"
+    stop: "{{ ip }}"
+  {{ end }}
 ---
 apiVersion: cilium.io/v2alpha1
 kind: CiliumL2AnnouncementPolicy
