@@ -12,7 +12,8 @@ spec:
   syncPolicy:
     automated: {}
     syncOptions:
-      - CreateNamespace=true
+    - CreateNamespace=true
+    - ServerSideApply=true
   source:
     chart: eclipse-che
     repoURL: https://eclipse-che.github.io/che-operator/charts
