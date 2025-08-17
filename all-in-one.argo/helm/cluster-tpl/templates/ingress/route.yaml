@@ -13,9 +13,6 @@ spec:
       services:
         - name: "{{ .Release.Name }}"
           port: 443
-      middlewares:
-        - name: vpn-only
-          namespace: traefik
     - match: HostSNI("{{ $outDns }}") || HostSNIRegexp(`^.\.+{{ regexReplaceAll "\\." $outDns "\\." }}$`)
       services:
         - name: "{{ .Release.Name }}"
@@ -36,9 +33,6 @@ spec:
       services:
         - name: "{{ .Release.Name }}"
           port: 80
-      middlewares:
-        - name: vpn-only
-          namespace: traefik
     - match: HostSNI("{{ $outDns }}") || HostSNIRegexp(`^.+\.{{ regexReplaceAll "\\." $outDns "\\." }}$`)
       services:
         - name: "{{ .Release.Name }}"
