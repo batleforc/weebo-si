@@ -20,6 +20,8 @@ spec:
           metadata:
             name: eclipse-che
             namespace: eclipse-che
+            annotations:
+              argocd.argoproj.io/tracking-id: che-cluster-main-in:org.eclipse.che/CheCluster:eclipse-che/che-cluster
           spec:
             devEnvironments:
               disableContainerBuildCapabilities: false
