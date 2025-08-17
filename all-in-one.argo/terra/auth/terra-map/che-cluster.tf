@@ -43,3 +43,15 @@ resource "vault_kv_secret_v2" "che" {
     }
   )
 }
+
+resource "vault_kv_secret_v2" "che-app" {
+  mount = "mc-authentik"
+  name  = "che-cluster/eclipse-che/auth"
+  data_json = jsonencode(
+    {
+      AUTHENTIK_CLIENT_ID     = authentik_provider_oauth2.che.client_id,
+      AUTHENTIK_CLIENT_SECRET = authentik_provider_oauth2.che.client_secret,
+      AUTHENTIK_URL           = "https://login.4.weebo.fr/application/o/${authentik_application.che.slug}/",
+    }
+  )
+}
