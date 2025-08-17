@@ -5,7 +5,7 @@ metadata:
   name: "first-pool"
 spec:
   blocks:
-  {{ _, ip := range split "," .Values.traefik.ips }}
+  {{ ip := range split "," .Values.traefik.ips }}
   - start: "{{ ip }}"
     stop: "{{ ip }}"
   {{ end }}
