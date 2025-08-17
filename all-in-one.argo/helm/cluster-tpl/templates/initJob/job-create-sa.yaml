@@ -44,7 +44,7 @@ spec:
                 sleep 5
               done
               cat /tmp/kube_ca.crt
-              TF_VAR_cluster_name="{{ .Release.Name }}" TF_VAR_host="https://{{ tpl .Values.dns.name . }}.{{.Values.dns.base}}:6443" terraform apply -auto-approve
+              TF_VAR_cluster_name="{{ .Release.Name }}" TF_VAR_host="https://{{ .Release.Name }}-lb.{{.Release.Namespace}}:6443" terraform apply -auto-approve
           volumeMounts:
             - mountPath: /tmp
               name: temp
