@@ -60,13 +60,13 @@ spec:
   data:
     - secretKey: url
       remoteRef:
-        key: mc-authentik/che-cluster/{{ .Release.Namespace }}/auth
+        key: mc-authentik/che-cluster/eclipse-che/auth
         property: AUTHENTIK_URL
     - secretKey: client_id
       remoteRef:
-        key: mc-authentik/che-cluster/{{ .Release.Namespace }}/auth
+        key: mc-authentik/che-cluster/eclipse-che/auth
         property: AUTHENTIK_CLIENT_ID
     - secretKey: client_secret
       remoteRef:
-        key: mc-authentik/che-cluster/{{ .Release.Namespace }}/auth
+        key: mc-authentik/che-cluster/eclipse-che/auth
         property: AUTHENTIK_CLIENT_SECRET
