@@ -147,6 +147,7 @@ resource "vault_kubernetes_auth_backend_role" "auth-vpn" {
 }
 
 resource "vault_kubernetes_auth_backend_role" "auth-reader-che-cluster" {
+  backend                          = "che-cluster"
   role_name                        = "auth-reader-che-cluster"
   bound_service_account_names      = ["che", "default"]
   bound_service_account_namespaces = ["eclipse-che"]
