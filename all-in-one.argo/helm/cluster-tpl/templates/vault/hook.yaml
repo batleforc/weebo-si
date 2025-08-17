@@ -22,8 +22,7 @@ spec:
     name: {{ .Release.Name }}
     namespace: vault-infra
   ignoreDifferences:
-    - group: ""
-      kind: "Secret"
+    - kind: "Secret"
       name: "vault-webhook-vault-secrets-webhook-webhook-tls"
       jsonPointers:
         - /data
