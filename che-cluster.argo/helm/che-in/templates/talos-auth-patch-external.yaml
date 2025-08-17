@@ -1,0 +1,72 @@
+# https://doc.crds.dev/github.com/eclipse-che/che-operator
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: che-cluster
+  namespace: eclipse-che
+spec:
+  refreshPolicy: Periodic
+  refreshInterval: 24h
+  secretStoreRef:
+    name: che-cluster-store
+  target:
+    name: che-cluster
+    template:
+      type: Opaque
+      data:
+        che-cluster.yaml: |
+          kind: CheCluster
+          apiVersion: org.eclipse.che/v2
+          metadata:
+            name: eclipse-che
+            namespace: eclipse-che
+          spec:
+            devEnvironments:
+              disableContainerBuildCapabilities: false
+              maxNumberOfWorkspacesPerUser: 20
+              maxNumberOfRunningWorkspacesPerUser: 5
+              defaultNamespace:
+                template: dev-ws-<username>
+              persistUserHome:
+                enabled: true
+              storage:
+                perUserStrategyPvcConfig:
+                  storageClass: local-path
+                  claimSize: "10Gi"
+                perWorkspaceStrategyPvcConfig:
+                  storageClass: local-path
+                  claimSize: "10Gi"
+            networking:
+              hostname: che-cluster.cluster.4.weebo.fr
+              ingressClassName: null
+              annotations:
+                kubernetes.io/ingress.class: "traefik"
+                cert-manager.io/cluster-issuer: "outbound"
+              auth:
+                oAuthClientName: '{{ printf "{{"}} .client_id }}'
+                oAuthSecret: '{{ printf "{{"}} .client_secret }}'
+                identityProviderURL: '{{ printf "{{"}} .url }}'
+                oAuthProxy:
+                  cookieExpireSeconds: 32400
+            components:
+              cheServer:
+                extraProperties:
+                  CHE_SYSTEM_ADMIN_NAME: "Batleforc"
+              metrics:
+                enable: true
+              dashboard:
+                logLevel: INFO
+
+  data:
+    - secretKey: url
+      remoteRef:
+        key: mc-authentik/che-cluster/{{ .Release.Namespace }}/auth
+        property: AUTHENTIK_URL
+    - secretKey: client_id
+      remoteRef:
+        key: mc-authentik/che-cluster/{{ .Release.Namespace }}/auth
+        property: AUTHENTIK_CLIENT_ID
+    - secretKey: client_secret
+      remoteRef:
+        key: mc-authentik/che-cluster/{{ .Release.Namespace }}/auth
+        property: AUTHENTIK_CLIENT_SECRET
