@@ -70,6 +70,9 @@ traefik:
   gatewayAPI:
     enabled: false
 
+argoApp:
+  enabled: true
+
 certManager:
   enabled: true
   version: 1.18.0
