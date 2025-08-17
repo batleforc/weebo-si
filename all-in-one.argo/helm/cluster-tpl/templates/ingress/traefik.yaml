@@ -22,7 +22,7 @@ spec:
         ingressRoute:
           dashboard:
             enabled: true
-            matchRule: Host("{{ tpl .Values.dns.name . }}.{{.Values.dns.in.base}}") && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
+            matchRule: Host("{{ tpl .Values.dns.name . }}.{{.Values.dns.out.base}}") && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
             middlewares:
               - name: vpn-only
                 namespace: traefik
