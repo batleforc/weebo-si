@@ -46,8 +46,6 @@ spec:
                 oAuthClientName: '{{ printf "{{"}} .client_id }}'
                 oAuthSecret: '{{ printf "{{"}} .client_secret }}'
                 identityProviderURL: '{{ printf "{{"}} .url }}'
-                oAuthProxy:
-                  cookieExpireSeconds: 32400
             components:
               cheServer:
                 extraProperties:
