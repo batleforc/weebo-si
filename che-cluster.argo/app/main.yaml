@@ -15,7 +15,7 @@ spec:
     helm:
       releaseName: che-main
   destination:
-    name: che-cluster
+    name: in-cluster
     namespace: "default"
   syncPolicy:
     automated:
