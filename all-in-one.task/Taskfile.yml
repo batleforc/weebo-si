@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 env:
   PULUMI_CONFIG_PASSPHRASE: ""
@@ -22,16 +22,16 @@ tasks:
       - k9s {{ .CLI_ARGS }}
   argo-pwd:
     cmds:
-    - kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+      - kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
   argo-forward:
     cmds:
-    - kubectl port-forward svc/argocd-server -n argocd 8080:443
+      - kubectl port-forward svc/argocd-server -n argocd 8080:443
   vault-pwd:
     cmds:
-    - kubectl -n vault get secret vault-unseal-keys -o jsonpath="{.data.vault-root}" | base64 -d
+      - kubectl -n vault get secret vault-unseal-keys -o jsonpath="{.data.vault-root}" | base64 -d
   vault-forward:
     cmds:
-    - kubectl port-forward svc/vault -n vault 8200:8200
+      - kubectl port-forward svc/vault -n vault 8200:8200
   kubectl:
     cmds:
       - echo ${KUBECONFIG}
@@ -71,7 +71,7 @@ tasks:
     cmds:
       - task aio:app -- state delete --all
 
-# Omni tasks
+  # Omni tasks
   omni:ctl:
     silent: true
     env:
@@ -91,7 +91,7 @@ tasks:
       - kubectl {{ .CLI_ARGS }}
   omni:create-sa:
     vars:
-      cluster: '{{.cluster}}'
+      cluster: "{{.cluster}}"
     env:
       OMNICONFIG: ./0.pulumi/all-in-one/omniconfig.yaml
     preconditions:
@@ -103,13 +103,24 @@ tasks:
   ## CAPI
   capi:get-kubeconfig:
     vars:
-      cluster: '{{.cluster}}'
-      ns: '{{.ns}}'
+      cluster: "{{.cluster}}"
+      ns: "{{.ns}}"
     cmds:
       - kubectl -n {{.ns}} get secret {{.cluster}}-kubeconfig -o yaml | yq .data.value | base64 -d > ./kubeconfig.{{.cluster}}.yaml
   capi:get-talosconfig:
     vars:
-      cluster: '{{.cluster}}'
-      ns: '{{.ns}}'
+      cluster: "{{.cluster}}"
+      ns: "{{.ns}}"
     cmds:
       - kubectl -n {{.ns}} get secret {{.cluster}}-talosconfig -o yaml | yq .data.talosconfig | base64 -d > ./talosconfig.{{.cluster}}.yaml
+  capi:kubectl:
+    vars:
+      cluster: "{{.cluster}}"
+    cmds:
+      - kubectl --kubeconfig=./kubeconfig.{{.cluster}}.yaml {{ .CLI_ARGS }}
+  capi:k9s:
+    vars:
+      cluster: "{{.cluster}}"
+      ns: "{{.ns}}"
+    cmds:
+      - k9s --kubeconfig=./kubeconfig.{{.cluster}}.yaml {{ .CLI_ARGS }}
