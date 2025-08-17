@@ -22,6 +22,7 @@ spec:
         ingressRoute:
           dashboard:
             enabled: true
+            matchRule: Host(`4.weebo.fr`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
             middlewares:
               - name: vpn-only
                 namespace: traefik
