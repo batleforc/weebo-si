@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: vault-webhook
+  name: {{ .Release.Name }}-vault-webhook
   namespace: argocd
 spec:
   project: default
