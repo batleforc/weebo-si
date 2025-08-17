@@ -20,6 +20,11 @@ spec:
     helm:
       releaseName: cilium
       valuesObject:
+        hubble:
+          relay:
+            enabled: true
+          ui:
+            enabled: true
         operator:
           replicas: {{ .Values.cluster.controlPlane.replicas}}
         ipam:

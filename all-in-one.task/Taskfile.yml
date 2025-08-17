@@ -124,3 +124,9 @@ tasks:
       ns: "{{.ns}}"
     cmds:
       - k9s --kubeconfig=./kubeconfig.{{.cluster}}.yaml {{ .CLI_ARGS }}
+  capi:cilium:
+    vars:
+      cluster: "{{.cluster}}"
+      ns: "{{.ns}}"
+    cmds:
+      - cilium --kubeconfig=./kubeconfig.{{.cluster}}.yaml {{ .CLI_ARGS }}
