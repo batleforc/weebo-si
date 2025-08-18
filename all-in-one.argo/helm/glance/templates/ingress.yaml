@@ -23,7 +23,7 @@ spec:
         - name: authentik
           namespace: authentik
     - kind: Rule
-      match: Host(`{{ .Values.ingress.host  }}`) && PathPrefix(`/outpost.goauthentik.io/`)"
+      match: Host(`{{ .Values.ingress.host  }}`) && PathPrefix(`/outpost.goauthentik.io/`)
       priority: 15
       services:
         - name: authentik-server
