@@ -29,7 +29,7 @@ spec:
       priority: 15
       services:
         - name: authentik-server
-          namespace: authentik-server
+          namespace: authentik
           port: 80
           passHostHeader: true
       middlewares:
