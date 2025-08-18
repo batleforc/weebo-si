@@ -4,6 +4,11 @@ version:
 
 repo: glanceapp/glance
 
+ingress:
+  secure: true
+  host: glance.4.weebo.fr
+  insecure: ""
+
 pullPolicy: Always
 
 content: |
