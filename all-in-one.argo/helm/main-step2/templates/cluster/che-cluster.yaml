@@ -15,7 +15,7 @@ spec:
       releaseName: che-cluster
       valuesObject:
         traefik:
-          ips: "10.244.0.83,fd00:10:244::f146"
+          ips: "10.244.0.37,fd00:10:244::cdaa"
   destination:
     name: in-cluster
     namespace: 'che'
