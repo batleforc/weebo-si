@@ -58,6 +58,9 @@ spec:
           enabled: {{ .Values.cilium.ipv4 }}
         ipv6:
           enabled: {{ .Values.cilium.ipv6 }}
+        k8s:
+          requireIPv4PodCIDR: {{ .Values.cilium.ipv4 }}
+          requireIPv6PodCIDR: {{ .Values.cilium.ipv6 }}
   ignoreDifferences:
   - kind: Secret
     name: hubble-server-certs
