@@ -1,7 +1,8 @@
 {{ $inDns := print (tpl .Values.dns.name .) "." .Values.dns.in.base }}
 {{ $outDns := print (tpl .Values.dns.name .) "." .Values.dns.out.base }}
 apiVersion: traefik.io/v1alpha1
-kind: IngressRouteTCP
+#kind: IngressRouteTCP
+kind: IngressRoute
 metadata:
   name: "{{ .Release.Name }}-websecure"
   namespace: "{{ .Release.Namespace }}"
@@ -9,12 +10,14 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: HostSNI("{{ $inDns }}") || HostSNIRegexp(`^.+\.{{ regexReplaceAll "\\." $inDns "\\." }}$`)
+    - match Host("{{ $inDns }}") || HostRegexp(`^.+\.{{ regexReplaceAll "\\." $inDns "\\." }}$`)
+    #- match: HostSNI("{{ $inDns }}") || HostSNIRegexp(`^.+\.{{ regexReplaceAll "\\." $inDns "\\." }}$`)
       services:
         - name: "{{ .Release.Name }}"
           namespace: "{{ .Release.Namespace }}"
           port: 443
-    - match: HostSNI("{{ $outDns }}") || HostSNIRegexp(`^.\.+{{ regexReplaceAll "\\." $outDns "\\." }}$`)
+    - match: Host("{{ $outDns }}") || HostRegexp(`^.\.+{{ regexReplaceAll "\\." $outDns "\\." }}$`)
+    #- match: HostSNI("{{ $outDns }}") || HostSNIRegexp(`^.\.+{{ regexReplaceAll "\\." $outDns "\\." }}$`)
       services:
         - name: "{{ .Release.Name }}"
           namespace: "{{ .Release.Namespace }}"
@@ -23,7 +26,8 @@ spec:
     passthrough: true
 ---
 apiVersion: traefik.io/v1alpha1
-kind: IngressRouteTCP
+#kind: IngressRouteTCP
+kind: IngressRoute
 metadata:
   name: "{{ .Release.Name }}-web"
   namespace: "{{ .Release.Namespace }}"
@@ -31,12 +35,12 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: HostSNI("{{ $inDns }}") || HostSNIRegexp(`^.+\.{{ regexReplaceAll "\\." $inDns "\\." }}$`)
+    - match: Host("{{ $inDns }}") || HostRegexp(`^.+\.{{ regexReplaceAll "\\." $inDns "\\." }}$`)
       services:
         - name: "{{ .Release.Name }}"
           namespace: "{{ .Release.Namespace }}"
           port: 80
-    - match: HostSNI("{{ $outDns }}") || HostSNIRegexp(`^.+\.{{ regexReplaceAll "\\." $outDns "\\." }}$`)
+    - match: Host("{{ $outDns }}") || HostRegexp(`^.+\.{{ regexReplaceAll "\\." $outDns "\\." }}$`)
       services:
         - name: "{{ .Release.Name }}"
           namespace: "{{ .Release.Namespace }}"
