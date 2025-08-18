@@ -41,7 +41,7 @@ metadata:
   namespace: default
 spec:
   rules:
-    - host: "*.cluster.4.weebo.fr"
+    - host: "*"
       http:
         paths:
           - path: /
