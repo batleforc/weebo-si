@@ -130,3 +130,9 @@ tasks:
       ns: "{{.ns}}"
     cmds:
       - cilium --kubeconfig=./kubeconfig.{{.cluster}}.yaml {{ .CLI_ARGS }}
+  capi:talosctl:
+    vars:
+      cluster: "{{.cluster}}"
+      ns: "{{.ns}}"
+    cmds:
+      - TALOSCONFIG="talosconfig.{{.cluster}}.yaml" talosctl {{ .CLI_ARGS }}

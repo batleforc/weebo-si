@@ -19,6 +19,7 @@ talos-config.yaml
 kubeconfig.*.yml
 kubeconfig.*.yaml
 talosconfig.*.yml
+talosconfig.*.yaml
 
 0.keepassxc
 root_ca*.pem
