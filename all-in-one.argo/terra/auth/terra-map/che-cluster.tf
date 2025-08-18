@@ -12,7 +12,7 @@ resource "authentik_provider_oauth2" "che" {
     },
     {
       matching_mode = "strict",
-      url           = "https://che-cluster.cluster.4.weebo.fr",
+      url           = "https://che-cluster.cluster.4.weebo.fr/oauth/callback",
     },
     {
       matching_mode = "regex",
