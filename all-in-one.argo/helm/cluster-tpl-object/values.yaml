@@ -95,4 +95,4 @@ externalSecrets:
 release: "une releaseuhhh"
 
 test:
-  enabled: true
+  enabled: false
