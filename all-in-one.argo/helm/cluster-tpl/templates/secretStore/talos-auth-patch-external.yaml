@@ -55,7 +55,8 @@ spec:
                     - op: add
                       path: /machine/network/interfaces
                       value:
-                        - dhcp: true
+                        - interface: enp1s0
+                          dhcp: true
                           dhcpOptions:
                             ipv4: true
                             ipv6: true
