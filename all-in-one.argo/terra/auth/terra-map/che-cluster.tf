@@ -1,7 +1,7 @@
 resource "authentik_provider_oauth2" "che" {
   name               = "che-cluster"
   client_id          = "che-cluster"
-  sub_mode           = "user_email"
+  sub_mode           = "user_username"
   invalidation_flow  = data.authentik_flow.default-invalidation-flow.id
   authorization_flow = data.authentik_flow.default-authorization-flow.id
   signing_key        = data.authentik_certificate_key_pair.generated.id
