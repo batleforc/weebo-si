@@ -15,7 +15,7 @@ spec:
       valuesObject:
         ingress:
           secure: false
-          insecure: "Path("/")"
+          insecure: "Path(`/`)"
   destination:
     name: {{ .Release.Name }}
     namespace: 'glance'
