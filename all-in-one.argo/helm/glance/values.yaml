@@ -58,6 +58,9 @@ content: |
                 - title: Kubevirt Manager
                   url: https://kubevirt-manager.4.weebo.fr/
                   icon: mdi:server-outline
+                - title: Eclipse Che
+                  url: https://che-cluster.cluster.4.weebo.fr/
+                  icon: si:eclipseche
 
             - type: bookmarks
               groups:
