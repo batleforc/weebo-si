@@ -53,6 +53,13 @@ spec:
                       value:
                         - net.ifnames=0
                     - op: add
+                      path: /machine/network/interfaces
+                      value:
+                        - dhcp: true
+                          dhcpOptions:
+                            ipv4: true
+                            ipv6: true
+                    - op: add
                       path: /machine/install/image
                       value: {{ .Values.cluster.talos.installImage }}
                     - op: add
