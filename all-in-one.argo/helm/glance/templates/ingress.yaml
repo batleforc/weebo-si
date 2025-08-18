@@ -13,7 +13,7 @@ spec:
       match: Host(`{{ .Values.ingress.host  }}`)
       priority: 10
       services:
-        - name: internal
+        - name: glance
           namespace: glance
           passHostHeader: true
           port: 8080
@@ -51,7 +51,7 @@ spec:
       match: {{ .Values.ingress.insecure | default "Host(`{{ .Values.ingress.host }}`)" }}
       priority: 10
       services:
-        - name: internal
+        - name: glance
           namespace: glance
           passHostHeader: true
           port: 8080
