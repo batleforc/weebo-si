@@ -10,7 +10,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match Host("{{ $inDns }}") || HostRegexp(`^.+\.{{ regexReplaceAll "\\." $inDns "\\." }}$`)
+    - match: Host("{{ $inDns }}") || HostRegexp(`^.+\.{{ regexReplaceAll "\\." $inDns "\\." }}$`)
     #- match: HostSNI("{{ $inDns }}") || HostSNIRegexp(`^.+\.{{ regexReplaceAll "\\." $inDns "\\." }}$`)
       services:
         - name: "{{ .Release.Name }}"
