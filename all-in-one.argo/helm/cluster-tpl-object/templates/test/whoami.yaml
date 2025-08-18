@@ -41,7 +41,17 @@ metadata:
   namespace: default
 spec:
   rules:
-    - host: "*"
+    - host: "*.cluster.4.weebo.fr"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+    - host: "*.weebo.poc"
       http:
         paths:
           - path: /
