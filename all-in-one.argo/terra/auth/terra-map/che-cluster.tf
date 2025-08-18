@@ -12,11 +12,11 @@ resource "authentik_provider_oauth2" "che" {
     },
     {
       matching_mode = "strict",
-      url           = "https://che.dev.4.weebo.fr",
+      url           = "https://che-cluster.cluster.4.weebo.fr",
     },
     {
       matching_mode = "regex",
-      url           = "https://.*.che.dev.4.weebo.fr",
+      url           = "https://.*.che-cluster.cluster.4.weebo.fr",
     },
   ]
   property_mappings = [
