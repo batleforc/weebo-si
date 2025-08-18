@@ -41,5 +41,3 @@ spec:
         - name: "{{ .Release.Name }}"
           namespace: "{{ .Release.Namespace }}"
           port: 80
-  tls:
-    passthrough: true
