@@ -24,6 +24,7 @@ spec:
           command:
             - "ls"
           args:
+            - -lah
             - /etc/
           ports:
             - name: dns-tcp
