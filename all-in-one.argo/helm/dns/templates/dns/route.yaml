@@ -11,7 +11,7 @@ spec:
   routes:
     - match: Host(`ns.4.weebo.fr`)
       services:
-        - name: dns-server
+        - name: dns-server-in
           port: 443
   tls:
     passthrough: true
