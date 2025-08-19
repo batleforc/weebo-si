@@ -21,8 +21,8 @@ forwarders:
   #- 1.1.1.1
 
 bind9:
-  image: bratkartoffel/bind9
-  tag: latest
+  image: openeuler/bind9
+  tag: 9.21.6-oe2403lts
 
 bind9Version: 9.18-22.04_beta
 

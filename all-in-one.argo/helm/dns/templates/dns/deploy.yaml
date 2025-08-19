@@ -18,8 +18,6 @@ spec:
       labels:
         app: dns-server
     spec:
-      securityContext:
-        runAsUser: 1000
       containers:
         - name: dns-server
           image: {{ .Values.bind9.image }}:{{ .Values.bind9.tag }}
@@ -34,7 +32,7 @@ spec:
               containerPort: 953
           volumeMounts:
             - name: named-map
-              mountPath: /etc/bind/named.conf
+              mountPath: /etc/named.conf
               subPath: named.conf
             # Create a volumeMount for each zone
             {{- range $key, $value := .Values.zone }}
@@ -47,8 +45,6 @@ spec:
               subPath: tsig.key
             - name: empty-dir
               mountPath: /var/lib/bind/pri/weebo.poc
-            - name: empty-cache
-              mountPath: /var/cache
           readinessProbe:
             tcpSocket:
               port: dns-tcp
@@ -78,6 +74,4 @@ spec:
           secret:
             secretName: tsig-key-secret
         - name: empty-dir
-          emptyDir: {}
-        - name: empty-cache
           emptyDir: {}
