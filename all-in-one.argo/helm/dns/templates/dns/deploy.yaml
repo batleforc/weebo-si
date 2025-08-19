@@ -45,6 +45,8 @@ spec:
               subPath: tsig.key
             - name: empty-dir
               mountPath: /var/lib/bind/pri/weebo.poc
+            - name: ns-4-weebo-fr
+              mountPath: /var/lib/bind/pri/ns.4.weebo.fr
           readinessProbe:
             tcpSocket:
               port: dns-tcp
@@ -75,3 +77,6 @@ spec:
             secretName: tsig-key-secret
         - name: empty-dir
           emptyDir: {}
+        - name: ns-4-weebo-fr
+          secret:
+            secretName: ns-4-weebo-fr-tls

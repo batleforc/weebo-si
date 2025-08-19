@@ -1,0 +1,14 @@
+# Create a cert manager certificate for ns.4.weebo.fr
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ns-4-weebo-fr
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: ns-4-weebo-fr-tls
+  issuerRef:
+    name: outbound
+    kind: ClusterIssuer
+  commonName: ns.4.weebo.fr
+  dnsNames:
+    - ns.4.weebo.fr
