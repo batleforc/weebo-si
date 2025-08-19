@@ -14,4 +14,4 @@ spec:
           namespace: "{{ .Release.Namespace }}"
           port: 443
   tls:
-    secretName: ns-4-weebo-fr-tls
+    passthrough: true
