@@ -18,6 +18,8 @@ spec:
       labels:
         app: dns-server
     spec:
+      securityContext:
+        runAsUser: 1000
       containers:
         - name: dns-server
           image: {{ .Values.bind9.image }}:{{ .Values.bind9.tag }}
