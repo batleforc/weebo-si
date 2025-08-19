@@ -1,0 +1,17 @@
+## IngressRouteTCP for ns.4.weebo.fr
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: ns-4-weebo-fr
+  namespace: {{ .Release.Namespace }}
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - match: Host(`ns.4.weebo.fr`)
+      services:
+        - name: dns-server
+          port: 443
+  tls:
+    passthrough: true

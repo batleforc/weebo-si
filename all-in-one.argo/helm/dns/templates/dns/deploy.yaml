@@ -30,6 +30,9 @@ spec:
               protocol: UDP
             - name: loopback
               containerPort: 953
+            - name: dns-tls
+              containerPort: 443
+              protocol: TCP
           volumeMounts:
             - name: named-map
               mountPath: /etc/bind/named.conf

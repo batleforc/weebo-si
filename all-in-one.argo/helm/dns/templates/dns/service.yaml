@@ -21,6 +21,10 @@ spec:
       protocol: UDP
       port: 53
       targetPort: 53
+    - name: tls
+      protocol: TCP
+      port: 443
+      targetPort: 443
   selector:
     app: dns-server
   type: ClusterIP

@@ -6,12 +6,18 @@ metadata:
 data:
   named.conf: |
     include "/val/lib/bind/pri/tsig.key";
+    tls local-tls{
+      key-file "/var/lib/bind/pri/ns.4.weebo.fr/tls.key";
+      cert-file "/var/lib/bind/pri/ns.4.weebo.fr/tls.crt";
+    };
     options {
       directory "/var/cache/bind";
       querylog yes;
       listen-on port 53 { any; };
       listen-on-v6 port 53 { any; };
-      allow-query     { any; };
+      listen-on port 443 tls local-tls http default {any;};
+      listen-on-v6 port 443 tls local-tls http default {any;};
+      allow-query { any; };
       forwarders {
         {{ range .Values.forwarders }}
         {{ . }};
