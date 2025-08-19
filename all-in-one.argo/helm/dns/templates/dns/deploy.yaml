@@ -32,7 +32,7 @@ spec:
               containerPort: 953
           volumeMounts:
             - name: named-map
-              mountPath: /etc/named.conf
+              mountPath: /etc/bind/named.conf
               subPath: named.conf
             # Create a volumeMount for each zone
             {{- range $key, $value := .Values.zone }}
