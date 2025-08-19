@@ -26,7 +26,6 @@ spec:
           args:
             - -lah
             - /etc/
-            - \&& cat /etc/named.conf
           ports:
             - name: dns-tcp
               containerPort: 53
