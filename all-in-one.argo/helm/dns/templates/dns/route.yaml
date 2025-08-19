@@ -12,6 +12,7 @@ spec:
     - match: HostSNI(`ns.4.weebo.fr`)
       services:
         - name: dns-server-in
+          namespace: "{{ .Release.Namespace }}"
           port: 443
   tls:
     passthrough: true

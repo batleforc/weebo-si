@@ -6,7 +6,7 @@ metadata:
 data:
   named.conf: |
     include "/val/lib/bind/pri/tsig.key";
-    tls local-tls{
+    tls local-tls {
       key-file "/var/lib/bind/pri/ns.4.weebo.fr/tls.key";
       cert-file "/var/lib/bind/pri/ns.4.weebo.fr/tls.crt";
     };
