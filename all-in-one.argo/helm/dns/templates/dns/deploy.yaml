@@ -21,6 +21,8 @@ spec:
       containers:
         - name: dns-server
           image: {{ .Values.bind9.image }}:{{ .Values.bind9.tag }}
+          command:
+            - "ls /etc/"
           ports:
             - name: dns-tcp
               containerPort: 53
