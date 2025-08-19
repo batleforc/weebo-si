@@ -9,7 +9,7 @@ spec:
     - web
     - websecure
   routes:
-    - match: Host(`ns.4.weebo.fr`)
+    - match: HostSNI(`ns.4.weebo.fr`)
       services:
         - name: dns-server-in
           port: 443
