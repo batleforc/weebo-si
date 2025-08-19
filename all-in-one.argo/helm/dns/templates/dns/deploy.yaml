@@ -21,11 +21,6 @@ spec:
       containers:
         - name: dns-server
           image: {{ .Values.bind9.image }}:{{ .Values.bind9.tag }}
-          command:
-            - "ls"
-          args:
-            - -lah
-            - /etc/
           ports:
             - name: dns-tcp
               containerPort: 53
@@ -37,7 +32,7 @@ spec:
               containerPort: 953
           volumeMounts:
             - name: named-map
-              mountPath: /etc/named.conf
+              mountPath: /etc/bind/named.conf
               subPath: named.conf
             # Create a volumeMount for each zone
             {{- range $key, $value := .Values.zone }}
