@@ -33,10 +33,10 @@ spec:
                 enabled: true
               storage:
                 perUserStrategyPvcConfig:
-                  storageClass: local-path
+                  storageClass: kubevirt
                   claimSize: "10Gi"
                 perWorkspaceStrategyPvcConfig:
-                  storageClass: local-path
+                  storageClass: kubevirt
                   claimSize: "10Gi"
             networking:
               hostname: che-cluster.cluster.4.weebo.fr
