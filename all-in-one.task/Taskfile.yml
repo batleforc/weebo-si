@@ -112,7 +112,7 @@ tasks:
       cluster: "{{.cluster}}"
       ns: "{{.ns}}"
     cmds:
-      - kubectl -n {{.ns}} get secret {{.cluster}}-talosconfig -o yaml | yq .data.talosconfig | base64 -d > ./talosconfig.{{.cluster}}.yaml
+      - kubectl -n {{.ns}} get secret {{.cluster}}-talosconfig -o yaml | yq -r .data.talosconfig | base64 -d > ./talosconfig.{{.cluster}}.yaml
   capi:kubectl:
     vars:
       cluster: "{{.cluster}}"
