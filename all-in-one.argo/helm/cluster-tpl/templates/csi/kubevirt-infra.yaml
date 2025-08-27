@@ -20,7 +20,7 @@ spec:
         clusterNamespace: {{ .Release.Namespace }}
   destination:
     name: in-cluster
-    namespace: "default"
+    namespace: "{{ .Release.Namespace }}"
   syncPolicy:
     automated:
       selfHeal: true
