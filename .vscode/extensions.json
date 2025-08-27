@@ -21,6 +21,7 @@
     "usernamehw.errorlens",
     "eamodio.gitlens",
     "oderwat.indent-rainbow",
-    "redhat.vscode-yaml"
+    "redhat.vscode-yaml",
+    "hashicorp.terraform"
   ]
 }
