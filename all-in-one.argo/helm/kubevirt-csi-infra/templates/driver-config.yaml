@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: driver-config
+  namespace: {{ .Release.Namespace }}
+data:
+  infraClusterLabels: csi-driver/cluster={{ .Values.clusterName}}
+  infraClusterNamespace: {{ .Release.Namespace }}

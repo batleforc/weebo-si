@@ -60,6 +60,8 @@ storage:
     enabled: true
   longhorn:
     enabled: true
+  kubevirt:
+    enabled: true
 
 traefik:
   enabled: true

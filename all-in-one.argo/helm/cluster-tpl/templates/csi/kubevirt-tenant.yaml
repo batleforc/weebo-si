@@ -1,0 +1,33 @@
+{{- if .Values.storage.kubevirt.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-kubevirt-csi-tenant
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: "{{ .Release.Name }}"
+  source:
+    repoURL: "https://github.com/batleforc/weebo-si"
+    path: "all-in-one.argo/helm/kubevirt-csi-tenant"
+    helm:
+      releaseName: kubevirt-csi-tenant
+      valuesObject:
+        clusterName: {{ .Release.Name }}
+        clusterNamespace: {{ .Release.Namespace }}
+  destination:
+    name: {{ .Release.Name }}
+    namespace: "default"
+  syncPolicy:
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}
