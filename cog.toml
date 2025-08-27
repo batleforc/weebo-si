@@ -25,7 +25,6 @@ script = """#!/bin/sh
 set -e
 task ansible:vault-lock || true
 git add .
-gitleaks git -v
 gitleaks git --pre-commit --redact --staged --verbose
 """
 
