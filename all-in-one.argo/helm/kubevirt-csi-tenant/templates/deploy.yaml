@@ -325,10 +325,10 @@ provisioner: csi.kubevirt.io
 parameters:
   infraStorageClassName: local-path-sdb
   bus: scsi
----
-apiVersion: snapshot.storage.k8s.io/v1
-kind: VolumeSnapshotClass
-metadata:
-  name: kubevirt-csi-snapclass
-driver: csi.kubevirt.io
-deletionPolicy: Delete
+# ---
+# apiVersion: snapshot.storage.k8s.io/v1
+# kind: VolumeSnapshotClass
+# metadata:
+#   name: kubevirt-csi-snapclass
+# driver: csi.kubevirt.io
+# deletionPolicy: Delete
