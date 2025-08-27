@@ -11,5 +11,5 @@ data "netbird_peer" "phone" {
 }
 
 data "netbird_peer" "pc" {
-  ip = "100.113.84.92"
+  ip = "100.113.58.229"
 }
