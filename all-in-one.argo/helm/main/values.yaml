@@ -23,8 +23,8 @@ omni:
 clusterApi:
   enabled: true
   version:
-    operator: 0.23.0
-    clusterApi: v1.11.0
+    operator: 0.22.0
+    clusterApi: v1.10.4
     kubevirt: v0.1.10
     talosCP: v0.5.10
     talosBootstrap: v0.6.9
