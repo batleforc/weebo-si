@@ -11,5 +11,5 @@ spec:
     developerConfiguration:
       featureGates:
         - ExpandDisks
-        - DeclarativeHotplugVolumes
+        - HotplugVolumes
 {{- end -}}
