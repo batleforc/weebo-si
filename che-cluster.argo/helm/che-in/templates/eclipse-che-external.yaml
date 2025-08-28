@@ -49,6 +49,7 @@ spec:
               auth:
                 oAuthClientName: '{{ printf "{{"}} .client_id }}'
                 oAuthSecret: '{{ printf "{{"}} .client_secret }}'
+                oAuthScope: "email openid profile offline_access"
                 identityProviderURL: '{{ printf "{{"}} .url }}'
             components:
               cheServer:
