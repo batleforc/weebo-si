@@ -5,6 +5,7 @@ resource "authentik_provider_oauth2" "che" {
   invalidation_flow  = data.authentik_flow.default-invalidation-flow.id
   authorization_flow = data.authentik_flow.default-authorization-flow.id
   signing_key        = data.authentik_certificate_key_pair.generated.id
+  access_token_validity= "hours=10"
   allowed_redirect_uris = [
     {
       matching_mode = "strict",
