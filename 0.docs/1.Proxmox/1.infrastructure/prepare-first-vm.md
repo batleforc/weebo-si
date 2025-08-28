@@ -9,7 +9,7 @@
 
 ### Prérequis
 
-Les deux étapes précédentes doivent être réalisées, [la préparation de votre poste de travail](/1.infrastructure/prepare-pc) et [la préparation du serveur Proxmox](/1.infrastructure/prepare-server).
+Les deux étapes précédentes doivent être réalisées, [la préparation de votre poste de travail](/0.setup/prepare-pc) et [la préparation du serveur Proxmox](/1.Proxmox/1.infrastructure/prepare-server).
 
 ### Exécution
 

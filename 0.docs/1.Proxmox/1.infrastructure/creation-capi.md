@@ -16,8 +16,8 @@ A la suite de la création de ce cluster, l'objectif est d'automatiser la créat
 ### Prérequis
 
 - Avoir suivis :
-  - [Préparation du poste de travail](/1.infrastructure/prepare-pc)
-  - [Préparation du serveur](/1.infrastructure/prepare-server)
+  - [Préparation du poste de travail](/0.setup/prepare-pc)
+  - [Préparation du serveur](/1.Proxmox/1.infrastructure/prepare-server)
   - [Préparation pour nos première VM](./prepare-first-vm.md)
 - Avoir créé un PAT Github en lecture seule sur le repository privé et l'avoir stocké dans le fichier `.env` à la racine du projet.
 
