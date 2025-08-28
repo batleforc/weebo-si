@@ -5,5 +5,5 @@ metadata:
 provisioner: rancher.io/local-path
 parameters:
   nodePath: /var/mnt/longhorn
-volumeBindingMode: Immediate
+volumeBindingMode: WaitForFirstConsumer
 reclaimPolicy: Delete
