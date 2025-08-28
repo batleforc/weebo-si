@@ -1,4 +1,4 @@
-# Rust driven Wireguard X Chrome Workflow
+# Rust driven Wireguard X Chrome Workflow [TO-DO]
 
 Why the hell do i have this kind of idea right now ?
 
@@ -6,7 +6,7 @@ Why the hell do i have this kind of idea right now ?
 
 - One Packaged (?) chrome instance that with a wireguard can work has if it was directly in the target network
 - Full User Namespace in order for it to not need Admin Right.
-- Launched with TAURI !
+- Launched with Tauri !
 - Should work either with an SSO Workflow or directly by injecting the wg0.conf
 
 ## Clue

@@ -1,4 +1,4 @@
-# ALL IN ONE
+# ALL IN ONE [Done]
 
 Le but est de provisionner un noeud Dédié OVH avec une iso Talos et de rentre le setup le plus simple possible avec des techno que je ne maîtrise pas encore.
 
@@ -13,12 +13,16 @@ Le but est de provisionner un noeud Dédié OVH avec une iso Talos et de rentre 
 
 ## GOAL
 
-- Provisionnement automatisé via Github Action
 - Installation de Talos sur le dédié
 - Bootstrap de Talos
 - Support IPV4 ++ IPV6
 - Installation de Cilium
 - Installation d'ArgoCD
+- Provisionnement automatisé via Github Action (?)
+
+## Bilan
+
+AIO est devenue la deuxième itération de la WeeboSI me permettant d'aller encore plus loin dans l'automatisation et la simplification du processus de déploiement.
 
 ## Link
 

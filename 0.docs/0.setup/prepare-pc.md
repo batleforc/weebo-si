@@ -8,6 +8,13 @@ Toute les commande sont à exécuter à la racine du projet.
 
 :::
 
+::: tip
+
+Ces étapes étais baser sur une installation Ubuntu 24.04.3 avant le 25/08/2025
+Depuis cette date, le système de base est devenue [Omarchy](https://omarchy.org/) certain changements peuvent être nécessaires ou auront lieux.
+
+:::
+
 ## 0. Pré-requis
 
 Afin de pouvoir exécuter ces script vous aurez tout de même besoin de quelques outils :

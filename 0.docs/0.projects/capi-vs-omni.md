@@ -1,10 +1,10 @@
-# Capi Vs Omni
+# Capi Vs Omni [Done]
 
 - Date du stream : 02 / 07 / 2025
 - [Twitch](https://www.twitch.tv/batleforc)
 - Playlist
   - [Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
-  - [Youtube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O)
+  - [YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O)
 
 ## Goal
 
@@ -40,6 +40,10 @@ Comparer dans des condition similaire [Omni](https://omni.siderolabs.com/) et [C
   - 1 Sous DNS par cluster
     - *.[Cluster NAME].cluster.4.weebo.fr
 - [Game Server](https://github.com/awesome-selfhosted/awesome-selfhosted#games)
+
+## Bilan
+
+Omni n'est pour moi pas encore une solution qui me convient, celle-ci n'est pas encore GitOps ready ou bien intégrable dans la visions actuelle de l'environnement.
 
 ## Lien
 

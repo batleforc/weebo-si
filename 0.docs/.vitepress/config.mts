@@ -100,32 +100,46 @@ export default defineConfig({
         ],
       },
       {
-        text: "1. Création de l'infrastructure",
+        text: "0. Setup",
         items: [
           {
             text: "Préparation du poste de travail",
-            link: "/1.infrastructure/prepare-pc",
-          },
-          {
-            text: "Préparation du serveur",
-            link: "/1.infrastructure/prepare-server",
-          },
-          {
-            text: "Préparation pour nos premières VM",
-            link: "/1.infrastructure/prepare-first-vm",
-          },
-          {
-            text: "Création de la première VM CAPI",
-            link: "/1.infrastructure/creation-capi",
+            link: "/0.setup/prepare-pc",
           },
         ],
       },
       {
-        text: "2. Gestion de l'infrastructure",
+        text: "1. Kubevirt",
+        items: [],
+      },
+      {
+        text: "1. Proxmox",
         items: [
           {
-            text: "Mise en place CAPI",
-            link: "/2.gestion/capi",
+            text: "1. Création de l'infrastructure",
+            items: [
+              {
+                text: "Préparation du serveur",
+                link: "/1.Proxmox/1.infrastructure/prepare-server",
+              },
+              {
+                text: "Préparation pour nos premières VM",
+                link: "/1.Proxmox/1.infrastructure/prepare-first-vm",
+              },
+              {
+                text: "Création de la première VM CAPI",
+                link: "/1.Proxmox/1.infrastructure/creation-capi",
+              },
+            ],
+          },
+          {
+            text: "2. Gestion de l'infrastructure",
+            items: [
+              {
+                text: "Mise en place CAPI",
+                link: "/1.Proxmox/2.gestion/capi",
+              },
+            ],
           },
         ],
       },
