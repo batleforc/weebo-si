@@ -27,6 +27,10 @@ spec:
                           "node":"DEFAULT_PATH_FOR_NON_LISTED_NODES",
                           "paths":["/var/local-path-provisioner","/var/mnt/longhorn"]
                         },
+                        {
+                          "node":"weebo4-controlplane",
+                          "paths":["/var/local-path-provisioner","/var/mnt/longhorn"]
+                        }
                       ]
               }
       - patch: |-
