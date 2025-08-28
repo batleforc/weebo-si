@@ -36,7 +36,7 @@ const headers =
 export default defineConfig({
   title: "Weebo SI",
   description:
-    "The nearly pefect dev env made to test new cool stuff and further",
+    "The nearly perfect dev environment made to test new cool stuff and more",
   base: "/weebo-si/",
   head: headers,
   lastUpdated: true,
@@ -81,7 +81,6 @@ export default defineConfig({
           { text: "Contribuer", link: "/0.introduction/contributing" },
           { text: "Etape", link: "/0.introduction/etape" },
           { text: "Kanban", link: "/0.introduction/kanban" },
-          { text: "Architecture", link: "/0.introduction/architecture" },
           {
             text: "Projects",
             items: [
@@ -110,11 +109,39 @@ export default defineConfig({
       },
       {
         text: "1. Kubevirt",
-        items: [],
+        items: [
+          { text: "Architecture", link: "/1.Kubevirt/architecture" },
+          {
+            text: "1. Création de l'infrastructure",
+            items: [
+              {
+                text: "Talos x Cilium sur OVH via Pulumi",
+                link: "/1.Kubevirt/1.infrastructure/initOvhTalos",
+              },
+              {
+                text: "Kubevirt sur Talos x Cilium via Argo",
+                link: "/1.Kubevirt/1.infrastructure/installationKubevirt",
+              },
+              {
+                text: "Cluster Api sur Talos x Cilium x Kubevirt",
+                link: "/1.Kubevirt/1.infrastructure/installationCapi",
+              },
+              {
+                text: "Kubevirt CSI sur Talos x Cluster API",
+                link: "/1.Kubevirt/1.infrastructure/installationKubevirtCSI",
+              },
+              {
+                text: "Eclipse Che sur Talos",
+                link: "/1.Kubevirt/1.infrastructure/installationEclipseChe",
+              },
+            ],
+          },
+        ],
       },
       {
         text: "1. Proxmox",
         items: [
+          { text: "Architecture", link: "/1.Proxmox/architecture" },
           {
             text: "1. Création de l'infrastructure",
             items: [
@@ -162,36 +189,12 @@ export default defineConfig({
             text: "Bilan des streams",
             items: [
               {
-                text: "Stream - 15/03/2025",
-                link: "/0.introduction/stream/15-03-2025",
+                text: "Saison 1",
+                link: "/0.introduction/stream/saison1/index.html",
               },
               {
-                text: "Stream - 22/03/2025",
-                link: "/0.introduction/stream/22-03-2025",
-              },
-              {
-                text: "Stream - 29/03/2025",
-                link: "/0.introduction/stream/29-03-2025",
-              },
-              {
-                text: "Stream - 12/04/2025",
-                link: "/0.introduction/stream/12-04-2025",
-              },
-              {
-                text: "Stream - 19/04/2025",
-                link: "/0.introduction/stream/19-04-2025",
-              },
-              {
-                text: "Stream - 03/05/2025",
-                link: "/0.introduction/stream/03-05-2025",
-              },
-              {
-                text: "Stream - 10/05/2025",
-                link: "/0.introduction/stream/10-05-2025",
-              },
-              {
-                text: "Stream - 17/05/2025",
-                link: "/0.introduction/stream/17-05-2025",
+                text: "Saison 2",
+                link: "/0.introduction/stream/saison2/index.html",
               },
             ],
           },

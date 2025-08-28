@@ -9,6 +9,8 @@ Merci à toutes les personnes qui ont partagé leur savoir et leur expérience. 
 - [Stéphane Robert - Ansible X Proxmox](https://blog.stephane-robert.info/docs/virtualiser/type1/proxmox/ansible-modules/)
 - [Stéphane Robert - Terraform X Proxmox](https://blog.stephane-robert.info/docs/virtualiser/type1/proxmox/terraform/)
 - [ItTavern - Hardening SSH](https://ittavern.com/ssh-server-hardening/)
+- [littel.jo - Créer 511 clusters Kubernetes](https://medium.com/@littel.jo/cr%C3%A9er-511-clusters-kubernetes-interconnect%C3%A9s-avec-cilium-cluster-mesh-partie-6-96982e039c87)
+- [littel.jo - S'initier a eBPF avec Aya](https://medium.com/@littel.jo/sinitier-%C3%A0-ebpf-avec-aya-c9d570560261)
 
 :::warning
 

@@ -9,6 +9,12 @@ Le but initial de ce projet était :
 
 Avant toute chose, il est important de noter que ce projet est un projet personnel et que je ne suis pas un expert dans toutes les technologies utilisées. Ce projet est un moyen pour moi de continuer à apprendre mais surtout de m'amuser en définissant mon environnement parfait. Je vous prierais par contre de me citer si vous utilisez ce projet pour vos propres besoins.
 
+::: info
+
+Certaine parties de cette documentation ont été corrigées et reformulées par Github Copilot
+
+:::
+
 ## Technologies utilisées
 
 - [Taskfile](https://taskfile.dev/#/)
@@ -18,6 +24,7 @@ Avant toute chose, il est important de noter que ce projet est un projet personn
 - [Proxmox](https://www.proxmox.com/)
 - [CAPI](https://cluster-api.sigs.k8s.io/)
 - [ArgoCD](https://argoproj.github.io/argo-cd/)
+- Et bien d'autres !
 
 ## Organisation du projet
 
