@@ -44,8 +44,6 @@ const MermaidExample = (md: MarkdownRenderer) => {
       <code>${token.content.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code>
       </pre>
       </div>`;
-    } else {
-      console.log("Unknown language:", language);
     }
 
     return defaultRenderer(tokens, index, options, env, slf);
