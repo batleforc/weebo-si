@@ -104,10 +104,10 @@ data:
       name: "first-pool"
     spec:
       blocks:
-      {{"{{"}}% for ip in ips.split(' ') %}}
+      {% for ip in ips.split(' ') %}
       - start: {{"{{"}} ip }}
         stop: {{"{{"}} ip }}
-      {{"{{"}}% endfor %}}
+      {% endfor %}
   secrets.j2: |
     apiVersion: v1
     kind: Secret
