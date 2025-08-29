@@ -81,6 +81,17 @@ data:
       sub-ca.crt: {{"{{"}} subca.content | from_json | json_query("data.certificate") | b64encode }}
       vault-ca.crt: {{"{{"}} lookup('ansible.builtin.file', '/ca/vault/ca.crt') | b64encode }}
     ---
+    apiVersion: cilium.io/v2alpha1
+    kind: CiliumLoadBalancerIPPool
+    metadata:
+      name: first-pool
+    spec:
+      blocks:
+      {% for ip in ips.stdout.split(' ') %}
+      - start: {{"{{"}} ip }}
+        stop: {{"{{"}} ip }}
+      {% endfor %}
+    ---
     apiVersion: v1
     kind: Service
     metadata:
@@ -98,17 +109,6 @@ data:
         - protocol: TCP
           port: 943
           targetPort: 943
-    ---
-    apiVersion: cilium.io/v2alpha1
-    kind: CiliumLoadBalancerIPPool
-    metadata:
-      name: first-pool
-    spec:
-      blocks:
-      {% for ip in ips.stdout.split(' ') %}
-      - start: {{"{{"}} ip }}
-        stop: {{"{{"}} ip }}
-      {% endfor %}
   secrets.j2: |
     apiVersion: v1
     kind: Secret
