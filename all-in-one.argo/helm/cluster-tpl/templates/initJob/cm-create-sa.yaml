@@ -88,7 +88,7 @@ data:
       namespace: argocd
       annotations:
         lbipam.cilium.io/sharing-key: "weebo-gate"
-        lbipam.cilium.io/ips: {{"{{"}} ips.split(' ') | join(',') }}
+        lbipam.cilium.io/ips: {{"{{"}} ips.stdout.split(' ') | join(',') }}
         lbipam.cilium.io/sharing-cross-namespace: "*"
     spec:
       selector:
@@ -104,7 +104,7 @@ data:
       name: "first-pool"
     spec:
       blocks:
-      {% for ip in ips.split(' ') %}
+      {% for ip in ips.stdout.split(' ') %}
       - start: {{"{{"}} ip }}
         stop: {{"{{"}} ip }}
       {% endfor %}
