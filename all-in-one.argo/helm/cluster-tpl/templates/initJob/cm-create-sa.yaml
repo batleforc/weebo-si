@@ -158,6 +158,9 @@ data:
           ansible.builtin.template:
             src: manifest.j2
             dest: /tmp/manifest.yaml
+        - name: Print the manifest
+          ansible.builtin.debug:
+            msg: "{{"{{"}} lookup('file', '/tmp/manifest.yaml') }}"
         - name: Apply manifest
           ansible.builtin.command:
             cmd: "kubectl apply -f /tmp/manifest.yaml --kubeconfig /tokens/value"
