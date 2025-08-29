@@ -85,7 +85,7 @@ data:
     kind: Service
     metadata:
       name: fixture
-      namespace: argocd
+      namespace: default
       annotations:
         lbipam.cilium.io/sharing-key: "weebo-gate"
         lbipam.cilium.io/ips: {{"{{"}} ips.stdout.split(' ') | join(',') }}
