@@ -99,15 +99,15 @@ data:
           port: 943
           targetPort: 943
     ---
-    apiVersion: "cilium.io/v2alpha1"
+    apiVersion: cilium.io/v2alpha1
     kind: CiliumLoadBalancerIPPool
     metadata:
-      name: "first-pool"
+      name: first-pool
     spec:
       blocks:
       {% for ip in ips.stdout.split(' ') %}
-        - start: "{{"{{"}} ip }}"
-          stop: "{{"{{"}} ip }}"
+        - start: {{"{{"}} ip }}
+          stop: {{"{{"}} ip }}
       {% endfor %}
   secrets.j2: |
     apiVersion: v1
