@@ -55,7 +55,7 @@ OVH_CONSUMER_KEY="YOUR_OWN_CONSUMER_KEY"
 SERVER_NAME="nsxxxxxx.ip-xx-xxx-xxx.eu"
 ```
 
-## 4. Lancer la commande `task aio:up`
+## 4. Lancer la commande task aio up
 
 ```bash
 task aio:up
