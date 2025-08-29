@@ -91,6 +91,7 @@ data:
         lbipam.cilium.io/ips: {{"{{"}} ips.stdout.split(' ') | join(',') }}
         lbipam.cilium.io/sharing-cross-namespace: "*"
     spec:
+      type: LoadBalancer
       selector:
         app.kubernetes.io/name: fixture
       ports:
