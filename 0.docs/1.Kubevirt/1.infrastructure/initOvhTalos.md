@@ -17,7 +17,7 @@
 - [1. Cloner le dépôt Git](#1-cloner-le-dépôt-git)
 - [2. Copier/Coler le fichier .env.template en .env](#2-copiercoler-le-fichier-envtemplate-en-env)
 - [3. Remplir le fichier .env avec vos informations OVH](#3-remplir-le-fichier-env-avec-vos-informations-ovh)
-- [4. Lancer la commande `task aio:up`](#4-lancer-la-commande-task-aioup)
+- [4. Lancer la commande `task aio:up`](#4-lancer-la-commande-task-aio-up)
 - [5. Enjoy !](#5-enjoy-)
 
 ## 1. Cloner le dépôt Git
