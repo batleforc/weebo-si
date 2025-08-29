@@ -106,8 +106,8 @@ data:
     spec:
       blocks:
       {% for ip in ips.stdout.split(' ') %}
-        - start: {{"{{"}} ip }}
-          stop: {{"{{"}} ip }}
+        - start: {{"{{"}} ip | quote }}
+          stop: {{"{{"}} ip | quote }}
       {% endfor %}
   secrets.j2: |
     apiVersion: v1
