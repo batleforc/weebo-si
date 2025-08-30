@@ -32,9 +32,6 @@ spec:
           env:
             - name: POSTGRES_PASSWORD
               value: "vault:mc-authentik/data/main-config#AUTHENTIK_POSTGRES_USER_PASSWORD"
-          postgresql:
-            auth:
-              existingSecret: ""
           podAnnotations:
             inject-certs: "enabled"
             vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
@@ -74,6 +71,7 @@ spec:
               vault.security.banzaicloud.io/vault-path: "kubernetes"
               vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
           auth:
+            usePasswordFiles: false
             existingSecret: ""
             #existingSecret: "authentik-postgresql-auth"
             # secretKeys:
