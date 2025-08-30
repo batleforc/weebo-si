@@ -70,10 +70,11 @@ spec:
               vault.security.banzaicloud.io/vault-role: "auth"
               vault.security.banzaicloud.io/vault-path: "kubernetes"
               vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
-          # auth:
-          #   existingSecret: "authentik-postgresql-auth"
-          #   secretKeys:
-          #     adminPasswordKey: "password-admin"
+          auth:
+            existingSecret: ""
+            #existingSecret: "authentik-postgresql-auth"
+            secretKeys:
+              adminPasswordKey: "password-admin"
           serviceAccount:
             name: authentik
             create: false
