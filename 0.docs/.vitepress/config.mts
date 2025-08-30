@@ -83,6 +83,7 @@ export default defineConfig({
           { text: "Kanban", link: "/0.introduction/kanban" },
           {
             text: "Projects",
+            collapsed: true,
             items: [
               { text: "Capi Vs Omni ?", link: "/0.projects/capi-vs-omni" },
               { text: "AllInOne Argo", link: "/0.projects/all-in-one" },
@@ -140,6 +141,7 @@ export default defineConfig({
       },
       {
         text: "1. Proxmox",
+        collapsed: true,
         items: [
           { text: "Architecture", link: "/1.Proxmox/architecture" },
           {
