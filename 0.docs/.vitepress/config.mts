@@ -192,11 +192,11 @@ export default defineConfig({
             items: [
               {
                 text: "Saison 1",
-                link: "/0.introduction/stream/saison1/index.html",
+                link: "/0.introduction/stream/saison1/index",
               },
               {
                 text: "Saison 2",
-                link: "/0.introduction/stream/saison2/index.html",
+                link: "/0.introduction/stream/saison2/index",
               },
             ],
           },
@@ -206,23 +206,23 @@ export default defineConfig({
             items: [
               {
                 text: "us9 - Updatecli",
-                link: "/0.us/us9.html",
+                link: "/0.us/us9",
               },
               {
                 text: "us15 - Dns Dynamique",
-                link: "/0.us/us15.html",
+                link: "/0.us/us15",
               },
               {
                 text: "us16 - Certificat authority",
-                link: "/0.us/us16.html",
+                link: "/0.us/us16",
               },
               {
                 text: "us17 - PVC CSI",
-                link: "/0.us/us17.html",
+                link: "/0.us/us17",
               },
               {
                 text: "us206 - Mise en place d'une stack de Monitoring",
-                link: "/0.us/us206.html",
+                link: "/0.us/us206",
               },
             ],
           },
