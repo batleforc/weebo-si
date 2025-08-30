@@ -13,7 +13,7 @@ spec:
     chart: netbird
     repoURL: https://netbirdio.github.io/helms
     # https://github.com/bank-vaults/vault-operator/pkgs/container/helm-charts%2Fvault-operator
-    targetRevision: 1.8.0
+    targetRevision: 1.9.0
     helm:
       releaseName: netbird
       valuesObject:
