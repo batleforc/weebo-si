@@ -55,6 +55,7 @@ externalSecrets:
 
 auth:
   enabled: true
+  version: 2025.8.1
 
 glance:
   enabled: true
