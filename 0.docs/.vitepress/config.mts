@@ -198,6 +198,32 @@ export default defineConfig({
               },
             ],
           },
+          {
+            text: "User Story",
+            collapsed: true,
+            items: [
+              {
+                text: "us9 - Updatecli",
+                link: "/0.us/us9.html",
+              },
+              {
+                text: "us15 - Dns Dynamique",
+                link: "/0.us/us15.html",
+              },
+              {
+                text: "us16 - Certificat authority",
+                link: "/0.us/us16.html",
+              },
+              {
+                text: "us17 - PVC CSI",
+                link: "/0.us/us17.html",
+              },
+              {
+                text: "us206 - Mise en place d'une stack de Monitoring",
+                link: "/0.us/us206.html",
+              },
+            ],
+          },
         ],
       },
     ],
