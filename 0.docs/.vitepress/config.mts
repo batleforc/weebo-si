@@ -224,6 +224,10 @@ export default defineConfig({
                 text: "us206 - Mise en place d'une stack de Monitoring",
                 link: "/0.us/us206",
               },
+              {
+                text: "us216 - Mise en place NetPolicy",
+                link: "/0.us/us216",
+              },
             ],
           },
         ],

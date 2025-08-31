@@ -11,6 +11,7 @@ kanban
   todo[To Do]
     us203[Try to fix proxmox with the csi driver]@{ assigned: Proxmox, priority: 'High'}
     us204[Refaire les règle UpdateCLI]@{ assigned: RÉCURENT, priority: 'High'}
+    us216[Mise en place NetPolicy]@{ assigned: MVP1, priority: 'High', ticket: 'us216'}
     us205[Recréer l’autorité de certification uniquement via terraform]@{ assigned: MVP1, priority: 'High'}
     us207[Mise en place Harbor et propagation dans les clusters pour avoir un cache des images]@{ assigned: MVP1, priority: 'High'}
     us208[Mise en place d'une extensions Netbird pour Talos]@{ assigned: MVP1, priority: 'High'}
