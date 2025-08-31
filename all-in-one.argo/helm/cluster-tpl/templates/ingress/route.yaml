@@ -13,13 +13,11 @@ spec:
       services:
         - name: "{{ .Release.Name }}"
           namespace: "{{ .Release.Namespace }}"
-          nativeLB: true
           port: 443
-    - match: HostSNI("{{ $outDns }}") || HostSNIRegexp(`^.\.+{{ regexReplaceAll "\\." $outDns "\\." }}$`)
+    - match: HostSNI("{{ $outDns }}") || HostSNIRegexp(`^.+\.{{ regexReplaceAll "\\." $outDns "\\." }}$`)
       services:
         - name: "{{ .Release.Name }}"
           namespace: "{{ .Release.Namespace }}"
-          nativeLB: true
           port: 443
   tls:
     passthrough: true
