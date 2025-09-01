@@ -1,0 +1,24 @@
+{{ if .Values.coroot.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: coroot-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: monitoring
+  source:
+    repoURL: 'https://coroot.github.io/helm-charts'
+    chart: "coroot-operator"
+    targetRevision: {{ .Values.coroot.operator.version }}
+    helm:
+      releaseName: coroot-operator
+  destination:
+    name: in-cluster
+    namespace: 'coroot'
+  syncPolicy:
+    automated: {}
+    syncOptions:
+      - CreateNamespace=true
+{{ end }}

@@ -7,6 +7,9 @@ kubevirt:
   manager: true
   storageClass: local-storage
 
+monitoring:
+  enabled: true
+
 dns:
   outbound:
     enabled: true

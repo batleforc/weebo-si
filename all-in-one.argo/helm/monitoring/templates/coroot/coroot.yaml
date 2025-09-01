@@ -1,0 +1,21 @@
+{{ if .Values.coroot.enabled }}
+apiVersion: coroot.com/v1
+kind: Coroot
+metadata:
+  name: coroot
+  namespace: coroot
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  ingress: # Ingress configuration for Coroot.
+    className: traefik
+    host: coroot.4.weebo.fr
+    path: /
+    annotations:
+      cert-manager.io/cluster-issuer: "outbound"
+    tls: # TLS configuration.
+      hosts:
+        - coroot.4.weebo.fr
+      secretName: coroot-tls
+
+{{ end }}

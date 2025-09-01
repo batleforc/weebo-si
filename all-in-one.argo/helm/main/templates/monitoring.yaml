@@ -1,0 +1,27 @@
+{{ if .Values.monitoring.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://github.com/batleforc/weebo-si"
+    path: "all-in-one.argo/helm/monitoring"
+    helm:
+      releaseName: monitoring
+  destination:
+    name: in-cluster
+    namespace: "default"
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{ end }}

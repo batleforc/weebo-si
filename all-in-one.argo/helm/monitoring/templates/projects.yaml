@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: "monitoring"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  sourceRepos:
+    - "*"
+  destinations:
+    - namespace: "*"
+      name: "in-cluster"
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
