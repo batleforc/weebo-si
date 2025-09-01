@@ -20,7 +20,7 @@ spec:
   syncPolicy:
     automated: {}
     managedNamespaceMetadata:
-      annotations: # The annotations to set on the application namespace
+      labels:
         pod-security.kubernetes.io/enforce: privileged
         pod-security.kubernetes.io/restrict: privileged
         pod-security.kubernetes.io/audit: privileged
