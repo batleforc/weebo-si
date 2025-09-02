@@ -24,4 +24,8 @@ spec:
           keySecret:
             name: che-cluster-api-key
             key: api-key
+        - description: "Otel collector API Key"
+          keySecret:
+            name: otel-collector-api-key
+            key: api-key
 {{ end }}
