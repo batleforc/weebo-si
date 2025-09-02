@@ -24,14 +24,14 @@ path "mc-authentik/data/che-cluster/{{identity.entity.aliases.auth_kubernetes_22
 }
 
 path "mc-authentik/metadata/+/+/monitoring" {
-  capabilities = ["create", "read", "update", "delete", "list", "patch"]
+  capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
 path "mc-authentik/data/+/+/monitoring" {
-  capabilities = ["create", "read", "update", "delete", "list", "patch"]
+  capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
 
 path "mc-authentik/metadata/+/monitoring" {
-  capabilities = ["create","read", "update", "delete", "list", "patch"]
+  capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
 path "mc-authentik/data/+/monitoring" {
   capabilities = ["create", "read", "update", "delete", "list","patch"]
