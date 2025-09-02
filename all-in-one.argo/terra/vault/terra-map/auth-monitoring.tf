@@ -33,7 +33,7 @@ path "mc-authentik/data/+/+/vpn" {
 EOT
 }
 
-resource "vault_kubernetes_auth_backend_role" "auth-reader-che-cluster" {
+resource "vault_kubernetes_auth_backend_role" "auth-monitoring" {
   role_name                        = "auth-monitoring"
   bound_service_account_names      = ["coroot","default"]
   bound_service_account_namespaces = ["coroot","monitoring"]
