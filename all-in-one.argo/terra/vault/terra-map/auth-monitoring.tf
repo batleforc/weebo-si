@@ -30,6 +30,13 @@ path "mc-authentik/data/+/+/monitoring" {
   capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
 
+path "mc-authentik/metadata/*/monitoring" {
+  capabilities = ["create", "read", "update", "delete", "list","patch"]
+}
+path "mc-authentik/data/*/monitoring" {
+  capabilities = ["create", "read", "update", "delete", "list","patch"]
+}
+
 path "mc-authentik/metadata/+/monitoring" {
   capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
