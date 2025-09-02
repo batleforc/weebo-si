@@ -17,4 +17,8 @@ configMapGenerator:
     namespace: vault
     files:
       - ./terra-map/main.tf
-      - ./terra-map/authentik.tf
+      - ./terra-map/auth-base.tf
+      - ./terra-map/auth-bootstrap.tf
+      - ./terra-map/auth-vpn.tf
+      - ./terra-map/auth-cluster-che-cluster.tf
+      - ./terra-map/auth-monitoring.tf
