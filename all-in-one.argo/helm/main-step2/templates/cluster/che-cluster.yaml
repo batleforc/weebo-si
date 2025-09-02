@@ -16,6 +16,10 @@ spec:
       valuesObject:
         traefik:
           ips: "10.244.0.158"
+        monitoring:
+          {{ range $key, $value := .Values.monitoring }}
+          {{ $key }}: {{ $value | toJson | indent 8 }}
+          {{- end }}
   destination:
     name: in-cluster
     namespace: 'che'

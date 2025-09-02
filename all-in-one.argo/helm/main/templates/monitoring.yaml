@@ -11,6 +11,10 @@ spec:
     path: "all-in-one.argo/helm/monitoring"
     helm:
       releaseName: monitoring
+      valuesObject:
+        {{ range $key, $value := .Values.monitoring }}
+        {{ $key }}: {{ $value | toJson | indent 8 }}
+        {{- end }}
   destination:
     name: in-cluster
     namespace: "default"

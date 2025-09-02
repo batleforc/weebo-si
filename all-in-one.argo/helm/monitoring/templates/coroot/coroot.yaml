@@ -17,5 +17,11 @@ spec:
       hosts:
         - coroot.4.weebo.fr
       secretName: coroot-tls
-
+    projects:
+      - name: default
+        apiKeys:
+          - description: "Api Key for sub Cluster che"
+            keySecret:
+              name: che-cluster-api-key
+              key: api-key
 {{ end }}

@@ -9,6 +9,10 @@ kubevirt:
 
 monitoring:
   enabled: true
+  coroot:
+    enabled: true
+    operator:
+      version: 0.4.4
 
 dns:
   outbound:
