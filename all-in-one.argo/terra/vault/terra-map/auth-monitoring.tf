@@ -30,7 +30,7 @@ path "mc-authentik/data/*/monitoring" {
 path "mc-authentik/metadata/che-cluster/+/monitoring" {
   capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
-path "mc-authentik/data/che-cluster/+/monitoring" {
+path "mc-authentik/data/che-cluster/*/monitoring" {
   capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
 
