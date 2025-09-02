@@ -6,11 +6,11 @@ path "mc-authentik/data/che-cluster/{{identity.entity.aliases.auth_kubernetes_22
   capabilities = ["read","list"]
 }
 path "mc-authentik/data/che-cluster/{{identity.entity.aliases.auth_kubernetes_225a14d3.metadata.service_account_namespace}}/config" {
-  capabilities = ["create", "read", "update", "delete", "list"]
+  capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
 
 path "mc-authentik/data/che-cluster/{{identity.entity.aliases.auth_kubernetes_225a14d3.metadata.service_account_namespace}}/sub" {
-  capabilities = ["create", "read", "update", "delete", "list"]
+  capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
 path "mc-authentik/metadata/che-cluster/{{identity.entity.aliases.auth_kubernetes_225a14d3.metadata.service_account_namespace}}/sub" {
   capabilities = ["read","list"]
@@ -20,7 +20,7 @@ path "mc-authentik/metadata/che-cluster/{{identity.entity.aliases.auth_kubernete
   capabilities = ["read","list"]
 }
 path "mc-authentik/data/che-cluster/{{identity.entity.aliases.auth_kubernetes_225a14d3.metadata.service_account_namespace}}/vpn" {
-  capabilities = ["create", "read", "update", "delete", "list"]
+  capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
 
 path "mc-authentik/metadata/*/monitoring" {
