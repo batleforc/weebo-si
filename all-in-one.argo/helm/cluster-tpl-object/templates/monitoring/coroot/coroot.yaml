@@ -1,0 +1,15 @@
+{{ if and .Values.monitoring.enabled .Values.monitoring.coroot.enabled  }}
+apiVersion: coroot.com/v1
+kind: Coroot
+metadata:
+  name: coroot
+  namespace: coroot
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  apiKeySecret:
+    name: coroot-api-key
+    key: api-key
+  agentsOnly:
+    corootURL: "https://coroot.4.weebo.fr"
+{{ end }}
