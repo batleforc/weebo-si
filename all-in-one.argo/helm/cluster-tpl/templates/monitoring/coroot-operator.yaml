@@ -15,7 +15,7 @@ spec:
     helm:
       releaseName: coroot-operator
   destination:
-    name: in-cluster
+    name: {{ .Release.Name }}
     namespace: 'coroot'
   syncPolicy:
     automated: {}
