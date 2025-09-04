@@ -7,7 +7,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  project: monitoring
+  project: {{ .Release.Name }}
   source:
     repoURL: 'https://coroot.github.io/helm-charts'
     chart: "coroot-operator"
