@@ -20,12 +20,14 @@ spec:
   projects:
     - name: default
       apiKeys:
-        - description: "Api Key for sub Cluster che"
-          keySecret:
-            name: che-cluster-api-key
-            key: api-key
         - description: "Otel collector API Key"
           keySecret:
             name: otel-collector-api-key
+            key: api-key
+    - name: "che-cluster"
+      apiKeys:
+        - description: "Api Key for sub Cluster che"
+          keySecret:
+            name: che-cluster-api-key
             key: api-key
 {{ end }}
