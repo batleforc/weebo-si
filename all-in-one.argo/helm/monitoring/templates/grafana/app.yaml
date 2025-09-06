@@ -29,7 +29,7 @@ spec:
             domain: grafana.4.weebo.fr
             root_url: https://grafana.4.weebo.fr
           auth:
-            signout_redirect_url: $__file{/etc/secrets/auth-generic-oauth/client_id}end-session/
+            signout_redirect_url: https://login.4.weebo.fr/application/o/end-session/
             oauth_auto_login: true
           auth.generic_oauth:
             enabled: true
@@ -37,9 +37,9 @@ spec:
             client_id: $__file{/etc/secrets/auth-generic-oauth/client_id}
             client_secret: $__file{/etc/secrets/auth-generic-oauth/client_secret}
             scopes: openid profile email
-            auth_url: $__file{/etc/secrets/auth-generic-oauth/url}authorize/
-            token_url: $__file{/etc/secrets/auth-generic-oauth/url}token/
-            api_url: $__file{/etc/secrets/auth-generic-oauth/url}userinfo/
+            auth_url: https://login.4.weebo.fr/application/o/authorize/
+            token_url: https://login.4.weebo.fr/application/o/token/
+            api_url: https://login.4.weebo.fr/application/o/userinfo/
             role_attribute_path: contains(groups, 'weebo_admin') && 'Admin' || contains(groups, 'weebo_moderator') && 'Editor' || 'Viewer'
         extraSecretMounts:
           - name: auth-generic-oauth
