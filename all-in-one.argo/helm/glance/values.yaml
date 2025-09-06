@@ -63,7 +63,6 @@ content: |
                   icon: si:eclipseche
                 - title: Coroot
                   url: https://coroot.4.weebo.fr/
-                  icon: si:coroot
                 - title: Grafana
                   url: https://grafana.4.weebo.fr/
                   icon: si:grafana
