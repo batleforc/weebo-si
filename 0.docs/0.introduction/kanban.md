@@ -30,6 +30,7 @@ kanban
 ```
 
 - [WarpGate](https://warpgate.null.page/docs/)
+- [Grafana MCP](https://github.com/grafana/helm-charts/tree/main/charts/grafana-mcp)
 
 ## Actions récurrentes
 
@@ -48,6 +49,12 @@ kanban
 - Musique: [NCS](https://ncs.io/)
 - Objectif
   - On attaque la mise en place de la stack de monitoring !
+    - Grafana ++ sidecar load source && dashboard
+    - déploiement OTEL
+    - Chargement des métriques Traefik ++ envoie des traces Traefik vers OTEL Collector
+- Bilan
+  - KubeApiProxy ?! : Next Time
+  - Upgrade ArgoCD : DONE
 
 ### Stream 30 AOÛT 2025 - SAISON 2222222222
 

@@ -3,5 +3,5 @@ config:
   app:talosVersion: v1.10.4
   app:kubeVersion: v1.33.2
   app:ciliumVersion: v1.17.4
-  app:argoAppsVersion: 8.1.2
+  app:argoAppsVersion: 8.3.5
   cilium:configPath: kubeconfig.yaml

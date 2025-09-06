@@ -28,3 +28,4 @@ configMapGenerator:
       - ./terra-map/outpost.tf
       - ./terra-map/glance.tf
       - ./terra-map/che-cluster.tf
+      - ./terra-map/grafana.tf

@@ -93,9 +93,9 @@ func main() {
 			StringData: pulumi.StringMap{
 				"auth": redisPasswordResource.Result,
 			},
-		}, pulumi.DependsOn([]pulumi.Resource{
-			ns,
-		}))
+		},
+			pulumi.DependsOn([]pulumi.Resource{ns}),
+		)
 		if err != nil {
 			return err
 		}

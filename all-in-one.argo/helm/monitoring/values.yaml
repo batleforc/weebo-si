@@ -2,3 +2,7 @@ coroot:
   enabled: true
   operator:
     version: 0.4.4
+
+grafana:
+  enabled: true
+  version: 9.4.4
