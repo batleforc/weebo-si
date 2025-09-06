@@ -58,6 +58,8 @@ spec:
             - secretName: grafana-tls
               hosts:
                 - grafana.4.weebo.fr
+        plugins:
+          - grafana-clickhouse-datasource
   destination:
     name: in-cluster
     namespace: 'grafana'

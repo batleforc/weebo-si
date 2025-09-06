@@ -22,6 +22,7 @@ kanban
     us213[Mise en place Bastion WarpGate]@{ assigned: MVP2, priority: 'High'}
     us214[Mise en place Headlamp pour les sous cluster]@{ assigned: MVP2, priority: 'High'}
     us215[Mise en place d'un S3, RustFS ?]@{ assigned: MVP2, priority: 'High'}
+    us217[Mise en place d'environnement Eclipse che - par ex nix]@{ assigned: MVP3, priority: 'High'}
   doing[Doing]
     us206[Mise en place d'une stack de Monitoring, Log/Trace/Métrique]@{ assigned: MVP1, priority: 'High', ticket: 'us206'}
   done[Done]
