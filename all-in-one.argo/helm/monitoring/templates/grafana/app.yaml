@@ -29,22 +29,22 @@ spec:
             domain: grafana.4.weebo.fr
             root_url: https://grafana.4.weebo.fr
           auth:
-            signout_redirect_url: $__file{/etc/secrets/auth_generic_oauth/client_id}end-session/
+            signout_redirect_url: $__file{/etc/secrets/auth-generic-oauth/client_id}end-session/
             oauth_auto_login: true
           auth.generic_oauth:
             enabled: true
             name: weebo-si
-            client_id: $__file{/etc/secrets/auth_generic_oauth/client_id}
-            client_secret: $__file{/etc/secrets/auth_generic_oauth/client_secret}
+            client_id: $__file{/etc/secrets/auth-generic-oauth/client_id}
+            client_secret: $__file{/etc/secrets/auth-generic-oauth/client_secret}
             scopes: openid profile email
-            auth_url: $__file{/etc/secrets/auth_generic_oauth/url}authorize/
-            token_url: $__file{/etc/secrets/auth_generic_oauth/url}token/
-            api_url: $__file{/etc/secrets/auth_generic_oauth/url}userinfo/
+            auth_url: $__file{/etc/secrets/auth-generic-oauth/url}authorize/
+            token_url: $__file{/etc/secrets/auth-generic-oauth/url}token/
+            api_url: $__file{/etc/secrets/auth-generic-oauth/url}userinfo/
             role_attribute_path: contains(groups, 'weebo_admin') && 'Admin' || contains(groups, 'weebo_moderator') && 'Editor' || 'Viewer'
         extraSecretMounts:
-          - name: auth_generic_oauth
+          - name: auth-generic-oauth
             secretName: grafana-auth
-            mountPath: /etc/secrets/auth_generic_oauth
+            mountPath: /etc/secrets/auth-generic-oauth
             defaultMode: 0440
             readOnly: true
         ingress:
