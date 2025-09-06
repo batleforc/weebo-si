@@ -32,6 +32,7 @@ kanban
 
 - [WarpGate](https://warpgate.null.page/docs/)
 - [Grafana MCP](https://github.com/grafana/helm-charts/tree/main/charts/grafana-mcp)
+- [Coroot Grafana Dashboards](https://github.com/kirillyu/coroot-grafana-dashboards)
 
 ## Actions récurrentes
 
@@ -42,10 +43,21 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Stream 6 SEPTEMBRE 2025
+### Stream 13 SEPTEMBRE 2025
 
 - Debut : 16h30
 - FIN : ~ 18h30
+- Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
+- Musique: [NCS](https://ncs.io/)
+- Objectif
+  - KubeApiProxy ?!
+  - déploiement OTEL
+  - Chargement des métriques Traefik ++ envoie des traces Traefik vers OTEL Collector
+
+### Stream 6 SEPTEMBRE 2025
+
+- Debut : 16h30
+- FIN : ~ 19h30
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif
@@ -56,20 +68,8 @@ kanban
 - Bilan
   - KubeApiProxy ?! : Next Time
   - Upgrade ArgoCD : DONE
-
-### Stream 30 AOÛT 2025 - SAISON 2222222222
-
-- Debut : 16h30
-- FIN : ~ 19H
-- Vod : [Twitch](https://www.twitch.tv/videos/2553712231) YouTube : Soon
-- Musique: [NCS](https://ncs.io/)
-- Objectif
-  - Regarde le kanban 🤣
-  - Psttt fin du MVP et début du suivant !!!
-- Bilan
-  - Présentation des projet pour cette premiere partit de Saison 2
-  - Exploration initial de Zot 👀
-  - Début de l'exploration de la stack de monitoring
+  - Mise en place Grafana x Coroot : DONE
+  - Next Step: Créer des dashboards Grafana pour coroot : DONE
 
 ### [Bilan des streams de la saison 2](/0.introduction/stream/saison2/index.html) - In Progress
 
