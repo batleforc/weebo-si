@@ -63,7 +63,7 @@ content: |
                   icon: si:eclipseche
                 - title: Coroot
                   url: https://coroot.4.weebo.fr/
-                  icon: https://raw.githubusercontent.com/coroot/coroot/refs/heads/main/docs/static/img/favicon.ico
+                  icon: auto-invert https://raw.githubusercontent.com/coroot/coroot/refs/heads/main/docs/static/img/favicon.ico
                 - title: Grafana
                   url: https://grafana.4.weebo.fr/
                   icon: si:grafana
