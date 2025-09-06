@@ -1,4 +1,4 @@
-{{ if .Values.coroot.enabled }}
+{{ if .Values.grafana.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -24,6 +24,40 @@ spec:
             enabled: true
           datasources:
             enabled: true
+        grafana.ini:
+          server:
+            domain: grafana.4.weebo.fr
+            root_url: https://grafana.4.weebo.fr
+          auth:
+            signout_redirect_url: $__file{/etc/secrets/auth_generic_oauth/client_id}end-session/
+            oauth_auto_login: true
+          auth.generic_oauth:
+            enabled: true
+            name: weebo-si
+            client_id: $__file{/etc/secrets/auth_generic_oauth/client_id}
+            client_secret: $__file{/etc/secrets/auth_generic_oauth/client_secret}
+            scopes: openid profile email
+            auth_url: $__file{/etc/secrets/auth_generic_oauth/url}authorize/
+            token_url: $__file{/etc/secrets/auth_generic_oauth/url}token/
+            api_url: $__file{/etc/secrets/auth_generic_oauth/url}userinfo/
+            role_attribute_path: contains(groups, 'weebo_admin') && 'Admin' || contains(groups, 'weebo_moderator') && 'Editor' || 'Viewer'
+        extraSecretMounts:
+          - name: auth_generic_oauth
+            secretName: grafana-auth
+            mountPath: /etc/secrets/auth_generic_oauth
+            defaultMode: 0440
+            readOnly: true
+        ingress:
+          enabled: true
+          annotations:
+            kubernetes.io/ingress.class: traefik
+            cert-manager.io/cluster-issuer: outbound
+          hosts:
+            - grafana.4.weebo.fr
+          tls:
+            - secretName: grafana-tls
+              hosts:
+                - grafana.4.weebo.fr
   destination:
     name: in-cluster
     namespace: 'grafana'
