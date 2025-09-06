@@ -1,0 +1,17 @@
+{{ if and .Values.grafana.enabled .Values.coroot.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: coroot-prom-datasource
+  namespace: grafana
+  labels:
+    grafana_datasource: 'true' # default value for: sidecar.datasources.label
+stringData:
+  pg-db.yaml: |-
+    apiVersion: 1
+    datasources:
+      - name: coroot-prom
+        type: prometheus
+        url: http://coroot-prometheus.coroot:9090
+        editable: false
+{{ end }}
