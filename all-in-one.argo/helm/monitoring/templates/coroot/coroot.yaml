@@ -17,9 +17,6 @@ spec:
       hosts:
         - coroot.4.weebo.fr
       secretName: coroot-tls
-  clickhouse:
-    keeper:
-      replicas: 1
   projects:
     - name: default
       apiKeys:
