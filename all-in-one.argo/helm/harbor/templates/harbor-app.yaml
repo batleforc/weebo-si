@@ -41,7 +41,11 @@ spec:
             registry:
               size: 20Gi
         harborAdminPassword: "vault:mc-authentik/data/harbor/config#HARBOR_ADMIN_PASSWORD"
-
+        internalTLS:
+          enabled: true
+        secretKey: {{ randAlphaNum 16 | quote }}
+        metrics:
+          enabled: true
 
 
   destination:
