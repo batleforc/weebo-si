@@ -55,7 +55,7 @@ resource "vault_kubernetes_auth_backend_role" "auth-write" {
 resource "vault_kubernetes_auth_backend_role" "auth-read" {
   role_name                        = "auth-read"
   bound_service_account_names      = ["authentik", "default", "kubevirt-omni"]
-  bound_service_account_namespaces = ["authentik", "argocd", "netbird", "kubevirt-omni", "che","grafana"]
+  bound_service_account_namespaces = ["authentik", "argocd", "netbird", "kubevirt-omni", "che","grafana","harbor"]
   token_ttl                        = 3600
   token_policies                   = [vault_policy.authentik_reader_policy.name]
 }

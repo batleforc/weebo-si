@@ -14,6 +14,13 @@ spec:
     helm:
       releaseName: harbor-app
       valuesObject:
+        core:
+          podLabels:
+            inject-certs: "enabled"
+            vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
+            vault.security.banzaicloud.io/vault-role: "auth-read"
+            vault.security.banzaicloud.io/vault-path: "kubernetes"
+            vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
         expose:
           tls:
             certSource: secret
@@ -33,7 +40,8 @@ spec:
           persistentVolumeClaim:
             registry:
               size: 20Gi
-        harborAdminPassword: "" # A récupérer du vault
+        harborAdminPassword: "vault:mc-authentik/data/harbor/config#HARBOR_ADMIN_PASSWORD"
+
 
 
   destination:
