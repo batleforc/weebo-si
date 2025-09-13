@@ -50,6 +50,10 @@ kanban
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif
+  - Pas MERCI CuistOps, Du GitOps dans nos VM ?!
+    - Discussions autour du contexte
+    - Comment le mettre en place ?
+    - Boot-C x Cloud Init ?
   - KubeApiProxy ?!
   - déploiement OTEL
   - Chargement des métriques Traefik ++ envoie des traces Traefik vers OTEL Collector
