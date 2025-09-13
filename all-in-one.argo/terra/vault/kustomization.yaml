@@ -22,3 +22,4 @@ configMapGenerator:
       - ./terra-map/auth-vpn.tf
       - ./terra-map/auth-cluster-che-cluster.tf
       - ./terra-map/auth-monitoring.tf
+      - ./terra-map/harbor.tf

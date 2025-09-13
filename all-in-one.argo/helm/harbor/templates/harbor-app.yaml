@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: harbor-app
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated: {}
+  source:
+    chart: harbor
+    repoURL: https://helm.goharbor.io
+    targetRevision: "{{ .Values.version.helm }}"
+    helm:
+      releaseName: harbor-app
+      valuesObject:
+        expose:
+          tls:
+            certSource: secret
+            secret:
+              secretName: harbor-tls
+          ingress:
+            hosts:
+              core: "core.harbor.4.weebo.fr"
+            annotations:
+              cert-manager.io/cluster-issuer: "outbound"
+              ingress.kubernetes.io/ssl-redirect: "true"
+              ingress.kubernetes.io/proxy-body-size: "0"
+              nginx.ingress.kubernetes.io/ssl-redirect: "true"
+              nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        externalURL: "https://core.harbor.4.weebo.fr"
+        persistence:
+          persistentVolumeClaim:
+            registry:
+              size: 20Gi
+        harborAdminPassword: "" # A récupérer du vault
+
+
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: harbor

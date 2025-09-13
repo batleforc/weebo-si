@@ -1,5 +1,5 @@
 Hey !
-Je suis en stream  pour la 6e itération du Weebo-Si.
+La 3ᵉ itération de Weebo-Si S2 est en cours.
 À l'ordre du jour :
 - Mise en place Root/Intermediate CA
 - CertManager X Vault
