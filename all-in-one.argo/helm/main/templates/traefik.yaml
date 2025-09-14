@@ -21,27 +21,12 @@ spec:
       valuesObject:
         metrics:
           addInternals: true
-        additionalArguments:
-          - "--entryPoints.web.reusePort=true"
-          - "--entryPoints.banana.reusePort=true"
         ports:
-          websecureltv:
-            port: 8443
-            expose:
-              default: true
-            exposedPort: 443
-            protocol: TCP
-            allowACMEByPass: false
-            http3:
-              enabled: false
-            # -- See [upstream documentation](https://doc.traefik.io/traefik/routing/entrypoints/#transport)
-            transport:
-              respondingTimeouts:
-                readTimeout: 180s   # @schema type:[string, integer, null]
-                writeTimeout: 180s   # @schema type:[string, integer, null]
-                idleTimeout: 180s   # @schema type:[string, integer, null]
-            tls:
-              enabled: true
+          websecure:
+            respondingTimeouts:
+              readTimeout: 180s   # @schema type:[string, integer, null]
+              writeTimeout: 180s   # @schema type:[string, integer, null]
+              idleTimeout: 180s   # @schema type:[string, integer, null]
         ingressRoute:
           dashboard:
             enabled: true
