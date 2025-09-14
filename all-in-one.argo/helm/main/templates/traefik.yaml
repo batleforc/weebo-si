@@ -21,11 +21,11 @@ spec:
       valuesObject:
         metrics:
           addInternals: true
+        additionalArguments:
+          - "--entryPoints.web.reusePort=true"
+          - "--entryPoints.banana.reusePort=true"
         ports:
-          websecure:
-            reusePort: true
           websecureltv:
-            reusePort: true
             port: 8443
             expose:
               default: true
