@@ -29,6 +29,7 @@ spec:
               idleTimeout: 180s   # @schema type:[string, integer, null]
         ingressRoute:
           dashboard:
+
             enabled: true
             matchRule: Host(`4.weebo.fr`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
             middlewares:
