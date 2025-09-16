@@ -32,6 +32,12 @@ spec:
           automountServiceAccountToken: true
         exporter:
           automountServiceAccountToken: true
+          podAnnotations:
+            inject-certs: "enabled"
+            vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
+            vault.security.banzaicloud.io/vault-role: "auth-read"
+            vault.security.banzaicloud.io/vault-path: "kubernetes"
+            vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
         expose:
           tls:
             certSource: secret
