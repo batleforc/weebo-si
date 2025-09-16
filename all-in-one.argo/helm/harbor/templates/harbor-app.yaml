@@ -30,6 +30,8 @@ spec:
           automountServiceAccountToken: true
         trivy:
           automountServiceAccountToken: true
+        exporter:
+          automountServiceAccountToken: true
         expose:
           tls:
             certSource: secret
