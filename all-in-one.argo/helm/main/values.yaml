@@ -44,6 +44,9 @@ vault:
 netbird:
   enabled: true
 
+harbor:
+  enabled: true
+
 certManager:
   enabled: true
   version: 1.18.0
