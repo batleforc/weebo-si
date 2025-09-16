@@ -24,6 +24,12 @@ spec:
             vault.security.banzaicloud.io/vault-role: "auth-read"
             vault.security.banzaicloud.io/vault-path: "kubernetes"
             vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
+        jobservice:
+          automountServiceAccountToken: true
+        registry:
+          automountServiceAccountToken: true
+        trivy:
+          automountServiceAccountToken: true
         expose:
           tls:
             certSource: secret
