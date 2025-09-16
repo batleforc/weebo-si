@@ -14,7 +14,10 @@ spec:
     helm:
       releaseName: harbor-app
       valuesObject:
+        portal:
+          automountServiceAccountToken: true
         core:
+          automountServiceAccountToken: true
           podAnnotations:
             inject-certs: "enabled"
             vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
