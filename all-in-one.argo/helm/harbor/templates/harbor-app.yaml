@@ -45,21 +45,19 @@ spec:
               secretName: harbor-tls
           ingress:
             hosts:
-              core: "core.harbor.4.weebo.fr"
+              core: "harbor.4.weebo.fr"
             annotations:
               cert-manager.io/cluster-issuer: "outbound"
               ingress.kubernetes.io/ssl-redirect: "true"
               ingress.kubernetes.io/proxy-body-size: "0"
               nginx.ingress.kubernetes.io/ssl-redirect: "true"
               nginx.ingress.kubernetes.io/proxy-body-size: "0"
-        externalURL: "https://core.harbor.4.weebo.fr"
+        externalURL: "https://harbor.4.weebo.fr"
         persistence:
           persistentVolumeClaim:
             registry:
               size: 20Gi
         harborAdminPassword: "vault:mc-authentik/data/harbor/config#HARBOR_ADMIN_PASSWORD"
-        internalTLS:
-          enabled: true
         secretKey: {{ randAlphaNum 16 | quote }}
         metrics:
           enabled: true
