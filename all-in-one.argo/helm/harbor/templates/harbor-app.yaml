@@ -15,7 +15,7 @@ spec:
       releaseName: harbor-app
       valuesObject:
         core:
-          podLabels:
+          podAnnotations:
             inject-certs: "enabled"
             vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
             vault.security.banzaicloud.io/vault-role: "auth-read"
