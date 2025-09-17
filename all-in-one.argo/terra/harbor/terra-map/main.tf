@@ -9,8 +9,39 @@ terraform {
   }
 }
 
+locals {
+  token_vault = file("/var/run/secrets/kubernetes.io/serviceaccount/token")
+}
+
+variable "vault_addr" {
+  type        = string
+  description = "The address of the Vault instance"
+  default     = "https://vault.capi.weebo.poc"
+}
+
+variable "username" {
+  type    = string
+  default = "admin"
+}
+
+variable "password" {
+  type    = string
+  default = "admin"
+}
+
 provider "harbor" {
   url      = "https://harbor.4.weebo.fr"
   username = var.username
   password = var.password
+}
+
+provider "vault" {
+  address          = var.vault_addr
+  ca_cert_file     = "/etc/ssl/vault/ca.crt"
+  skip_child_token = "true"
+  auth_login_jwt {
+    role  = "auth"
+    jwt   = local.token_vault
+    mount = "kubernetes"
+  }
 }
