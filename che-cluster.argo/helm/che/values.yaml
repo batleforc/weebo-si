@@ -1,7 +1,7 @@
 clusterName: che-cluster
 
 devworkspaceOperator:
-  version: "v0.36.0"
+  version: main #"v0.36.0"
 
 eclipseChe:
   version: "7.108.0"
