@@ -67,6 +67,9 @@ content: |
                 - title: Grafana
                   url: https://grafana.4.weebo.fr/
                   icon: si:grafana
+                - title: Harbor
+                  url: https://harbor.4.weebo.fr/
+                  icon: si:harbor
 
             - type: bookmarks
               groups:
