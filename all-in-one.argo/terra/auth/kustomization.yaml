@@ -29,3 +29,4 @@ configMapGenerator:
       - ./terra-map/glance.tf
       - ./terra-map/che-cluster.tf
       - ./terra-map/grafana.tf
+      - ./terra-map/harbor.tf
