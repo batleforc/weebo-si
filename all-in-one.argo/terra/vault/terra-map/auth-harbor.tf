@@ -8,7 +8,10 @@ path "mc-authentik/+/+/harbor" {
 path "mc-authentik/+/+/+/harbor" {
   capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
-path "mc-authentik/+/harbor/harbor" {
+path "mc-authentik/metadata/harbor/harbor" {
+  capabilities = ["create", "read", "update", "delete", "list","patch"]
+}
+path "mc-authentik/data/harbor/harbor" {
   capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
 path "mc-authentik/data/{{identity.entity.aliases.auth_kubernetes_225a14d3.metadata.service_account_namespace}}/*" {
