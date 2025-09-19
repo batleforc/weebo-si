@@ -4,6 +4,7 @@ resource "harbor_robot_account" "reader" {
   level = "system"
   permissions {
     namespace = harbor_project.cache-dck.name
+    kind = "project"
     access {
       action = "pull"
       resource = "repository"
@@ -11,6 +12,7 @@ resource "harbor_robot_account" "reader" {
   }
   permissions {
     namespace = harbor_project.cache-ghub.name
+    kind = "project"
     access {
       action = "pull"
       resource = "repository"
@@ -18,6 +20,7 @@ resource "harbor_robot_account" "reader" {
   }
   permissions {
     namespace = harbor_project.cache-quay.name
+    kind = "project"
     access {
       action = "pull"
       resource = "repository"
