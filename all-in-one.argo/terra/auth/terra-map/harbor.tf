@@ -31,7 +31,7 @@ resource "vault_kv_secret_v2" "harbor" {
     {
       AUTHENTIK_CLIENT_ID     = authentik_provider_oauth2.harbor.client_id,
       AUTHENTIK_CLIENT_SECRET = authentik_provider_oauth2.harbor.client_secret,
-      AUTHENTIK_URL           = "https://login.4.weebo.fr/application/o/${authentik_application.harbor.slug}",
+      AUTHENTIK_URL           = "https://login.4.weebo.fr/application/o/${authentik_application.harbor.slug}/",
     }
   )
 }
