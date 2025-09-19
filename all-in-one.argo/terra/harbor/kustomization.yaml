@@ -19,3 +19,5 @@ configMapGenerator:
       - ./terra-map/main.tf
       - ./terra-map/data.tf
       - ./terra-map/config.tf
+      - ./terra-map/projects-cache.tf
+      - ./terra-map/svc-reader.tf
