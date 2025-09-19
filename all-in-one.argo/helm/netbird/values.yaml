@@ -1,5 +1,5 @@
 netbird:
-  version: "0.56.1"
+  version: "0.57.1"
   dashboard: "v2.18.1"
 
 outboundIps: "127.0.0.1"
