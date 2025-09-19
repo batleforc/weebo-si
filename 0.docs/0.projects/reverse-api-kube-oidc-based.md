@@ -8,10 +8,34 @@ Can have XXX Provider, need to be capable to handle HTTPs/Ws/Other.
 
 ## Stack Technique
 
-- Rust
-  - Dois êtes scalable a l'infinis
+- Configuration dynamique
+  - CRD
+    - basé sur [AuthenticationConfiguration](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#using-authentication-configuration) ?
+    - Certificat du cluster
+    - metadata
+- Authentification
+  - Validation du token via les paramètre AuthenticationConfiguration
   - Pas d'impersonate
+- Extensions Kubectl
+- Path
+  - /
+    - Interface de l'application
+    - Authentification
+      - In-App OIDC
+        - 1 cluster reverse proxy == 1 Group OIDC
+      - Reverse proxy OIDC
+        - equivalent oc login --web => Callback server local
+        - equivalent oc login --token --api => Token retourner par l'interface
+  - /api
+    - Internal api of the reverse proxy
+  - /{CLUSTER_NAME}
+    - Proxy to the cluster api
+- Rust
+  - Dois êtes scalable a l'infinis (Redis centralisé ?)
+  - Pas d'impersonate (Ouais c'est un besoin de sécurité)
   - Actix
-  - Redis
-    - Stockage des jeton valide (?) pour X seconde puis revalidation
-    - Stockage de la configuration (sélecteur de claim, Provider, client secret, client id)
+  - Configuration depuis l'ETCD
+  - Support HTTP/2 / WebSocket
+  - RateLimit configurable (Fail2Ban like aussi)
+  - Monitoring / Metrics
+  - Support du [CEL (Common Expression Language)](https://github.com/cel-rust/cel-rust) ? Pas sur que ce soit nécessaire d'aller jusque la.

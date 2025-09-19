@@ -43,11 +43,27 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Stream 13 SEPTEMBRE 2025
+### Stream 20 SEPTEMBRE 2025
 
 - Debut : 16h30
 - FIN : ~ 18h30
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
+- Musique: [NCS](https://ncs.io/)
+- Objectif
+  - KubeApiProxy ?!
+    - Rust x Axios
+    - Store basic context behind authentification
+    - Creer une extensions pour kubectl
+  - déploiement OTEL
+  - Chargement des métriques Traefik ++ envoie des traces Traefik vers OTEL Collector
+  - Ajout d'une auth Authentik dans Vault
+  - Préparation de l'auto scaling des clusters Talos pour [lundi 22 SEPTEMBRE 2025](https://www.twitch.tv/cuistops)
+
+### Stream 13 SEPTEMBRE 2025
+
+- Debut : 16h30
+- FIN : ~ 18h30
+- Vod : [Twitch](https://www.twitch.tv/videos/2565416116) [YouTube](https://youtu.be/1aH1YR0tBY4)
 - Musique: [NCS](https://ncs.io/)
 - Objectif
   - Pas MERCI CuistOps, Du GitOps dans nos VM ?!
@@ -62,7 +78,7 @@ kanban
 
 - Debut : 16h30
 - FIN : ~ 19h30
-- Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
+- Vod : [Twitch](https://www.twitch.tv/videos/2559647271) [YouTube](https://youtu.be/njCye6LxTE0)
 - Musique: [NCS](https://ncs.io/)
 - Objectif
   - On attaque la mise en place de la stack de monitoring !
