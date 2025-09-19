@@ -24,24 +24,24 @@ variable "username" {
   default = "admin"
 }
 
-variable "password" {
-  type    = string
-  default = "admin"
-}
-
-provider "harbor" {
-  url      = "https://harbor.4.weebo.fr"
-  username = var.username
-  password = var.password
-}
-
 provider "vault" {
   address          = var.vault_addr
   ca_cert_file     = "/etc/ssl/vault/ca.crt"
   skip_child_token = "true"
   auth_login_jwt {
-    role  = "auth"
+    role  = "auth-harbor"
     jwt   = local.token_vault
     mount = "kubernetes"
   }
+}
+
+data "vault_kv_secret_v2" "harbor_config" {
+  mount = "mc-authentik"
+  name  = "harbor/config"
+}
+
+provider "harbor" {
+  url      = "https://harbor.4.weebo.fr"
+  username = var.username
+  password = data.vault_kv_secret_v2.harbor_config.data["HARBOR_ADMIN_PASSWORD"]
 }

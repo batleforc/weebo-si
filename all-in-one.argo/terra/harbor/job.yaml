@@ -32,8 +32,8 @@ spec:
           terraform init --upgrade
           terraform apply -auto-approve
         env:
-        - name: TF_VAR_harbor_token
-          value: "vault:mc-authentik/data/harbor/config#TERRAFORM_TOKEN"
+        # - name: TF_VAR_harbor_token
+        #   value: "vault:mc-authentik/data/harbor/config#TERRAFORM_TOKEN"
         - name: TF_VAR_vault_addr
           value: "https://vault.vault:8200"
         volumeMounts:

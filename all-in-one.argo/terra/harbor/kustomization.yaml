@@ -17,3 +17,5 @@ configMapGenerator:
     namespace: harbor
     files:
       - ./terra-map/main.tf
+      - ./terra-map/data.tf
+      - ./terra-map/config.tf
