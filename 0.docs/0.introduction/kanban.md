@@ -51,13 +51,12 @@ kanban
 - Musique: [NCS](https://ncs.io/)
 - Objectif
   - KubeApiProxy ?!
-    - Rust x Axios
-    - Store basic context behind authentification
-    - Creer une extensions pour kubectl
-  - déploiement OTEL
+    - Parler des spec
+    - Initialiser le projet
   - Chargement des métriques Traefik ++ envoie des traces Traefik vers OTEL Collector
-  - Ajout d'une auth Authentik dans Vault
   - Préparation de l'auto scaling des clusters Talos pour [lundi 22 SEPTEMBRE 2025](https://www.twitch.tv/cuistops)
+  - Déployer [kubevirt operator](https://github.com/seatgeek/buildkit-operator)
+  - Ajout d'une auth Authentik dans Vault
 
 ### Stream 13 SEPTEMBRE 2025
 
