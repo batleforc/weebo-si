@@ -7,7 +7,7 @@ resource "authentik_provider_oauth2" "harbor" {
   allowed_redirect_uris = [
     {
       matching_mode = "strict",
-      url           = "https://harbor.4.weebo.fr/c/oidc/callback/",
+      url           = "https://harbor.4.weebo.fr/c/oidc/callback",
     },
   ]
   property_mappings = [
