@@ -1,9 +1,9 @@
 resource "harbor_config_auth" "oidc" {
   auth_mode          = "oidc_auth"
   oidc_name          = "Weebo Authentik"
-  oidc_endpoint      = data.vault_kv_secret_v2.harbor_auth.data_json["AUTHENTIK_URL"]
-  oidc_client_id     = data.vault_kv_secret_v2.harbor_auth.data_json["AUTHENTIK_CLIENT_ID"]
-  oidc_client_secret = data.vault_kv_secret_v2.harbor_auth.data_json["AUTHENTIK_CLIENT_SECRET"]
+  oidc_endpoint      = data.vault_kv_secret_v2.harbor_auth.data_json.AUTHENTIK_URL
+  oidc_client_id     = data.vault_kv_secret_v2.harbor_auth.data_json.AUTHENTIK_CLIENT_ID
+  oidc_client_secret = data.vault_kv_secret_v2.harbor_auth.data_json.AUTHENTIK_CLIENT_SECRET
   oidc_scope         = "openid,profile,email,offline_access"
   oidc_verify_cert   = true
   oidc_auto_onboard  = true
