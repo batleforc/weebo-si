@@ -3,21 +3,21 @@ resource "harbor_robot_account" "reader" {
   description = "Service account meant to be a read-only user for pulling images from Harbor"
   level = "system"
   permissions {
-    namespace = ressource.harbor_project.cache-dck.name
+    namespace = harbor_project.cache-dck.name
     access {
       action = "pull"
       resource = "repository"
     }
   }
   permissions {
-    namespace = resource.harbor_project.cache-ghub.name
+    namespace = harbor_project.cache-ghub.name
     access {
       action = "pull"
       resource = "repository"
     }
   }
   permissions {
-    namespace = resource.harbor_project.cache-quay.name
+    namespace = harbor_project.cache-quay.name
     access {
       action = "pull"
       resource = "repository"
