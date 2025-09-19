@@ -20,6 +20,9 @@ path "mc-authentik/+/+/harbor" {
 path "mc-authentik/+/+/+/harbor" {
   capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
+path "mc-authentik/+/harbor/harbor" {
+  capabilities = ["create", "read", "update", "delete", "list","patch"]
+}
 EOT
 }
 
