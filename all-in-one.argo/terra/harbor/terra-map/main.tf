@@ -35,11 +35,6 @@ provider "vault" {
   }
 }
 
-data "vault_kv_secret_v2" "harbor_config" {
-  mount = "mc-authentik"
-  name  = "harbor/config"
-}
-
 provider "harbor" {
   url      = "https://harbor.4.weebo.fr"
   username = var.username
