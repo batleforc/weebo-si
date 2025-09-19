@@ -14,10 +14,10 @@ path "mc-authentik/data/{{identity.entity.aliases.auth_kubernetes_225a14d3.metad
 path "mc-authentik/metadata/{{identity.entity.aliases.auth_kubernetes_225a14d3.metadata.service_account_namespace}}/sub" {
   capabilities = ["read","list"]
 }
-path "mc-authentik/metadata/*/harbor" {
+path "mc-authentik/*/harbor" {
   capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
-path "mc-authentik/data/*/harbor" {
+path "mc-authentik/*/harbor" {
   capabilities = ["create", "read", "update", "delete", "list","patch"]
 }
 EOT
