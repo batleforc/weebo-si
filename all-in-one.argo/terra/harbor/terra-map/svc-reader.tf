@@ -48,7 +48,7 @@ resource "vault_kv_secret_v2" "harbor_reader" {
   data_json = jsonencode(
     {
       username = harbor_robot_account.reader.name
-      password = harbor_robot_account.reader.token
+      password = harbor_robot_account.reader.secret
       url     = "https://harbor.4.weebo.fr"
     }
   )
