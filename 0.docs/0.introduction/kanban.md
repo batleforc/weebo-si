@@ -43,11 +43,22 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Stream 20 SEPTEMBRE 2025
+### Stream 27 SEPTEMBRE 2025
 
 - Debut : 16h30
 - FIN : ~ 18h30
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
+- Musique: [NCS](https://ncs.io/)
+- Objectif
+  - Chargement des métriques Traefik ++ envoie des traces Traefik vers OTEL Collector
+  - Déployer [kubevirt operator](https://github.com/seatgeek/buildkit-operator)
+  - Ajout d'une auth Authentik dans Vault
+
+### Stream 20 SEPTEMBRE 2025
+
+- Debut : 16h30
+- FIN : ~ 18h30
+- Vod : [Twitch](https://www.twitch.tv/videos/2571232605) YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif
   - KubeApiProxy ?!
@@ -57,6 +68,8 @@ kanban
   - Préparation de l'auto scaling des clusters Talos pour [lundi 22 SEPTEMBRE 2025](https://www.twitch.tv/cuistops)
   - Déployer [kubevirt operator](https://github.com/seatgeek/buildkit-operator)
   - Ajout d'une auth Authentik dans Vault
+- Bilan
+  - KubeApiProxy ?! and only kubeApiProxy
 
 ### Stream 13 SEPTEMBRE 2025
 
