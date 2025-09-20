@@ -38,5 +38,5 @@ provider "vault" {
 provider "harbor" {
   url      = "https://harbor.4.weebo.fr"
   username = var.username
-  password = data.vault_kv_secret_v2.harbor_config.data.HARBOR_ADMIN_PASSWORD
+  password = ephemeral.vault_kv_secret_v2.harbor_config.data.HARBOR_ADMIN_PASSWORD
 }
