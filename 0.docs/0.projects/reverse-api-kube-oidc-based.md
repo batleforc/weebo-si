@@ -11,7 +11,7 @@ Can have XXX Provider, need to be capable to handle HTTPs/Ws/Other.
 - Configuration dynamique
   - CRD
     - basé sur [AuthenticationConfiguration](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#using-authentication-configuration) ?
-    - Certificat du cluster
+    - Certificat du cluster (possible MTLS ?)
     - metadata
 - Authentification
   - Validation du token via les paramètre AuthenticationConfiguration
@@ -28,7 +28,7 @@ Can have XXX Provider, need to be capable to handle HTTPs/Ws/Other.
         - equivalent oc login --token --api => Token retourner par l'interface
   - /api
     - Internal api of the reverse proxy
-  - /{CLUSTER_NAME}
+  - /cluster/{CLUSTER_NAME}
     - Proxy to the cluster api
 - Rust
   - Dois êtes scalable a l'infinis (Redis centralisé ?)
