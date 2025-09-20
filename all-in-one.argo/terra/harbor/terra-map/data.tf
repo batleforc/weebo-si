@@ -3,7 +3,7 @@ ephemeral "vault_kv_secret_v2" "harbor_config" {
   name  = "harbor/config"
 }
 
-ephemeral "vault_kv_secret_v2" "harbor_auth" {
+data "vault_kv_secret_v2" "harbor_auth" {
   mount = "mc-authentik"
   name  = "harbor/auth"
 }
