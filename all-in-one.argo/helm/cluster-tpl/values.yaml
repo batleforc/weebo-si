@@ -50,7 +50,7 @@ argo:
 cilium:
   enabled: true
   version: "v1.17.6"
-  ipv6: true
+  ipv6: false
   ipv4: true
 
 dns:
