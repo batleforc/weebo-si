@@ -15,7 +15,7 @@ metadata:
     capacity.cluster-autoscaler.kubernetes.io/maxPods: "100"
 spec:
   clusterName: "{{ .Release.Name }}"
-  {{ if .Values.cluster.worker.autoscale }}
+  {{ if not .Values.cluster.worker.autoscale }}
   replicas: {{ .Values.cluster.worker.replicas }}
   {{ end }}
   selector:
