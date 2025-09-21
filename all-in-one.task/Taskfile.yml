@@ -132,7 +132,7 @@ tasks:
       cluster: "{{.cluster}}"
       ns: "{{.ns}}"
     cmds:
-      - cilium --kubeconfig=./kubeconfig.{{.cluster}}.yaml {{ .CLI_ARGS }}
+      - cilium-cli --kubeconfig=./kubeconfig.{{.cluster}}.yaml {{ .CLI_ARGS }}
   capi:talosctl:
     vars:
       cluster: "{{.cluster}}"

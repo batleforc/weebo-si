@@ -27,18 +27,6 @@ spec:
             path: /machine/install/image
             value: {{ .Values.cluster.talos.installImage }}
           - op: add
-            path: /machine/kubelet/extraArgs
-            value:
-                cloud-provider: external
-          - op: add
-            path: /cluster/externalCloudProvider
-            value:
-              enabled: true
-              manifests:
-                {{- range .Values.cluster.talos.manifests }}
-                - {{ . }}
-                {{- end }}
-          - op: add
             path: /machine/sysctls
             value:
               net.ipv4.ip_forward: 1
