@@ -1,0 +1,33 @@
+{{- if gt .Values.cluster.worker.replicas 0 -}}
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: "{{ .Release.Name }}"
+  name: "{{ .Release.Name }}-infra-worker"
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  clusterName: "{{ .Release.Name }}"
+  replicas: {{ .Values.cluster.worker.replicas }}
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: "{{ .Release.Name }}"
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: "{{ .Release.Name }}"
+        node-role.kubernetes.io/worker: ''
+    spec:
+      clusterName: "{{ .Release.Name }}"
+      version: "{{ .Values.cluster.kubernetesVersion }}"
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+          kind: TalosConfigTemplate
+          name: "{{ .Release.Name }}-infra-worker"
+      infrastructureRef:
+        name: "{{ .Release.Name }}-infra-worker"
+        namespace: "{{ .Release.Namespace }}"
+        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+        kind: KubevirtMachineTemplate
+{{- end -}}

@@ -1,0 +1,53 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: KubevirtMachineTemplate
+metadata:
+  name: "{{ .Release.Name }}-infra-worker"
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  template:
+    spec:
+      virtualMachineBootstrapCheck:
+        checkStrategy: none
+      virtualMachineTemplate:
+        metadata:
+          namespace: "{{ .Release.Namespace }}"
+        spec:
+          dataVolumeTemplates:
+            - metadata:
+                name: "boot-volume"
+              spec:
+                pvc:
+                  volumeMode: Filesystem
+                  accessModes:
+                    - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: "{{ .Values.cluster.worker.storage }}"
+                source:
+                  http:
+                    url: "{{ .Values.cluster.kubevirt.talosQcow2 }}"
+                    # namespace: golden-images
+          runStrategy: Always
+          template:
+            spec:
+              domain:
+                resources:
+                  requests:
+                    memory: {{ .Values.cluster.worker.ram }}
+                cpu:
+                  cores: {{ .Values.cluster.worker.cpu.cores }}
+                  threads: {{ .Values.cluster.worker.cpu.threads }}
+                devices:
+                  networkInterfaceMultiqueue: true
+                  disks:
+                    - disk:
+                        bus: virtio
+                      name: dv-volume
+              evictionStrategy: External
+              volumes:
+                # - name: serviceaccount
+                #   serviceAccount:
+                #     serviceAccountName: cdi-cloner
+                - dataVolume:
+                    name: "boot-volume"
+                  name: dv-volume

@@ -1,0 +1,11 @@
+{{- if gt .Values.cluster.worker.replicas 0 -}}
+apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+kind: TalosConfigTemplate
+metadata:
+  name: "{{ .Release.Name }}-infra-worker"
+spec:
+  template:
+    spec:
+      generateType: join
+      talosVersion: {{ .Values.cluster.talosVersion }}
+{{- end -}}

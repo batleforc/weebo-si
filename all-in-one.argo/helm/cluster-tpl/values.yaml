@@ -19,7 +19,7 @@ cluster:
   controlPlane:
     replicas: 1
     allowScheduling: true
-    ram: 16Gi
+    ram: 12Gi
     storage: 50Gi
     cpu:
       cores: 2
@@ -28,6 +28,11 @@ cluster:
     vaultProviderVersion: "4.4.0"
   worker:
     replicas: 0
+    ram: 6Gi
+    storage: 50Gi
+    cpu:
+      cores: 2
+      threads: 2
   talos:
     installImage: factory.talos.dev/openstack-installer/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b:v1.10.7 #factory.talos.dev/nocloud-installer/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3:v1.10.6
     qemuGuestAgent:
