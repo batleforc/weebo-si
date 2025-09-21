@@ -1,3 +1,4 @@
+{{- if or (gt (int .Values.cluster.worker.replicas) 0) .Values.cluster.worker.autoscale -}}
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
 kind: KubevirtMachineTemplate
 metadata:
@@ -51,3 +52,4 @@ spec:
                 - dataVolume:
                     name: "boot-volume"
                   name: dv-volume
+{{- end -}}

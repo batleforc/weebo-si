@@ -1,4 +1,4 @@
-{{- if gt (int .Values.cluster.worker.replicas) 0 -}}
+{{- if or (gt (int .Values.cluster.worker.replicas) 0) .Values.cluster.worker.autoscale -}}
 apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
 kind: TalosConfigTemplate
 metadata:

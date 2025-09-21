@@ -28,6 +28,7 @@ cluster:
     vaultProviderVersion: "4.4.0"
   worker:
     replicas: 0
+    autoscale: false
     ram: 6Gi
     storage: 50Gi
     cpu:
