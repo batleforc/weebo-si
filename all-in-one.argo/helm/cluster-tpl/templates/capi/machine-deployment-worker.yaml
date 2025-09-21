@@ -6,9 +6,18 @@ metadata:
     cluster.x-k8s.io/cluster-name: "{{ .Release.Name }}"
   name: "{{ .Release.Name }}-infra-worker"
   namespace: "{{ .Release.Namespace }}"
+  annotations:
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "2"
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "0"
+    capacity.cluster-autoscaler.kubernetes.io/memory: "{{ .Values.cluster.worker.ram }}"
+    capacity.cluster-autoscaler.kubernetes.io/cpu: "{{ .Values.cluster.worker.cpu.cores }}"
+    capacity.cluster-autoscaler.kubernetes.io/ephemeral-disk: "{{ .Values.cluster.worker.storage }}"
+    capacity.cluster-autoscaler.kubernetes.io/maxPods: "100"
 spec:
   clusterName: "{{ .Release.Name }}"
+  {{ if .Values.cluster.worker.autoscale }}
   replicas: {{ .Values.cluster.worker.replicas }}
+  {{ end }}
   selector:
     matchLabels:
       cluster.x-k8s.io/cluster-name: "{{ .Release.Name }}"

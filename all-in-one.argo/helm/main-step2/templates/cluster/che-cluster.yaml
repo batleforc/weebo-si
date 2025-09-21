@@ -23,6 +23,8 @@ spec:
         cluster:
           controlPlane:
             ram: 12Gi
+          worker:
+            replicas: 1
   destination:
     name: in-cluster
     namespace: 'che'
