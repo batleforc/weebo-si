@@ -8,10 +8,10 @@ cluster:
   network:
     podsCidr:
       - 10.245.0.0/16
-      - fd00:10:245::/56
+      #- fd00:10:245::/56
     servicesCidr:
       - 15.112.0.0/12
-      - fd00:10:97::/112
+      #- fd00:10:97::/112
   kubevirt:
     rootVolumeSize: 50Gi
     storageClassName: local-path
