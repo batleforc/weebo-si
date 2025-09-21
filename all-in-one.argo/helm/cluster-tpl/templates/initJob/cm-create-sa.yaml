@@ -98,6 +98,7 @@ data:
         - protocol: TCP
           port: 943
           targetPort: 943
+  manifest2.j2: |
     ---
     apiVersion: cilium.io/v2alpha1
     kind: CiliumLoadBalancerIPPool
@@ -194,6 +195,16 @@ data:
         - name: Apply Secret
           ansible.builtin.command:
             cmd: "kubectl apply -f /tmp/secrets.yaml"
+        - name: Create Secret2
+          ansible.builtin.template:
+            src: manifest2.j2
+            dest: /tmp/manifest2.yaml
+        - name: Print the manifest
+          ansible.builtin.debug:
+            msg: "{{"{{"}} lookup('file', '/tmp/manifest2.yaml') }}"
+        - name: Apply manifest
+          ansible.builtin.command:
+            cmd: "kubectl apply -f /tmp/manifest2.yaml --kubeconfig /tokens/value"
   main.tf: |-
     terraform {
       required_providers {
