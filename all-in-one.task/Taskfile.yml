@@ -36,8 +36,8 @@ tasks:
     cmds:
       - kubectl port-forward svc/vault -n vault 8200:8200
   kubectl:
+    silent: true
     cmds:
-      - echo ${KUBECONFIG}
       - kubectl {{ .CLI_ARGS }}
   aio:
     dir: ./0.pulumi/all-in-one
@@ -109,7 +109,7 @@ tasks:
       cluster: "{{.cluster}}"
       ns: "{{.ns}}"
     cmds:
-      - kubectl -n {{.ns}} get secret {{.cluster}}-kubeconfig -o yaml | yq .data.value | base64 -d > ./kubeconfig.{{.cluster}}.yaml
+      - kubectl -n {{.ns}} get secret {{.cluster}}-kubeconfig -o yaml | yq -r .data.value | base64 -d > ./kubeconfig.{{.cluster}}.yaml
   capi:get-talosconfig:
     vars:
       cluster: "{{.cluster}}"
