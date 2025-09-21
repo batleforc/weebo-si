@@ -10,6 +10,10 @@ spec:
       talosVersion: {{ .Values.cluster.talosVersion }}
       strategicPatches:
         - |
+          - op: replace
+            path: /machine/network/nameservers
+            value:
+              - 10.96.0.11
           - op: add
             path: /machine/install/extraKernelArgs
             value:
