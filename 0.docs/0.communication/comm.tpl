@@ -23,3 +23,28 @@ www.twitch.tv/batleforc
 Et pour finir, le bilan du stream du jour, batleforc.github.io/weebo-si/0.i...
 
 See you soon
+
+
+
+
+###
+
+Hello There,
+
+Du Gitops dans les VM ?!
+
+*
+
+Doc [https://batleforc.github.io/weebo-si](https://batleforc.github.io/weebo-si)
+
+*
+
+Kanban et Récap de stream [https://batleforc.github.io/weebo-si/0.introduction/kanban.html](https://batleforc.github.io/weebo-si/0.introduction/kanban.html)
+
+*
+
+GitHub [https://github.com/batleforc/weebo-si](https://github.com/batleforc/weebo-si)
+
+*
+
+Et toujours en musique [https://batleforc.github.io/weebo-si/0.introduction/kanban.html#music](https://batleforc.github.io/weebo-si/0.introduction/kanban.html#music)

@@ -20,6 +20,9 @@ spec:
           {{ range $key, $value := .Values.monitoring }}
           {{ $key }}: {{ $value | toJson | indent 8 }}
           {{- end }}
+        cluster:
+          controlPlane:
+            ram: 12Gi
   destination:
     name: in-cluster
     namespace: 'che'
