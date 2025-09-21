@@ -16,9 +16,6 @@ spec:
               extensions:
                 - image: {{ .Values.cluster.talos.qemuGuestAgent.image }}
           - op: replace
-            path: /cluster/allowSchedulingOnControlPlanes
-            value: {{.Values.cluster.controlPlane.allowScheduling}}
-          - op: replace
             path: /machine/network/nameservers
             value:
               - 10.96.0.11
@@ -77,21 +74,6 @@ spec:
               net.ipv4.ip_forward: 1
               net.ipv6.conf.all.forwarding: 1
               vm.nr_hugepages: 2048
-          - op: add
-            path: /cluster/apiServer/admissionControl/0/configuration/exemptions/namespaces/-
-            value: falco
-          - op: add
-            path: /machine/kubelet/extraArgs/rotate-server-certificates
-            value: "true"
-          - op: add
-            path: /cluster/apiServer/certSANs/-
-            value: "{{ tpl .Values.dns.name . }}.{{.Values.dns.in.base}}"
-          - op: add
-            path: /cluster/apiServer/certSANs/-
-            value: "{{ tpl .Values.dns.name . }}.{{.Values.dns.out.base}}"
-          - op: add
-            path: /cluster/apiServer/certSANs/-
-            value: "{{ .Release.Name }}-lb.{{ .Release.Namespace }}"
           - op: add
             path: /machine/kubelet/extraMounts
             value: []
