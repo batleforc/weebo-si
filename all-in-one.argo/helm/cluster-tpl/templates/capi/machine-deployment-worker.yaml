@@ -1,4 +1,4 @@
-{{- if gt .Values.cluster.worker.replicas 0 -}}
+{{- if gt (int .Values.cluster.worker.replicas) 0 -}}
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
