@@ -4,7 +4,7 @@ metadata:
   name: {{ .Release.Name }}-vault-webhook
   namespace: argocd
 spec:
-  project: default
+  project: {{ .Release.Name }}
   syncPolicy:
     automated: {}
     syncOptions:
