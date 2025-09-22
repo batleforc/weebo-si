@@ -42,6 +42,9 @@ spec:
                         extensions:
                           - image: {{ .Values.cluster.talos.qemuGuestAgent.image }}
                     - op: replace
+                      path: /machine/features/hostDNS/forwardKubeDNSToHost
+                      value: false
+                    - op: replace
                       path: /cluster/allowSchedulingOnControlPlanes
                       value: {{.Values.cluster.controlPlane.allowScheduling}}
                     - op: replace
