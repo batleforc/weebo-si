@@ -30,4 +30,26 @@ spec:
           - op: replace
             path: /machine/features/hostDNS/forwardKubeDNSToHost
             value: false
+          {{ if .Values.cilium.enabled -}}
+          - op: add
+            path: /cluster/network/cni
+            value:
+              name: none
+          - op: add
+            path: /cluster/proxy
+            value:
+              disabled: true
+          - op: replace
+            path: /cluster/network/podSubnets
+            value:
+              {{- range $index, $subnet := .Values.cluster.network.podsCidr }}
+              - {{ $subnet }}
+              {{- end }}
+          - op: replace
+            path: /cluster/network/serviceSubnets
+            value:
+              {{- range $index, $subnet := .Values.cluster.network.servicesCidr }}
+              - {{ $subnet }}
+              {{- end }}
+          {{- end }}
 {{- end -}}
