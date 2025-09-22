@@ -22,9 +22,10 @@ spec:
           {{- end }}
         cluster:
           controlPlane:
+            replicas: 2
             ram: 12Gi
           worker:
-            replicas: 1
+            replicas: 0
   destination:
     name: in-cluster
     namespace: 'che'
