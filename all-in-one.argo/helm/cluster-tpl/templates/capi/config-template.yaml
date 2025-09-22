@@ -27,4 +27,7 @@ spec:
               net.ipv4.ip_forward: 1
               net.ipv6.conf.all.forwarding: 1
               vm.nr_hugepages: 2048
+          - op: replace
+            path: /machine/features/hostDNS/forwardKubeDNSToHost
+            value: false
 {{- end -}}
