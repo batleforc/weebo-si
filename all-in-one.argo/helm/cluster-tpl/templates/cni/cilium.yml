@@ -58,9 +58,6 @@ spec:
           hostRoot: /sys/fs/cgroup
         k8sServiceHost: "localhost"
         k8sServicePort: 7445
-        socketLB:
-          enabled: true
-          hostNamespaceOnly: true
         ipv4:
           enabled: {{ .Values.cilium.ipv4 }}
         ipv6:
