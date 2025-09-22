@@ -68,6 +68,7 @@ data:
       name: cert-manager
       labels:
         name: cert-manager
+    {{- if .Values.certificate.enabled }}
     ---
     apiVersion: v1
     kind: Secret
@@ -80,6 +81,7 @@ data:
       root-ca.crt: {{"{{"}} rootca.content | from_json | json_query("data.certificate")  | b64encode }}
       sub-ca.crt: {{"{{"}} subca.content | from_json | json_query("data.certificate") | b64encode }}
       vault-ca.crt: {{"{{"}} lookup('ansible.builtin.file', '/ca/vault/ca.crt') | b64encode }}
+    {{- end }}
     ---
     apiVersion: v1
     kind: Service
@@ -133,6 +135,7 @@ data:
   playbook.yaml: |
     - hosts: localhost
       tasks:
+        {{- if .Values.certificate.enabled }}
         - name: Fetch RootCA from Vault
           ansible.builtin.uri:
             url: "{{ .Values.certificate.rootCA.url }}"
@@ -151,6 +154,7 @@ data:
             body_format: json
             status_code: 200
           register: subca
+        {{- end }}
         - name: Get All node's ip
           ansible.builtin.command:
             cmd: "kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type==\"InternalIP\")].address}' --kubeconfig /tokens/value"

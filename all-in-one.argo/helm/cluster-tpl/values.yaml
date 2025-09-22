@@ -94,6 +94,7 @@ trustManager:
   version: 0.18.0
 
 certificate:
+  enabled: false
   rootCA:
     url: https://vault.4.weebo.fr/v1/pki/issuer/default/json
   subCA:

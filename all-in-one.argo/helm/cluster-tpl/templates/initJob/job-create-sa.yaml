@@ -23,10 +23,13 @@ spec:
               name: "{{ .Release.Name }}-script-vol"
             - mountPath: /tokens
               name: kube-secret
+            {{- if .Values.certificate.enabled }}
             - mountPath: "/ca/vault"
               name: vault-ca
+            {{- end }}
             - mountPath: /tmp
               name: temp
+        {{- if .Values.certificate.enabled }}
         - name: create-in-vault
           image: hashicorp/terraform:latest
           imagePullPolicy: IfNotPresent
@@ -54,6 +57,7 @@ spec:
               name: "{{ .Release.Name }}-script-vol"
             - mountPath: "/ca/vault"
               name: vault-ca
+        {{- end }}
       restartPolicy: Never
       volumes:
         - name: "{{ .Release.Name }}-script-vol"
@@ -62,9 +66,11 @@ spec:
         - name: kube-secret
           secret:
             secretName: "{{ .Release.Name }}-kubeconfig"
+        {{- if .Values.certificate.enabled }}
         - name: vault-ca
           secret:
             secretName: vault-tls
+        {{- end }}
         - name: terra-job
           persistentVolumeClaim:
             claimName: "create-sa-pvc-{{ .Release.Name }}"
