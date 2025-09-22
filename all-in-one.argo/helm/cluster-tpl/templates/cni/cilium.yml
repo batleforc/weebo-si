@@ -65,6 +65,8 @@ spec:
         k8s:
           requireIPv4PodCIDR: {{ .Values.cilium.ipv4 }}
           requireIPv6PodCIDR: {{ .Values.cilium.ipv6 }}
+        commonLabels:
+          pod-security.kubernetes.io/enforce: privileged
   ignoreDifferences:
   - kind: Secret
     name: hubble-server-certs
