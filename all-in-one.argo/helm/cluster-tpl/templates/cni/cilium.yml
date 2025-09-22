@@ -70,6 +70,7 @@ spec:
           requireIPv6PodCIDR: {{ .Values.cilium.ipv6 }}
         commonLabels:
           pod-security.kubernetes.io/enforce: privileged
+        devices: "eth+"
   ignoreDifferences:
   - kind: Secret
     name: hubble-server-certs
