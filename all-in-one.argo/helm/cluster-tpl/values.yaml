@@ -21,6 +21,7 @@ cluster:
     allowScheduling: true
     ram: 12Gi
     storage: 50Gi
+    storageClassName: local-path
     cpu:
       cores: 2
       threads: 2
