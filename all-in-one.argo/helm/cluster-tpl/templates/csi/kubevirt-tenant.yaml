@@ -18,6 +18,7 @@ spec:
       valuesObject:
         clusterName: {{ .Release.Name }}
         clusterNamespace: {{ .Release.Namespace }}
+        storageClassName: {{ .Values.cluster.kubevirt.storageClassName }}
   destination:
     name: {{ .Release.Name }}
     namespace: "default"
