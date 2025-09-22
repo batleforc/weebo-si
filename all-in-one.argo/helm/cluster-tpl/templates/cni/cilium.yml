@@ -31,7 +31,7 @@ spec:
         ipam:
           mode: kubernetes
         bpf:
-          masquerade: true
+          hostLegacyRouting: true
         l2announcements:
           enabled: true
         externalIPs:
