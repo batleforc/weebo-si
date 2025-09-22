@@ -20,6 +20,7 @@ spec:
     helm:
       releaseName: cilium
       valuesObject:
+        rollOutCiliumPods: true
         hubble:
           relay:
             enabled: true
@@ -29,6 +30,8 @@ spec:
           replicas: {{ .Values.cluster.controlPlane.replicas}}
         ipam:
           mode: kubernetes
+        bpf:
+          masquerade: true
         kubeProxyReplacement: true
         securityContext:
           capabilities:
