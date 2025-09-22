@@ -1,3 +1,4 @@
+{{- if .Values.externalSecrets.enabled -}}
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
@@ -204,3 +205,4 @@ spec:
       remoteRef:
         key: mc-authentik/{{ .Release.Namespace }}/auth
         property: AUTHENTIK_CLIENT_ID
+{{- end }}
