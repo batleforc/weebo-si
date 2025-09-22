@@ -30,8 +30,6 @@ spec:
           replicas: {{ .Values.cluster.controlPlane.replicas}}
         ipam:
           mode: kubernetes
-        bpf:
-          masquerade: true
         l2announcements:
           enabled: true
         externalIPs:
