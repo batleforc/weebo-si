@@ -32,6 +32,7 @@ spec:
           mode: kubernetes
         bpf:
           masquerade: true
+        forwardKubeDNSToHost: false
         kubeProxyReplacement: true
         securityContext:
           capabilities:
