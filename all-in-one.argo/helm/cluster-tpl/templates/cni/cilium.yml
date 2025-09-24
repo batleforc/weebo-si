@@ -32,11 +32,6 @@ spec:
           mode: kubernetes
         bpf:
           masquerade: true
-          hostLegacyRouting: true
-        l2announcements:
-          enabled: true
-        externalIPs:
-          enabled: true
         kubeProxyReplacement: true
         securityContext:
           capabilities:
@@ -71,7 +66,6 @@ spec:
           requireIPv6PodCIDR: {{ .Values.cilium.ipv6 }}
         commonLabels:
           pod-security.kubernetes.io/enforce: privileged
-        devices: "eth+"
   ignoreDifferences:
   - kind: Secret
     name: hubble-server-certs
