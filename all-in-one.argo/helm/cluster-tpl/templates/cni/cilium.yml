@@ -31,7 +31,7 @@ spec:
         ipam:
           mode: kubernetes
         bpf:
-          masquerade: true
+          masquerade: false
         kubeProxyReplacement: true
         enableMasqueradeRouteSource: true
         enableIPv4Masquerade: {{ .Values.cilium.ipv4 }}
