@@ -47,6 +47,7 @@ spec:
               tlsSecretName: che-cluster-tls
               annotations:
                 kubernetes.io/ingress.class: "traefik"
+                cert-manager.io/cluster-issuer: "outbound"
               auth:
                 oAuthClientName: '{{ printf "{{"}} .client_id }}'
                 oAuthSecret: '{{ printf "{{"}} .client_secret }}'
