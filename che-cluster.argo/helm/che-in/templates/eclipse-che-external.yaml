@@ -21,6 +21,7 @@ spec:
             name: eclipse-che
             namespace: eclipse-che
             annotations:
+              che.eclipse.org/self-signed-certificate: "false"
               argocd.argoproj.io/tracking-id: che-cluster-main-in:org.eclipse.che/CheCluster:eclipse-che/che-cluster
           spec:
             devEnvironments:
