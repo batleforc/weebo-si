@@ -34,7 +34,7 @@ spec:
           masquerade: true
         kubeProxyReplacement: true
         routingMode: native
-        auto-direct-node-routes: true
+        autoDirectNodeRoutes: true
         securityContext:
           capabilities:
             ciliumAgent:
