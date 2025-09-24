@@ -33,6 +33,7 @@ spec:
         bpf:
           masquerade: true
         kubeProxyReplacement: true
+        autoDirectNodeRoutes: true
         securityContext:
           capabilities:
             ciliumAgent:
