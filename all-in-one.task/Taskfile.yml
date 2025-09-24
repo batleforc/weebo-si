@@ -16,7 +16,7 @@ tasks:
       - talosctl {{ .CLI_ARGS }}
   cilium:
     cmds:
-      - cilium {{ .CLI_ARGS }}
+      - cilium-cli {{ .CLI_ARGS }}
   k9s:
     cmds:
       - k9s {{ .CLI_ARGS }}
