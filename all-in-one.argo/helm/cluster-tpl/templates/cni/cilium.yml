@@ -33,7 +33,8 @@ spec:
         bpf:
           masquerade: true
         kubeProxyReplacement: true
-        autoDirectNodeRoutes: true
+        tunnel: vxlan
+        #autoDirectNodeRoutes: true
         securityContext:
           capabilities:
             ciliumAgent:
