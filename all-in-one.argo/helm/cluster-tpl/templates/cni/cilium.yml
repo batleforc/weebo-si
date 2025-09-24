@@ -33,6 +33,13 @@ spec:
         bpf:
           masquerade: true
         kubeProxyReplacement: true
+        enableMasqueradeRouteSource: true
+        {{- if .Values.cilium.ipv4 -}}
+        enableIPv4Masquerade: {{ .Values.cilium.ipv4 }}
+        {{- end -}}
+        {{- if .Values.cilium.ipv6 -}}
+        enableIPv6Masquerade: {{ .Values.cilium.ipv6 }}
+        {{- end -}}
         routingMode: native
         securityContext:
           capabilities:
