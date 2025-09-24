@@ -11,4 +11,4 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  storageClassName: {{ .Values.cluster.kubevirt.storageClassName }}
+  storageClassName: {{ .Values.cluster.controlPlane.storageClassName }}
