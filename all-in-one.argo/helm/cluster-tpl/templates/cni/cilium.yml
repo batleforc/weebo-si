@@ -31,10 +31,8 @@ spec:
         ipam:
           mode: kubernetes
         bpf:
-          masquerade: false
+          masquerade: true
         kubeProxyReplacement: true
-        enableMasqueradeRouteSource: true
-        enableIPv4Masquerade: {{ .Values.cilium.ipv4 }}
         routingMode: native
         securityContext:
           capabilities:
@@ -71,6 +69,7 @@ spec:
           pod-security.kubernetes.io/enforce: privileged
         ipMasqAgent:
           enabled: true
+          masqLinkLocal: true
   ignoreDifferences:
   - kind: Secret
     name: hubble-server-certs
