@@ -52,28 +52,28 @@ resource "harbor_project" "cache-talos" {
 }
 
 resource "harbor_project_member_group" "admin_cache_dck" {
-  project_id    = harbor_project.cache_dck.id
+  project_id    = harbor_project.cache-dck.id
   group_name    = "weebo_admin"
   role          = "maintainer"
   type          = "oidc"
 }
 
 resource "harbor_project_member_group" "admin_cache_ghub" {
-  project_id    = harbor_project.cache_ghub.id
+  project_id    = harbor_project.cache-ghub.id
   group_name    = "weebo_admin"
   role          = "maintainer"
   type          = "oidc"
 }
 
 resource "harbor_project_member_group" "admin_cache_quay" {
-  project_id    = harbor_project.cache_quay.id
+  project_id    = harbor_project.cache-quay.id
   group_name    = "weebo_admin"
   role          = "maintainer"
   type          = "oidc"
 }
 
 resource "harbor_project_member_group" "admin_cache_talos" {
-  project_id    = harbor_project.cache_talos.id
+  project_id    = harbor_project.cache-talos.id
   group_name    = "weebo_admin"
   role          = "maintainer"
   type          = "oidc"
