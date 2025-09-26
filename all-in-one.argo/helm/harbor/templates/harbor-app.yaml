@@ -66,3 +66,49 @@ spec:
   destination:
     server: "https://kubernetes.default.svc"
     namespace: harbor
+  ignoreDifferences:
+  - group: ''
+    kind: Secret
+    name: harbor-core
+    namespace: harbor
+    jsonPointers:
+    - /data/CSRF_KEY
+    - /data/secret
+    - /data/tls.crt
+    - /data/tls.key
+  - group: ''
+    kind: Secret
+    name: harbor-jobservice
+    namespace: harbor
+    jsonPointers:
+    - /data/JOBSERVICE_SECRET
+  - group: ''
+    kind: Secret
+    name: harbor-registry
+    namespace: harbor
+    jsonPointers:
+    - /data/REGISTRY_HTTP_SECRET
+  - group: ''
+    kind: Secret
+    name: harbor-registry-htpasswd
+    namespace: harbor
+    jsonPointers:
+    - /data/REGISTRY_HTPASSWD
+  - group: 'apps'
+    kind: Deployment
+    name: harbor-core
+    namespace: harbor
+    jsonPointers:
+    - /spec/template/metadata/annotations
+  - group: 'apps'
+    kind: Deployment
+    name: harbor-jobservice
+    namespace: harbor
+    jsonPointers:
+    - /spec/template/metadata/annotations
+  - group: 'apps'
+    kind: Deployment
+    name: harbor-registry
+    namespace: harbor
+    jsonPointers:
+    - /spec/template/metadata/annotations

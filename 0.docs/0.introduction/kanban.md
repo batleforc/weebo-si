@@ -13,9 +13,6 @@ kanban
     us204[Refaire les règle UpdateCLI]@{ assigned: RÉCURENT, priority: 'High'}
     us216[Mise en place NetPolicy]@{ assigned: MVP1, priority: 'High', ticket: 'us216'}
     us205[Recréer l’autorité de certification uniquement via terraform]@{ assigned: MVP1, priority: 'High'}
-    us207[Mise en place Harbor et propagation dans les clusters pour avoir un cache des images]@{ assigned: MVP1, priority: 'High'}
-    us208[Mise en place d'une extensions Netbird pour Talos]@{ assigned: MVP1, priority: 'High'}
-    us209[Mise en place et développement d'un ProxyApiKube]@{ assigned: MVP2, priority: 'High'}
     us210[Tester un autre provider de cluster que Talos dans Kubevirt]@{ assigned: MVP2, priority: 'High'}
     us211[Mettre en place KASM x KubeVirt]@{ assigned: MVP2, priority: 'High'}
     us212[Mise en place ContainerSSH]@{ assigned: MVP2, priority: 'High'}
@@ -25,6 +22,9 @@ kanban
     us217[Mise en place d'environnement Eclipse che - par ex nix]@{ assigned: MVP3, priority: 'High'}
   doing[Doing]
     us206[Mise en place d'une stack de Monitoring, Log/Trace/Métrique]@{ assigned: MVP1, priority: 'High', ticket: 'us206'}
+    us207[Mise en place Harbor et propagation dans les clusters pour avoir un cache des images]@{ assigned: MVP1, priority: 'High'}
+    us208[Mise en place d'une extensions Netbird pour Talos]@{ assigned: MVP1, priority: 'High'}
+    us209[Mise en place et développement d'un ProxyApiKube]@{ assigned: MVP2, priority: 'High'}
   done[Done]
     us201[Lister les application a intégrer PROPREMENT]@{ assigned: MVP, priority: 'High'}
     us202[Définir le programme des prochains mois]@{ assigned: MVP, priority: 'High'}

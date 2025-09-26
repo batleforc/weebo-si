@@ -1,5 +1,7 @@
 # Spoilers
 
+## LoadBalancer VM
+
 ```mermaid
 flowchart TB
  subgraph chenode["chenode"]
@@ -60,3 +62,31 @@ flowchart TB
     L_auth_argo_0@{ animation: none } 
 
 ```
+
+## Netbird X Talos
+
+```bash
+curl -s --data-binary @./0.updatecli/shell/talos-scheme.sub.yaml https://factory.talos.dev/schematics
+```
+
+- Talos Url : <factory.talos.dev/openstack-installer/489b8c4c135880c4d03864c0c46871e71c16f39375a5662ab90b475bb919bf08:v1.11.2>
+- Harbor Url : <harbor.4.weebo.fr/cache-talos/openstack-installer/489b8c4c135880c4d03864c0c46871e71c16f39375a5662ab90b475bb919bf08:v1.11.2>
+- Extensions Url : <ghcr.io/siderolabs/netbird:0.57.1>
+- Netbird Extensions doc : <https://github.com/siderolabs/extensions/tree/main/network/netbird>
+- [Using Harbor has a talos cache registry](https://www.talos.dev/v1.11/talos-guides/configuration/pull-through-cache/)
+
+
+### Build Command
+
+```bash
+docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:v1.11.2 installer --platform=openstack --extra-kernel-arg net.ifnames=0 --system-extension-image ghcr.io/siderolabs/netbird:0.57.1 --system-extension-image ghcr.io/siderolabs/iscsi-tools:v0.2.0 --system-extension-image ghcr.io/siderolabs/qemu-guest-agent:10.0.2 --system-extension-image ghcr.io/siderolabs/util-linux-tools:2.41.1 --system-extension-image ghcr.io/siderolabs/mei:v1.11.2 --system-extension-image ghcr.io/siderolabs/intel-ucode:20250812
+```
+
+### Extensions
+
+- <https://github.com/siderolabs/extensions/pkgs/container/iscsi-tools> : 0.2.0
+- <https://github.com/siderolabs/extensions/pkgs/container/netbird> : 0.57.1
+- <https://github.com/siderolabs/extensions/pkgs/container/qemu-guest-agent> : 10.0.2
+- <https://github.com/siderolabs/extensions/pkgs/container/util-linux-tools> : 2.41.1
+- <https://github.com/siderolabs/extensions/pkgs/container/mei> : v1.11.2
+- <https://github.com/siderolabs/extensions/pkgs/container/intel-ucode> : 20250812
