@@ -10,6 +10,7 @@ resource "harbor_config_auth" "oidc" {
   oidc_groups_claim  = "groups"
   oidc_admin_group   = "weebo_admin"
   oidc_user_claim    = "preferred_username"
+  ignore_changes    = [oidc_client_secret]
 }
 
 resource "harbor_config_system" "main" {
