@@ -50,3 +50,31 @@ resource "harbor_project" "cache-talos" {
   public        = "false"
   storage_quota = 15
 }
+
+resource "harbor_project_member_group" "admin_cache_dck" {
+  project_id    = harbor_project.cache_dck.id
+  group_name    = "weebo_admin"
+  role          = "maintainer"
+  type          = "oidc"
+}
+
+resource "harbor_project_member_group" "admin_cache_ghub" {
+  project_id    = harbor_project.cache_ghub.id
+  group_name    = "weebo_admin"
+  role          = "maintainer"
+  type          = "oidc"
+}
+
+resource "harbor_project_member_group" "admin_cache_quay" {
+  project_id    = harbor_project.cache_quay.id
+  group_name    = "weebo_admin"
+  role          = "maintainer"
+  type          = "oidc"
+}
+
+resource "harbor_project_member_group" "admin_cache_talos" {
+  project_id    = harbor_project.cache_talos.id
+  group_name    = "weebo_admin"
+  role          = "maintainer"
+  type          = "oidc"
+}

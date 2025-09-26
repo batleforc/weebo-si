@@ -82,6 +82,10 @@ curl -s --data-binary @./0.updatecli/shell/talos-scheme.sub.yaml https://factory
 docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:v1.11.2 installer --platform=openstack --extra-kernel-arg net.ifnames=0 --system-extension-image ghcr.io/siderolabs/netbird:0.57.1 --system-extension-image ghcr.io/siderolabs/iscsi-tools:v0.2.0 --system-extension-image ghcr.io/siderolabs/qemu-guest-agent:10.0.2 --system-extension-image ghcr.io/siderolabs/util-linux-tools:2.41.1 --system-extension-image ghcr.io/siderolabs/mei:v1.11.2 --system-extension-image ghcr.io/siderolabs/intel-ucode:20250812
 ```
 
+```bash
+docker run --rm -t -v ~/.docker/config.json:/root/.docker/config.json -e DOCKER_CONFIG=/root/.docker/config.json -v $PWD/_out:/out harbor.4.weebo.fr/cache-ghub/siderolabs/imager:v1.11.2 installer --platform=openstack --extra-kernel-arg net.ifnames=0 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/netbird:0.57.1 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/iscsi-tools:v0.2.0 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/qemu-guest-agent:10.0.2 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/util-linux-tools:2.41.1 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/mei:v1.11.2 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/intel-ucode:20250812
+```
+
 ### Extensions
 
 - <https://github.com/siderolabs/extensions/pkgs/container/iscsi-tools> : 0.2.0
