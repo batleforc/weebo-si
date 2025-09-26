@@ -5,8 +5,6 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  syncPolicy:
-    automated: {}
   source:
     chart: harbor
     repoURL: https://helm.goharbor.io
