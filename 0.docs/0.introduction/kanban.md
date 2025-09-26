@@ -50,9 +50,18 @@ kanban
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif
+  - Ajouter au Sous Cluster Talos l'extensions [Netbird](https://github.com/siderolabs/extensions/tree/main/network/netbird)
+    - Build de l'image ?!
+    - Stockage de l'iso dans un S3 (RustFS ?!)
   - Chargement des métriques Traefik ++ envoie des traces Traefik vers OTEL Collector
   - Déployer [kubevirt operator](https://github.com/seatgeek/buildkit-operator)
   - Ajout d'une auth Authentik dans Vault
+  - Retour stream CuistOps x Kubevirt x Capi x Talos x Cilium
+    - Réseau
+      - Cilium x Tunneling x Plage CIDR invalide
+      - [Netbird x Talos](https://github.com/siderolabs/extensions/tree/main/network/netbird) (Not Tailscale xD)
+    - Stockage
+      - [Longhorn x Talos](https://github.com/longhorn/longhorn/pull/11199)
 
 ### Stream 20 SEPTEMBRE 2025
 
