@@ -16,6 +16,13 @@ resource "harbor_registry" "quay" {
   endpoint_url  = "https://quay.io"
 }
 
+resource "harbor_registry" "talos" {
+  provider_name = "harbor"
+  name          = "talos"
+  endpoint_url  = "https://factory.talos.dev"
+  
+}
+
 resource "harbor_project" "cache-dck" {
   name          = "cache-dck"
   registry_id   = resource.harbor_registry.docker.registry_id
@@ -33,6 +40,13 @@ resource "harbor_project" "cache-ghub" {
 resource "harbor_project" "cache-quay" {
   name          = "cache-quay"
   registry_id   = resource.harbor_registry.quay.registry_id
+  public        = "false"
+  storage_quota = 15
+}
+
+resource "harbor_project" "cache-talos" {
+  name          = "cache-talos"
+  registry_id   = resource.harbor_registry.talos.registry_id
   public        = "false"
   storage_quota = 15
 }
