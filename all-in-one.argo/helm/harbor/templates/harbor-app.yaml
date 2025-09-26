@@ -110,3 +110,27 @@ spec:
     namespace: harbor
     jsonPointers:
     - /spec/template/metadata/annotations
+  - group: ''
+    kind: Secret
+    name: harbor-app-core
+    jsonPOinters:
+    - /data/CSRF_KEY
+    - /data/secret
+    - /data/tls.crt
+    - /data/tls.key
+    - /data/secretKey
+  - group: ''
+    kind: Secret
+    name: harbor-app-jobservice
+    jsonPointers:
+    - /data/JOBSERVICE_SECRET
+  - group: ''
+    kind: Secret
+    name: harbor-app-registry
+    jsonPointers:
+    - /data/REGISTRY_HTTP_SECRET
+  - group: ''
+    kind: Secret
+    name: harbor-app-registry-htpasswd
+    jsonPointers:
+    - /data/REGISTRY_HTPASSWD
