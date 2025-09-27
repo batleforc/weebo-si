@@ -1,10 +1,20 @@
 Hey !
-La 3ᵉ itération de Weebo-Si S2 est en cours.
+La 5ᵉ itération de Weebo-Si S2 vien de commencé.
 À l'ordre du jour :
-- Mise en place Root/Intermediate CA
-- CertManager X Vault
-- Et si on fessait confiance à ce RootCA ?
-- Et toujours + !
+- Bilan du stream de lundi avec les copain de chez CuistOps
+- Test de l'extensions Netbird pour Talos
+- Et si on a le temps retour a nos problème de monitoring !
+- Et toujours + (en rust bien sur) !
+
+www.twitch.tv/batleforc
+
+###
+
+Pssst ! RDV a 16H30 pour la 5ᵉ itération de Weebo-Si S2.
+À l'ordre du jour :
+- Bilan du stream de lundi avec les copain de chez CuistOps
+- Test de l'extensions Netbird pour Talos
+- Et si on a le temps retour a nos problème de monitoring !
 
 www.twitch.tv/batleforc
 

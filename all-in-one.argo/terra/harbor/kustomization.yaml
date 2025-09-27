@@ -21,3 +21,4 @@ configMapGenerator:
       - ./terra-map/config.tf
       - ./terra-map/projects-cache.tf
       - ./terra-map/svc-reader.tf
+      - ./terra-map/projects-talos.tf

@@ -74,6 +74,7 @@ curl -s --data-binary @./0.updatecli/shell/talos-scheme.sub.yaml https://factory
 - Extensions Url : <ghcr.io/siderolabs/netbird:0.57.1>
 - Netbird Extensions doc : <https://github.com/siderolabs/extensions/tree/main/network/netbird>
 - [Using Harbor has a talos cache registry](https://www.talos.dev/v1.11/talos-guides/configuration/pull-through-cache/)
+- <https://www.talos.dev/v1.11/talos-guides/install/boot-assets/#imager>
 
 ### Build Command
 
