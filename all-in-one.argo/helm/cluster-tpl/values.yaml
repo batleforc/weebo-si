@@ -1,6 +1,6 @@
 cluster:
   talosVersion: "v1.11.2"
-  kubernetesVersion: "v1.33.3"
+  kubernetesVersion: "v1.34.1"
   annotations:
     argocd.argoproj.io/sync-options: PruneLast=true
   labels:
