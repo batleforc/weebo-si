@@ -20,7 +20,6 @@ resource "harbor_registry" "talos" {
   provider_name = "harbor"
   name          = "talos"
   endpoint_url  = "https://factory.talos.dev"
-  
 }
 
 resource "harbor_project" "cache-dck" {

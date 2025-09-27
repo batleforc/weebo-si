@@ -54,6 +54,7 @@ variable "namespace_who_read" {
     "coroot" = "coroot"
     "argocd" = "argocd"
     "indns" = "indns"
+    "che"= "che"
   }
 }
 

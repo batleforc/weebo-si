@@ -195,6 +195,13 @@ spec:
                           permissions: 0o444
                           path: /var/lib/apiserver/authentication.yaml
                           op: create
+                  - |
+                    ---
+                    apiVersion: v1alpha1
+                    kind: ExtensionServiceConfig
+                    name: netbird
+                    environment:
+                      - NB_SETUP_KEYS='{{ printf "{{"}} .vpn_setup_key }}'
 
   data:
     - secretKey: url
@@ -205,4 +212,8 @@ spec:
       remoteRef:
         key: mc-authentik/{{ .Release.Namespace }}/auth
         property: AUTHENTIK_CLIENT_ID
+    - secretKey: vpn_setup_key
+      remoteRef:
+        key: mc-authentik/{{ .Release.Namespace }}/vpn
+        property: KUBERNETES_SETUP_KEY
 {{- end }}
