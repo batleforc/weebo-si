@@ -1,0 +1,19 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ .Release.Name }}-cdiregistry
+  namespace: {{ .Release.Namespace }}
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: {{ .Release.Name }}-store
+    kind: SecretStore
+  data:
+    - secretKey: accessKeyId
+      remoteRef:
+        key: mc-authentik/{{ .Release.Namespace }}/harbor
+        property: username
+    - secretKey: secretKey
+      remoteRef:
+        key: mc-authentik/{{ .Release.Namespace }}/harbor
+        property: password

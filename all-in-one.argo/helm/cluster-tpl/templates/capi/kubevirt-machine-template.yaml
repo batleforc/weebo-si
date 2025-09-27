@@ -27,7 +27,7 @@ spec:
                   {{ if eq .Values.cluster.kubevirt.source "registry" }}
                   registry:
                     url: "{{ .Values.cluster.kubevirt.talosQcow2 }}"
-                    secretRef: "{{ .Release.Name }}-configjson"
+                    secretRef: "{{ .Release.Name }}-cdiregistry"
                   {{ else }}
                   http:
                     url: "{{ .Values.cluster.kubevirt.talosQcow2 }}"
