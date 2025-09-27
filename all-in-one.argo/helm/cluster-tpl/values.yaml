@@ -15,7 +15,8 @@ cluster:
   kubevirt:
     rootVolumeSize: 50Gi
     storageClassName: local-path-sdb
-    talosQcow2: https://factory.talos.dev/image/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b/v1.11.2/openstack-amd64.qcow2 #https://factory.talos.dev/image/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3/v1.10.6/nocloud-amd64.qcow2
+    talosQcow2: docker://harbor.4.weebo.fr/talos/vpn-openstack/qcow:v1.11.2
+    #talosQcow2: https://factory.talos.dev/image/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b/v1.11.2/openstack-amd64.qcow2 #https://factory.talos.dev/image/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3/v1.10.6/nocloud-amd64.qcow2
   controlPlane:
     replicas: 1
     allowScheduling: true
