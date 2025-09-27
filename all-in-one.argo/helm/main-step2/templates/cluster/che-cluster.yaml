@@ -22,7 +22,7 @@ spec:
           {{- end }}
         cluster:
           controlPlane:
-            replicas: 2
+            replicas: 1
             ram: 12Gi
           worker:
             replicas: 0
