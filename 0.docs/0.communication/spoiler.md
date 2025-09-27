@@ -75,7 +75,6 @@ curl -s --data-binary @./0.updatecli/shell/talos-scheme.sub.yaml https://factory
 - Netbird Extensions doc : <https://github.com/siderolabs/extensions/tree/main/network/netbird>
 - [Using Harbor has a talos cache registry](https://www.talos.dev/v1.11/talos-guides/configuration/pull-through-cache/)
 
-
 ### Build Command
 
 ```bash
@@ -83,7 +82,7 @@ docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:v1.11.2 installer
 ```
 
 ```bash
-docker run --rm -t -v ~/.docker/config.json:/root/.docker/config.json -e DOCKER_CONFIG=/root/.docker/config.json -v $PWD/_out:/out harbor.4.weebo.fr/cache-ghub/siderolabs/imager:v1.11.2 installer --platform=openstack --extra-kernel-arg net.ifnames=0 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/netbird:0.57.1 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/iscsi-tools:v0.2.0 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/qemu-guest-agent:10.0.2 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/util-linux-tools:2.41.1 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/mei:v1.11.2 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/intel-ucode:20250812
+docker run --rm -t -v ~/.docker/config.json:/root/.docker/config.json -e DOCKER_CONFIG=/root/.docker -v $PWD/_out:/out harbor.4.weebo.fr/cache-ghub/siderolabs/imager:v1.11.2 installer --platform=openstack --extra-kernel-arg net.ifnames=0 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/netbird:0.57.1 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/iscsi-tools:v0.2.0 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/qemu-guest-agent:10.0.2 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/util-linux-tools:2.41.1 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/mei:v1.11.2 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/intel-ucode:20250812
 ```
 
 ### Extensions
