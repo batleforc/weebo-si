@@ -24,8 +24,13 @@ spec:
                     requests:
                       storage: "{{ .Values.cluster.controlPlane.storage }}"
                 source:
+                  {{ if eq .Values.cluster.kubevirt.source "registry" }}
+                  registry:
+                    url: "{{ .Values.cluster.kubevirt.talosQcow2 }}"
+                  {{ else }}
                   http:
                     url: "{{ .Values.cluster.kubevirt.talosQcow2 }}"
+                  {{ end }}
                     # namespace: golden-images
           runStrategy: Always
           template:
