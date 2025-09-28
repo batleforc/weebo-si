@@ -87,6 +87,10 @@ docker run --rm -t -v ~/.docker/config.json:/root/.docker/config.json -e DOCKER_
 ```
 
 ```bash
+docker run --rm -t -v ~/.docker/config.json:/root/.docker/config.json -e DOCKER_CONFIG=/root/.docker -v $PWD/_out:/out harbor.4.weebo.fr/cache-ghub/siderolabs/imager:v1.11.2 installer --platform=openstack --extra-kernel-arg net.ifnames=0 --system-extension-image harbor.4.weebo.fr/talos/extensions/netbird:v0.57.1 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/iscsi-tools:v0.2.0 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/qemu-guest-agent:10.0.2 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/util-linux-tools:2.41.1 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/mei:v1.11.2 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/intel-ucode:20250812
+```
+
+```bash
 docker run --rm -t -v ~/.docker/config.json:/root/.docker/config.json -e DOCKER_CONFIG=/root/.docker -v $PWD/_out:/out -v /dev:/dev --privileged harbor.4.weebo.fr/cache-ghub/siderolabs/imager:v1.11.2 metal --platform=openstack --extra-kernel-arg net.ifnames=0 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/netbird:0.57.1 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/iscsi-tools:v0.2.0 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/qemu-guest-agent:10.0.2 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/util-linux-tools:2.41.1 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/mei:v1.11.2 --system-extension-image harbor.4.weebo.fr/cache-ghub/siderolabs/intel-ucode:20250812
 ```
 
@@ -100,6 +104,7 @@ sudo qemu-img convert -f raw -O qcow2 _out/openstack-amd64.raw _out/openstack-am
 
 ```bash
 docker build . -f all-in-one.task/Dockerfile -t harbor.4.weebo.fr/talos/vpn-openstack/qcow:v1.11.2
+docker push harbor.4.weebo.fr/talos/vpn-openstack/qcow:v1.11.2
 ```
 
 ```bash

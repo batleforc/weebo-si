@@ -18,6 +18,8 @@ includes:
     taskfile: 0.task/keystore/Taskfile.yml
   aio:
     taskfile: all-in-one.task/Taskfile.yml
+  build:
+    taskfile: 0.task/talvirt/Taskfile.yaml
 
 tasks:
   ssh-proxmox:
