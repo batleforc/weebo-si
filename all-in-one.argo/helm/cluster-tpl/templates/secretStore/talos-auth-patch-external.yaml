@@ -209,7 +209,7 @@ spec:
                     kind: ExtensionServiceConfig
                     name: netbird
                     environment:
-                      - NB_SETUP_KEYS={{ printf "{{"}} .vpn_setup_key }}
+                      - NB_SETUP_KEY={{ printf "{{"}} .vpn_setup_key }}
                       - NB_MANAGEMENT_URL=https://netbird.4.weebo.fr:443
                       - NB_ADMIN_URL=https://netbird.4.weebo.fr:443
 

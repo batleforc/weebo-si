@@ -9,6 +9,6 @@ tasks:
   image:
     cmds:
       - cat all-in-one.task/profile.yaml | docker run --rm -i -v ~/.docker/config.json:/root/.docker/config.json -e DOCKER_CONFIG=/root/.docker -v $PWD/_out:/out -v /dev:/dev --privileged harbor.4.weebo.fr/cache-ghub/siderolabs/imager:v1.11.2 -
-      - sudo qemu-img convert -f raw -O qcow2 _out/openstack-amd64.raw _out/openstack-amd64.qcow2
+      - qemu-img convert -f raw -O qcow2 _out/openstack-amd64.raw all-in-one.task/openstack-amd64.qcow2
       - docker build . -f all-in-one.task/Dockerfile -t harbor.4.weebo.fr/talos/vpn-openstack/qcow:v1.11.2
       - docker push harbor.4.weebo.fr/talos/vpn-openstack/qcow:v1.11.2
