@@ -40,7 +40,7 @@ resource "netbird_network_resource" "che-cluster-service-cidr" {
   name        = "che-cluster-service-cidr"
   network_id  = netbird_network.che-cluster.id
   groups      = [netbird_group.che-cluster-peer.id]
-  address     = "15.112.0.0/12"
+  address     = "10.112.0.0/12"
   description = "Che cluster service's CIDR"
 }
 
@@ -50,4 +50,9 @@ resource "netbird_network_resource" "che-cluster-fqdn" {
   groups      = [netbird_group.che-cluster-peer.id]
   address     = "*.che.cluster.4.weebo.fr"
   description = "Che cluster FQDN's CIDR"
+}
+
+resource "netbird_network_router" "che-cluster" {
+  network_id = netbird_network.che-cluster.id
+  peer_groups = [netbird_group.che-cluster-peer.id]
 }
