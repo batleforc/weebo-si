@@ -22,7 +22,7 @@ spec:
         - name: output-volume
           mountPath: /output
       - name: tsig-secret-creator
-        image: bitnami/kubectl:latest
+        image: alpine/k8s:1.31.13
         command: ["/bin/sh", "-c"]
         args:
           - |
