@@ -38,11 +38,6 @@ spec:
                 strategicPatches:
                   - |
                     - op: replace
-                      path: /machine/install
-                      value:
-                        extensions:
-                          - image: {{ .Values.cluster.talos.qemuGuestAgent.image }}
-                    - op: replace
                       path: /machine/features/hostDNS/forwardKubeDNSToHost
                       value: false
                     - op: replace
