@@ -32,6 +32,11 @@ spec:
                 template: dev-ws-<username>
               persistUserHome:
                 enabled: true
+              networking:
+                externalTLSConfig:
+                  enabled: true
+                  annotations:
+                    cert-manager.io/cluster-issuer: outbound
               storage:
                 pvcStrategy: per-workspace
                 perUserStrategyPvcConfig:
