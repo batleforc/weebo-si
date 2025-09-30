@@ -209,6 +209,9 @@ data:
         - name: Apply manifest
           ansible.builtin.command:
             cmd: "kubectl apply -f /tmp/manifest2.yaml --kubeconfig /tokens/value"
+        - name: Annotate traefik
+          ansible.builtin.command:
+            cmd: kubectl annotate --kubeconfig /tokens/value --overwrite -n traefik services traefik lbipam.cilium.io/ips='{{"{{"}} ips.stdout.split(' ') | join(',') }}'
   main.tf: |-
     terraform {
       required_providers {
