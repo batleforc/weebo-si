@@ -29,8 +29,6 @@ spec:
           annotations:
             lbipam.cilium.io/sharing-key: "weebo-gate"
             lbipam.cilium.io/sharing-cross-namespace: "*"
-        deployment:
-          kind: DaemonSet
         logs:
           general:
             format: json
