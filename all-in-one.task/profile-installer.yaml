@@ -24,9 +24,5 @@ input:
     - imageRef: harbor.4.weebo.fr/cache-ghub/siderolabs/mei:v1.11.2
     - imageRef: harbor.4.weebo.fr/cache-ghub/siderolabs/intel-ucode:20250812
 output:
-  kind: image
-  imageOptions:
-    diskSize: 4453302272
-    diskFormat: raw
-    bootloader: dual-boot
+  kind: installer
   outFormat: raw

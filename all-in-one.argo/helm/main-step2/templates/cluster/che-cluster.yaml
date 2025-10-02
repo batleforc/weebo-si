@@ -26,6 +26,7 @@ spec:
             ram: 12Gi
           worker:
             replicas: 0
+            autoscale: true
   destination:
     name: in-cluster
     namespace: 'che'

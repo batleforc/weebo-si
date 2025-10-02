@@ -13,7 +13,6 @@ cluster:
       - 10.112.0.0/12 # 10.96.0.0/12
       #- fd00:10:97::/112
   kubevirt:
-    rootVolumeSize: 50Gi
     source: registry
     storageClassName: local-path-sdb
     talosQcow2: docker://harbor.4.weebo.fr/talos/vpn-openstack/qcow:v1.11.2
@@ -22,7 +21,7 @@ cluster:
     replicas: 1
     allowScheduling: true
     ram: 12Gi
-    storage: 50Gi
+    storage: 15Gi
     storageClassName: local-path
     cpu:
       cores: 2
