@@ -26,6 +26,7 @@ spec:
             ram: 12Gi
           worker:
             replicas: 1
+            ram: 8Gi
             autoscale: false
   destination:
     name: in-cluster
