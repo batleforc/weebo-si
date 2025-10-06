@@ -43,11 +43,29 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Stream 27 SEPTEMBRE 2025
+### Stream 11 OCTOBRE 2025
 
 - Debut : 16h30
 - FIN : ~ 18h30
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
+- Musique: [NCS](https://ncs.io/)
+- Objectif
+  - Retour Netbird x Talos
+    - Mise en place de la configuration LAN
+  - Install de Talos via ISO ephemeral
+  - UserNamespace ?
+    - Nested podman ?
+
+### Stream 27 SEPTEMBRE 2025
+
+- Debut : 16h30
+- FIN : ~ 18h30
+- Vod :
+  - Twitch
+    - [1/3](https://www.twitch.tv/videos/2577116098)
+    - [2/3](https://www.twitch.tv/videos/2577151005)
+    - [3/3](https://www.twitch.tv/videos/2577153148)
+  - YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif
   - Ajouter au Sous Cluster Talos l'extensions [Netbird](https://github.com/siderolabs/extensions/tree/main/network/netbird)
@@ -67,7 +85,7 @@ kanban
 
 - Debut : 16h30
 - FIN : ~ 18h30
-- Vod : [Twitch](https://www.twitch.tv/videos/2571232605) YouTube : Soon
+- Vod : [Twitch](https://www.twitch.tv/videos/2571232605) [YouTube](https://youtu.be/_7REED7ysOA)
 - Musique: [NCS](https://ncs.io/)
 - Objectif
   - KubeApiProxy ?!
