@@ -12,6 +12,9 @@ rules:
   - apiGroups: ["controlplane.cluster.x-k8s.io"]
     resources: ["taloscontrolplanes"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["bootstrap.cluster.x-k8s.io"]
+    resources: ["talosconfigtemplates"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
