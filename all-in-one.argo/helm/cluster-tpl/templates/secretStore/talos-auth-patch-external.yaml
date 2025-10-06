@@ -198,6 +198,7 @@ spec:
                           permissions: 0o444
                           path: /var/lib/apiserver/authentication.yaml
                           op: create
+                  {{ if .Values.vpn.enabled -}}
                   - |
                     ---
                     apiVersion: v1alpha1
@@ -207,6 +208,7 @@ spec:
                       - NB_SETUP_KEY={{ printf "{{"}} .vpn_setup_key }}
                       - NB_MANAGEMENT_URL=https://netbird.4.weebo.fr:443
                       - NB_ADMIN_URL=https://netbird.4.weebo.fr:443
+                  {{- end }}
 
   data:
     - secretKey: url

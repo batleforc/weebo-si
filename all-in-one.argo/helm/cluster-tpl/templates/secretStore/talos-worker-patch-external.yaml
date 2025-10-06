@@ -1,0 +1,99 @@
+{{- if and (and .Values.vpn.enabled .Values.externalSecrets.enabled) (or (gt (int .Values.cluster.worker.replicas) 0) .Values.cluster.worker.autoscale) -}}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ .Release.Name }}-worker-secret
+  namespace: {{ .Release.Namespace }}
+spec:
+  refreshPolicy: Periodic
+  refreshInterval: 24h
+  secretStoreRef:
+    name: {{ .Release.Name }}-store
+  target:
+    name: {{ .Release.Name }}-worker-patch
+    template:
+      type: Opaque
+      data:
+        talos.yaml: |
+
+          apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+          kind: TalosConfigTemplate
+          metadata:
+            name: "{{ .Release.Name }}-infra-worker"
+            namespace: "{{ .Release.Namespace }}"
+            annotations:
+              argocd.argoproj.io/tracking-id: "{{ .Release.Name }}:bootstrap.cluster.x-k8s.io/TalosConfigTemplate:{{ .Release.Namespace }}/{{ .Release.Name }}-infra-worker"
+          spec:
+            template:
+              spec:
+                generateType: join
+                talosVersion: {{ .Values.cluster.talosVersion }}
+                strategicPatches:
+                  - |
+                    - op: replace
+                      path: /machine/features/hostDNS/forwardKubeDNSToHost
+                      value: false
+                    - op: add
+                      path: /machine/install/extraKernelArgs
+                      value:
+                        - net.ifnames=0
+                    - op: add
+                      path: /machine/install/image
+                      value: {{ .Values.cluster.talos.installImage }}
+                    - op: add
+                      path: /machine/sysctls
+                      value:
+                        net.ipv4.ip_forward: 1
+                        net.ipv6.conf.all.forwarding: 1
+                        vm.nr_hugepages: 2048
+                    - op: replace
+                      path: /machine/features/hostDNS/forwardKubeDNSToHost
+                      value: false
+                    {{ if .Values.cilium.enabled -}}
+                    - op: add
+                      path: /cluster/network/cni
+                      value:
+                        name: none
+                    - op: add
+                      path: /cluster/proxy
+                      value:
+                        disabled: true
+                    - op: replace
+                      path: /cluster/network/podSubnets
+                      value:
+                        {{- range $index, $subnet := .Values.cluster.network.podsCidr }}
+                        - {{ $subnet }}
+                        {{- end }}
+                    - op: replace
+                      path: /cluster/network/serviceSubnets
+                      value:
+                        {{- range $index, $subnet := .Values.cluster.network.servicesCidr }}
+                        - {{ $subnet }}
+                        {{- end }}
+                    {{- end }}
+                  {{ if .Values.vpn.enabled -}}
+                  - |
+                    ---
+                    apiVersion: v1alpha1
+                    kind: ExtensionServiceConfig
+                    name: netbird
+                    environment:
+                      - NB_SETUP_KEY={{ printf "{{"}} .vpn_setup_key }}
+                      - NB_MANAGEMENT_URL=https://netbird.4.weebo.fr:443
+                      - NB_ADMIN_URL=https://netbird.4.weebo.fr:443
+                  {{- end }}
+
+  data:
+    - secretKey: vpn_setup_key
+      remoteRef:
+        key: mc-authentik/{{ .Release.Namespace }}/vpn
+        property: KUBERNETES_SETUP_KEY
+    - secretKey: harbor_username
+      remoteRef:
+        key: mc-authentik/{{ .Release.Namespace }}/harbor
+        property: username
+    - secretKey: harbor_password
+      remoteRef:
+        key: mc-authentik/{{ .Release.Namespace }}/harbor
+        property: password
+{{- end }}

@@ -49,6 +49,9 @@ argo:
   external:
     enabled: true
 
+vpn:
+  enabled: true
+
 cilium:
   enabled: true
   version: "v1.18.2"
