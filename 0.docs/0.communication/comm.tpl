@@ -10,6 +10,18 @@ www.twitch.tv/batleforc
 
 ###
 
+Pssst ! RDV demain a 16H30 pour la 6ᵉ itération de Weebo-Si S2.
+À l'ordre du jour :
+- Mise en place d'une logique dites de "site" pour les sous cluster
+- Test de Talos en UserNamespace
+- Et un peu de ProxyAuthK8S
+
+
+www.twitch.tv/batleforc
+
+
+###
+
 Pssst ! RDV a 16H30 pour la 5ᵉ itération de Weebo-Si S2.
 À l'ordre du jour :
 - Bilan du stream de lundi avec les copain de chez CuistOps

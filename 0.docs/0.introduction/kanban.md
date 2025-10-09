@@ -22,17 +22,22 @@ kanban
     us217[Mise en place d'environnement Eclipse che - par ex nix]@{ assigned: MVP3, priority: 'High'}
   doing[Doing]
     us206[Mise en place d'une stack de Monitoring, Log/Trace/Métrique]@{ assigned: MVP1, priority: 'High', ticket: 'us206'}
-    us207[Mise en place Harbor et propagation dans les clusters pour avoir un cache des images]@{ assigned: MVP1, priority: 'High'}
     us208[Mise en place d'une extensions Netbird pour Talos]@{ assigned: MVP1, priority: 'High'}
     us209[Mise en place et développement d'un ProxyApiKube]@{ assigned: MVP2, priority: 'High'}
   done[Done]
     us201[Lister les application a intégrer PROPREMENT]@{ assigned: MVP, priority: 'High'}
     us202[Définir le programme des prochains mois]@{ assigned: MVP, priority: 'High'}
+    us207[Mise en place Harbor et propagation dans les clusters pour avoir un cache des images]@{ assigned: MVP1, priority: 'High'}
 ```
 
 - [WarpGate](https://warpgate.null.page/docs/)
 - [Grafana MCP](https://github.com/grafana/helm-charts/tree/main/charts/grafana-mcp)
 - [Coroot Grafana Dashboards](https://github.com/kirillyu/coroot-grafana-dashboards)
+
+## Bazar d'actions
+
+- Tester l'Install de Talos via ISO ephemeral
+- Travaux monitoring (voir us206)
 
 ## Actions récurrentes
 
@@ -51,10 +56,13 @@ kanban
 - Musique: [NCS](https://ncs.io/)
 - Objectif
   - Retour Netbird x Talos
-    - Mise en place de la configuration LAN
-  - Install de Talos via ISO ephemeral
+    - Mise en place de la configuration Isolated Network
   - UserNamespace ?
-    - Nested podman ?
+    - Nested podman/docker ?
+  - Retour [ProxyAuthK8S](https://github.com/batleforc/ProxyAuthK8S)
+    - Avancement
+    - Stocker les cluster dans Redis pour aller plus vite
+    - Comprendre pourquoi les event ne sont pas attacher au Trace
 
 ### Stream 27 SEPTEMBRE 2025
 
