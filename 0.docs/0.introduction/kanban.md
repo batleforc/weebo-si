@@ -59,6 +59,7 @@ kanban
     - Mise en place de la configuration Isolated Network
   - UserNamespace ?
     - Nested podman/docker ?
+    - Industrialisation du build des images Talos
   - Retour [ProxyAuthK8S](https://github.com/batleforc/ProxyAuthK8S)
     - Avancement
     - Stocker les cluster dans Redis pour aller plus vite
