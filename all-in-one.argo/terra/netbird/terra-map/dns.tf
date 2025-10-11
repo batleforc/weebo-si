@@ -8,7 +8,7 @@ resource "netbird_nameserver_group" "main-test" {
       port    = 53
     }
   ]
-  groups                 = [netbird_group.batleforc.id]
+  groups                 = [data.netbird_group.weebo_admin.id]
   search_domains_enabled = false
   enabled                = true
   primary                = true

@@ -16,7 +16,7 @@ resource "netbird_setup_key" "kube-peer" {
 resource "netbird_route" "kubernetes-peer" {
   network_id  = "kubernetes peer"
   peer_groups = [netbird_group.kubernetes-peer.id]
-  groups      = [netbird_group.batleforc.id]
+  groups      = [data.netbird_group.weebo_admin.id]
   description = "Kubernetes Peer Route"
   network     = "10.244.0.0/16" #,10.96.0.0/12,fd00:10:244::/56,fd00:10:96::/112"
 }
@@ -24,15 +24,15 @@ resource "netbird_route" "kubernetes-peer" {
 resource "netbird_route" "kubernetes-peer-service" {
   network_id  = "kubernetes peer service"
   peer_groups = [netbird_group.kubernetes-peer.id]
-  groups      = [netbird_group.batleforc.id]
+  groups      = [data.netbird_group.weebo_admin.id]
   description = "Kubernetes Peer Service Route"
   network     = "10.96.0.0/12"
 }
 
 resource "netbird_route" "kubernetes-exit-node" {
   network_id = "kubernetes exit node"
-  #access_control_groups = [netbird_group.batleforc.id]
-  groups      = [netbird_group.batleforc.id]
+  #access_control_groups = [data.netbird_group.weebo_admin.id]
+  groups      = [data.netbird_group.weebo_admin.id]
   peer_groups = [netbird_group.kubernetes-peer.id]
   description = "Kubernetes Exit Node Route"
   network     = "0.0.0.0/0"
@@ -41,8 +41,8 @@ resource "netbird_route" "kubernetes-exit-node" {
 # Uncomment if you want to add IPv6 support for the exit node, at the moment netbird does not support IPv6 routes
 # resource "netbird_route" "kubernetes-exit-node-ipv6" {
 #   network_id = "kubernetes exit node ipv6"
-#   #access_control_groups = [netbird_group.batleforc.id]
-#   groups      = [netbird_group.batleforc.id]
+#   #access_control_groups = [data.netbird_group.weebo_admin.id]
+#   groups      = [data.netbird_group.weebo_admin.id]
 #   peer_groups = [netbird_group.kubernetes-peer.id]
 #   description = "Kubernetes Exit Node IPv6 Route"
 #   network     = "::/0"
@@ -58,7 +58,7 @@ resource "netbird_policy" "kubernetes-peer" {
     enabled       = true
     protocol      = "all"
     name          = "Access Kubernetes Peer"
-    sources       = [netbird_group.batleforc.id]
+    sources       = [data.netbird_group.weebo_admin.id]
     destinations  = [netbird_group.kubernetes-peer.id]
   }
 }
