@@ -73,10 +73,6 @@ spec:
                         {{- end }}
                     {{- end }}
                     - op: add
-                      path: /cluster/apiServer/extraArgs
-                      value:
-                        feature-gates: UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true
-                    - op: add
                       path: /machine/kubelet/extraConfig
                       value:
                         featureGates:
