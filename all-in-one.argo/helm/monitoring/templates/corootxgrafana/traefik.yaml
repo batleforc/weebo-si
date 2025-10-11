@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: traefik-grafana-dashboard
-  namespace: monitoring
+  namespace: grafana
   labels:
     grafana_dashboard: "1"
 data:
