@@ -52,21 +52,9 @@ resource "netbird_network_resource" "che-cluster-fqdn" {
   description = "Che cluster FQDN's CIDR"
 }
 
-resource "netbird_group" "che_ops" {
-  name = "che_ops"
-  peers = []
-}
-
-resource "netbird_group" "che_dev" {
-  name = "che_dev"
-  peers = []
-}
-
 resource "netbird_network_router" "che-cluster" {
   network_id = netbird_network.che-cluster.id
   peer_groups = [
     netbird_group.che-cluster-peer.id,
-    netbird_group.che_ops.id,
-    netbird_group.che_dev.id
   ]
 }
