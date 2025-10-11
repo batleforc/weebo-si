@@ -6,3 +6,9 @@ coroot:
 grafana:
   enabled: true
   version: 10.1.0
+  datasources:
+    clickhouse:
+      - name: che-cluster
+        value: k16ab48c
+      - name: default
+        value: jsyy2pqy
