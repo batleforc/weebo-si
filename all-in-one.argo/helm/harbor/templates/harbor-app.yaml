@@ -22,10 +22,18 @@ spec:
             vault.security.banzaicloud.io/vault-role: "auth-read"
             vault.security.banzaicloud.io/vault-path: "kubernetes"
             vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
+            coroot.com/scrape-metrics: 'true'
+            coroot.com/metrics-port: '8001'
         jobservice:
           automountServiceAccountToken: true
+          podAnnotations:
+            coroot.com/scrape-metrics: 'true'
+            coroot.com/metrics-port: '8001'
         registry:
           automountServiceAccountToken: true
+          podAnnotations:
+            coroot.com/scrape-metrics: 'true'
+            coroot.com/metrics-port: '8001'
         trivy:
           automountServiceAccountToken: true
         exporter:
@@ -36,6 +44,8 @@ spec:
             vault.security.banzaicloud.io/vault-role: "auth-read"
             vault.security.banzaicloud.io/vault-path: "kubernetes"
             vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
+            coroot.com/scrape-metrics: 'true'
+            coroot.com/metrics-port: '8001'
         expose:
           tls:
             certSource: secret
@@ -56,7 +66,6 @@ spec:
             registry:
               size: 20Gi
         harborAdminPassword: "vault:mc-authentik/data/harbor/config#HARBOR_ADMIN_PASSWORD"
-        secretKey: {{ randAlphaNum 16 | quote }}
         metrics:
           enabled: true
 
