@@ -110,9 +110,20 @@ spec:
                         net.ipv4.ip_forward: 1
                         net.ipv6.conf.all.forwarding: 1
                         vm.nr_hugepages: 2048
+                        user.max_user_namespaces: "11255"
                     - op: add
                       path: /cluster/apiServer/admissionControl/0/configuration/exemptions/namespaces/-
                       value: falco
+                    - op: add
+                      path: /cluster/apiServer/extraArgs
+                      value:
+                        feature-gates: UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true
+                    - op: add
+                      path: /machine/kubelet/extraConfig
+                      value:
+                        featureGates:
+                          UserNamespacesSupport: true
+                          UserNamespacesPodSecurityStandards: true
                     - op: add
                       path: /machine/kubelet/extraArgs/rotate-server-certificates
                       value: "true"
