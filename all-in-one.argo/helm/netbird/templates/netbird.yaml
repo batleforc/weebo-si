@@ -115,7 +115,8 @@ spec:
                   "AuthorizationEndpoint": "https://login.4.weebo.fr/application/o/authorize/",
                   "Scope": "openid profile email offline_access api",
                   "UseIDToken": false,
-                  "RedirectURLs": ["http://localhost:53000"]
+                  "RedirectURLs": ["http://localhost:53000"],
+                  "DisablePromptLogin": true
                 }
               },
               "StoreConfig": {
