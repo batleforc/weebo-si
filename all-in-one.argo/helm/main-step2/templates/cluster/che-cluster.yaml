@@ -22,8 +22,8 @@ spec:
           {{- end }}
         cluster:
           controlPlane:
-            replicas: 2
-            ram: 12Gi
+            replicas: 1
+            ram: 11Gi
           worker:
             replicas: 1
             ram: 8Gi
