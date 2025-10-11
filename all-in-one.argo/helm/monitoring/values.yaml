@@ -1,8 +1,8 @@
 coroot:
   enabled: true
   operator:
-    version: 0.4.4
+    version: 0.4.8
 
 grafana:
   enabled: true
-  version: 9.4.4
+  version: 10.1.0
