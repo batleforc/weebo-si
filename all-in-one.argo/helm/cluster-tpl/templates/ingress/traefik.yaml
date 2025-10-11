@@ -29,6 +29,10 @@ spec:
           annotations:
             lbipam.cilium.io/sharing-key: "weebo-gate"
             lbipam.cilium.io/sharing-cross-namespace: "*"
+        deployment:
+          podAnnotations:
+            coroot.com/scrape-metrics: 'true'
+            coroot.com/metrics-port: '9100'
         logs:
           general:
             format: json
