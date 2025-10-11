@@ -21,6 +21,10 @@ spec:
       valuesObject:
         metrics:
           addInternals: true
+        deployment:
+          podAnnotations:
+            coroot.com/scrape-metrics: 'true'
+            coroot.com/metrics-port: '9100'
         ports:
           websecure:
             respondingTimeouts:
@@ -28,8 +32,7 @@ spec:
               writeTimeout: 180s   # @schema type:[string, integer, null]
               idleTimeout: 180s   # @schema type:[string, integer, null]
         ingressRoute:
-          dashboard:
-
+          dashboard:S
             enabled: true
             matchRule: Host(`4.weebo.fr`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
             middlewares:

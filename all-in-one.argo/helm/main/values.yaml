@@ -72,7 +72,7 @@ glance:
 
 traefik:
   enabled: true
-  version: 37.0.0
+  version: 37.1.2
   ips: "37.187.255.5,2001:41d0:c:705::1"
   kubeCRD:
     enabled: true
