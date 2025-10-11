@@ -57,3 +57,21 @@ resource "vault_kv_secret_v2" "che-app" {
     }
   )
 }
+
+resource "authentik_group" "che_admin" {
+  name         = "che_admin"
+  users        = []
+  parent = authentik_group.che_ops.id
+}
+
+resource "authentik_group" "che_ops" {
+  name         = "che_ops"
+  users        = []
+  parent = authentik_group.che_dev.id
+}
+
+resource "authentik_group" "che_dev" {
+  name         = "che_dev"
+  users        = []
+  parent = authentik_group.weebo_user.id
+}
