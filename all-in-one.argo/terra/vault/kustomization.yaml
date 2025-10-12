@@ -24,3 +24,4 @@ configMapGenerator:
       - ./terra-map/auth-monitoring.tf
       - ./terra-map/harbor.tf
       - ./terra-map/auth-harbor.tf
+      - ./terra-map/auth-policy.tf
