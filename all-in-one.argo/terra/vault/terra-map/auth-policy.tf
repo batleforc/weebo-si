@@ -1,4 +1,4 @@
-resource "vault_policy" "authentik_policy" {
+resource "vault_policy" "authentik_policy_weebo_admin" {
   name = "weebo_admin"
 
   policy = <<EOT
