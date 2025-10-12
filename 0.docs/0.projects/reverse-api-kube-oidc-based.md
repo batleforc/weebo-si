@@ -39,3 +39,13 @@ Can have XXX Provider, need to be capable to handle HTTPs/Ws/Other.
   - RateLimit configurable (Fail2Ban like aussi)
   - Monitoring / Metrics
   - Support du [CEL (Common Expression Language)](https://github.com/cel-rust/cel-rust) ? Pas sur que ce soit nécessaire d'aller jusque la.
+
+## Status
+
+### Stream 11 OCTOBRE 2025
+
+- [x] CRD
+- [x] Couche de tracing basique
+- [x] Base de l'api (Swagger auto généré, instrumentation)
+- [x] Listener d'event Kube
+- [x] Connection basique a un REDIS

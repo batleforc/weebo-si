@@ -48,11 +48,33 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Stream 11 OCTOBRE 2025
+### Stream 18 OCTOBRE 2025
 
 - Debut : 16h30
 - FIN : ~ 18h30
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
+- Musique: [NCS](https://ncs.io/)
+- Objectif
+  - Vault le retour
+    - OIDC avec Authentik (explication du setup)
+  - UserNamespace ?
+    - Nested podman/docker ?
+    - Industrialisation du build des images Talos
+  - Retour [ProxyAuthK8S](https://github.com/batleforc/ProxyAuthK8S)
+    - Avancement
+    - Stocker les cluster dans Redis pour aller plus vite
+    - Comprendre pourquoi les event ne sont pas attacher au Trace
+
+### Stream 11 OCTOBRE 2025
+
+- Debut : 16h30
+- FIN : ~ 19H04
+- Vod :
+  - Twitch
+    - [1/3](https://www.twitch.tv/videos/2589032809)
+    - [2/3](https://www.twitch.tv/videos/2589043372)
+    - [3/3](https://www.twitch.tv/videos/2589146936)
+  - YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif
   - Retour Netbird x Talos
@@ -64,6 +86,12 @@ kanban
     - Avancement
     - Stocker les cluster dans Redis pour aller plus vite
     - Comprendre pourquoi les event ne sont pas attacher au Trace
+- Bilan
+  - Netbird x Talos : Contrainte technique (Pré provisionning des groups impossible)
+  - UserNamespace
+    - Activation dans Talos : DONE
+    - Nested Build : Next Time
+  - [ProxyAuthK8S](/weebo-si/0.projects/reverse-api-kube-oidc-based.html) : Pas eu le temps mais avancement en OFF voir spec
 
 ### Stream 27 SEPTEMBRE 2025
 
