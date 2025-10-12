@@ -42,8 +42,8 @@ resource "authentik_application" "vault" {
 
 resource "vault_jwt_auth_backend" "vault_authentik" {
   description        = "WeeboSI Authentik OIDC"
-  path               = vault_auth_backend.vault_authentik.path
-  type               = vault_auth_backend.vault_authentik.type
+  path               = "authentik"
+  type               = "oidc"
   oidc_discovery_url = "https://login.4.weebo.fr/application/o/${authentik_application.vault.slug}/"
   oidc_client_id     = authentik_provider_oauth2.vault.client_id
   oidc_client_secret = authentik_provider_oauth2.vault.client_secret
