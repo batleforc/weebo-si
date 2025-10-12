@@ -84,7 +84,7 @@ resource "vault_identity_group_alias" "vault_authentik_reader" {
 resource "vault_jwt_auth_backend_role" "vault_authentik_weebo_admin" {
   backend        = vault_jwt_auth_backend.vault_authentik.path
   role_name      = "weebo_admin"
-  token_policies = ["root"]
+  token_policies = ["weebo_admin", "root"]
 
   user_claim      = "sub"
   role_type       = "oidc"
@@ -103,7 +103,7 @@ resource "vault_jwt_auth_backend_role" "vault_authentik_weebo_admin" {
 resource "vault_identity_group" "vault_authentik_weebo_admin" {
   name     = "weebo_admin"
   type     = "external"
-  policies = ["weebo_admin"]
+  policies = ["weebo_admin", "root"]
 }
 
 resource "vault_identity_group_alias" "vault_authentik_weebo_admin" {
