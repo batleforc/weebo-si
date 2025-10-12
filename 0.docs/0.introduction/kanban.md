@@ -91,7 +91,7 @@ kanban
   - UserNamespace
     - Activation dans Talos : DONE
     - Nested Build : Next Time
-  - [ProxyAuthK8S](/weebo-si/0.projects/reverse-api-kube-oidc-based.html) : Pas eu le temps mais avancement en OFF voir spec
+  - [ProxyAuthK8S](/0.projects/reverse-api-kube-oidc-based.html) : Pas eu le temps mais avancement en OFF voir spec
 
 ### Stream 27 SEPTEMBRE 2025
 
