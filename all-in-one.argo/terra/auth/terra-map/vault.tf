@@ -7,23 +7,23 @@ resource "authentik_provider_oauth2" "vault" {
   allowed_redirect_uris = [
     {
       matching_mode = "strict",
-      url           = "https://vault.4.weebo.fr/ui/vault/auth/oidc/oidc/callback",
+      url           = "https://vault.4.weebo.fr/ui/vault/auth/authentik/oidc/callback",
     },
     {
       matching_mode = "strict",
-      url           = "https://vault.4.weebo.fr/oidc/callback",
+      url           = "https://vault.4.weebo.fr/authentik/callback",
     },
     {
       matching_mode = "strict",
-      url           = "https://vault.weebo.poc/ui/vault/auth/oidc/oidc/callback",
+      url           = "https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback",
     },
     {
       matching_mode = "strict",
-      url           = "https://vault.weebo.poc/oidc/callback",
+      url           = "https://vault.weebo.poc/authentik/callback",
     },
     {
       matching_mode = "strict",
-      url           = "http://localhost:8250/oidc/callback",
+      url           = "http://localhost:8250/authentik/callback",
     }
   ]
   property_mappings = [
@@ -59,11 +59,11 @@ resource "vault_jwt_auth_backend_role" "vault_authentik_reader" {
   role_type       = "oidc"
   bound_audiences = [authentik_provider_oauth2.vault.client_id]
   allowed_redirect_uris = [
-    "https://vault.4.weebo.fr/ui/vault/auth/oidc/oidc/callback",
-    "https://vault.4.weebo.fr/oidc/callback",
-    "https://vault.weebo.poc/ui/vault/auth/oidc/oidc/callback",
-    "https://vault.weebo.poc/oidc/callback",
-    "http://localhost:8250/oidc/callback",
+    "https://vault.4.weebo.fr/ui/vault/auth/authentik/oidc/callback",
+    "https://vault.4.weebo.fr/authentik/callback",
+    "https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback",
+    "https://vault.weebo.poc/authentik/callback",
+    "http://localhost:8250/authentik/callback",
   ]
   groups_claim = "groups"
   oidc_scopes  = ["openid", "profile", "email"]
@@ -90,11 +90,11 @@ resource "vault_jwt_auth_backend_role" "vault_authentik_weebo_admin" {
   role_type       = "oidc"
   bound_audiences = [authentik_provider_oauth2.vault.client_id]
   allowed_redirect_uris = [
-    "https://vault.4.weebo.fr/ui/vault/auth/oidc/oidc/callback",
-    "https://vault.4.weebo.fr/oidc/callback",
-    "https://vault.weebo.poc/ui/vault/auth/oidc/oidc/callback",
-    "https://vault.weebo.poc/oidc/callback",
-    "http://localhost:8250/oidc/callback",
+    "https://vault.4.weebo.fr/ui/vault/auth/authentik/oidc/callback",
+    "https://vault.4.weebo.fr/authentik/callback",
+    "https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback",
+    "https://vault.weebo.poc/authentik/callback",
+    "http://localhost:8250/authentik/callback",
   ]
   groups_claim = "groups"
   oidc_scopes  = ["openid", "profile", "email"]
