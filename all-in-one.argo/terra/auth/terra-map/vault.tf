@@ -40,11 +40,6 @@ resource "authentik_application" "vault" {
   protocol_provider = authentik_provider_oauth2.vault.id
 }
 
-resource "vault_auth_backend" "vault_authentik" {
-  type = "oidc"
-  path = "authentik"
-}
-
 resource "vault_jwt_auth_backend" "vault_authentik" {
   description        = "WeeboSI Authentik OIDC"
   path               = vault_auth_backend.vault_authentik.path
