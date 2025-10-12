@@ -71,7 +71,7 @@ resource "vault_jwt_auth_backend_role" "vault_authentik_reader" {
     "http://localhost:8250/oidc/callback",
   ]
   groups_claim = "groups"
-  oidc_scopes  = "openid,profile,email"
+  oidc_scopes  = ["openid", "profile", "email"]
 }
 
 resource "vault_identity_group" "vault_authentik_reader" {
@@ -102,7 +102,7 @@ resource "vault_jwt_auth_backend_role" "vault_authentik_weebo_admin" {
     "http://localhost:8250/oidc/callback",
   ]
   groups_claim = "groups"
-  oidc_scopes  = "openid,profile,email"
+  oidc_scopes  = ["openid", "profile", "email"]
 }
 
 resource "vault_identity_group" "vault_authentik_weebo_admin" {
