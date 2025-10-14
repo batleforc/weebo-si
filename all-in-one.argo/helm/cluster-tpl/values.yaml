@@ -20,18 +20,18 @@ cluster:
   controlPlane:
     replicas: 1
     allowScheduling: true
-    ram: 12Gi
-    storage: 15Gi
+    ram: 13Gi
+    storage: 20Gi
     storageClassName: local-path
     cpu:
       cores: 2
-      threads: 2
+      threads: 1
   bootstrap:
     vaultProviderVersion: "4.4.0"
   worker:
     replicas: 0
     autoscale: false
-    ram: 6Gi
+    ram: 8Gi
     storage: 50Gi
     cpu:
       cores: 2
