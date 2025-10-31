@@ -1,0 +1,9 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: che-batleforc
+  labels:
+    app.kubernetes.io/part-of: che.eclipse.org
+    app.kubernetes.io/component: workspaces-namespace
+  annotations:
+    che.eclipse.org/username: Batleforc
