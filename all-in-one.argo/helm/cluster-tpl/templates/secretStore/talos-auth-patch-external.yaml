@@ -118,6 +118,16 @@ spec:
                       path: /cluster/apiServer/extraArgs
                       value:
                         feature-gates: UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true
+                        enable-admission-plugins: PodNodeSelector
+                    - op: add
+                      path: /cluster/apiServer/admissionControl/-
+                      value:
+                        name: PodNodeSelector
+                        configuration:
+                          podNodeSelectorPluginConfig:
+                              clusterDefaultNodeSelector: kubernetes.io/os=linux
+                              worker: node-role.kubernetes.io/worker
+                              cp: node-role.kubernetes.io/control-plane
                     - op: add
                       path: /machine/kubelet/extraConfig
                       value:
