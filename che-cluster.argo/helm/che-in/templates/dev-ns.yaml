@@ -8,3 +8,17 @@ metadata:
   annotations:
     che.eclipse.org/username: Batleforc
     scheduler.alpha.kubernetes.io/node-selector: worker
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: che-batleforc-rolebinding
+  namespace: che-batleforc
+subjects:
+  - kind: User
+    name: Batleforc
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: eclipse-che-cheworkspaces-clusterrole
+  apiGroup: rbac.authorization.k8s.io
