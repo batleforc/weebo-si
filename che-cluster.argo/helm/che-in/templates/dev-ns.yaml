@@ -18,7 +18,7 @@ metadata:
     app.kubernetes.io/part-of: che.eclipse.org
 subjects:
   - kind: User
-    name: Batleforc
+    name: weebsso:batleforc@weebo.poc
     apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
@@ -34,7 +34,7 @@ metadata:
     app.kubernetes.io/part-of: che.eclipse.org
 subjects:
   - kind: User
-    name: Batleforc
+    name: weebsso:batleforc@weebo.poc
     apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
