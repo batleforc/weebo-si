@@ -14,6 +14,8 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: che-batleforc-rolebinding
   namespace: che-batleforc
+  labels:
+    app.kubernetes.io/part-of: che.eclipse.org
 subjects:
   - kind: User
     name: Batleforc
@@ -28,6 +30,8 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: che-batleforc-rolebinding-devworkspace
   namespace: che-batleforc
+  labels:
+    app.kubernetes.io/part-of: che.eclipse.org
 subjects:
   - kind: User
     name: Batleforc
