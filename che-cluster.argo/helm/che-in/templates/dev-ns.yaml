@@ -5,6 +5,6 @@ metadata:
   labels:
     app.kubernetes.io/part-of: che.eclipse.org
     app.kubernetes.io/component: workspaces-namespace
-    scheduler.alpha.kubernetes.io/node-selector: worker
   annotations:
     che.eclipse.org/username: Batleforc
+    scheduler.alpha.kubernetes.io/node-selector: worker
