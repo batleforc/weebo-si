@@ -59,6 +59,9 @@ kanban
   - ProxyAuthK8S
     - Initialisation du projet
     - Parler des specs
+- SideQuest
+  - [Kamaji x Talos](https://www.youtube.com/watch?v=nSGo_72LnmY)
+  - [Talos CSR Signer](https://github.com/clastix/talos-csr-signer/blob/master/docs/sidecar-deployment.md)
 
 ### Stream 11 OCTOBRE 2025
 
