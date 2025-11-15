@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kamaji
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://clastix.github.io/charts'
+    chart: kamaji
+    targetRevision: {{ .Values.kamaji.version }}
+    helm:
+      releaseName: kamaji
+      valuesObject:
+        resources: null
+  destination:
+    name: "in-cluster"
+    namespace: 'kamaji-system'
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated: {}
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m

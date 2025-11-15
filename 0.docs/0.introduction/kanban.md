@@ -48,7 +48,7 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Next Stream
+### Stream 15 NOVEMBRE 2025
 
 - Debut : 16h30
 - FIN : ~ 18h30
@@ -62,6 +62,13 @@ kanban
 - SideQuest
   - [Kamaji x Talos](https://www.youtube.com/watch?v=nSGo_72LnmY)
   - [Talos CSR Signer](https://github.com/clastix/talos-csr-signer/blob/master/docs/sidecar-deployment.md)
+- News
+  - [Umami V3 !](https://github.com/umami-software/umami)
+  - [Kanidm](https://github.com/kanidm/kanidm) and [Kaniop](https://github.com/pando85/kaniop)
+  - [Termix (alternative a Termius)](https://github.com/Termix-SSH/Termix)
+  - Game on Container
+    - [QuakeJS Arena](https://github.com/JackBrenn/quakejs-rootless)
+    - [Doom your cluster !](https://github.com/storax/kubedoom)
 
 ### Stream 11 OCTOBRE 2025
 

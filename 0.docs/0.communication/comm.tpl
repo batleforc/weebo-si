@@ -70,3 +70,26 @@ GitHub [https://github.com/batleforc/weebo-si](https://github.com/batleforc/weeb
 *
 
 Et toujours en musique [https://batleforc.github.io/weebo-si/0.introduction/kanban.html#music](https://batleforc.github.io/weebo-si/0.introduction/kanban.html#music)
+
+
+### Next Stream
+
+- Debut : 16h30
+- FIN : ~ 18h30
+- Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
+- Musique: [NCS](https://ncs.io/)
+- Objectif
+  - Admission Controller Talos
+  - ProxyAuthK8S
+    - Initialisation du projet
+    - Parler des specs
+- SideQuest
+  - [Kamaji x Talos](https://www.youtube.com/watch?v=nSGo_72LnmY)
+  - [Talos CSR Signer](https://github.com/clastix/talos-csr-signer/blob/master/docs/sidecar-deployment.md)
+- News
+  - [Umami V3 !](https://github.com/umami-software/umami)
+  - [Kanidm](https://github.com/kanidm/kanidm) and [Kaniop](https://github.com/pando85/kaniop)
+  - [Termix (alternative a Termius)](https://github.com/Termix-SSH/Termix)
+  - Game on Container
+    - [QuakeJS Arena](https://github.com/JackBrenn/quakejs-rootless)
+    - [Doom your cluster !](https://github.com/storax/kubedoom)

@@ -1,0 +1,26 @@
+{{- if .Values.kamalos.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kamalos
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/batleforc/weebo-si'
+    path: 'all-in-one.argo/helm/kamalos'
+    helm:
+      releaseName: kamalos
+  destination:
+    name: in-cluster
+    namespace: 'kamalos'
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+    - RespectIgnoreDifferences=true
+    - CreateNamespace=true
+{{- end -}}
