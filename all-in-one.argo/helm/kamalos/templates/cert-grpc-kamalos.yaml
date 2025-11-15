@@ -1,0 +1,24 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.cluster.name }}-talos-tls-cert
+  namespace: {{ .Values.cluster.namespace }}
+spec:
+  secretName: {{ .Values.cluster.name }}-talos-tls-cert
+  duration: 8760h # 1 year
+  renewBefore: 720h # 30 days before
+  isCA: false
+  privateKey:
+    algorithm: Ed25519
+    size: 256
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  ipAddresses:
+    - 127.0.0.1
+    - {{ .Values.cluster.controlPlane.ip }}
+  issuerRef:
+    name: {{ .Values.cluster.name }}-talos-ca
+    kind: Issuer
+    group: cert-manager.io
