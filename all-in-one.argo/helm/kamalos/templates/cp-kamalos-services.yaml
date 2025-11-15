@@ -8,10 +8,14 @@ spec:
   selector:
     kamaji.clastix.io/name: {{ .Values.cluster.name }}
   ports:
-    - name: kubernetes
+    - name: kube-apiserver
       port: 6443
-      targetPort: 6443
       protocol: TCP
+      targetPort: 6443
+    - name: konnectivity-server
+      port: 8132
+      protocol: TCP
+      targetPort: 8132
     - name: talos-csr-signer
       port: 50001
       targetPort: 50001
