@@ -23,4 +23,5 @@ spec:
     syncOptions:
     - RespectIgnoreDifferences=true
     - CreateNamespace=true
+    - ServerSideApply=true
 {{- end -}}
