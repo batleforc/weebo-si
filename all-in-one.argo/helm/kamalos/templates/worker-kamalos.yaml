@@ -1,49 +1,43 @@
 {{- range .Values.workers -}}
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
-kind: KubevirtMachine
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
 metadata:
   name: "{{ $.Values.cluster.name }}-{{ .name }}"
   namespace: {{ $.Values.cluster.namespace }}
 spec:
-  virtualMachineBootstrapCheck:
-    checkStrategy: none
-  virtualMachineTemplate:
-    metadata:
-      namespace: {{ $.Values.cluster.namespace }}
+  dataVolumeTemplates:
+    - metadata:
+        name: boot-volume
+      spec:
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: {{ .storage }}
+          volumeMode: Filesystem
+        source:
+          http:
+            url: {{ .img}}
+  runStrategy: Always
+  template:
     spec:
-      dataVolumeTemplates:
-        - metadata:
-            name: boot-volume
-          spec:
-            pvc:
-              accessModes:
-                - ReadWriteOnce
-              resources:
-                requests:
-                  storage: {{ .storage }}
-              volumeMode: Filesystem
-            source:
-              http:
-                url: {{ .img}}
-      runStrategy: Always
-      template:
-        spec:
-          domain:
-            cpu:
-              cores: {{ .cpu.cores}}
-              threads: {{ .cpu.threads}}
-            devices:
-              disks:
-                - disk:
-                    bus: virtio
-                  name: dv-volume
-              networkInterfaceMultiqueue: true
-            resources:
-              requests:
-                memory: {{ .ram}}
-          evictionStrategy: External
-          volumes:
-            - dataVolume:
-                name: boot-volume
+      domain:
+        cpu:
+          cores: {{ .cpu.cores }}
+          threads: {{ .cpu.threads }}
+        devices:
+          disks:
+            - disk:
+                bus: virtio
               name: dv-volume
+          networkInterfaceMultiqueue: true
+        resources:
+          requests:
+            memory: {{ .ram }}
+      evictionStrategy: External
+      volumes:
+        - dataVolume:
+            name: boot-volume
+          name: dv-volume
 {{- end -}}
