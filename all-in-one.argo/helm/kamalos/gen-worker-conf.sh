@@ -1,8 +1,9 @@
 export CLUSTER_NAME="kamalos"
 export NAMESPACE="kamalos"
-export WORKER_IP="10.244.0.57"
+export WORKER_IP="10.244.0.123"
 export KUBERNETES_VERSION="v1.33.2"
 export TALOS_VERSION="v1.11.5"
+export CONTROL_PLANE_IP="10.96.70.1"
 
 task aio:kubectl -- get secret ${CLUSTER_NAME}-admin-kubeconfig -n $NAMESPACE \
   -o jsonpath='{.data.admin\.conf}' | base64 -d > ./tmp/${NAMESPACE}-${CLUSTER_NAME}.kubeconfig
@@ -47,9 +48,9 @@ cluster:
   network:
     dnsDomain: cluster.local
     podSubnets:
-      - 10.244.0.0/16
+      - 10.246.0.0/16
     serviceSubnets:
-      - 10.96.0.0/12
+      - 10.128.0.0/12
   token: ${K8S_BOOTSTRAP_TOKEN}
   ca:
     crt: ${K8S_CA}

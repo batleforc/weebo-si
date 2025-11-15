@@ -49,6 +49,8 @@ spec:
   networkProfile:
     address: {{ .Values.cluster.controlPlane.ip }}
     port: 6443
+    serviceCidr: {{ .Values.cluster.network.serviceSubnets }}
+    podCidr: {{ .Values.cluster.network.podSubnets }}
   kubernetes:
     version: {{ .Values.cluster.kubeVersion }}
     kubelet:
