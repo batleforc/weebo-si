@@ -1,0 +1,20 @@
+# Service for Kamalos Control Plane
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.cluster.name }}-control-plane
+  namespace: {{ .Values.cluster.namespace }}
+spec:
+  selector:
+    kamaji.clastix.io/name: {{ .Values.cluster.name }}
+  ports:
+    - name: kubernetes
+      port: 6443
+      targetPort: 6443
+      protocol: TCP
+    - name: talos-csr-signer
+      port: 50001
+      targetPort: 50001
+      protocol: TCP
+  type: ClusterIP
+  clusterIP: {{ .Values.cluster.controlPlane.ip }}

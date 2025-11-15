@@ -1,0 +1,59 @@
+apiVersion: kamaji.clastix.io/v1alpha1
+kind: TenantControlPlane
+metadata:
+  name: {{ .Values.cluster.name }}
+  namespace: {{ .Values.cluster.namespace }}
+spec:
+  dataStore: default
+  controlPlane:
+    deployment:
+      replicas: 1
+      additionalContainers:
+        - name: talos-csr-signer
+          image: "{{ .Values.cluster.csrSigner.image }}:{{ .Values.cluster.csrSigner.tag }}"
+          imagePullPolicy: Always
+          ports:
+            - name: grpc
+              containerPort: 50001
+              protocol: TCP
+          env:
+            - name: TALOS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.cluster.name }}-talos-ca
+                  key: token
+          volumeMounts:
+            - name: talos-ca
+              mountPath: /etc/talos-ca
+              readOnly: true
+            - name: tls-cert
+              mountPath: /etc/talos-server-crt
+              readOnly: true
+      additionalVolumes:
+        - name: talos-ca
+          secret:
+            secretName: {{ .Values.cluster.name }}-talos-ca
+        - name: tls-cert
+          secret:
+            secretName: {{ .Values.cluster.name }}-talos-tls-cert
+    service:
+      serviceType: ClusterIP
+      additionalMetadata:
+        annotations:
+          metallb.io/loadBalancerIPs: {{ .Values.cluster.controlPlane.ip }}
+      additionalPorts:
+        - name: talos-csr-signer
+          port: 50001
+          targetPort: 50001
+          protocol: TCP
+  networkProfile:
+    address: {{ .Values.cluster.controlPlane.ip }}
+    port: 6443
+  kubernetes:
+    version: {{ .Values.cluster.kubeVersion }}
+    kubelet:
+      cgroupfs: systemd
+  addons:
+    coreDNS: {}
+    kubeProxy: {}
+    konnectivity: {}

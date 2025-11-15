@@ -1,6 +1,6 @@
 kamaji:
   version: "0.0.0+latest"
-  csr_signer:
+  csrSigner:
     enabled: true
     image: "ghcr.io/clastix/talos-csr-signer"
     tag: "latest"
