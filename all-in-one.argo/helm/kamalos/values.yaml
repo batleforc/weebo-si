@@ -14,7 +14,7 @@ cluster:
     ip: "10.96.70.1"
   network:
     podSubnets: 10.245.0.0/16
-    serviceSubnets: 10.112.0.0/12
+    serviceSubnets: 10.128.0.0/12
 
 workers:
   - name: "worker-1"
