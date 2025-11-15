@@ -10,7 +10,7 @@ spec:
       replicas: 1
       additionalContainers:
         - name: talos-csr-signer
-          image: "{{ .Values.cluster.csrSigner.image }}:{{ .Values.cluster.csrSigner.tag }}"
+          image: "{{ .Values.kamaji.csrSigner.image }}:{{ .Values.kamaji.csrSigner.tag }}"
           imagePullPolicy: Always
           ports:
             - name: grpc
