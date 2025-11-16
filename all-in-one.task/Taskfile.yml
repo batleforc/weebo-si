@@ -8,8 +8,8 @@ env:
 tasks:
   up:
     cmds:
-      - task up-aio
-      - task up-app
+      - task aio:up-aio
+      - task aio:up-app
   talosctl:
     silent: true
     cmds:

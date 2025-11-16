@@ -14,20 +14,41 @@
 ## Étapes
 
 <!-- no toc -->
-- [1. Cloner le dépôt Git](#1-cloner-le-dépôt-git)
+- [1. Préparer le repo Git](#1-préparer-le-repo-git)
 - [2. Copier/Coler le fichier .env.template en .env](#2-copiercoler-le-fichier-envtemplate-en-env)
 - [3. Remplir le fichier .env avec vos informations OVH](#3-remplir-le-fichier-env-avec-vos-informations-ovh)
 - [4. Lancer la commande `task aio:up`](#4-lancer-la-commande-task-aio-up)
-- [5. Enjoy !](#5-enjoy-)
+- [5. Finalisation](#5-finalisation)
+- [6. Enjoy !](#6-enjoy-)
 
-## 1. Cloner le dépôt Git
+## 1. Préparer le repo Git
 
-Jusque là, tout est standard. Vous pouvez cloner le dépôt Git où vous le souhaitez sur votre poste de travail.
+Deux choix s'offre a vous, soit Forker ce dêpôt GitHub pour garder une copie personnelle vous permettant de faire vos propres modifications, soit cloner directement ce dépôt.
+
+### Forker le dépôt
+
+Dans le cas d'un fork, celui-ci est disponible depuis [l'interface GitHub a l'url suivante](https://github.com/batleforc/weebo-si/fork).
+
+### Cloner le dépôt
+
+Peu importe votre choix, il vous faut cloner le dépôt sur votre poste de travail (penser a remplacer `batleforc` par votre propre nom d'utilisateur GitHub si vous avez forké le dépôt directement).
 
 ```bash
 git clone https://github.com/batleforc/weebo-si.git
 cd weebo-si
 ```
+
+### Configuration de l'environnement
+
+Maintenant que vous avez le code source sur votre poste de travail, il est nécessaire de remplacer les url propres a votre fork comme par exemple:
+
+- `4.weebo.fr` par votre propre domaine
+- `https://github.com/batleforc/weebo-si` par votre propre dépôt GitHub
+- Le nom du noeud dans le fichier `0.pulumi/all-in-one/main.go` a la ligne `nodeName := "weebo4"` (ex: `weeboX`) qui sera uttiliser pour nommer votre control plane Talos.
+
+La prochaine étape consiste a identifier les fonctionnalités dont vous avez besoin. Celle-ci sont gérées dans le fichier Values Helm disponible dans l'application main au path `all-in-one.argo/helm/main/values.yaml`.
+
+Attention certaines fonctionnalités comme l'installation d'authentik nécessites que la fonctionnalité Vault sois complétement opérationnelle et que l'application `terra-vault` ai été déployée avec succès.
 
 ## 2. Copier/Coler le fichier .env.template en .env
 
@@ -57,14 +78,32 @@ SERVER_NAME="nsxxxxxx.ip-xx-xxx-xxx.eu"
 
 ## 4. Lancer la commande task aio up
 
+::: warning
+
+Avant votre toute première exécution d'un script Pulumi, créer une configuration local avec la commande `pulumi login --local` afin d'éviter d'utiliser le service Pulumi Cloud.
+
+:::
+
 ```bash
 task aio:up
 ```
+
+::: info
+
+Chaque script Pulumi est indépendant avec ça propre Stack, lors de la premiére exécution de la commande `task aio:up` Pulumi vous demandera de choisir un nom de stack pour chaque script. Vous pouvez utiliser le nom par défaut `dev` ou en choisir un autre.
+
+:::
 
 La commande `task aio:up` va en réalité exécuter deux scripts Pulumi:
 
 - `task up-aio` : Permet le provisionnement du BareMetal Ovh et l'installation de Talos ainsi que Cilium, cette applications ce trouve dans le dossier `0.pulumi/all-in-one`
 - `task up-app` : Permet la configuration de Cilium et l'installation d'ArgoCD puis l'installation de la première application, cette application se trouve dans le dossier `0.pulumi/app`
+
+::: tip
+
+En case de besoin de relancer l'installation, vous pouvez utiliser la commande `pulumi state delete --all` dans chaque dossier `0.pulumi/all-in-one` et `0.pulumi/app`.
+
+:::
 
 ### `task up-aio` ou préparation du BareMetal OVH
 
@@ -416,6 +455,12 @@ g, authentik Admins, role:admin`),
 }))
 ```
 
+::: warning
+
+Attention, l'installation d'argoCD via le HelmChart peux rester coincer sur l'ingress, pour palier a ce problème vous pouvez remplcar la section `server.ingress.enabled` par un false puis une fois le setup effectuer, réappliquer le manifest avec un `true`.
+
+:::
+
 3. Création de l'application ArgoCD AIO directement relier a ce repository
 
 ```go
@@ -456,7 +501,27 @@ argocd,
 }))
 ```
 
-## 5. Enjoy !
+## 5. Finalisation
+
+Une fois les deux scripts Pulumi exécuter avec succès il peux être nécessaire d'accéder au argocd pour finaliser l'installation.
+
+Pour cela vous pouvez suivre les étapes suivantes:
+
+1. Récupérer le mot de passe initial de l'utilisateur admin
+
+```bash
+task aio:argo-pwd
+```
+
+2. Accéder a l'interface web via la commande
+
+```bash
+task aio:argo-forward
+```
+
+3. Se connecter avec l'utilisateur `admin` et le mot de passe récupérer précédemment en accédant a l'url `https://localhost:8080`
+
+## 6. Enjoy !
 
 Vous pouvez dès à présent vous connecter a votre cluster Talos via kubectl.
 
