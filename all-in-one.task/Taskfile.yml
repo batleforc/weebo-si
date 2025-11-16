@@ -52,6 +52,7 @@ tasks:
       PULUMI_CONFIG_PASSPHRASE: ""
       KUBECONFIG: "../all-in-one/kubeconfig.yaml"
       KUBERNETES_MASTER: "../all-in-one/kubeconfig.yaml"
+      GIT_PASSWORD: "{{.ARGO_GITHUB_TOKEN}}"
     cmds:
       - pulumi {{ .CLI_ARGS }}
   up-aio:

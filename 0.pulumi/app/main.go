@@ -29,6 +29,10 @@ func main() {
 		if dnsName == "" {
 			return fmt.Errorf("PROXMOX_DNS environment variable is not set")
 		}
+		gitPassword := os.Getenv("GIT_PASSWORD")
+		if gitPassword == "" {
+			return fmt.Errorf("GIT_PASSWORD environment variable is not set")
+		}
 
 		serverNetwork, err := dedicated.GetServerSpecificationsNetwork(ctx, &dedicated.GetServerSpecificationsNetworkArgs{
 			ServiceName: serviceName,
@@ -190,6 +194,21 @@ g, authentik Admins, role:admin`),
 								"recurse": true,
 							},
 						},
+					},
+				}),
+				pulumi.Any(map[string]interface{}{
+					"apiVersion": "v1",
+					"kind":       "Secret",
+					"metadata": map[string]interface{}{
+						"name": "argocd-main-weebo-si",
+						"namespace": ns.Metadata.ApplyT(func(metadata metav1.ObjectMeta) (*string, error) {
+							return metadata.Name, nil
+						}).(pulumi.StringPtrOutput),
+					},
+					"stringData": map[string]interface{}{
+						"url":      "https://github.com/batleforc/weebo-si",
+						"type":     "git",
+						"password": gitPassword,
 					},
 				}),
 			},

@@ -1,6 +1,6 @@
 export CLUSTER_NAME="kamalos"
 export NAMESPACE="kamalos"
-export WORKER_IP="10.244.0.123"
+export WORKER_IP="10.244.0.23"
 export KUBERNETES_VERSION="v1.33.2"
 export TALOS_VERSION="v1.11.5"
 export CONTROL_PLANE_IP="10.96.70.1"
@@ -8,8 +8,7 @@ export CONTROL_PLANE_IP="10.96.70.1"
 task aio:kubectl -- get secret ${CLUSTER_NAME}-admin-kubeconfig -n $NAMESPACE \
   -o jsonpath='{.data.admin\.conf}' | base64 -d > ./tmp/${NAMESPACE}-${CLUSTER_NAME}.kubeconfig
 
-K8S_CA=$(task aio:kubectl -- --kubeconfig=./tmp/${NAMESPACE}-${CLUSTER_NAME}.kubeconfig config view --raw \
-  -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
+K8S_CA=$(cat ./tmp/kamalos-kamalos.kubeconfig | yq .clusters[0].cluster.certificate-authority-data)
 
 K8S_BOOTSTRAP_TOKEN=$(kubeadm --kubeconfig=./tmp/${NAMESPACE}-${CLUSTER_NAME}.kubeconfig token create)
 
