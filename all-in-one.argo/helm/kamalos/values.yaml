@@ -25,3 +25,11 @@ workers:
       threads: 1
     ram: "10Gi"
     storage: "20Gi"
+  - name: "worker-2"
+    ip: ""
+    img: "https://factory.talos.dev/image/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3/v1.11.5/metal-amd64.qcow2"
+    cpu:
+      cores: 2
+      threads: 1
+    ram: "8Gi"
+    storage: "20Gi"
