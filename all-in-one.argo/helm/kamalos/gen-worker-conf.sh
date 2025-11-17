@@ -1,7 +1,6 @@
 export CLUSTER_NAME="kamalos"
 export NAMESPACE="kamalos"
-export WORKER_IP="10.244.0.43"
-export WORKER_IP_2="10.244.0.188"
+export WORKER_IPS=$(task aio:kubectl -- -n kamalos get pod -o yaml | yq '.items[] | select(.metadata.name | match("virt-launcher-kamalos-worker.*")) | .status.podIP')
 export KUBERNETES_VERSION="v1.33.2"
 export TALOS_VERSION="v1.11.5"
 export CONTROL_PLANE_IP="10.96.70.1"
@@ -68,5 +67,7 @@ echo "Generated worker configuration at ./tmp/worker.yaml"
 
 echo "Worker join command:"
 
-talosctl apply-config --insecure --nodes $WORKER_IP --file ./tmp/worker.yaml
-talosctl apply-config --insecure --nodes $WORKER_IP_2 --file ./tmp/worker.yaml
+for WORKER_IP in $WORKER_IPS; do
+  talosctl apply-config --insecure --talosconfig=./tmp/talosconfig --nodes $WORKER_IP --file worker.yaml
+  echo "Worker node $WORKER_IP configured."
+done
