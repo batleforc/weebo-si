@@ -68,6 +68,6 @@ echo "Generated worker configuration at ./tmp/worker.yaml"
 echo "Worker join command:"
 
 for WORKER_IP in $WORKER_IPS; do
-  talosctl apply-config --insecure --talosconfig=./tmp/talosconfig --nodes $WORKER_IP --file worker.yaml
+  talosctl apply-config --insecure --talosconfig=./tmp/talosconfig --nodes $WORKER_IP --file ./tmp/worker.yaml
   echo "Worker node $WORKER_IP configured."
 done
