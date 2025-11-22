@@ -95,6 +95,14 @@ export default defineConfig({
                 text: "WireChromium",
                 link: "/0.projects/rs-wirechrome",
               },
+              {
+                text: "KAMALOS !",
+                link: "/0.projects/kamalos",
+              },
+              {
+                text: "Boot-C",
+                link: "/0.projects/boot-c",
+              },
             ],
           },
         ],

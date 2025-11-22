@@ -48,11 +48,27 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Stream 15 NOVEMBRE 2025
+### Next Stream
 
 - Debut : 16h30
 - FIN : ~ 18h30
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
+- Musique: [NCS](https://ncs.io/)
+- Objectif
+  - ProxyAuthK8S
+    - Début d'UI
+    - Faire la validation du token provenant de l'interface
+- SideQuest
+  - [Kamalos !](/0.projects/kamalos)
+- News
+  - [Eclipse Che 7.112.0](https://github.com/eclipse-che/che/releases/tag/7.112.0)
+  - [PVMSS](https://github.com/julienhmmt/pvmss)
+
+### Stream 15 NOVEMBRE 2025
+
+- Debut : 16h30
+- FIN : 18h10
+- Vod : [Twitch](https://www.twitch.tv/videos/2619146743) YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif
   - Admission Controller Talos
