@@ -55,6 +55,21 @@ kanban
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif
+  - Mise en place de l'approche Weebo-SI pour un noeud Talos MonoNode
+  - ProxyAuthK8S : Du SSO PARTOUT !
+    - Valider le token SSO provenant de kubectl
+- SideQuest
+  - [Kamaji x Talos](https://www.youtube.com/watch?v=nSGo_72LnmY)
+  - [Talos CSR Signer](https://github.com/clastix/talos-csr-signer/blob/master/docs/sidecar-deployment.md)
+- News : Update soon
+
+### Stream 22 NOVEMBRE 2025
+
+- Debut : 16h30
+- FIN : 19H05
+- Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
+- Musique: [NCS](https://ncs.io/)
+- Objectif
   - ProxyAuthK8S
     - Début d'UI
     - Faire la validation du token provenant de l'interface
@@ -63,6 +78,7 @@ kanban
 - News
   - [Eclipse Che 7.112.0](https://github.com/eclipse-che/che/releases/tag/7.112.0)
   - [PVMSS](https://github.com/julienhmmt/pvmss)
+  - [Noyra by s17n](https://github.com/syrm/noyra)
 
 ### Stream 15 NOVEMBRE 2025
 

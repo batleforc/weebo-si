@@ -13,3 +13,49 @@ Cette XP a commencer lors du stream du 15 Novembre 2025 et est toujours en cours
   - Cilium
   - Grafana x Coroot
   - Kubevirt CSI
+
+## Setup non automatisé
+
+Le setup qui suit n'est pas automatisé et grandement basé sur le tutoriel bootstrap side car de [le tutoriel bootstrap side car de Talos CSR Signer](https://github.com/clastix/talos-csr-signer/blob/master/docs/sidecar-deployment.md)
+
+### Prérequis
+
+- Un cluster Kubernetes "Hôte" avec:
+  - Kubevirt
+  - ArgoCD
+  - Cilium
+- Un poste avec:
+  - kubectl
+  - talosctl
+  - kubeadm
+  - helm 3
+  - task (optionnel, pour exécuter les commandes dans le cluster hôte)
+  - Un accès directe dans le réseau Kubernetes (via un VPN ou un kubectl port-forward par exemple)
+- Le repository git [Weebo-SI](https://github.com/batleforc/weebo-si) cloné et être dans le dossier `all-in-one.argo/helm/kamalos`
+
+::: tip
+
+Les scripts fournis utilisent la commande `task aio:kubectl --` pour exécuter les commandes kubectl dans le cluster HOST. Il est possible d'adapter les scripts en remplaçant cette commande par `kubectl --kubeconfig=./path/to/kubeconfig` si vous souhaitez exécuter les commandes directement.
+
+:::
+
+::: warning
+
+L'exécution de la suite part du principe que vous avez un accès réseau direct au cluster Kubernetes hôte (via un VPN ou en étant directement sur le réseau).
+
+Dans le cas contraire, il est possible d'adapter les scripts pour utiliser des port-forward kubectl ou autre méthode.
+
+:::
+
+### Installation
+
+#### 1. Création des secrets
+
+Avant de déployer Kamaji il est nécessaire de préparer les secrets nécessaires en créant une configuration Talos puis en créant le secret dans kubernetes.
+
+```bash
+talosctl gen secrets -o ./tmp/secrets.yaml --force # Génère la configuration Talos
+./secret.sh # Créer le secret correspondant dans le namespace kamalos
+```
+
+WIP: Suite de l'installation à venir...

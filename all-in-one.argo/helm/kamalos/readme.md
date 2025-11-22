@@ -19,7 +19,7 @@ Cette configuration est basé sur le [déploiement Sidecar CSR Signer de Talos](
 
 ### 0. Nota Bene
 
-Les scripts fournis uttilisent la commande `task aio:kubectl --` pour exécuter les commandes kubectl dans le cluster HOST. Il est possible d'adapter les scripts en remplaçant cette commande par `kubectl --kubeconfig=./path/to/kubeconfig` si vous souhaitez exécuter les commandes directement.
+Les scripts fournis utilisent la commande `task aio:kubectl --` pour exécuter les commandes kubectl dans le cluster HOST. Il est possible d'adapter les scripts en remplaçant cette commande par `kubectl --kubeconfig=./path/to/kubeconfig` si vous souhaitez exécuter les commandes directement.
 
 ### 1. Création des secrets
 
