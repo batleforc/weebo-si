@@ -73,6 +73,9 @@ kanban
   - ProxyAuthK8S
     - Début d'UI
     - Faire la validation du token provenant de l'interface
+    - Bilan:
+      - Interconnection et validation du token provenant de l'interface : DONE
+      - Préparation d'un model d'authentification réutilisable pour l'authentification via kubectl : DONE
 - SideQuest
   - [Kamalos !](/0.projects/kamalos)
 - News
