@@ -23,8 +23,8 @@ cluster:
 workers:
   - name: "worker-1"
     ip: "10.244.0.43"
-    source: "http"
-    img: "https://factory.talos.dev/image/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3/v1.11.5/metal-amd64.qcow2"
+    source: "registry"
+    img: "harbor.4.weebo.fr/talos/vpn-metal/qcow:v1.11.5"
     cpu:
       cores: 2
       threads: 1
@@ -32,8 +32,8 @@ workers:
     storage: "20Gi"
   - name: "worker-2"
     ip: "10.244.0.188"
-    source: "http"
-    img: "https://factory.talos.dev/image/ac8870ab0fc06e25c9cc68d4ba3e2c4d5d2ce86d7525cda4aad57602e64fc4e3/v1.11.5/metal-amd64.qcow2"
+    source: "registry"
+    img: "harbor.4.weebo.fr/talos/vpn-metal/qcow:v1.11.5"
     cpu:
       cores: 2
       threads: 1

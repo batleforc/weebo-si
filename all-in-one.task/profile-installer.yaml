@@ -1,7 +1,7 @@
 arch: amd64
 platform: openstack
 secureboot: false
-version: v1.11.2
+version: v1.11.5
 customization:
   extraKernelArgs:
     - net.ifnames=0
@@ -15,13 +15,13 @@ input:
   sdBoot:
     path: /usr/install/amd64/systemd-boot.efi
   baseInstaller:
-    imageRef: ghcr.io/siderolabs/installer-base:v1.11.2
+    imageRef: ghcr.io/siderolabs/installer-base:v1.11.5
   systemExtensions:
-    - imageRef: harbor.4.weebo.fr/talos/extensions/netbird:v0.59.5
+    - imageRef: ghcr.io/siderolabs/netbird:0.60.2
     - imageRef: harbor.4.weebo.fr/cache-ghub/siderolabs/iscsi-tools:v0.2.0
     - imageRef: harbor.4.weebo.fr/cache-ghub/siderolabs/qemu-guest-agent:10.0.2
     - imageRef: harbor.4.weebo.fr/cache-ghub/siderolabs/util-linux-tools:2.41.1
-    - imageRef: harbor.4.weebo.fr/cache-ghub/siderolabs/mei:v1.11.2
+    - imageRef: harbor.4.weebo.fr/cache-ghub/siderolabs/mei:v1.11.5
     - imageRef: harbor.4.weebo.fr/cache-ghub/siderolabs/intel-ucode:20250812
 output:
   kind: installer

@@ -1,14 +1,27 @@
-version: '3'
+version: "3"
 
 tasks:
   extensions:
     cmds:
-      - cat all-in-one.task/profile-installer.yaml | docker run --rm -i -v ~/.docker/config.json:/root/.docker/config.json -e DOCKER_CONFIG=/root/.docker -v $PWD/_out:/out harbor.4.weebo.fr/cache-ghub/siderolabs/imager:v1.11.2 -
-      - crane push _out/installer-amd64.tar harbor.4.weebo.fr/talos/vpn-openstack/installer:v1.11.2
+      - cat all-in-one.task/profile-installer.yaml | docker run --rm -i -v ~/.docker/config.json:/root/.docker/config.json -e DOCKER_CONFIG=/root/.docker -v $PWD/_out:/out harbor.4.weebo.fr/cache-ghub/siderolabs/imager:v1.11.5 -
+      - crane push _out/installer-amd64.tar harbor.4.weebo.fr/talos/vpn-openstack/installer:v1.11.5
     silent: true
   image:
     cmds:
-      - cat all-in-one.task/profile.yaml | docker run --rm -i -v ~/.docker/config.json:/root/.docker/config.json -e DOCKER_CONFIG=/root/.docker -v $PWD/_out:/out -v /dev:/dev --privileged harbor.4.weebo.fr/cache-ghub/siderolabs/imager:v1.11.2 -
+      - cat all-in-one.task/profile.yaml | docker run --rm -i -v ~/.docker/config.json:/root/.docker/config.json -e DOCKER_CONFIG=/root/.docker -v $PWD/_out:/out -v /dev:/dev --privileged harbor.4.weebo.fr/cache-ghub/siderolabs/imager:v1.11.5 -
       - qemu-img convert -f raw -O qcow2 _out/openstack-amd64.raw all-in-one.task/openstack-amd64.qcow2
-      - docker build . -f all-in-one.task/Dockerfile -t harbor.4.weebo.fr/talos/vpn-openstack/qcow:v1.11.2
-      - docker push harbor.4.weebo.fr/talos/vpn-openstack/qcow:v1.11.2
+      - docker build . -f all-in-one.task/Dockerfile -t harbor.4.weebo.fr/talos/vpn-openstack/qcow:v1.11.5
+      - docker push harbor.4.weebo.fr/talos/vpn-openstack/qcow:v1.11.5
+    silent: true
+  extensions-metal:
+    cmds:
+      - cat all-in-one.task/profile-installer.metal.yaml | docker run --rm -i -v ~/.docker/config.json:/root/.docker/config.json -e DOCKER_CONFIG=/root/.docker -v $PWD/_out:/out harbor.4.weebo.fr/cache-ghub/siderolabs/imager:v1.11.5 -
+      - crane push _out/installer-amd64.tar harbor.4.weebo.fr/talos/vpn-metal/installer:v1.11.5
+    silent: true
+  image-metal:
+    cmds:
+      - cat all-in-one.task/profile.metal.yaml | docker run --rm -i -v ~/.docker/config.json:/root/.docker/config.json -e DOCKER_CONFIG=/root/.docker -v $PWD/_out:/out -v /dev:/dev --privileged harbor.4.weebo.fr/cache-ghub/siderolabs/imager:v1.11.5 -
+      - qemu-img convert -f raw -O qcow2 _out/metal-amd64.raw all-in-one.task/metal-amd64.qcow2
+      - docker build . -f all-in-one.task/Dockerfile.metal -t harbor.4.weebo.fr/talos/vpn-metal/qcow:v1.11.5
+      - docker push harbor.4.weebo.fr/talos/vpn-metal/qcow:v1.11.5
+    silent: true

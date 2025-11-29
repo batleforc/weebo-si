@@ -1,5 +1,5 @@
 arch: amd64
-platform: openstack
+platform: metal
 secureboot: false
 version: v1.11.5
 customization:
@@ -24,9 +24,5 @@ input:
     - imageRef: harbor.4.weebo.fr/cache-ghub/siderolabs/mei:v1.11.5
     - imageRef: harbor.4.weebo.fr/cache-ghub/siderolabs/intel-ucode:20250812
 output:
-  kind: image
-  imageOptions:
-    diskSize: 4453302272
-    diskFormat: raw
-    bootloader: dual-boot
+  kind: installer
   outFormat: raw
