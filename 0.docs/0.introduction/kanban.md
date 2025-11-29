@@ -55,9 +55,9 @@ kanban
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif
-  - Mise en place de l'approche Weebo-SI pour un noeud Talos MonoNode
   - ProxyAuthK8S : Du SSO PARTOUT !
     - Valider le token SSO provenant de kubectl
+  - Kamalos : Et si on ajoutait un noeud Talos via VPN ?
 - SideQuest
   - [Kamaji x Talos](https://www.youtube.com/watch?v=nSGo_72LnmY)
   - [Talos CSR Signer](https://github.com/clastix/talos-csr-signer/blob/master/docs/sidecar-deployment.md)

@@ -36,6 +36,8 @@ www.twitch.tv/batleforc
 - Doc https://batleforc.github.io/weebo-si
 - Kanban et Récap de stream https://batleforc.github.io/weebo-si/0.introduction/kanban.html
 - Github https://github.com/batleforc/weebo-si
+- ProxyAuthK8S https://github.com/batleforc/ProxyAuthK8S
+
 - Et toujours en musique https://batleforc.github.io/weebo-si/0.introduction/kanban.html#music
 
 
