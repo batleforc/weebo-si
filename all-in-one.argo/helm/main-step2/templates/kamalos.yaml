@@ -20,6 +20,11 @@ spec:
     automated:
       prune: false
       selfHeal: true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/restrict: privileged
+        pod-security.kubernetes.io/audit: privileged
     syncOptions:
     - RespectIgnoreDifferences=true
     - CreateNamespace=true
