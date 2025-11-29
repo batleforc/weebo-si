@@ -59,3 +59,12 @@ talosctl gen secrets -o ./tmp/secrets.yaml --force # Génère la configuration T
 ```
 
 WIP: Suite de l'installation à venir...
+
+## Setup with VPN
+
+### Goal
+
+- Un control plane Kamaji avec le sidecar Talos CSR Signer sur Weebo-SI
+- Un worker Kubevirt Talos sur Weebo-SI
+- Un worker VM ou Docker Talos sur le poste local (via VPN)
+- Un VPN Netbird avec un "réseau" partager entre le cluster hôte et le noeud (pas de vpn sur le poste local !)

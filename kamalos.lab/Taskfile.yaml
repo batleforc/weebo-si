@@ -1,0 +1,16 @@
+version: "3"
+
+env:
+  KUBECONFIG_HOST: ./0.pulumi/all-in-one/kubeconfig.yaml
+  KUBECONFIG_KAMALOUS: ./all-in-one.argo/helm/kamalos/tmp/kamalos-kamalos.kubeconfig
+
+tasks:
+  k-host:
+    cmds:
+      - KUBECONFIG=$KUBECONFIG_HOST kubectl {{ .CLI_ARGS }}
+  k-kamalos:
+    cmds:
+      - KUBECONFIG=$KUBECONFIG_KAMALOUS kubectl {{ .CLI_ARGS }}
+  k-forward-kamalos:
+    cmds:
+      - KUBECONFIG=$KUBECONFIG_HOST kubectl port-forward -n kamalos svc/kamalos-control-plane 6444:6443

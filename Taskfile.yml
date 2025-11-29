@@ -1,9 +1,9 @@
-version: '3'
+version: "3"
 
 env:
   VAULT_PASSWORD_FILES: "vault_password"
 
-dotenv: [ '.env' ]
+dotenv: [".env"]
 
 includes:
   init:
@@ -20,20 +20,22 @@ includes:
     taskfile: all-in-one.task/Taskfile.yml
   build:
     taskfile: 0.task/talvirt/Taskfile.yaml
+  kamalos:
+    taskfile: kamalos.lab/Taskfile.yaml
 
 tasks:
   ssh-proxmox:
     cmds:
-    - ssh -i $ANSIBLE_PROXMOX_SSH_KEY root@$PROXMOX_DNS -p 2323
+      - ssh -i $ANSIBLE_PROXMOX_SSH_KEY root@$PROXMOX_DNS -p 2323
   kubectl:
     cmds:
-    - kubectl {{ .CLI_ARGS }}
+      - kubectl {{ .CLI_ARGS }}
   kubectl-oidc:
     cmds:
-    - kubectl {{ .CLI_ARGS }} --kubeconfig kubeconfig.oidc.yaml
+      - kubectl {{ .CLI_ARGS }} --kubeconfig kubeconfig.oidc.yaml
   traefik:
     cmds:
-    - task kubectl --  port-forward $(task kubectl -- get pods --selector "app.kubernetes.io/name=traefik" --output=name -n traefik) -n traefik 9000:9000
+      - task kubectl --  port-forward $(task kubectl -- get pods --selector "app.kubernetes.io/name=traefik" --output=name -n traefik) -n traefik 9000:9000
   create-kubeconfig-oidc:
     vars:
       OIDC_CLIENT_ID:
@@ -43,16 +45,16 @@ tasks:
       server_ca:
         sh: cat kubeconfig.yaml | yq .clusters[0].cluster."certificate-authority-data"
     cmds:
-    - cp kubeconfig.oidc-template.yaml kubeconfig.oidc.yaml
-    - yq e -i '.users[0].user.exec.args[3] = "--oidc-client-id={{ .OIDC_CLIENT_ID }}"' kubeconfig.oidc.yaml
-    - yq e -i '.clusters[0].cluster.server = "{{ .server_url }}"' kubeconfig.oidc.yaml
-    - yq e -i '.clusters[0].cluster."certificate-authority-data" = "{{ .server_ca }}"' kubeconfig.oidc.yaml
+      - cp kubeconfig.oidc-template.yaml kubeconfig.oidc.yaml
+      - yq e -i '.users[0].user.exec.args[3] = "--oidc-client-id={{ .OIDC_CLIENT_ID }}"' kubeconfig.oidc.yaml
+      - yq e -i '.clusters[0].cluster.server = "{{ .server_url }}"' kubeconfig.oidc.yaml
+      - yq e -i '.clusters[0].cluster."certificate-authority-data" = "{{ .server_ca }}"' kubeconfig.oidc.yaml
   k9s:
     cmds:
-    - k9s {{ .CLI_ARGS }}
+      - k9s {{ .CLI_ARGS }}
   popeye:
     cmds:
-    - popeye {{ .CLI_ARGS }}
+      - popeye {{ .CLI_ARGS }}
   get-traefik-ip:
     cmds:
-    - task kubectl -- get pod --selector "app.kubernetes.io/name=traefik" -n traefik -o jsonpath='{.items[0].status.podIP}'
+      - task kubectl -- get pod --selector "app.kubernetes.io/name=traefik" -n traefik -o jsonpath='{.items[0].status.podIP}'
