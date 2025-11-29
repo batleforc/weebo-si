@@ -18,8 +18,14 @@ spec:
               storage: {{ .storage }}
           volumeMode: Filesystem
         source:
+          {{ if eq .source "registry" }}
+          registry:
+            url: "{{ .img }}"
+            secretRef: "{{ $.Values.cluster.name }}-cdiregistry"
+          {{ else }}
           http:
-            url: {{ .img}}
+            url: "{{ .img }}"
+          {{ end }}
   runStrategy: Always
   template:
     spec:

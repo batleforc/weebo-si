@@ -1,0 +1,24 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ $.Values.cluster.name }}-configjson
+  namespace: {{ $.Values.cluster.namespace }}
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: {{ $.Values.cluster.name }}-store
+    kind: SecretStore
+  target:
+    template:
+      type: kubernetes.io/dockerconfigjson
+      data:
+        .dockerconfigjson: '{"auths":{"harbor.4.weebo.fr":{"username":"{{ printf "{{"}} .harbor_username }}","password":"{{ printf "{{"}} .harbor_password }}","auth":"{{ printf "{{"}} printf "%s:%s" .harbor_username .harbor_password | b64enc }}"}}}'
+  data:
+    - secretKey: harbor_username
+      remoteRef:
+        key: mc-authentik/{{ $.Values.cluster.namespace }}/harbor
+        property: username
+    - secretKey: harbor_password
+      remoteRef:
+        key: mc-authentik/{{ $.Values.cluster.namespace }}/harbor
+        property: password
