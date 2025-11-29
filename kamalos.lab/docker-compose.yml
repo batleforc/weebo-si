@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  worker3:
+    image: ghcr.io/siderolabs/talos:v1.10.6
+    container_name: worker3
+    read_only: true
+    privileged: true
+    security_opt:
+      - seccomp=unconfined
+    environment:
+      - PLATFORM=container
+    tmpfs:
+      - /run
+      - /system
+      - /tmp
+    volumes:
+      - talos_system_state:/system/state
+      - talos_var:/var
+      - talos_cni:/etc/cni
+      - talos_kubernetes:/etc/kubernetes
+      - talos_libexec:/usr/libexec/kubernetes
+      - talos_opt:/opt
+    stdin_open: true
+    tty: true
+    # Uncomment the next line if you want the container to be removed after stopping
+    # remove: true
+
+volumes:
+  talos_system_state:
+  talos_var:
+  talos_cni:
+  talos_kubernetes:
+  talos_libexec:
+  talos_opt:

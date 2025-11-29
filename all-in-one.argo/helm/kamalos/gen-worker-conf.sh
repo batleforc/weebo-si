@@ -1,6 +1,6 @@
 export CLUSTER_NAME="kamalos"
 export NAMESPACE="kamalos"
-export WORKER_IPS=$(task aio:kubectl -- -n kamalos get pod -o yaml | yq '.items[] | select(.metadata.name | match("virt-launcher-kamalos-worker.*")) | .status.podIP')
+export WORKER_IPS=$(./get_node_ip.sh)
 export KUBERNETES_VERSION="v1.33.2"
 export TALOS_VERSION="v1.11.5"
 export CONTROL_PLANE_IP="10.96.70.1"
@@ -61,6 +61,14 @@ cluster:
         disabled: true
       service:
         disabled: true
+---
+apiVersion: v1alpha1
+kind: ExtensionServiceConfig
+name: netbird
+environment:
+  - NB_SETUP_KEY={{ printf "{{"}} .vpn_setup_key }}
+  - NB_MANAGEMENT_URL=https://netbird.4.weebo.fr:443
+  - NB_ADMIN_URL=https://netbird.4.weebo.fr:443
 EOF
 
 echo "Generated worker configuration at ./tmp/worker.yaml"

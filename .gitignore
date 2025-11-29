@@ -21,7 +21,7 @@ kubeconfig.*.yaml
 talosconfig.*.yml
 talosconfig.*.yaml
 *.qcow2
-
+*.vdi
 0.keepassxc
 root_ca*.pem
 root_ca*.crt

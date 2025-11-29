@@ -1,0 +1,15 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ $.Values.cluster.name }}-vpn-setupkey
+  namespace: {{ $.Values.cluster.namespace }}
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: {{ $.Values.cluster.name }}-store
+    kind: SecretStore
+  data:
+    - secretKey: KUBERNETES_SETUP_KEY
+      remoteRef:
+        key: mc-authentik/{{ $.Values.cluster.namespace }}/vpn
+        property: KUBERNETES_SETUP_KEY

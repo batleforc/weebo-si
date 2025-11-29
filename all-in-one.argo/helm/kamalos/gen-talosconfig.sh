@@ -1,4 +1,4 @@
-export worker_ip=$(task aio:kubectl -- -n kamalos get pod -o yaml | yq '.items[] | select(.metadata.name | match("virt-launcher-kamalos-worker.*")) | .status.podIP')
+export worker_ip=$(./get_node_ip.sh)
 
 talosctl gen config kamalos https://10.96.70.1:6443 \
   --with-secrets ./tmp/secrets.yaml \
