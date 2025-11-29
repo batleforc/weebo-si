@@ -20,6 +20,12 @@ path "mc-authentik/metadata/+/vpn" {
 path "mc-authentik/data/+/vpn" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
+path "mc-authentik/metadata/+/vpn-exit-node" {
+  capabilities = ["read","list"]
+}
+path "mc-authentik/data/+/vpn-exit-node" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
 EOT
 }
 
