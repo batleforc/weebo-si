@@ -1,0 +1,42 @@
+{{- if .Values.cluster.vpn.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpn-peer
+  namespace: vpn-peer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vpn-peer
+  template:
+    metadata:
+      labels:
+        app: vpn-peer
+      annotations:
+        vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
+        vault.security.banzaicloud.io/vault-role: "auth-read"
+        vault.security.banzaicloud.io/vault-path: "kubernetes"
+        vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
+    spec:
+      containers:
+        - name: netbird
+          image: netbirdio/netbird:latest
+          env:
+            - name: NB_SETUP_KEY
+              value: "vault:mc-authentik/data/kamalos/vpn-exit-node#KUBERNETES_SETUP_KEY" # replace with your setup key
+            - name: NB_HOSTNAME
+              value: "{{ $.Values.cluster.name }}" # name that will appear in the management UI
+            - name: NB_LOG_LEVEL
+              value: "info"
+            - name: NB_MANAGEMENT_URL
+              value: "{{ $.Values.cluster.vpn.managementUrl }}"
+            - name: NB_ADMIN_URL
+              value: "{{ $.Values.cluster.vpn.adminUrl }}"
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_RESOURCE
+                - SYS_ADMIN
+{{- end -}}
