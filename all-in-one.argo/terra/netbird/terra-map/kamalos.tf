@@ -64,7 +64,7 @@ resource "netbird_setup_key" "kamalos-cp-access" {
   usage_limit            = 0
 }
 
-resource "vault_kv_secret_v2" "kamalos-peer" {
+resource "vault_kv_secret_v2" "kamalos-cp-peer" {
   mount = "mc-authentik"
   name  = "kamalos/vpn-exit-node"
   data_json = jsonencode(
