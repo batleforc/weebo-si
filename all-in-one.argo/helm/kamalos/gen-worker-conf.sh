@@ -5,12 +5,23 @@ export KUBERNETES_VERSION="v1.33.2"
 export TALOS_VERSION="v1.11.5"
 export CONTROL_PLANE_IP="10.96.70.1"
 
+echo "Generating worker configuration for cluster ${CLUSTER_NAME} in namespace ${NAMESPACE}"
+echo "Worker IPs: ${WORKER_IPS}"
+
 task aio:kubectl -- get secret ${CLUSTER_NAME}-admin-kubeconfig -n $NAMESPACE \
   -o jsonpath='{.data.admin\.conf}' | base64 -d > ./tmp/${NAMESPACE}-${CLUSTER_NAME}.kubeconfig
 
-K8S_CA=$(cat ./tmp/kamalos-kamalos.kubeconfig | yq .clusters[0].cluster.certificate-authority-data)
+echo "Extracted kubeconfig to ./tmp/${NAMESPACE}-${CLUSTER_NAME}.kubeconfig"
+
+K8S_CA=$(cat ./tmp/${NAMESPACE}-${CLUSTER_NAME}.kubeconfig | yq .clusters[0].cluster.certificate-authority-data)
 
 K8S_BOOTSTRAP_TOKEN=$(kubeadm --kubeconfig=./tmp/${NAMESPACE}-${CLUSTER_NAME}.kubeconfig token create)
+
+echo "Generated bootstrap token: ${K8S_BOOTSTRAP_TOKEN}"
+
+VPN_SETUP_KEY=$(task aio:kubectl -- get secret -n $NAMESPACE  ${CLUSTER_NAME}-vpn-setupkey -o jsonpath='{.data.KUBERNETES_SETUP_KEY}' | base64 -d)
+
+echo "Retrieved VPN setup key."
 
 # Re-extract credentials from secrets.yaml (keep base64 encoded for worker.yaml)
 TALOS_CA_CRT=$(yq -r '.certs.os.crt' ./tmp/secrets.yaml)
@@ -66,7 +77,7 @@ apiVersion: v1alpha1
 kind: ExtensionServiceConfig
 name: netbird
 environment:
-  - NB_SETUP_KEY={{ printf "{{"}} .vpn_setup_key }}
+  - NB_SETUP_KEY=${VPN_SETUP_KEY}
   - NB_MANAGEMENT_URL=https://netbird.4.weebo.fr:443
   - NB_ADMIN_URL=https://netbird.4.weebo.fr:443
 EOF

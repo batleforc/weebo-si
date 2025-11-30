@@ -25,3 +25,8 @@ tasks:
       - docker build . -f all-in-one.task/Dockerfile.metal -t harbor.4.weebo.fr/talos/vpn-metal/qcow:v1.11.5
       - docker push harbor.4.weebo.fr/talos/vpn-metal/qcow:v1.11.5
     silent: true
+  image-metal-local:
+    cmds:
+      - cat all-in-one.task/profile.metal-local.yaml | docker run --rm -i -v ~/.docker/config.json:/root/.docker/config.json -e DOCKER_CONFIG=/root/.docker -v $PWD/_out:/out -v /dev:/dev --privileged harbor.4.weebo.fr/cache-ghub/siderolabs/imager:v1.11.5 -
+      - qemu-img convert -f raw -O qcow2 _out/metal-amd64.raw all-in-one.task/metal-local-amd64.qcow2
+    silent: true
