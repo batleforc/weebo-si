@@ -55,6 +55,21 @@ kanban
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif
+  - ProxyAuthK8S
+    - Développement de l'extensions Kubectl
+    - Préparation d'une release
+  - [Minio](https://github.com/minio/minio/commit/27742d469462e1561c776f88ca7a1f26816d69e2) or not Minio that isn't the question anymore
+  - Omarchy c'est sympa, mais c'étais sans doute trop tôt
+- News
+  - SideQuest: Reporter au stream d'après
+
+### Stream 29 NOVEMBRE 2025
+
+- Debut : 16h30
+- FIN : ~ 18h45
+- Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
+- Musique: [NCS](https://ncs.io/)
+- Objectif
   - ProxyAuthK8S : Du SSO PARTOUT !
     - Valider le token SSO provenant de kubectl
   - Kamalos : Et si on ajoutait un noeud Talos via VPN ?
