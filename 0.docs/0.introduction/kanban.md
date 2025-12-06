@@ -48,20 +48,20 @@ kanban
 - [Playlist Twitch](https://www.twitch.tv/collections/Gha3LW0WLRh8hg)
 - [Playlist YouTube](https://youtube.com/playlist?list=PLgGm8OmIPBhnlGhLG4RhUXV8zUvBmvl-O&si=dIglK5lVrDIImCQo)
 
-### Next Stream
+### Stream 6 DECEMBRE 2025
 
 - Debut : 16h30
-- FIN : ~ 18h30
+- FIN : 18h57
 - Vod : [Twitch](https://www.twitch.tv/batleforc) YouTube : Soon
 - Musique: [NCS](https://ncs.io/)
 - Objectif
   - ProxyAuthK8S
     - Développement de l'extensions Kubectl
-    - Préparation d'une release
-  - [Minio](https://github.com/minio/minio/commit/27742d469462e1561c776f88ca7a1f26816d69e2) or not Minio that isn't the question anymore
   - Omarchy c'est sympa, mais c'étais sans doute trop tôt
 - News
-  - SideQuest: Reporter au stream d'après
+  - Dernier stream de 2025, Joyeuses fêtes a tous !
+  - Stream orienté développement de notre extensions Kubectl
+  - RDV en 2026 pour plus de péripéties !
 
 ### Stream 29 NOVEMBRE 2025
 
