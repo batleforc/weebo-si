@@ -1,0 +1,19 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ $.Values.cluster.name }}-cdiregistry
+  namespace: {{ $.Values.cluster.namespace }}
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: {{ $.Values.cluster.name }}-store
+    kind: SecretStore
+  data:
+    - secretKey: accessKeyId
+      remoteRef:
+        key: mc-authentik/{{ $.Values.cluster.namespace }}/harbor
+        property: username
+    - secretKey: secretKey
+      remoteRef:
+        key: mc-authentik/{{ $.Values.cluster.namespace }}/harbor
+        property: password
