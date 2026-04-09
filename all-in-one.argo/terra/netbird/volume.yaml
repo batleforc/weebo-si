@@ -1,7 +1,7 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: "terra-job-netbird"
+  name: "terra-job-vpn"
   annotations:
     argocd.argoproj.io/ignore-healthcheck: "true"
 spec:

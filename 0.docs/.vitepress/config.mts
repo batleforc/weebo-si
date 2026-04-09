@@ -103,6 +103,10 @@ export default defineConfig({
                 text: "Boot-C",
                 link: "/0.projects/boot-c",
               },
+              {
+                text: "V3",
+                link: "/0.projects/v3",
+              },
             ],
           },
         ],
