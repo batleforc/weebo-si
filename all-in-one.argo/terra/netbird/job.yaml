@@ -47,10 +47,10 @@ spec:
       volumes:
         - name: "script-vol"
           configMap:
-            name: "terra-vpn-config"
+            name: "terra-netbird-config"
         - name: terra-job
           persistentVolumeClaim:
-            claimName: "terra-job-vpn"
+            claimName: "terra-job-netbird"
         - name: vault-tls
           secret:
             secretName: "vault-tls"
@@ -80,4 +80,4 @@ spec:
       volumes:
         - name: terra-job
           persistentVolumeClaim:
-            claimName: "terra-job-vpn"
+            claimName: "terra-job-netbird"
