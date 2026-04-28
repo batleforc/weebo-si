@@ -11,72 +11,75 @@ spec:
     name: che-cluster-store
   target:
     name: che-cluster
-    manifest:
-      kind: CheCluster
-      apiVersion: org.eclipse.che/v2
     template:
       type: Opaque
-      name: eclipse-che
       data:
-        metadata:
-          annotations:
-            che.eclipse.org/self-signed-certificate: "false"
-            argocd.argoproj.io/tracking-id: che-cluster-main-in:org.eclipse.che/CheCluster:eclipse-che/che-cluster
-        spec:
-          devEnvironments:
-            disableContainerBuildCapabilities: false
-            maxNumberOfWorkspacesPerUser: 20
-            maxNumberOfRunningWorkspacesPerUser: 5
-            defaultNamespace:
-              template: dev-ws-<username>
-              autoProvision: false
-            persistUserHome:
-              enabled: true
-            networking:
-              externalTLSConfig:
-                enabled: true
-                annotations:
-                  cert-manager.io/cluster-issuer: outbound
-            storage:
-              pvcStrategy: per-workspace
-              perUserStrategyPvcConfig:
-                claimSize: "10Gi"
-              perWorkspaceStrategyPvcConfig:
-                claimSize: "10Gi"
-          networking:
-            hostname: che-cluster.cluster.4.weebo.fr
-            domain: che-cluster.cluster.4.weebo.fr
-            ingressClassName: traefik
-            tlsSecretName: che-cluster-tls
+        che-cluster.yaml: |
+          kind: CheCluster
+          apiVersion: org.eclipse.che/v2
+          metadata:
+            name: eclipse-che
+            namespace: eclipse-che
             annotations:
-              kubernetes.io/ingress.class: "traefik"
-            auth:
-              oAuthClientName: '{{ printf "{{"}} .client_id }}'
-              oAuthSecret: '{{ printf "{{"}} .client_secret }}'
-              oAuthScope: "email openid profile offline_access"
-              identityProviderURL: '{{ printf "{{"}} .url }}'
-              gateway:
-                oAuthProxy:
-                  cookieExpireSeconds: 32400
-          components:
-            cheServer:
-              extraProperties:
-                CHE_SYSTEM_ADMIN_NAME: "Batleforc"
-            metrics:
-              enable: true
-            dashboard:
-              logLevel: INFO
+              che.eclipse.org/self-signed-certificate: "false"
+              argocd.argoproj.io/tracking-id: che-cluster-main-in:org.eclipse.che/CheCluster:eclipse-che/che-cluster
+          spec:
+            devEnvironments:
+              disableContainerBuildCapabilities: false
+              maxNumberOfWorkspacesPerUser: 20
+              maxNumberOfRunningWorkspacesPerUser: 5
+              defaultNamespace:
+                template: dev-ws-<username>
+                autoProvision: false
+              persistUserHome:
+                enabled: true
+              networking:
+                externalTLSConfig:
+                  enabled: true
+                  annotations:
+                    cert-manager.io/cluster-issuer: outbound
+              storage:
+                pvcStrategy: per-workspace
+                perUserStrategyPvcConfig:
+                  storageClass: kubevirt
+                  claimSize: "10Gi"
+                perWorkspaceStrategyPvcConfig:
+                  storageClass: kubevirt
+                  claimSize: "10Gi"
+            networking:
+              hostname: che-cluster.cluster.4.weebo.fr
+              domain: che-cluster.cluster.4.weebo.fr
+              ingressClassName: traefik
+              tlsSecretName: che-cluster-tls
+              annotations:
+                kubernetes.io/ingress.class: "traefik"
+              auth:
+                oAuthClientName: '{{ printf "{{"}} .client_id }}'
+                oAuthSecret: '{{ printf "{{"}} .client_secret }}'
+                oAuthScope: "email openid profile offline_access"
+                identityProviderURL: '{{ printf "{{"}} .url }}'
+                gateway:
+                  oAuthProxy:
+                    cookieExpireSeconds: 32400
+            components:
+              cheServer:
+                extraProperties:
+                  CHE_SYSTEM_ADMIN_NAME: "Batleforc"
+              metrics:
+                enable: true
+              dashboard:
+                logLevel: INFO
 
   data:
     - secretKey: url
       remoteRef:
-        key: mv/eclipse-che/auth
+        key: mc-authentik/che-cluster/eclipse-che/auth
         property: AUTHENTIK_URL
     - secretKey: client_id
       remoteRef:
-        key: mv/eclipse-che/auth
+        key: mc-authentik/che-cluster/eclipse-che/auth
         property: AUTHENTIK_CLIENT_ID
     - secretKey: client_secret
       remoteRef:
-        key: mv/eclipse-che/auth
+        key: mc-authentik/che-cluster/eclipse-che/auth
         property: AUTHENTIK_CLIENT_SECRET
