@@ -1,5 +1,10 @@
 # Weebo SI - L'env de dev Presque Parfait
 
+:::warning
+WIP - Work In Progress
+Préparation de la saison 3 en cours
+:::
+
 ![banner](./0.docs/public/banner.png)
 
 Ce projet a pour but de définir et de mettre en place un environnement Kubernetes de dev et expérimentation tester et complet. Cette environnement est `presque` parfait car les choix d'aujourd'hui ne seront pas forcément ceux de demain.
@@ -16,3 +21,7 @@ Dans cette doc vous retrouverez les informations suivantes:
 ## Participating
 
 Please, before contributing, read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+
+## Want to see the previous versions of the project ?
+
+Vous pourrez retrouver l'état du repo à la fin de la saison 2 au tag [v2.0.0](https://github.com/batleforc/weebo-si/tree/v2.0.0).

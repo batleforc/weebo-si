@@ -1,6 +1,0 @@
-kind: Namespace
-apiVersion: v1
-metadata:
-  name: omni
-  labels:
-    pod-security.kubernetes.io/enforce: privileged

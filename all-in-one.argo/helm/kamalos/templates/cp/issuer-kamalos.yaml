@@ -1,8 +1,0 @@
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: {{ .Values.cluster.name }}-talos-ca
-  namespace: {{ .Values.cluster.namespace }}
-spec:
-  ca:
-    secretName: {{ .Values.cluster.name }}-talos-ca

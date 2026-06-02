@@ -1,3 +1,0 @@
-clusterNamespace: "che-cluster"
-clusterName: "che-cluster"
-storageClassName: "local-path-sdb"

@@ -1,1 +1,0 @@
-https://github.com/siderolabs/omni/tree/main/deploy/helm

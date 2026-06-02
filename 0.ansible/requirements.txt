@@ -1,5 +1,0 @@
-ansible
-ansible-lint
-jmespath
-proxmoxer
-requests

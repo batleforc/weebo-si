@@ -1,2 +1,18 @@
 [tools]
+k9s = "latest"
+kubectl = "latest"
+pulumi = "latest"
 task = "latest"
+argocd = "latest"
+cilium-cli = "latest"
+cilium-hubble = "latest"
+helm-ls = "latest"
+helm = "latest"
+gitleaks = "latest"
+cocogitto = "latest"
+go = "latest"
+"kkrew:cilium-policy-gen" = "latest"
+"kkrew:tree" = "latest"
+
+[plugins]
+kkrew = "https://github.com/soupglasses/mise-krew"

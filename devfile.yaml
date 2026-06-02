@@ -3,15 +3,5 @@ metadata:
   name: weebo-si
   version: 1.0.0
 
-components:
-- name: tools
-  container:
-    image: ghcr.io/batleforc/weebodevimage/che-ops:main
-    memoryLimit: 2Gi
-    memoryRequest: 1Gi
-    mountSources: true
-    endpoints:
-    - exposure: public
-      name: doc
-      protocol: https
-      targetPort: 5173
+parent:
+  uri: "https://raw.githubusercontent.com/batleforc/WeeboDevImage/refs/heads/main/che-mise/devfile.yaml"
