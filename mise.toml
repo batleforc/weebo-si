@@ -13,6 +13,7 @@ cocogitto = "latest"
 go = "latest"
 "kkrew:cilium-policy-gen" = "latest"
 "kkrew:tree" = "latest"
+claude = "latest"
 
 [plugins]
 kkrew = "https://github.com/soupglasses/mise-krew"

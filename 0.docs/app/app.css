@@ -1,0 +1,94 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+/* ============================================================
+   MONOFOLIO BRAND — Fumadocs color + type overrides
+   Cyberpunk 70% × Steampunk 30%  (oklch throughout)
+   ============================================================ */
+
+@theme {
+  /* Type — mono for structure/labels, sans for prose */
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* Sharp corners — 2px base, core to the cyberpunk feel */
+  --radius-sm:   0.0625rem;  /* 1px  */
+  --radius-md:   0.125rem;   /* 2px  */
+  --radius-lg:   0.125rem;   /* 2px  */
+  --radius-xl:   0.25rem;    /* 4px  */
+  --radius-2xl:  0.5rem;     /* 8px  */
+
+  /* Fumadocs fd-* tokens → Monofolio brand palette */
+  --color-fd-background:           oklch(0.07 0.018 18);
+  --color-fd-foreground:           oklch(0.93 0.018 25);
+  --color-fd-muted:                oklch(0.13 0.016 18);
+  --color-fd-muted-foreground:     oklch(0.58 0.04  30);
+  --color-fd-popover:              oklch(0.10 0.018 18);
+  --color-fd-popover-foreground:   oklch(0.93 0.018 25);
+  --color-fd-card:                 oklch(0.10 0.018 18);
+  --color-fd-card-foreground:      oklch(0.93 0.018 25);
+  --color-fd-border:               oklch(0.65 0.26  25 / 0.22);
+  --color-fd-primary:              oklch(0.65 0.26  25);   /* neon crimson */
+  --color-fd-primary-foreground:   oklch(0.97 0.01  0);
+  --color-fd-secondary:            oklch(0.14 0.022 18);
+  --color-fd-secondary-foreground: oklch(0.93 0.018 25);
+  --color-fd-accent:               oklch(0.65 0.26  25 / 0.15);
+  --color-fd-accent-foreground:    oklch(0.93 0.018 25);
+  --color-fd-ring:                 oklch(0.65 0.26  25 / 0.60);
+  --color-fd-overlay:              oklch(0 0 0 / 0.65);
+}
+
+/* Effect tokens — not in @theme (not Tailwind utilities, used via var()) */
+:root {
+  --cyber-glow: 0 0 6px oklch(0.65 0.26 25 / 0.65), 0 0 22px oklch(0.65 0.26 25 / 0.30);
+  --steam-glow: 0 0 6px oklch(0.72 0.14 52 / 0.60), 0 0 22px oklch(0.72 0.14 52 / 0.25);
+  --grid-line:  oklch(0.65 0.26 25 / 0.06);
+}
+
+/* Ensure dark-mode class overrides from neutral.css keep brand values */
+.dark {
+  --color-fd-muted:            oklch(0.13 0.016 18);
+  --color-fd-secondary:        oklch(0.14 0.022 18);
+  --color-fd-muted-foreground: oklch(0.58 0.04  30);
+}
+
+.dark #nd-sidebar {
+  --color-fd-muted:            oklch(0.11 0.016 18);
+  --color-fd-secondary:        oklch(0.13 0.018 18);
+  --color-fd-muted-foreground: oklch(0.62 0.04  28);
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+
+html {
+  scrollbar-gutter: stable;
+  color-scheme: dark;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+/* 48px circuit grid — barely-visible crimson crosshatch */
+body {
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Nav logo — mono crimson with glow (mirrors "Max." treatment) */
+.weebo-logo {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+  color: oklch(0.65 0.26 25);
+  text-shadow: var(--cyber-glow);
+}
+
+.cyber-text-glow { text-shadow: var(--cyber-glow); }
