@@ -2,7 +2,19 @@ version: "3"
 
 dotenv: [".env"]
 
+includes:
+  pulunit: 1.pulu-init/Taskfile.yaml
+  puluconf: 1.pulu-conf/Taskfile.yaml
+
 tasks:
-  kubectl:
+  k:
+    desc: "Run kubectl commands on the cluster"
+    silent: true
+    env:
+      KUBECONFIG: 0.config/kubeconfig.yaml
     cmds:
       - kubectl {{ .CLI_ARGS }}
+  docs:run:
+    dir: 0.docs
+    cmds:
+      - npm run dev

@@ -1,0 +1,55 @@
+version: "3"
+
+tasks:
+  init:
+    desc: "Init pulumi by login to pulumi and install dependencies"
+    cmds:
+      - mkdir -p .tmp/pulumi
+      - pulumi login file://$PWD/.tmp/pulumi
+  base:
+    dir: ./0.pulumi
+    env:
+      PULUMI_CONFIG_PASSPHRASE: ""
+      KUBECONFIG: ../0.config/kubeconfig.yaml
+    cmds:
+      - pulumi {{ .CLI_ARGS }}
+  up:
+    desc: "Update the infrastructure by running pulumi up"
+    cmds:
+      - task pulumi:base -- up
+  # Get AUTHENTIK_URL from vault and export it as an environment variable for the pulumi stack
+  vault:OIDC_URL:
+    desc:
+      "Get the OIDC URL from vault and export it as an environment variable for
+      the pulumi stack"
+    env:
+      VAULT_ADDR: "https://localhost:8200"
+      VAULT_CACERT: ".tmp/vault-ca.crt"
+    vars:
+      VAULT_TOKEN:
+        sh: task vault:pwd
+    cmds:
+      - |
+        export OIDC_ISSUER_URL=$(VAULT_TOKEN={{.VAULT_TOKEN}} bao kv get -tls-skip-verify -field=AUTHENTIK_URL mv/eclipse-che/auth)
+        echo "OIDC_ISSUER_URL=$OIDC_ISSUER_URL" >> .env
+  vault:OIDC_CLIENT_ID:
+    desc: "Get the OIDC client ID from vault and export it as an environment
+      variable for the pulumi stack"
+    env:
+      VAULT_ADDR: "https://localhost:8200"
+      VAULT_CACERT: ".tmp/vault-ca.crt"
+    vars:
+      VAULT_TOKEN:
+        sh: task vault:pwd
+    cmds:
+      - |
+        export OIDC_CLIENT_ID=$(VAULT_TOKEN={{.VAULT_TOKEN}} bao kv get -tls-skip-verify -field=AUTHENTIK_CLIENT_ID mv/eclipse-che/auth)
+        echo "OIDC_CLIENT_ID=$OIDC_CLIENT_ID" >> .env
+  vault:unset:
+    desc: "Unset the environment variables for the pulumi stack"
+    cmds:
+      - |
+        unset OIDC_ISSUER_URL
+        unset OIDC_CLIENT_ID
+        sed -i '/export OIDC_ISSUER_URL/d' .env
+        sed -i '/export OIDC_CLIENT_ID/d' .env

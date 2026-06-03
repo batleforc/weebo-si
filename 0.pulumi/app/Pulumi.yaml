@@ -1,7 +1,0 @@
-name: app
-description: A minimal Go Pulumi program
-runtime: go
-config:
-  pulumi:tags:
-    value:
-      pulumi:template: go

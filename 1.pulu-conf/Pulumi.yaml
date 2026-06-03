@@ -1,0 +1,7 @@
+name: 0.pulumi-conf
+description: config for the previously setup talos node
+runtime: go
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: go

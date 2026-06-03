@@ -1,0 +1,14 @@
+version: "3"
+
+tasks:
+  base:
+    dir: ./0.pulumi-conf
+    env:
+      PULUMI_CONFIG_PASSPHRASE: ""
+      KUBECONFIG: ../0.config/kubeconfig.yaml
+    cmds:
+      - pulumi {{ .CLI_ARGS }}
+  up:
+    desc: "Update the infrastructure by running pulumi up"
+    cmds:
+      - task pulumi-conf:base -- up

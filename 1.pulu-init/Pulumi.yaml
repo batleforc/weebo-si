@@ -1,0 +1,7 @@
+name: 0.pulumi
+description: Setup Weebo 5 BM
+runtime: go
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: ovh-go
