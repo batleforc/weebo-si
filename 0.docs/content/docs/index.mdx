@@ -13,3 +13,49 @@ Toujours dans l'objectif de creer un environnement `presque` parfait, on retrouv
 
 - [Mise](https://mise.jdx.dev/) : Outils de gestion de versions
 - [Fumadocs](https://www.fumadocs.dev/docs) : Outils de documentation
+- [Pulumi](https://www.pulumi.com/) : Outils d'infrastructure as code
+
+## Question restante
+
+- Isolation du lab vis a vis de la prod ?
+  - Pour :
+    - Lab plus isolé, orienté die and retry and All in one,
+    - Pas de risque d'impact sur la prod
+  - Contre :
+    - Pas besoin de redéployer certaine brique comme l'authentification, le vpn(, le vault ?)
+    - Moins de ressource a gérer
+    - ArgoCD mutualisé pour la prod et le lab
+    - Moins de maintenance
+    - Plus de ressource pour le lab
+    - Authentification unifiée pour le lab et la prod mais restriction via groupes
+- Exposition du lab ?
+  - Pour :
+    - Accès plus simple pour les personnes extérieur a l'infra
+    - Plus de flexibilité pour les tests d'exposition
+  - Contre :
+    - Risque de sécurité
+    - Complexité de la configuration réseau
+    - Coût supplémentaire pour l'exposition
+    - Moins de contrôle sur les accès
+- Dns
+  - All in lab.weebo.fr ?
+  - Duo weebo.poc et lab.weebo.fr ?
+  - Autre ?
+- Règles et politique de sécurité
+  - Hook maison basé sur rust ?
+  - OPA ?
+  - Kyverno ?
+- PKI
+  - Vault ?
+  - Injection automatique du certificat via Trust manager de Cert-Manager ? + combo hook ?
+  - Autre ?
+- Forge isolé pour le lab ou forge mutualisé ?
+  - Pour
+    - Facilité de tester des configuration magique
+    - Moins de risque d'impact sur la prod
+  - Contre
+    - Moins de ressource pour le lab
+    - Maintenance d'une forge en plus
+    - Moins de flexibilité pour les tests d'intégration avec la prod
+    - Risque de leak d'info pour certain cas
+- Kubevirt ? VirtInk ? Virtu !?
