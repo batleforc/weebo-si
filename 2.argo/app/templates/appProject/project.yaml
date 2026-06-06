@@ -1,0 +1,27 @@
+{{ range .Values.project}}
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ .name }}
+  namespace: argocd
+spec:
+  {{- with .roles }}
+  roles:
+    {{ . | toYaml | indent 4 }}
+  {{ end }}
+  sourceRepos:
+    {{- range .sourceRepo }}
+    - "{{ . }}"
+    {{ end }}
+    {{- if .includeBaseRepo }}
+    - "{{ $.Values.repo }}"
+    {{ end }}
+  {{- with .dest }}
+  destinations:
+{{ . | toYaml | indent 4 }}
+  {{ end }}
+  {{- with .clusterResourceWhitelist }}
+  clusterResourceWhitelist:
+{{ . | toYaml | indent 4 }}
+  {{ end -}}
+{{- end -}}

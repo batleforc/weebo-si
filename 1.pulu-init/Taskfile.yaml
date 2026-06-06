@@ -7,7 +7,7 @@ tasks:
       - mkdir -p .tmp/pulumi
       - pulumi login file://$PWD/.tmp/pulumi
   base:
-    dir: ./0.pulumi
+    dir: ./1.pulu-init
     env:
       PULUMI_CONFIG_PASSPHRASE: ""
       KUBECONFIG: ../0.config/kubeconfig.yaml
@@ -16,7 +16,7 @@ tasks:
   up:
     desc: "Update the infrastructure by running pulumi up"
     cmds:
-      - task pulumi:base -- up
+      - task pulunit:base -- up
   # Get AUTHENTIK_URL from vault and export it as an environment variable for the pulumi stack
   vault:OIDC_URL:
     desc:

@@ -1,8 +1,8 @@
 encryptionsalt: v1:lLQgPkneq4M=:v1:xLem3a2VVqCgfdxa:SLQeH0GhNc5Iq+pUOEleku/q4JVGCw==
 config:
-  0.pulumi-conf:talosVersion: v1.12.7
-  0.pulumi-conf:kubeVersion: v1.35.3
-  0.pulumi-conf:ciliumVersion: v1.18.6
-  0.pulumi-conf:argoAppsVersion: 9.5.11
-  0.pulumi-conf:deployed: true
+  0.pulumi-conf:talosVersion: v1.13.3
+  0.pulumi-conf:kubeVersion: v1.36.1
+  0.pulumi-conf:ciliumVersion: v1.19.4
+  0.pulumi-conf:argoAppsVersion: 9.5.19
+  0.pulumi-conf:deployed: false
   cilium:configPath: ../0.config/kubeconfig.yaml

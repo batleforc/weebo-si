@@ -1,0 +1,29 @@
+version: "3"
+
+tasks:
+  socket:
+    desc: "Start netbird in socket mode"
+    env:
+      NB_USE_NETSTACK_MODE: "true"
+      NB_SOCKS5_LISTENER_PORT: "30000"
+      NB_ENABLE_NETSTACK_LOCAL_FORWARDING: "true"
+      NB_WG_KERNEL_DISABLED: "true"
+      NB_CONFIG: ".tmp/netbird-socket.yaml"
+      NB_MANAGEMENT_URL: "https://vpn.batleforc.fr"
+      NB_ADMIN_URL: "https://vpn.batleforc.fr"
+    cmds:
+      - netbird up -F
+  chrome:
+    desc: "Start Chrome configured to use the VPN in sockets mode and force dns resolution through the VPN with 10.96.0.11 as dns server"
+    env:
+      NB_USE_NETSTACK_MODE: "true"
+      NB_SOCKS5_LISTENER_PORT: "30000"
+    cmds:
+      - google-chrome --proxy-server="socks5://localhost:30000" --no-sandbox --user-data-dir=/tmp/chrome --host-resolver-rules="MAP * 10.96.0.11, EXCLUDE localhost"
+  curl:
+    desc: "Curl that use the VPN in sockets mode"
+    env:
+      NB_USE_NETSTACK_MODE: "true"
+      NB_SOCKS5_LISTENER_PORT: "30000"
+    cmds:
+      - curl --socks5 localhost:30000 {{ .CLI_ARGS }}

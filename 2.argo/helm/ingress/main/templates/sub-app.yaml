@@ -1,0 +1,35 @@
+{{- if .Values.subApp.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ingress-app
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: {{ .Values.project }}
+  source:
+    repoURL: '{{ .Values.repo }}'
+    path: '1.argo/helm/ingress/sub'
+    helm:
+      releaseName: ingress-app
+      valuesObject:
+        {{- with .Values }}
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'argocd'
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

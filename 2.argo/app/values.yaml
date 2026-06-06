@@ -1,0 +1,19 @@
+ingress:
+  enabled: true
+  project: infra
+
+repo: ""
+
+traefik:
+  ips: ""
+
+project:
+  - name: infra
+    sourceRepo: []
+    includeBaseRepo: true
+    dest:
+      - server: "https://kubernetes.default.svc"
+        namespace: "*"
+    clusterResourceWhitelist:
+      - group: ""
+        kind: "Namespace"

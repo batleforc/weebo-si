@@ -1,0 +1,9 @@
+{{- if .Values.traefik.enabled -}}
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: skip-tls
+  namespace: traefik
+spec:
+  insecureSkipVerify: true
+{{- end -}}

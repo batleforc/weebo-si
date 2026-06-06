@@ -1,0 +1,13 @@
+{{- if .Values.traefik.enabled -}}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-to-https
+  namespace: traefik
+spec:
+  redirectRegex:
+    regex: "^http://(.*)"
+    replacement: "https://$1"
+    permanent: true
+{{- end -}}

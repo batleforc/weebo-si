@@ -168,12 +168,12 @@ func main() {
 							"name": "none",
 						},
 						"podSubnets": []string{
-							"10.244.0.0/16",
-							"fd00:10:244::/56",
+							"10.245.0.0/16",
+							"fd00:10:245::/56",
 						},
 						"serviceSubnets": []string{
-							"10.96.0.0/12",
-							"fd00:10:96::/112",
+							"10.128.0.0/12",
+							"fd00:10:128::/112",
 						},
 						// "controllerManager": map[string]interface{}{
 						// 	"extraArgs": map[string]interface{}{

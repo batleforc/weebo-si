@@ -1,0 +1,13 @@
+{{- if .Values.traefik.enabled -}}
+apiVersion: traefik.io/v1alpha1
+kind: MiddlewareTCP
+metadata:
+  name: vpn-only
+  namespace: traefik
+spec:
+  ipAllowList:
+    sourceRange:
+      {{- range .Values.traefik.middleware.ipAllowList.sourceRange }}
+      - {{ . }}
+      {{- end }}
+{{- end -}}

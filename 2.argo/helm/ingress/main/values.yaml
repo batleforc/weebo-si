@@ -1,0 +1,34 @@
+certManager:
+  enabled: true
+  version: 1.20.2
+  installCRDs: true
+  certIssuer:
+    enabled: true
+    name: outbound
+    email: "maxleriche.60@gmail.com"
+  certIssuerDNS01:
+    enabled: false
+    name: dns-01
+    email: "maxleriche.60@gmail.com"
+    nameservers: "dns-server-in.dns.svc.cluster.local"
+    namespace: "dns"
+
+traefik:
+  enabled: true
+  version: 40.2.0
+  ips: ""
+  kubeCRD:
+    enabled: true
+  kubeIngress:
+    enabled: true
+  gatewayAPI:
+    enabled: false
+
+authentik:
+  enabled: false
+
+repo: ""
+project: ""
+
+subApp:
+  enabled: true

@@ -1,0 +1,25 @@
+{{- if .Values.certManager.certIssuerDNS01.enabled -}}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ .Values.certManager.certIssuerDNS01.name }}
+  namespace: dns
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  acme:
+    email: {{ .Values.certManager.certIssuerDNS01.email }}
+    server: https://acme-v02.api.letsencrypt.org/directory
+    preferredChain: "ISRG Root X1"
+    privateKeySecretRef:
+      name: {{ .Values.certManager.certIssuerDNS01.name }}-account-key
+    solvers:
+    - dns01:
+        rfc2136:
+          nameserver: {{ .Values.certManager.certIssuerDNS01.nameservers }}
+          tsigAlgorithm: HMACSHA512
+          tsigKeyName: tsig-key
+          tsigSecretSecretRef:
+            name: tsig-key-secret
+            key: tsig.key.secret
+{{- end -}}

@@ -1,0 +1,61 @@
+certManager:
+  enabled: true
+  version: 1.20.2
+  installCRDs: true
+  certIssuer:
+    enabled: true
+    name: outbound
+    email: "maxleriche.60@gmail.com"
+  certIssuerDNS01:
+    enabled: false
+    name: dns-01
+    email: "maxleriche.60@gmail.com"
+    nameservers: "dns-server-in.dns.svc.cluster.local"
+    namespace: "dns"
+
+traefik:
+  enabled: true
+  version: 40.2.0
+  ips: ""
+  kubeCRD:
+    enabled: true
+  kubeIngress:
+    enabled: true
+  gatewayAPI:
+    enabled: false
+  middleware:
+    ipAllowList:
+      sourceRange:
+        # POD IP PROD
+        - 10.244.0.0/16
+        - fd00:10:244::/56
+        # SERVICE IP PROD
+        - 10.96.0.0/12
+        - fd00:10:96::/112
+        # POD IP LAB
+        - 10.245.0.0/16
+        - fd00:10:245::/56
+        # SERVICE IP LAB
+        - 10.128.0.0/12
+        - fd00:10:128::/112
+        # IP PROD
+        - 94.23.38.81/32
+        - 2001:41d0:2:2751::1/128
+        # IP LAB
+        - 37.187.255.5/32
+        - 2001:41d0:c:705::1/48
+        # IP NETBIRD
+        - fd67:3c3d:53b7:8bb7::/64
+        - 100.64.0.0/16
+
+authentik:
+  enabled: false
+
+repo: ""
+project: ""
+
+subApp:
+  enabled: true
+
+pushTsig:
+  enabled: false

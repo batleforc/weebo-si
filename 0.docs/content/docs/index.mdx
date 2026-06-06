@@ -28,6 +28,7 @@ Toujours dans l'objectif de creer un environnement `presque` parfait, on retrouv
     - Moins de maintenance
     - Plus de ressource pour le lab
     - Authentification unifiée pour le lab et la prod mais restriction via groupes
+  - IN THE END : Authentik mutualisé, Sous Réseau VPN, Vault et Argo Séparé
 - Exposition du lab ?
   - Pour :
     - Accès plus simple pour les personnes extérieur a l'infra
@@ -37,18 +38,24 @@ Toujours dans l'objectif de creer un environnement `presque` parfait, on retrouv
     - Complexité de la configuration réseau
     - Coût supplémentaire pour l'exposition
     - Moins de contrôle sur les accès
+  - IN THE END: Expo Hybride avec ressources sécurisé si nécessaire
 - Dns
   - All in lab.weebo.fr ?
   - Duo weebo.poc et lab.weebo.fr ?
   - Autre ?
+  - IN THE END: Duo Weebo.poc interne et 4.weebo.fr pour l'externe
 - Règles et politique de sécurité
   - Hook maison basé sur rust ?
   - OPA ?
   - Kyverno ?
+  - IN THE END: Hybride Kyverno / Hook Maison
 - PKI
   - Vault ?
   - Injection automatique du certificat via Trust manager de Cert-Manager ? + combo hook ?
   - Autre ?
+  - IN THE END:
+    - Trust Manager : Propagation du certificat (Vault / ROOTCA)
+    - Injection par HOOK Kyverno
 - Forge isolé pour le lab ou forge mutualisé ?
   - Pour
     - Facilité de tester des configuration magique
@@ -59,3 +66,5 @@ Toujours dans l'objectif de creer un environnement `presque` parfait, on retrouv
     - Moins de flexibilité pour les tests d'intégration avec la prod
     - Risque de leak d'info pour certain cas
 - Kubevirt ? VirtInk ? Virtu !?
+- [OpenBao](https://github.com/bank-vaults/bank-vaults/issues/3543#issuecomment-3598061492) ! 
+- [Registry Docker](https://github.com/project-angos/angos/tree/main)
