@@ -38,6 +38,11 @@ func main() {
 		if gitRepo == "" {
 			return fmt.Errorf("GIT_REPO environment variable is not set")
 		}
+		gitBranch := os.Getenv("GIT_BRANCH")
+		if gitBranch == "" {
+			return fmt.Errorf("GIT_BRANCH environment variable is not set")
+		}
+
 		deployed := conf.GetBool("deployed")
 
 		serverNetwork, err := dedicated.GetServerSpecificationsNetwork(ctx, &dedicated.GetServerSpecificationsNetworkArgs{
@@ -251,11 +256,12 @@ g, authentik Admins, role:admin`),
 						"source": map[string]interface{}{
 							"repoURL":        gitRepo,
 							"path":           "2.argo/app",
-							"targetRevision": "develop",
+							"targetRevision": gitBranch,
 							"helm": map[string]interface{}{
 								"releaseName": "main",
 								"valuesObject": map[string]interface{}{
 									"repo": gitRepo,
+									"branch": gitBranch,
 									"traefik": map[string]interface{}{
 										"ips": fmt.Sprintf("%s,%s", serverNetwork.Routing.Ipv4.Ip, strings.ReplaceAll(serverNetwork.Routing.Ipv6.Ip, "/128", "")),
 									},

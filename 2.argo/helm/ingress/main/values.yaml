@@ -29,6 +29,7 @@ authentik:
 
 repo: ""
 project: ""
+branch: ""
 
 subApp:
   enabled: true

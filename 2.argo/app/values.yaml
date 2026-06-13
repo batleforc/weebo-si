@@ -3,6 +3,7 @@ ingress:
   project: infra
 
 repo: ""
+branch: ""
 
 traefik:
   ips: ""

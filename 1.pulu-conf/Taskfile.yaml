@@ -8,6 +8,7 @@ tasks:
       KUBECONFIG: ../0.config/kubeconfig.yaml
       ARGO_DNS: "argo.4.weebo.fr"
       GIT_REPO: "https://git.batleforc.fr/batleforc/weebo-si"
+      GIT_BRANCH: "develop"
     cmds:
       - pulumi {{ .CLI_ARGS }}
   up:

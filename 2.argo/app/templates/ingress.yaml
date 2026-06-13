@@ -12,6 +12,7 @@ spec:
   source:
     repoURL: '{{ .Values.repo }}'
     path: '2.argo/helm/ingress/main'
+    targetRevision: '{{ .Values.branch }}'
     helm:
       releaseName: ingress
       valuesObject:
