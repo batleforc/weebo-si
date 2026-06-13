@@ -43,6 +43,10 @@ func main() {
 						"siderolabs/util-linux-tools",
 						"siderolabs/intel-ucode",
 						"siderolabs/mei",
+						"siderolabs/youki",
+						"siderolabs/crun",
+						"siderolabs/wasmedge",
+						"siderolabs/netbird",
 					},
 				},
 			},
@@ -719,7 +723,7 @@ jwt:
         message: "email must be verified"
     claimMappings:
       username:
-        expression: '"weebsso:" + claims.email'
+        expression: '"labsso:" + claims.email'
       groups:
         expression: "claims.groups"
       uid:
@@ -763,6 +767,17 @@ jwt:
 			return err
 		}
 
+		jsonPatchNetbirdConfig, err := json.Marshal(map[string]interface{}{
+			"apiVersion": "v1alpha1",
+			"kind":       "ExtensionServiceConfig",
+			"name":       "netbird",
+			"environment": []string{
+				fmt.Sprintf("NB_SETUP_KEY=%s", os.Getenv("NETBIRD_SETUP_KEY")),
+				fmt.Sprintf("NB_MANAGEMENT_URL=https://%s:443", os.Getenv("NETBIRD_DOMAIN")),
+				fmt.Sprintf("NB_ADMIN_URL=https://%s:443", os.Getenv("NETBIRD_DOMAIN")),
+			},
+		})
+
 		// Apply the configuration and Bootstrap the cluster
 		configurationApply, err := machine.NewConfigurationApply(ctx, "configurationApply", &machine.ConfigurationApplyArgs{
 			ClientConfiguration:       secrets.ClientConfiguration,
@@ -772,6 +787,7 @@ jwt:
 			ConfigPatches: pulumi.StringArray{
 				jsonPatchConfig,
 				pulumi.String(string(jsonPatchUserVolume)),
+				pulumi.String(string(jsonPatchNetbirdConfig)),
 			},
 		}, pulumi.DependsOn([]pulumi.Resource{
 			reinstall,
