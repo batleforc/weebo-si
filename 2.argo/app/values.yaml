@@ -26,3 +26,5 @@ project:
         kind: "ClusterRole"
       - group: "rbac.authorization.k8s.io"
         kind: "ClusterRoleBinding"
+      - group: "networking.k8s.io"
+        kind: "IngressClass"
