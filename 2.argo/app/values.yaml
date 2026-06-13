@@ -28,3 +28,7 @@ project:
         kind: "ClusterRoleBinding"
       - group: "networking.k8s.io"
         kind: "IngressClass"
+      - group: "admissionregistration.k8s.io"
+        kind: "ValidatingWebhookConfiguration"
+      - group: "admissionregistration.k8s.io"
+        kind: "MutatingWebhookConfiguration"

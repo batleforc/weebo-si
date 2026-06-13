@@ -3,7 +3,7 @@ config:
   0.pulumi:talosVersion: v1.13.4
   0.pulumi:talosInstallVersion: v1.13.4
   0.pulumi:kubeVersion: v1.36.2
-  0.pulumi:ciliumVersion: v1.19.4
+  0.pulumi:ciliumVersion: v1.18.10
   0.pulumi:argoAppsVersion: 9.5.21
   0.pulumi:authEnabled: false
   cilium:configPath: ../0.config/kubeconfig.yaml

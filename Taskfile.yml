@@ -29,3 +29,8 @@ tasks:
       TALOSCONFIG: "0.config/talosconfig2.yaml"
     cmds:
       - talosctl {{ .CLI_ARGS }}
+  k9s:
+    env:
+      KUBECONFIG: 0.config/kubeconfig.yaml
+    cmds:
+      - k9s

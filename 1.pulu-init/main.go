@@ -46,7 +46,6 @@ func main() {
 						"siderolabs/youki",
 						"siderolabs/crun",
 						"siderolabs/wasmedge",
-						"siderolabs/netbird",
 					},
 				},
 			},
@@ -664,7 +663,10 @@ func main() {
 					"network": map[string]interface{}{
 						"nameservers": []string{
 							"213.186.33.99",
-							"2001:41d0:3:163::1",
+							"2001:4860:4860::8888",
+							//"2001:41d0:3:163::1",
+							"8.8.8.8",
+							"2001:4860:4860::8844",
 						},
 						"interfaces": []map[string]interface{}{
 							{
