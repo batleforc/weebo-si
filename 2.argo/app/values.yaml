@@ -11,8 +11,8 @@ traefik:
 project:
   - name: infra
     sourceRepo:
-      - ghcr.io/traefik/helm/traefik
-      - quay.io/jetstack/charts/cert-manager
+      - oci://ghcr.io/traefik/helm/traefik
+      - oci://quay.io/jetstack/charts/cert-manager
     includeBaseRepo: true
     dest:
       - server: "https://kubernetes.default.svc"
