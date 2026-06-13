@@ -15,7 +15,7 @@ spec:
     helm:
       releaseName: ingress
       valuesObject:
-        project: "{{ .Values.project }}"
+        project: "{{ .Values.ingress.project }}"
         repo: "{{ .Values.repo }}"
         traefik:
           ips: "{{ .Values.traefik.ips }}"
