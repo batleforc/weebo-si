@@ -1,0 +1,142 @@
+{{- if .Values.vaultInstance.enabled -}}
+apiVersion: "vault.banzaicloud.com/v1alpha1"
+kind: "Vault"
+metadata:
+  name: "openbao"
+  labels:
+    app.kubernetes.io/name: openbao
+    vault_cr: vault
+  namespace: {{ .Release.Namespace }}
+spec:
+  size: 1
+  image: {{ .Values.vaultInstance.image }}:{{ .Values.vaultInstance.version }}
+  vaultAnnotations:
+    traefik.ingress.kubernetes.io/service.serversscheme: https
+    traefik.ingress.kubernetes.io/service.serverstransport: traefik-skip-tls@kubernetescrd
+
+  # Specify the ServiceAccount where the Vault Pod and the Bank-Vaults configurer/unsealer is running
+  serviceAccount: openbao
+
+  tlsAdditionalHosts:
+    - vault.weebo.internal
+    - vault.vault
+    - vault.batleforc.fr
+  # Specify the Service's type where the Vault Service is exposed
+  # Please note that some Ingress controllers like https://github.com/kubernetes/ingress-gce
+  # forces you to expose your Service on a NodePort
+  serviceType: ClusterIP
+
+  # Request an Ingress controller with the default configuration
+  ingress: # # Specify Ingress object annotations here, if TLS is enabled (which is by default)
+
+  # # the operator will add NGINX, Traefik and HAProxy Ingress compatible annotations
+  # # to support TLS backends
+  # annotations: {}
+  # # Override the default Ingress specification here
+  # # This follows the same format as the standard Kubernetes Ingress
+  # # See: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#ingressspec-v1beta1-extensions
+  # spec: {}
+
+  volumes:
+    - name: vault-raft
+      persistentVolumeClaim:
+        claimName: vault-raft
+
+  volumeMounts:
+    # - name: vault-raft
+    #   mountPath: /vault/file
+    - mountPath: /openbao/config
+      name: vault-config
+    - name: vault-raft
+      mountPath: /openbao/data
+  # Support for distributing the generated CA certificate Secret to other namespaces.
+  # Define a list of namespaces or use ["*"] for all namespaces.
+  caNamespaces:
+    - "*"
+  vaultPodSpec:
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+  # Describe where you would like to store the Vault unseal keys and root token.
+  unsealConfig:
+    options:
+      # The preFlightChecks flag enables unseal and root token storage tests
+      # This is true by default
+      preFlightChecks: true
+      # The storeRootToken flag enables storing of root token in chosen storage
+      # This is true by default
+      storeRootToken: true
+      # The secretShares represents the total number of unseal key shares
+      # This is 5 by default
+      secretShares: 5
+      # The secretThreshold represents the minimum number of shares required to reconstruct the unseal key
+      # This is 3 by default
+      secretThreshold: 3
+    kubernetes:
+      secretNamespace: {{ .Release.Namespace }}
+
+  # A YAML representation of a final vault config file.
+  # See https://www.vaultproject.io/docs/configuration/ for more information.
+  config:
+    #disable_mlock: false
+    storage:
+      raft:
+        path: "/openbao/data"
+    listener:
+      tcp:
+        address: "0.0.0.0:8200"
+        tls_cert_file: /vault/tls/server.crt
+        tls_key_file: /vault/tls/server.key
+    api_addr: https://openbao.vault:8200
+    cluster_addr: "https://${.Env.POD_NAME}:8201"
+    ui: true
+
+  statsdDisabled: true
+
+  serviceRegistrationEnabled: true
+
+  resources:
+    # A YAML representation of resource ResourceRequirements for vault container
+    # Detail can reference: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container
+    vault:
+      limits:
+        memory: "1Gi"
+        cpu: "300m"
+      requests:
+        memory: "512Mi"
+        cpu: "100m"
+
+  # See: https://banzaicloud.com/docs/bank-vaults/cli-tool/#example-external-vault-configuration
+  # The repository also contains a lot examples in the test/deploy and operator/deploy directories.
+  externalConfig:
+    policies:
+      - name: allow_secrets
+        rules: |
+          path "secret/*" { capabilities = ["create", "read", "update", "delete", "list"] }
+          path "pki_int/*" { capabilities = ["read", "list"] }
+          path "pki/*" { capabilities = ["read", "list"] }
+      - name: allow_pki
+        rules: path "pki_int/*" { capabilities = ["create", "read", "update", "delete", "list"] }
+    auth:
+      - type: kubernetes
+        roles:
+          - name: default
+            bound_service_account_names: ["vault"]
+            bound_service_account_namespaces: ["vault"]
+            policies: allow_secrets
+            ttl: 1h
+          - name: cert-manager
+            bound_service_account_names: ["cert-manager", "vault-issuer"]
+            bound_service_account_namespaces: ["cert-manager"]
+            policies: allow_pki
+            ttl: 1h
+
+    secrets: []
+
+  vaultEnvsConfig:
+    - name: VAULT_LOG_LEVEL
+      value: debug
+{{- end -}}

@@ -1,0 +1,57 @@
+{{- if .Values.dex.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dex
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - CreateNamespace=true
+  source:
+    chart: dex
+    repoURL: https://charts.dexidp.io
+    targetRevision: {{ .Values.dex.version }}
+    helm:
+      releaseName: dex
+      valuesObject:
+        config:
+          issuer: "https://{{ .Values.dex.issuer }}"
+          storage:
+            type: kubernetes
+            config:
+              inCluster: true
+          enablePasswordDB: false
+          oauth2:
+            skipApprovalScreen: true
+          connectors:
+          - type: {{ .Values.dex.mainConnector.type }}
+            id: {{ .Values.dex.mainConnector.id }}
+            name: {{ .Values.dex.mainConnector.name }}
+            config:
+              issuer: {{ .Values.dex.mainConnector.config.issuer }}
+        env:
+          
+        ingress:
+          enabled: true
+          annotations:
+            cert-manager.io/cluster-issuer: outbound
+          hosts:
+          - host: {{ .Values.dex.issuer }}
+            paths:
+              - path: /
+                pathType: ImplementationSpecific
+          tls:
+            - hosts:
+              - {{ .Values.dex.issuer }}
+              secretName: dex-tls
+  destination:
+    name: "in-cluster"
+    namespace: dex
+{{- end -}}

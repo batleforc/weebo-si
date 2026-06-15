@@ -1,0 +1,24 @@
+bankVault:
+  enabled: true
+  ns: vault-operator
+  version: 1.23.4
+
+externalSecrets:
+  enabled: true
+  version: "2.2.0"
+
+vaultApp:
+  enabled: true
+
+vaultInstance:
+  enabled: true
+  version: "2.5.4"
+  image: openbao/openbao
+  hook:
+    enabled: true
+    version: 1.23.1
+  dns: vault.batleforc.fr
+
+repo: ""
+project: ""
+branch: ""

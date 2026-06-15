@@ -2,6 +2,10 @@ ingress:
   enabled: true
   project: infra
 
+auth:
+  enabled: true
+  project: infra
+
 repo: ""
 branch: ""
 

@@ -1,0 +1,26 @@
+{{- if .Values.bankVault.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+  source:
+    chart: vault-operator
+    repoURL: oci://ghcr.io/bank-vaults/helm-charts/vault-operator
+    # https://github.com/bank-vaults/vault-operator/pkgs/container/helm-charts%2Fvault-operator
+    targetRevision: {{ .Values.bankVault.version }}
+    helm:
+      releaseName: {{ .Values.bankVault.ns }}
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: {{ .Values.bankVault.ns }}
+{{- end -}}

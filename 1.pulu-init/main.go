@@ -46,6 +46,7 @@ func main() {
 						"siderolabs/youki",
 						"siderolabs/crun",
 						"siderolabs/wasmedge",
+						"siderolabs/netbird",
 					},
 				},
 			},

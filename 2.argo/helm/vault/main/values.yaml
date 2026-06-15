@@ -1,0 +1,18 @@
+bankVault:
+  enabled: true
+  ns: vault-operator
+  version: 1.24.0
+
+externalSecrets:
+  enabled: true
+  version: "2.6.0"
+
+vaultApp:
+  enabled: true
+
+vaultInstance:
+  enabled: true
+
+repo: ""
+project: ""
+branch: ""

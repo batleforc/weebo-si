@@ -1,0 +1,24 @@
+{{- if .Values.vaultInstance.enabled -}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vault-http
+  labels:
+    app: vault
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-redirect-to-https@kubernetescrd,traefik-vpn-only@kubernetescrd
+spec:
+  rules:
+    - host: {{ .Values.vaultInstance.dns }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vault
+                port:
+                  number: 8200
+{{- end -}}

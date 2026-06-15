@@ -1,0 +1,36 @@
+{{- if .Values.vaultApp.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault-app
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: {{ .Values.project }}
+  source:
+    repoURL: '{{ .Values.repo }}'
+    path: '2.argo/helm/vault/sub'
+    targetRevision: '{{ .Values.branch }}'
+    helm:
+      releaseName: vault-app
+      valuesObject:
+        {{- with .Values }}
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'vault'
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

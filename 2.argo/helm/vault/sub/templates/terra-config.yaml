@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: terra-vault
+  namespace: argocd
+spec:
+  project: {{ .Values.project }}
+  source:
+    path: 2.terra/vault
+    repoURL: "{{ .Values.repo }}"
+    targetRevision: '{{ .Values.branch }}'
+  destination:
+    namespace: vault
+    server: "https://kubernetes.default.svc"
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

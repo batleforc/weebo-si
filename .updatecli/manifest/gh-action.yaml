@@ -1,0 +1,36 @@
+name: Upgrade githubaction
+
+scms:
+  default:
+    kind: gitea
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: "{{ .github.owner}}"
+      repository: "{{ .github.repository}}"
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      url: "https://git.batleforc.fr"
+      branch: main
+
+actions:
+  default:
+    kind: gitea/pullrequest
+    scmid: default
+    spec:
+      title: "ci: Upgrade Forgejo Action"
+      automerge: false
+      description: |
+        Upgrade `githubaction` version in `.forgejo/workflows/` to the latest version.
+      labels:
+        - "Upgrade"
+        - "UpdateCLI"
+
+autodiscovery:
+  scmid: default
+  actionid: default
+  crawlers:
+    github/action:
+      spec:
+        digest: true
+        rootdir: ".forgejo"
