@@ -17,7 +17,7 @@ spec:
       tcp:
         address: "0.0.0.0:8200"
         tls_disable: true
-    api_addr: http://openbao.vault:8200
+    api_addr: http://openbao:8200
     cluster_addr: "https://${.Env.POD_NAME}:8201"
     ui: true
 
