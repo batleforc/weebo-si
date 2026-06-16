@@ -2,10 +2,7 @@
 apiVersion: "vault.banzaicloud.com/v1alpha1"
 kind: "Vault"
 metadata:
-  name: "vault"
-  labels:
-    app.kubernetes.io/name: vault
-    vault_cr: vault
+  name: "openbao"
   namespace: {{ .Release.Namespace }}
 spec:
   size: 1
