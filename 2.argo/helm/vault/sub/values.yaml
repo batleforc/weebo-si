@@ -1,7 +1,7 @@
 bankVault:
   enabled: true
   ns: vault-operator
-  version: 1.23.4
+  version: 1.24.0
 
 externalSecrets:
   enabled: true

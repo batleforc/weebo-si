@@ -53,13 +53,13 @@ spec:
   # Define a list of namespaces or use ["*"] for all namespaces.
   caNamespaces:
     - "*"
-  vaultPodSpec:
-    securityContext:
-      runAsNonRoot: true
-      runAsUser: 1000
-      fsGroup: 1000
-      seccompProfile:
-        type: RuntimeDefault
+  # vaultPodSpec:
+  #   securityContext:
+  #     runAsNonRoot: true
+  #     runAsUser: 1000
+  #     fsGroup: 1000
+  #     seccompProfile:
+  #       type: RuntimeDefault
   # Describe where you would like to store the Vault unseal keys and root token.
   unsealConfig:
     options:

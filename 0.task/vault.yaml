@@ -6,7 +6,7 @@ tasks:
     env:
       KUBECONFIG: 0.config/kubeconfig.yaml
     cmds:
-      - kubectl port-forward svc/vault -n vault 8200:8200
+      - kubectl port-forward svc/openbao -n vault 8200:8200
   pwd:
     desc: "Get the initial root token for Vault"
     env:
