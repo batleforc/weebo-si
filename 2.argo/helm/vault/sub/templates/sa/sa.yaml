@@ -8,5 +8,5 @@ metadata:
     app.kubernetes.io/created-by: vault-operator
     app.kubernetes.io/part-of: vault-operator
     app.kubernetes.io/managed-by: kustomize
-  name: vault
+  name: openbao
   namespace: vault

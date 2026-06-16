@@ -16,5 +16,5 @@ roleRef:
   name: vault
 subjects:
   - kind: ServiceAccount
-    name: vault
+    name: openbao
     namespace: vault
