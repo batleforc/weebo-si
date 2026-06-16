@@ -8,7 +8,7 @@ spec:
   source:
     path: 2.terra/vault
     repoURL: "{{ .Values.repo }}"
-    targetRevision: '{{ .Values.branch }}'
+    targetRevision: "{{ .Values.branch }}"
   destination:
     namespace: vault
     server: "https://kubernetes.default.svc"

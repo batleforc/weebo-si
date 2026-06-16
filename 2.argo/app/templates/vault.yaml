@@ -1,4 +1,4 @@
-{{- if .Values.ingress.enabled -}}
+{{- if .Values.vault.enabled -}}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -8,7 +8,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  project: {{ .Values.ingress.project }}
+  project: {{ .Values.vault.project }}
   source:
     repoURL: '{{ .Values.repo }}'
     path: '2.argo/helm/ingress/main'
@@ -16,7 +16,7 @@ spec:
     helm:
       releaseName: ingress
       valuesObject:
-        project: "{{ .Values.ingress.project }}"
+        project: "{{ .Values.vault.project }}"
         repo: "{{ .Values.repo }}"
         branch: "{{ .Values.branch }}"
         traefik:

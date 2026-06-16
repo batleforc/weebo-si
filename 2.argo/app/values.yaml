@@ -6,6 +6,10 @@ auth:
   enabled: true
   project: infra
 
+vault:
+  enabled: true
+  project: infra
+
 repo: ""
 branch: ""
 
@@ -17,6 +21,9 @@ project:
     sourceRepo:
       - oci://ghcr.io/traefik/helm/traefik
       - oci://quay.io/jetstack/charts/cert-manager
+      - oci://ghcr.io/bank-vaults/helm-charts/vault-operator
+      - https://ghcr.io/external-secrets/charts
+      - https://ghcr.io/bank-vaults/helm-charts
     includeBaseRepo: true
     dest:
       - server: "https://kubernetes.default.svc"
@@ -29,7 +36,11 @@ project:
       - group: "rbac.authorization.k8s.io"
         kind: "ClusterRole"
       - group: "rbac.authorization.k8s.io"
+        kind: "Role"
+      - group: "rbac.authorization.k8s.io"
         kind: "ClusterRoleBinding"
+      - group: "rbac.authorization.k8s.io"
+        kind: "RoleBinding"
       - group: "networking.k8s.io"
         kind: "IngressClass"
       - group: "admissionregistration.k8s.io"
@@ -38,3 +49,5 @@ project:
         kind: "MutatingWebhookConfiguration"
       - group: "cert-manager.io"
         kind: "ClusterIssuer"
+      - group: "vault.banzaicloud.com"
+        kind: "Vault"

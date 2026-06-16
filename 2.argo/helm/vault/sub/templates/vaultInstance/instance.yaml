@@ -5,7 +5,7 @@ metadata:
   name: "openbao"
   labels:
     app.kubernetes.io/name: openbao
-    vault_cr: vault
+    vault_cr: openbao
   namespace: {{ .Release.Namespace }}
 spec:
   size: 1
@@ -18,9 +18,9 @@ spec:
   serviceAccount: openbao
 
   tlsAdditionalHosts:
-    - vault.weebo.internal
-    - vault.vault
-    - vault.batleforc.fr
+    - openbao.weebo.internal
+    - openbao.vault
+    - vault.4.weebo.fr
   # Specify the Service's type where the Vault Service is exposed
   # Please note that some Ingress controllers like https://github.com/kubernetes/ingress-gce
   # forces you to expose your Service on a NodePort
