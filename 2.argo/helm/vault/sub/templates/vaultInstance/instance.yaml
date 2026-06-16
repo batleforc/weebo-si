@@ -15,7 +15,7 @@ spec:
     traefik.ingress.kubernetes.io/service.serverstransport: traefik-skip-tls@kubernetescrd
 
   # Specify the ServiceAccount where the Vault Pod and the Bank-Vaults configurer/unsealer is running
-  serviceAccount: openbao
+  serviceAccount: vault
 
   tlsAdditionalHosts:
     - openbao.weebo.internal
