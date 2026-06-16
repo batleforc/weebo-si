@@ -7,6 +7,7 @@ includes:
   puluconf: 1.pulu-conf/Taskfile.yaml
   argo: 0.task/argo.yaml
   vpn: 0.task/argo.yaml
+  vault: 0.task/vault.yaml
 
 tasks:
   init:

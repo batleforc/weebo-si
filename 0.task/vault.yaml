@@ -1,0 +1,31 @@
+version: "3"
+
+tasks:
+  forward:
+    desc: "Forward the port to access to Vault UI"
+    env:
+      KUBECONFIG: 0.config/kubeconfig.yaml
+    cmds:
+      - kubectl port-forward svc/openbao -n vault 8200:8200
+  pwd:
+    desc: "Get the initial root token for Vault"
+    env:
+      KUBECONFIG: 0.config/kubeconfig.yaml
+    cmds:
+      - kubectl -n vault get secret openbao-unseal-keys -o jsonpath="{.data.vault-root}" | base64 -d && echo
+  get-ca:
+    desc: "Get the CA certificate for Vault"
+    env:
+      KUBECONFIG: 0.config/kubeconfig.yaml
+    cmds:
+      - kubectl -n vault get secret vault-tls -o jsonpath="{.data.ca\.crt}" | base64 -d > .tmp/vault-ca.crt
+  default:
+    desc: "Login to Vault CLI"
+    env:
+      VAULT_ADDR: "https://localhost:8200"
+      VAULT_CACERT: ".tmp/vault-ca.crt"
+    vars:
+      VAULT_TOKEN:
+        sh: task vault:pwd
+    cmds:
+      - VAULT_TOKEN={{.VAULT_TOKEN}}  bao {{ .CLI_ARGS }}

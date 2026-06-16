@@ -2,10 +2,10 @@
 apiVersion: "vault.banzaicloud.com/v1alpha1"
 kind: "Vault"
 metadata:
-  name: "openbao"
+  name: "vault"
   labels:
-    app.kubernetes.io/name: openbao
-    vault_cr: openbao
+    app.kubernetes.io/name: vault
+    vault_cr: vault
   namespace: {{ .Release.Namespace }}
 spec:
   size: 1
@@ -18,8 +18,8 @@ spec:
   serviceAccount: vault
 
   tlsAdditionalHosts:
-    - openbao.weebo.internal
-    - openbao.vault
+    - vault.weebo.internal
+    - vault.vault
     - vault.4.weebo.fr
   # Specify the Service's type where the Vault Service is exposed
   # Please note that some Ingress controllers like https://github.com/kubernetes/ingress-gce
