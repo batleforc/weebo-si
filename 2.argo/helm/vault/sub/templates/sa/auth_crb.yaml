@@ -18,5 +18,5 @@ roleRef:
   name: system:auth-delegator
 subjects:
   - kind: ServiceAccount
-    name: openbao
+    name: vault
     namespace: vault
