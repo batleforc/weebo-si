@@ -1,6 +1,6 @@
 {{- if .Values.vaultInstance.enabled -}}
 apiVersion: "vault.banzaicloud.com/v1alpha1"
-kind: "Vault"
+kind: "vault"
 metadata:
   name: "vault"
   namespace: {{ .Release.Namespace }}

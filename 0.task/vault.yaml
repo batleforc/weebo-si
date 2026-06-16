@@ -6,13 +6,13 @@ tasks:
     env:
       KUBECONFIG: 0.config/kubeconfig.yaml
     cmds:
-      - kubectl port-forward svc/openbao -n vault 8200:8200
+      - kubectl port-forward svc/vault -n vault 8200:8200
   pwd:
     desc: "Get the initial root token for Vault"
     env:
       KUBECONFIG: 0.config/kubeconfig.yaml
     cmds:
-      - kubectl -n vault get secret openbao-unseal-keys -o jsonpath="{.data.vault-root}" | base64 -d && echo
+      - kubectl -n vault get secret vault-unseal-keys -o jsonpath="{.data.vault-root}" | base64 -d && echo
   get-ca:
     desc: "Get the CA certificate for Vault"
     env:
