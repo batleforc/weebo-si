@@ -40,7 +40,7 @@ spec:
         claimName: vault-raft
 
   vaultContainerSpec:
-    name: vault
+    name: openbao
     volumeMounts:
     # - name: vault-raft
     #   mountPath: /vault/file
