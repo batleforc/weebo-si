@@ -12,6 +12,12 @@ vaultApp:
 
 vaultInstance:
   enabled: true
+  version: "2.5.4"
+  image: openbao/openbao
+  hook:
+    enabled: true
+    version: 1.23.1
+  dns: vault.batleforc.fr
 
 repo: ""
 project: ""
