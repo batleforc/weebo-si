@@ -33,7 +33,8 @@ spec:
   # # This follows the same format as the standard Kubernetes Ingress
   # # See: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#ingressspec-v1beta1-extensions
   # spec: {}
-
+  vaultLabels:
+    vault-active: 'true'
   volumes:
     - name: vault-raft
       persistentVolumeClaim:
