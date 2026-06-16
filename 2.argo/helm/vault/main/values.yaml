@@ -17,7 +17,7 @@ vaultInstance:
   hook:
     enabled: true
     version: 1.23.1
-  dns: vault.batleforc.fr
+  dns: vault.4.weebo.fr
 
 repo: ""
 project: ""
