@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ingress
+  name: vault
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "1"
@@ -11,10 +11,10 @@ spec:
   project: {{ .Values.vault.project }}
   source:
     repoURL: '{{ .Values.repo }}'
-    path: '2.argo/helm/ingress/main'
+    path: '2.argo/helm/vault/main'
     targetRevision: '{{ .Values.branch }}'
     helm:
-      releaseName: ingress
+      releaseName: vault
       valuesObject:
         project: "{{ .Values.vault.project }}"
         repo: "{{ .Values.repo }}"
