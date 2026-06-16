@@ -17,13 +17,3 @@ configMapGenerator:
     files:
       - ./terra-map/main.tf
       - ./terra-map/auth-base.tf
-      - ./terra-map/auth-bootstrap.tf
-      - ./terra-map/vpn.tf
-      - ./terra-map/monitoring.tf
-      - ./terra-map/harbor.tf
-      - ./terra-map/registry.tf
-      - ./terra-map/auth-policy.tf
-      - ./terra-map/auth-forgejo.tf
-      - ./terra-map/forgejo.tf
-      - ./terra-map/s3.tf
-      - ./terra-map/dns.tf
