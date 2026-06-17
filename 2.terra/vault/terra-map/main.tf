@@ -17,7 +17,7 @@ data "vault_auth_backend" "kubernetes" {
 
 
 provider "vault" {
-  address      = "https://vault.vault:8200"
+  address      = "https://openbao.vault:8200"
   ca_cert_file = "/etc/ssl/vault/ca.crt"
   token        = local.token_vault
 }
