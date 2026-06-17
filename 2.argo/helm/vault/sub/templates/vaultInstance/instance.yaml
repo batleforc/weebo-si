@@ -46,7 +46,9 @@ spec:
       persistentVolumeClaim:
         claimName: vault-raft
 
-  volumeMounts:
+    vaultContainerSpec:
+    name: vault
+    volumeMounts:
     - mountPath: /openbao/config
       name: vault-config
     - mountPath: /openbao/data
