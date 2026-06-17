@@ -2,7 +2,7 @@
 apiVersion: "vault.banzaicloud.com/v1alpha1"
 kind: "Vault"
 metadata:
-  name: "vault"
+  name: "openbao"
   labels:
     app.kubernetes.io/name: vault
     vault_cr: vault
@@ -14,17 +14,17 @@ spec:
   # join http://vault:8200 (the active Service has no ready endpoint during the
   # initial unseal, and Cilium returns EPERM for a backend-less ClusterIP).
   raftLeaderAddress: "self"
-  # vaultAnnotations:
-  #   traefik.ingress.kubernetes.io/service.serversscheme: https
-  #   traefik.ingress.kubernetes.io/service.serverstransport: traefik-skip-tls@kubernetescrd
+  vaultAnnotations:
+    traefik.ingress.kubernetes.io/service.serversscheme: https
+    traefik.ingress.kubernetes.io/service.serverstransport: traefik-skip-tls@kubernetescrd
 
   # Specify the ServiceAccount where the Vault Pod and the Bank-Vaults configurer/unsealer is running
   serviceAccount: vault
 
   tlsAdditionalHosts:
-    - vault.weebo.internal
-    - vault.vault
-    - vault.batleforc.fr
+    - vault.weebo.poc
+    - openbao.vault
+    - vault.4.weebo.fr
   # Specify the Service's type where the Vault Service is exposed
   # Please note that some Ingress controllers like https://github.com/kubernetes/ingress-gce
   # forces you to expose your Service on a NodePort
@@ -47,8 +47,10 @@ spec:
         claimName: vault-raft
 
   volumeMounts:
-    - name: vault-raft
-      mountPath: /vault/file
+    - mountPath: /openbao/config
+      name: vault-config
+    - mountPath: /openbao/data
+      name: vault-raft
   # Support for distributing the generated CA certificate Secret to other namespaces.
   # Define a list of namespaces or use ["*"] for all namespaces.
   caNamespaces:
@@ -77,12 +79,13 @@ spec:
     disable_mlock: true
     storage:
       raft:
-        path: "/vault/file"
+        path: "/openbao/file"
     listener:
       tcp:
         address: "0.0.0.0:8200"
-        tls_disable: true
-    api_addr: http://vault.vault:8200
+        tls_cert_file: /vault/tls/server.crt
+        tls_key_file: /vault/tls/server.key
+    api_addr: https://openbao.vault:8200
     cluster_addr: "https://${.Env.POD_NAME}:8201"
     ui: true
 
@@ -98,6 +101,13 @@ spec:
       requests:
         memory: "512Mi"
         cpu: "100m"
+  vaultPodSpec:
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
 
   # See: https://banzaicloud.com/docs/bank-vaults/cli-tool/#example-external-vault-configuration
   # The repository also contains a lot examples in the test/deploy and operator/deploy directories.
