@@ -79,7 +79,7 @@ spec:
     disable_mlock: true
     storage:
       raft:
-        path: "/openbao/file"
+        path: "/openbao/data"
     listener:
       tcp:
         address: "0.0.0.0:8200"
