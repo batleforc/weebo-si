@@ -12,7 +12,7 @@ tasks:
     env:
       KUBECONFIG: 0.config/kubeconfig.yaml
     cmds:
-      - kubectl -n vault get secret vault-unseal-keys -o jsonpath="{.data.vault-root}" | base64 -d && echo
+      - kubectl -n vault get secret openbao-unseal-keys -o jsonpath="{.data.vault-root}" | base64 -d && echo
   get-ca:
     desc: "Get the CA certificate for Vault"
     env:

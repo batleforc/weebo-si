@@ -52,7 +52,7 @@ spec:
             claimName: "terra-job-vault"
         - name: vault-tls
           secret:
-            secretName: "vault-tls"
+            secretName: "openbao-tls"
         - name: vault-token
           secret:
             secretName: "openbao-unseal-keys"
