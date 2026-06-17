@@ -20,7 +20,7 @@ spec:
   tlsAdditionalHosts:
     - vault.weebo.internal
     - vault.vault
-    - vault.4.weebo.fr
+    - vault.batleforc.fr
   # Specify the Service's type where the Vault Service is exposed
   # Please note that some Ingress controllers like https://github.com/kubernetes/ingress-gce
   # forces you to expose your Service on a NodePort
@@ -122,6 +122,13 @@ spec:
             bound_service_account_namespaces: ["cert-manager"]
             policies: allow_pki
             ttl: 1h
+
+    secrets:
+      - path: secret
+        type: kv
+        description: General secrets.
+        options:
+          version: 2
 
   vaultEnvsConfig:
     - name: VAULT_LOG_LEVEL
