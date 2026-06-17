@@ -10,9 +10,9 @@ metadata:
 spec:
   size: 1
   image: {{ .Values.vaultInstance.image }}:{{ .Values.vaultInstance.version }}
-  vaultAnnotations:
-    traefik.ingress.kubernetes.io/service.serversscheme: https
-    traefik.ingress.kubernetes.io/service.serverstransport: traefik-skip-tls@kubernetescrd
+  # vaultAnnotations:
+  #   traefik.ingress.kubernetes.io/service.serversscheme: https
+  #   traefik.ingress.kubernetes.io/service.serverstransport: traefik-skip-tls@kubernetescrd
 
   # Specify the ServiceAccount where the Vault Pod and the Bank-Vaults configurer/unsealer is running
   serviceAccount: vault
@@ -77,15 +77,12 @@ spec:
     listener:
       tcp:
         address: "0.0.0.0:8200"
-        tls_cert_file: /vault/tls/server.crt
-        tls_key_file: /vault/tls/server.key
-    api_addr: https://vault.vault:8200
+        tls_disable: true
+    api_addr: http://vault.vault:8200
     cluster_addr: "https://${.Env.POD_NAME}:8201"
     ui: true
 
   statsdDisabled: true
-
-  serviceRegistrationEnabled: true
 
   resources:
     # A YAML representation of resource ResourceRequirements for vault container
