@@ -10,6 +10,10 @@ metadata:
 spec:
   size: 1
   image: {{ .Values.vaultInstance.image }}:{{ .Values.vaultInstance.version }}
+  # Single-node raft: bootstrap this instance as the leader instead of trying to
+  # join http://vault:8200 (the active Service has no ready endpoint during the
+  # initial unseal, and Cilium returns EPERM for a backend-less ClusterIP).
+  raftLeaderAddress: "self"
   # vaultAnnotations:
   #   traefik.ingress.kubernetes.io/service.serversscheme: https
   #   traefik.ingress.kubernetes.io/service.serverstransport: traefik-skip-tls@kubernetescrd
