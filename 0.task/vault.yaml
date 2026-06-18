@@ -18,7 +18,7 @@ tasks:
     env:
       KUBECONFIG: 0.config/kubeconfig.yaml
     cmds:
-      - kubectl -n vault get secret vault-tls -o jsonpath="{.data.ca\.crt}" | base64 -d > .tmp/vault-ca.crt
+      - kubectl -n vault get secret openbao-tls -o jsonpath="{.data.ca\.crt}" | base64 -d > .tmp/vault-ca.crt
   default:
     desc: "Login to Vault CLI"
     env:
@@ -29,3 +29,9 @@ tasks:
         sh: task vault:pwd
     cmds:
       - VAULT_TOKEN={{.VAULT_TOKEN}}  bao {{ .CLI_ARGS }}
+  dex:
+    desc: "Create entry in vault for DEX"
+    vars:
+      TOKEN: "{{ .TOKEN }}"
+    cmds:
+      - task vault -- kv put -tls-skip-verify -mount=mv dex/config LAB_CLIENT_SECRET={{ .TOKEN }}

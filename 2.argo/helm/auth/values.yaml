@@ -3,12 +3,8 @@ dex:
   version: "0.24.1"
   issuer: "dex.4.weebo.fr"
   mainConnector:
-    type: oidc
-    id: weebo
-    name: Weebo
-    config:
-      issuer: "https://auth.4.weebo.fr"
-
+    issuer: "https://auth.batleforc.fr/application/o/lab/.well-known/openid-configuration"
+    clientID: "lab"
 repo: ""
 project: ""
 branch: ""
