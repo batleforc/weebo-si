@@ -142,7 +142,26 @@ spec:
         description: General secrets.
         options:
           version: 2
-
+      - type: pki
+        description: Weebo PKI Backend
+        config:
+          default_lease_ttl: 744h
+          max_lease_ttl: 87600h
+        configuration:
+          config:
+          - name: urls
+            issuing_certificates: https://openbao.vault:8200/v1/pki/ca
+            crl_distribution_points: https://openbao.vault:8200/v1/pki/crl
+          root/generate:
+            - name: internal
+              common_name: weebo.poc
+              ttl: 87600h
+          roles:
+            - name: default
+              allowed_domains: weebo.poc
+              allow_subdomains: true
+              generate_lease: true
+              ttl: 1m
   vaultEnvsConfig:
     - name: VAULT_LOG_LEVEL
       value: debug
