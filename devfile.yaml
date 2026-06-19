@@ -4,4 +4,4 @@ metadata:
   version: 1.0.0
 
 parent:
-  uri: "https://raw.githubusercontent.com/batleforc/WeeboDevImage/refs/heads/main/che-mise/devfile.yaml"
+  uri: "https://raw.githubusercontent.com/batleforc/WeeboDevImage/refs/heads/main/che-min-mise/devfile.yaml"
