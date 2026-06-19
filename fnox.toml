@@ -1,0 +1,29 @@
+default_provider = "vault"
+
+[providers.vault]
+type = "vault"
+address = "https://vault.batleforc.fr"
+path = "dv/dev-vault/batleforc/weebo-si"
+credential_command = "vault login -path='authentik' -token-only -method='oidc' role='weebo_admin' "
+
+[secrets]
+# Base env
+DNS_NAME= { provider = "vault", value = "DNS_NAME" }
+DNS_ALT_NAME= { provider = "vault", value = "DNS_ALT_NAME" }
+SERVER_NAME= { provider = "vault", value = "SERVER_NAME" }
+
+# OVH
+OVH_ENDPOINT= { provider = "vault", value = "OVH_ENDPOINT" }
+OVH_APPLICATION_KEY= { provider = "vault", value = "OVH_APPLICATION_KEY" }
+OVH_APPLICATION_SECRET= { provider = "vault", value = "OVH_APPLICATION_SECRET" }
+OVH_CONSUMER_KEY= { provider = "vault", value = "OVH_CONSUMER_KEY" }
+
+# Netbird
+NETBIRD_SETUP_KEY= { provider = "vault", value = "NETBIRD_SETUP_KEY" }
+NETBIRD_DOMAIN= { provider = "vault", value = "NETBIRD_DOMAIN" }
+NETBIRD_ENABLE= { provider = "vault", value = "NETBIRD_ENABLE" }
+
+# OIDC Issuer
+OIDC_ISSUER_URL= { provider = "vault", value = "OIDC_ISSUER_URL" }
+OIDC_CLIENT_ID= { provider = "vault", value = "OIDC_CLIENT_ID" }
+OIDC_CLIENT_SECRET= { provider = "vault", value = "OIDC_CLIENT_SECRET" }

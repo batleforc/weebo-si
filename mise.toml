@@ -15,7 +15,8 @@ go = "latest"
 "kkrew:tree" = "latest"
 claude = "latest"
 talosctl = "latest"
-"aqua:openbao/openbao/bao" = "latest"
+fnox = "latest"
+vault = "latest"
 
 [plugins]
 kkrew = "https://github.com/soupglasses/mise-krew"
