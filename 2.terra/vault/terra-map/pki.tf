@@ -42,3 +42,26 @@ resource "vault_pki_secret_backend_intermediate_set_signed" "intermediate" {
   backend     = vault_mount.pki_int.path
   certificate = vault_pki_secret_backend_root_sign_intermediate.intermediate.certificate
 }
+
+data "vault_pki_secret_backend_issuers" "pki_intermediate_issuers" {
+  backend = vault_mount.pki_int.path
+}
+
+data "vault_pki_secret_backend_issuer" "intermediate" {
+  backend = vault_mount.pki_int.path
+  # Get the one who is default
+  issuer_ref = keys({ for k, v in data.vault_pki_secret_backend_issuers.pki_intermediate_issuers.key_info : k => k if jsondecode(v).is_default == true })[0]
+}
+
+resource "vault_pki_secret_backend_role" "intermediate_role" {
+  backend          = vault_mount.pki_int.path
+  issuer_ref       = data.vault_pki_secret_backend_issuer.intermediate.issuer_ref
+  name             = "weebo-poc"
+  ttl              = 86400
+  max_ttl          = 2592000
+  allow_ip_sans    = true
+  key_type         = "rsa"
+  key_bits         = 4096
+  allowed_domains  = ["weebo.poc"]
+  allow_subdomains = true
+}
