@@ -11,7 +11,7 @@ spec:
   project: {{ .Values.vpn.project }}
   source:
     repoURL: '{{ .Values.repo }}'
-    path: '2.helm/vpn'
+    path: '2.helm/netbird-exit-node'
     targetRevision: '{{ .Values.branch }}'
     helm:
       releaseName: ingress
