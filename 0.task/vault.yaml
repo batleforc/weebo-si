@@ -28,10 +28,16 @@ tasks:
       VAULT_TOKEN:
         sh: task vault:pwd
     cmds:
-      - VAULT_TOKEN={{.VAULT_TOKEN}}  bao {{ .CLI_ARGS }}
+      - VAULT_TOKEN={{.VAULT_TOKEN}} vault {{ .CLI_ARGS }}
   dex:
     desc: "Create entry in vault for DEX"
     vars:
       TOKEN: "{{ .TOKEN }}"
     cmds:
       - task vault -- kv put -tls-skip-verify -mount=mv dex/config LAB_CLIENT_SECRET={{ .TOKEN }}
+  vpn:
+    desc: "Create entry in vault for VPN terraform provider"
+    vars:
+      TOKEN: "{{ .TOKEN }}"
+    cmds:
+      - task vault -- kv put -tls-skip-verify -mount=mv netbird/vpn-exit-node KUBERNETES_SETUP_KEY={{ .TOKEN }}
