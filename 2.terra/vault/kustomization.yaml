@@ -19,3 +19,4 @@ configMapGenerator:
       - ./terra-map/auth-base.tf
       - ./terra-map/dex-bootstrap.tf
       - ./terra-map/pki.tf
+      - ./terra-map/mv.tf
