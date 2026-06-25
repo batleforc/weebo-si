@@ -27,6 +27,7 @@ resource "vault_pki_secret_backend_intermediate_cert_request" "csr-request" {
   backend     = vault_mount.pki_int.path
   type        = "internal"
   common_name = "weebo.poc Intermediate Authority"
+  key_bits    = 4096
 }
 
 resource "vault_pki_secret_backend_root_sign_intermediate" "intermediate" {
