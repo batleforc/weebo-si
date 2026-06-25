@@ -1,0 +1,41 @@
+{{- if .Values.vpn.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vpn
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: {{ .Values.vpn.project }}
+  source:
+    repoURL: '{{ .Values.repo }}'
+    path: '2.helm/vpn'
+    targetRevision: '{{ .Values.branch }}'
+    helm:
+      releaseName: ingress
+      valuesObject:
+        project: "{{ .Values.vpn.project }}"
+        repo: "{{ .Values.repo }}"
+        branch: "{{ .Values.branch }}"
+        traefik:
+          ips: "{{ .Values.traefik.ips }}"
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'netbird'
+  syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+    syncOptions:
+    - CreateNamespace=true
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

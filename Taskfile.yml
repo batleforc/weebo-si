@@ -35,3 +35,8 @@ tasks:
       KUBECONFIG: 0.config/kubeconfig.yaml
     cmds:
       - k9s
+  c:
+    env:
+      KUBECONFIG: 0.config/kubeconfig.yaml
+    cmds:
+      - cilium {{ .CLI_ARGS }}

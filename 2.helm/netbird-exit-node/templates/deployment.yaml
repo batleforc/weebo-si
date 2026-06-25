@@ -1,0 +1,48 @@
+{{- if and .Values.netbird.enabled (not .Values.netbird.test) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "exit-node-{{ .Release.Name }}"
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "exit-node-{{ .Release.Name }}"
+  template:
+    metadata:
+      labels:
+        app: "exit-node-{{ .Release.Name }}"
+      annotations:
+{{- with .Values.netbird.annotations }}
+{{ toYaml . | indent 8 }}
+{{- end }}
+    spec:
+      containers:
+        - name: exit-node
+          image: "{{ .Values.netbird.adminMode.image }}:{{ .Values.netbird.adminMode.version }}"
+          imagePullPolicy: {{ .Values.netbird.adminMode.pullPolicy }}
+          securityContext:
+            capabilities:
+              add:
+                {{- range .Values.netbird.adminMode.capabilities }}
+                - {{ . }}
+                {{- end }}
+          env:
+            - name: NB_SETUP_KEY
+              value: "{{ tpl .Values.netbird.setup_key . }}" # replace with your setup key
+            - name: NB_HOSTNAME
+              value: "{{ .Values.netbird.peer_name }}" # name that will appear in the management UI
+            - name: NB_LOG_LEVEL
+              value: "info"
+            - name: NB_MANAGEMENT_URL
+              value: "{{ .Values.netbird.url }}:443"
+            - name: NB_ADMIN_URL
+              value: "{{ .Values.netbird.url }}:443"
+            - name: TZ
+              value: "{{ .Values.netbird.tz }}"
+          resources:
+{{- with .Values.netbird.resources }}
+{{ toYaml . | indent 12 }}
+{{- end }}
+{{- end -}}

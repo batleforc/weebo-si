@@ -14,6 +14,10 @@ storage:
   local:
     enabled: true
 
+vpn:
+  enabled: true
+  project: infra
+
 repo: ""
 branch: ""
 

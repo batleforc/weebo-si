@@ -1,6 +1,6 @@
 encryptionsalt: v1:uf5utzcY+xM=:v1:mF0qvQkF5RWyhKb/:x6zvJQZS491TX1hhjdQ9DcXPmOMmqA==
 config:
-  0.pulumi:talosVersion: v1.13.4
+  0.pulumi:talosVersion: v1.13.5
   0.pulumi:talosInstallVersion: v1.13.4
   0.pulumi:kubeVersion: v1.36.2
   0.pulumi:ciliumVersion: v1.18.10

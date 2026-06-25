@@ -1,0 +1,110 @@
+netbird:
+  test: false
+  enabled: true
+  version: "0.73"
+  image: 11notes/netbird-exit-node
+  url: "https://vpn.batleforc.fr"
+  peer_name: "lab-exit-node"
+  tz: "Europe/Paris"
+  setup_key: "vault:mv/data/{{ .Release.Namespace }}/vpn-exit-node#KUBERNETES_SETUP_KEY"
+  pullPolicy: Always
+  annotations:
+    vault.security.banzaicloud.io/vault-addr: "https://openbao.vault:8200"
+    vault.security.banzaicloud.io/vault-role: "auth-read"
+    vault.security.banzaicloud.io/vault-path: "kubernetes"
+    vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
+  resources:
+    limits:
+      cpu: 100m
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  adminMode:
+    enabled: true
+    image: netbirdio/netbird
+    version: "0.73.2"
+    pullPolicy: Always
+    capabilities:
+      - NET_ADMIN
+      - SYS_RESOURCE
+      - SYS_ADMIN
+
+netpol:
+  enabled: false
+  ingress:
+    - fromCIDRSet:
+        - cidr: 100.64.0.0/16
+  egress:
+    - toCIDRSet:
+        - cidr: ::/0
+          except:
+            - fd00:10:244::/56
+            - fd00:10:96::/112
+    - toCIDRSet:
+        - cidr: 0.0.0.0/0
+          except:
+            - 10.244.0.0/16
+            - 10.96.0.0/12
+    - toCIDRSet:
+        - cidr: 100.64.0.0/16
+    - toCIDRSet:
+        - cidr: 10.96.0.11/32
+      toPorts:
+        - ports:
+            - port: "53"
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: vault
+            io.kubernetes.pod.namespace: vault
+      toPorts:
+        - ports:
+            - port: "8200"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: traefik
+            io.kubernetes.pod.namespace: traefik
+      toPorts:
+        - ports:
+            - port: "8443"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: netbird-management
+            io.kubernetes.pod.namespace: vpn
+      toPorts:
+        - ports:
+            - port: "3478"
+              protocol: UDP
+    - toEndpoints:
+        - matchLabels:
+            app: blocky
+            io.kubernetes.pod.namespace: blocky
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+    - toEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: UDP
+            - port: "5351"
+              protocol: UDP
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: ""
+      toPorts:
+        - ports:
+            - port: "1900"
+              protocol: UDP

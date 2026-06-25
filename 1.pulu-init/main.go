@@ -68,6 +68,49 @@ func main() {
 
 		ctx.Export("schematicId", schematicID)
 
+		// Update Schema
+
+		tmpUpdateYamlSchema, err := yaml.Marshal(map[string]interface{}{
+			"customization": map[string]interface{}{
+				"extraKernelArgs": []string{
+					"net.ifnames=0",
+				},
+				"systemExtensions": map[string]interface{}{
+					"officialExtensions": []string{
+						"siderolabs/iscsi-tools",
+						"siderolabs/util-linux-tools",
+						"siderolabs/intel-ucode",
+						"siderolabs/mei",
+						"siderolabs/youki",
+						"siderolabs/crun",
+						"siderolabs/wasmedge",
+					},
+				},
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		schemaUpdate, err := imagefactory.NewSchematic(ctx, "schematicUpdateResource", &imagefactory.SchematicArgs{
+			Schematic: pulumi.String(tmpUpdateYamlSchema),
+		})
+		if err != nil {
+			return err
+		}
+
+		schematicUpdateID := schemaUpdate.ID().ApplyT(func(s pulumi.ID) (string, error) {
+			return string(s), nil
+		}).(pulumi.StringOutput)
+
+		ctx.Export("schematicUpdateId", schematicUpdateID)
+
+		urlUpdateResult := imagefactory.GetUrlsOutput(ctx, imagefactory.GetUrlsOutputArgs{
+			Platform:     pulumi.StringPtr(platform),
+			TalosVersion: pulumi.String(talosVersion),
+			SchematicId:  schematicUpdateID.ToStringOutput(),
+		})
+
 		urlResult := imagefactory.GetUrlsOutput(ctx, imagefactory.GetUrlsOutputArgs{
 			Platform:     pulumi.StringPtr(platform),
 			TalosVersion: pulumi.String(talosInstallVersion),
@@ -78,7 +121,9 @@ func main() {
 			ctx.Export("schematicId", pulumi.String(schematicId))
 			return fmt.Sprintf("https://factory.talos.dev/image/%s/%s/%s-amd64.qcow2", schematicId, talosInstallVersion, platform), nil
 		}).(pulumi.StringOutput)
+
 		ctx.Export("imageUrl", urlResult.ToGetUrlsResultOutput().Urls().Installer())
+		ctx.Export("updateImageUrl", urlUpdateResult.ToGetUrlsResultOutput().Urls().Installer())
 		ctx.Export("qcow2Url", qcow2Url)
 
 		// Prepare OVH
@@ -159,7 +204,7 @@ func main() {
 		ctx.Export("MasterIPv4", pulumi.String(serverNetwork.Routing.Ipv4.Ip))
 		ctx.Export("MasterIPv6", pulumi.String(serverNetwork.Routing.Ipv6.Ip))
 
-		jsonPatchConfig := urlResult.Urls().Installer().ApplyT(func(installerUrl string) (string, error) {
+		jsonPatchConfig := urlUpdateResult.Urls().Installer().ApplyT(func(installerUrl string) (string, error) {
 			conf := map[string]interface{}{
 				"cluster": map[string]interface{}{
 					"allowSchedulingOnControlPlanes": true,
@@ -763,7 +808,7 @@ jwt:
 				"diskSelector": map[string]interface{}{
 					"match": "disk.dev_path == '/dev/sdb'",
 				},
-				"minSize": "450GB",
+				"minSize": "460GB",
 			},
 		})
 		if err != nil {
