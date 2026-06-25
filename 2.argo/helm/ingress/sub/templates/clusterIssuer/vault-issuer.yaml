@@ -10,7 +10,7 @@ spec:
     server: https://openbao.vault:8200
     caBundleSecretRef:
       key: ca.crt
-      name: vault-tls
+      name: openbao-tls
     auth:
       kubernetes:
         role: cert-manager
