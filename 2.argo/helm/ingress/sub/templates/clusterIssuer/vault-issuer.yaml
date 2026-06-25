@@ -6,7 +6,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "2"
 spec:
   vault:
-    path: pki_int/sign/default
+    path: pki_int/sign/weebo-poc
     server: https://openbao.vault:8200
     caBundleSecretRef:
       key: ca.crt
