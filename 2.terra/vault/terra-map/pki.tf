@@ -49,6 +49,10 @@ data "vault_pki_secret_backend_issuers" "pki_intermediate_issuers" {
 }
 
 data "vault_pki_secret_backend_issuer" "intermediate" {
+  depends_on = [
+    vault_pki_secret_backend_intermediate_set_signed.intermediate,
+    data.vault_pki_secret_backend_issuers.pki_intermediate_issuers
+  ]
   backend = vault_mount.pki_int.path
   # Get the one who is default
   issuer_ref = keys({ for k, v in data.vault_pki_secret_backend_issuers.pki_intermediate_issuers.key_info : k => k if jsondecode(v).is_default == true })[0]
