@@ -11,6 +11,7 @@ metadata:
     traefik.ingress.kubernetes.io/backend-protocol: "https"
     #traefik.ingress.kubernetes.io/service.serversscheme: https
     cert-manager.io/cluster-issuer: "vault-issuer"
+    cert-manager.io/private-key-size: "4096"
     traefik.ingress.kubernetes.io/router.middlewares: traefik-vpn-only@kubernetescrd
 spec:
   rules:
