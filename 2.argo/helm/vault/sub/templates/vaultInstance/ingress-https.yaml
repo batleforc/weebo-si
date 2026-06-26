@@ -10,9 +10,13 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/backend-protocol: "https"
     #traefik.ingress.kubernetes.io/service.serversscheme: https
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-vpn-only@kubernetescrd
+
     cert-manager.io/cluster-issuer: "vault-issuer"
     cert-manager.io/private-key-size: "4096"
-    traefik.ingress.kubernetes.io/router.middlewares: traefik-vpn-only@kubernetescrd
+    cert-manager.io/common-name: "{{ .Values.vaultInstance.dns }}"
+    cert-manager.io/subject-organizations: "WeeboSI"
+    cert-manager.io/subject-organizationalunits: "VAULT"
 spec:
   rules:
     - host: {{ .Values.vaultInstance.dns }}
