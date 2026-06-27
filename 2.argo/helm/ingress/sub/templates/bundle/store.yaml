@@ -1,0 +1,24 @@
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: "cert-store"
+  namespace: cert-manager
+  annotations:
+    ## Add this annotation to disable controller warning events for unmaintained stores
+    external-secrets.io/disable-maintenance-checks: "true"
+spec:
+  provider:
+    vault:
+      server: "https://openbao.vault:8200"
+      path: "mv"
+      caProvider:
+        type: Secret
+        name: openbao-tls
+        key: ca.crt
+      auth:
+        kubernetes:
+          mountPath: "kubernetes"
+          role: "auth-read"
+          serviceAccountRef:
+            name: "default"
