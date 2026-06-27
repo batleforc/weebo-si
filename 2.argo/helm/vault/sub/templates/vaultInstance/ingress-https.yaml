@@ -16,7 +16,7 @@ metadata:
     cert-manager.io/private-key-size: "4096"
     cert-manager.io/common-name: "{{ .Values.vaultInstance.dns }}"
     cert-manager.io/subject-organizations: "WeeboSI"
-    cert-manager.io/subject-organizationalunits: "VAULT"
+    cert-manager.io/subject-organizationalunits: "Infra"
 spec:
   rules:
     - host: {{ .Values.vaultInstance.dns }}

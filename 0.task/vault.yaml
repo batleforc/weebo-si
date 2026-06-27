@@ -41,3 +41,9 @@ tasks:
       TOKEN: "{{ .TOKEN }}"
     cmds:
       - task vault -- kv put -tls-skip-verify -mount=mv netbird/vpn-exit-node KUBERNETES_SETUP_KEY={{ .TOKEN }}
+  trust-intermediate:
+    cmds:
+      - rm -rf weebo-si-int-ca.pem weebo-si-int-ca.key
+      - task vault -- list -tls-skip-verify  -format=json pki_int/certs | jq .[] | awk '{print "task vault -- read -tls-skip-verify   -format=json pki_int/cert/" $1 " | jq -r .data.certificate | cat >> weebo-si-int-ca.pem"}' | bash
+      - sudo cp weebo-si-int-ca.pem /etc/ssl/certs/weebo-si-int-ca.crt
+      - sudo update-ca-trust

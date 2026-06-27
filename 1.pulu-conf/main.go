@@ -192,7 +192,11 @@ g, authentik Admins, role:admin`),
 						"enabled": pulumi.Bool(deployed),
 						"tls":     pulumi.Bool(true),
 						"annotations": pulumi.StringMap{
-							"cert-manager.io/cluster-issuer": pulumi.String("outbound"),
+							"cert-manager.io/cluster-issuer":              pulumi.String("vault-issuer"),
+							"cert-manager.io/private-key-size":            pulumi.String("4096"),
+							"cert-manager.io/common-name":                 pulumi.String(argoDNSName),
+							"cert-manager.io/subject-organizations":       pulumi.String("WeeboSI"),
+							"cert-manager.io/subject-organizationalunits": pulumi.String("Infra"),
 						},
 					},
 				},
@@ -260,7 +264,7 @@ g, authentik Admins, role:admin`),
 							"helm": map[string]interface{}{
 								"releaseName": "main",
 								"valuesObject": map[string]interface{}{
-									"repo": gitRepo,
+									"repo":   gitRepo,
 									"branch": gitBranch,
 									"traefik": map[string]interface{}{
 										"ips": fmt.Sprintf("%s,%s", serverNetwork.Routing.Ipv4.Ip, strings.ReplaceAll(serverNetwork.Routing.Ipv6.Ip, "/128", "")),

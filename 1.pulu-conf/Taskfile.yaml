@@ -6,7 +6,7 @@ tasks:
     env:
       PULUMI_CONFIG_PASSPHRASE: ""
       KUBECONFIG: ../0.config/kubeconfig.yaml
-      ARGO_DNS: "argo.4.weebo.fr"
+      ARGO_DNS: "argo.weebo.poc"
       GIT_REPO: "https://git.batleforc.fr/batleforc/weebo-si"
       GIT_BRANCH: "develop"
     cmds:
