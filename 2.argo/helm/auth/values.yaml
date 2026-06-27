@@ -5,6 +5,12 @@ dex:
   mainConnector:
     issuer: "https://auth.batleforc.fr/application/o/lab/.well-known/openid-configuration"
     clientID: "lab"
+
+zitadel:
+  enabled: true
+  version: "10.0.4"
+  dns: auth.weebo.poc
+
 repo: ""
 project: ""
 branch: ""
