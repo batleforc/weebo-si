@@ -60,3 +60,5 @@ project:
         kind: "ClusterIssuer"
       - group: "vault.banzaicloud.com"
         kind: "Vault"
+      - group: "trust.cert-manager.io"
+        kind: "Bundle"
