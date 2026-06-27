@@ -30,6 +30,7 @@ project:
       - oci://ghcr.io/traefik/helm/traefik
       - oci://quay.io/jetstack/charts/cert-manager
       - oci://ghcr.io/bank-vaults/helm-charts/vault-operator
+      - oci://quay.io/jetstack/charts/trust-manager
       - https://ghcr.io/external-secrets/charts
       - https://ghcr.io/bank-vaults/helm-charts
     includeBaseRepo: true
