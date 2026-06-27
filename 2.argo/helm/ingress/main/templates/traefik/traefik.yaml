@@ -35,7 +35,7 @@ spec:
             - websecure
         service:
           spec:
-            type: LoadBalancer
+            type: ClusterIP
             ipFamilyPolicy: PreferDualStack
             ipFamilies:
               - IPv4
