@@ -73,7 +73,7 @@ resource "vault_pki_secret_backend_role" "intermediate_role" {
 
 resource "vault_kv_secret_v2" "certificate" {
   mount = "mv"
-  name  = "trust-manager/config"
+  name  = "cert-manager/config"
   data_json = jsonencode(
     {
       fullcert_chain = vault_pki_secret_backend_intermediate_set_signed.intermediate.certificate

@@ -12,3 +12,18 @@ resource "vault_kv_secret_v2" "dex" {
     }
   )
 }
+
+resource "random_string" "zitadel-master-key" {
+  length  = 42
+  special = true
+}
+
+resource "vault_kv_secret_v2" "zitadel-master-key" {
+  mount = "mv"
+  name  = "zitadel/config"
+  data_json = jsonencode(
+    {
+      masterkey = random_string.zitadel-master-key.result
+    }
+  )
+}

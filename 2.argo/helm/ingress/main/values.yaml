@@ -13,6 +13,11 @@ certManager:
     nameservers: "dns-server-in.dns.svc.cluster.local"
     namespace: "dns"
 
+trustManager:
+  enabled: true
+  version: "0.24.0"
+  installCRDs: true
+
 traefik:
   enabled: true
   version: 40.2.0

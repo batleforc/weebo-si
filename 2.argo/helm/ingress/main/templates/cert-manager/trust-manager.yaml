@@ -1,0 +1,34 @@
+{{- if .Values.trustManager.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: trust-manager
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - CreateNamespace=true
+  source:
+    chart: trust-manager
+    repoURL: oci://quay.io/jetstack/charts/trust-manager
+    targetRevision: {{ .Values.trustManager.version }}
+    helm:
+      releaseName: trust-manager
+      valuesObject:
+        crds:
+          enabled: {{ .Values.trustManager.installCRDs }}
+        secretTargets:
+          enabled: true
+          authorizedSecrets:
+            - "weebo-poc"
+            - "weebo.poc"
+  destination:
+    name: in-cluster
+    namespace: cert-manager
+{{- end -}}

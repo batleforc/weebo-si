@@ -41,7 +41,7 @@ spec:
               enabled: false
 
         zitadel:
-          masterkey: "MasterkeyNeedsToHave32Characters"
+          masterkey: "vault:mv/data/zitadel/config#masterkey"
 
           configmapConfig:
             ExternalDomain: {{ .Values.zitadel.dns }}   # replace with your domain or IP
