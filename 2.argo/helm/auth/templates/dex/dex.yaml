@@ -41,7 +41,7 @@ spec:
             name: weebo
             config:
               issuer: {{ .Values.dex.mainConnector.issuer }}
-              clientID: {{ .Values.dev.mainConnector.clientID }}
+              clientID: {{ .Values.dex.mainConnector.clientID }}
               redirectURI: "https://dex.4.weebo.fr/dex/callback"
               clientSecret: $LAB_CLIENT_SECRET
         env:
