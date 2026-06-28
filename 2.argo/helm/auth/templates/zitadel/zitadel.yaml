@@ -79,6 +79,20 @@ spec:
                 paths:
                   - path: /ui/v2/login
                     pathType: Prefix
+        initJob:
+          podAnnotations:
+            vault.security.banzaicloud.io/vault-addr: "https://openbao.vault:8200"
+            vault.security.banzaicloud.io/vault-role: "default"
+            vault.security.banzaicloud.io/vault-tls-secret: "openbao-tls"
+            vault.security.banzaicloud.io/vault-path: "kubernetes"
+            vault.security.banzaicloud.io/vault-agent: "true"
+        setupJob:
+          podAnnotations:
+            vault.security.banzaicloud.io/vault-addr: "https://openbao.vault:8200"
+            vault.security.banzaicloud.io/vault-role: "default"
+            vault.security.banzaicloud.io/vault-tls-secret: "openbao-tls"
+            vault.security.banzaicloud.io/vault-path: "kubernetes"
+            vault.security.banzaicloud.io/vault-agent: "true"
   destination:
     name: "in-cluster"
     namespace: zitadel
