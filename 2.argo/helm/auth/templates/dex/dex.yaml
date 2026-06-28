@@ -52,6 +52,7 @@ spec:
         ingress:
           enabled: true
           annotations:
+            cert-manager.io/cluster-issuer: "vault-issuer"
             cert-manager.io/private-key-size: "4096"
             cert-manager.io/common-name: "{{ .Values.dex.issuer }}"
             cert-manager.io/subject-organizations: "WeeboSI"
