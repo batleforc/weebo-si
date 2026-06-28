@@ -52,7 +52,10 @@ spec:
         ingress:
           enabled: true
           annotations:
-            cert-manager.io/cluster-issuer: outbound
+            cert-manager.io/private-key-size: "4096"
+            cert-manager.io/common-name: "{{ .Values.dex.issuer }}"
+            cert-manager.io/subject-organizations: "WeeboSI"
+            cert-manager.io/subject-organizationalunits: "Infra"
           hosts:
           - host: {{ .Values.dex.issuer }}
             paths:
