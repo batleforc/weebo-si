@@ -44,7 +44,7 @@ spec:
               clientID: {{ .Values.dex.mainConnector.clientID }}
               redirectURI: "https://dex.4.weebo.fr/dex/callback"
               clientSecret: $LAB_CLIENT_SECRET
-        env:
+        envVars:
           - name: "LAB_CLIENT_SECRET"
             value: "vault:mv/data/dex/config#LAB_CLIENT_SECRET"
           - name: "KUBE_CLIENT_SECRET"
