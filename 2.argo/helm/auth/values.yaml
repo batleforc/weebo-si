@@ -3,7 +3,7 @@ dex:
   version: "0.24.1"
   issuer: "dex.weebo.poc"
   mainConnector:
-    issuer: "https://auth.batleforc.fr/application/o/lab/.well-known/openid-configuration"
+    issuer: "https://auth.batleforc.fr/application/o/lab/"
     clientID: "lab"
 
 zitadel:
