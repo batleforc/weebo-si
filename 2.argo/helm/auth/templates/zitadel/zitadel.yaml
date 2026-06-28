@@ -51,11 +51,15 @@ spec:
               Enabled: false
             FirstInstance:
               Org:
-                Human:
-                  UserName: zitadel-admin
-                  Email: zitadel-admin@zitadel.localhost
-                  Password: "Password1!"
-                  PasswordChangeRequired: false
+                Machine:
+                  Machine:
+                    Username: "zitadel-admin-sa"
+                    Name: "Admin"
+                  MachineKey:
+                    ExpirationDate: "2030-01-01T00:00:00Z"
+                    Type: 1
+                  PAT:
+                    ExpirationDate: "2030-01-01T00:00:00Z"
 
         ingress:
           enabled: true

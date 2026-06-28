@@ -1,7 +1,7 @@
 dex:
   enabled: true
   version: "0.24.1"
-  issuer: "dex.4.weebo.fr"
+  issuer: "dex.weebo.poc"
   mainConnector:
     issuer: "https://auth.batleforc.fr/application/o/lab/.well-known/openid-configuration"
     clientID: "lab"
