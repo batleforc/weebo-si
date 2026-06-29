@@ -58,7 +58,7 @@ spec:
                     Object.spec.volumes{
                       name: "etc-ssl-certs",
                       secret: Object.spec.volumes.secret{
-                        name: "weebo.poc"
+                        secretName: "weebo.poc"
                       }
                     }
                   ])
