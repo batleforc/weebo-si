@@ -21,4 +21,7 @@ spec:
       - Infra
     organizations:
       - WeeboSI
+  usages:
+    - digital signature
+    - key encipherment
 {{- end -}}
