@@ -1,5 +1,5 @@
 kyverno:
-  enable: true
+  enabled: true
   version: 1.18.0
 
 repo: ""
