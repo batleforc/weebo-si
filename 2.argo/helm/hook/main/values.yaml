@@ -2,6 +2,9 @@ kyverno:
   enabled: true
   version: 3.8.1
 
+hookApp:
+  enabled: true
+
 repo: ""
 project: ""
 branch: ""

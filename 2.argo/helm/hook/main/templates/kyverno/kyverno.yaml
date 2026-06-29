@@ -18,7 +18,7 @@ spec:
     - CreateNamespace=true
     - ServerSideApply=true
   destination:
-    namespace: auth
+    namespace: hook
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
