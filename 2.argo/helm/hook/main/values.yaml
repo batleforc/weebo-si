@@ -1,6 +1,6 @@
 kyverno:
   enabled: true
-  version: 1.18.0
+  version: 3.8.1
 
 repo: ""
 project: ""
