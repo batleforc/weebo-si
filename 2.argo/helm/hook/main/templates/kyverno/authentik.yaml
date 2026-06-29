@@ -1,0 +1,32 @@
+{{- if .Values.kyverno.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: kyverno
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+  destination:
+    namespace: auth
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: kyverno
+    repoURL: https://kyverno.github.io/kyverno/
+    targetRevision: {{ .Values.kyverno.version }}
+    helm:
+      releaseName: kyverno
+      valuesObject:
+        
+
+{{- end -}}

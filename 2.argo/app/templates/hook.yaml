@@ -1,0 +1,36 @@
+{{- if .Values.hook.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hook
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: {{ .Values.hook.project }}
+  source:
+    repoURL: '{{ .Values.repo }}'
+    path: '2.argo/helm/hook/main'
+    targetRevision: '{{ .Values.branch }}'
+    helm:
+      releaseName: hook
+      valuesObject:
+        project: "{{ .Values.hook.project }}"
+        repo: "{{ .Values.repo }}"
+        branch: "{{ .Values.branch }}"
+        traefik:
+          ips: "{{ .Values.traefik.ips }}"
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'argocd'
+  syncPolicy:
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

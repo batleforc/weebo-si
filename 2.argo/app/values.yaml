@@ -18,6 +18,10 @@ vpn:
   enabled: true
   project: infra
 
+hool:
+  enabled: true
+  project: infra
+
 repo: ""
 branch: ""
 
@@ -35,6 +39,7 @@ project:
       - https://ghcr.io/bank-vaults/helm-charts
       - https://charts.zitadel.com
       - https://charts.dexidp.io
+      - https://kyverno.github.io/kyverno/
     includeBaseRepo: true
     dest:
       - server: "https://kubernetes.default.svc"

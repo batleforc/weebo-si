@@ -1,0 +1,7 @@
+kyverno:
+  enable: true
+  version: 1.18.0
+
+repo: ""
+project: ""
+branch: ""
