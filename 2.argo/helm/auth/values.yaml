@@ -8,7 +8,7 @@ dex:
 
 authentik:
   enabled: true
-  version: 2026.2.2
+  version: 2026.5.3
   argoAuth:
     enabled: true
 
@@ -17,7 +17,7 @@ dns:
   certificate:
     enabled: true
     name: auth-tls
-    issuerRef: "outbound"
+    issuerRef: "vault-issuer"
     issuerRefKind: ClusterIssuer
   createWithCRD: false
   ipv4:
