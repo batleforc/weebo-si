@@ -71,3 +71,5 @@ project:
         kind: "Bundle"
       - group: "cert-manager.io"
         kind: "Certificate"
+      - group: "policies.kyverno.io"
+        kind: "MutatingPolicy"
