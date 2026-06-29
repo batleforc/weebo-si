@@ -1,5 +1,9 @@
 terraform {
   required_providers {
+    authentik = {
+      source  = "goauthentik/authentik"
+      version = "2025.12.1"
+    }
     vault = {
       source  = "hashicorp/vault"
       version = "5.8.0"
@@ -8,16 +12,39 @@ terraform {
 }
 
 locals {
-  token_vault = file("/var/run/vault/vault-root")
+  token_vault = file("/var/run/secrets/kubernetes.io/serviceaccount/token")
 }
 
-data "vault_auth_backend" "kubernetes" {
-  path = "kubernetes"
+variable "authentik_url" {
+  type        = string
+  description = "The URL of the Authentik instance"
+  default     = "https://login.main-cluster.weebo.poc"
 }
 
+variable "authentik_token" {
+  type        = string
+  description = "The API token for Authentik"
+  default     = "foo-bar"
+}
+
+variable "vault_addr" {
+  type        = string
+  description = "The address of the Vault instance"
+  default     = "https://openbao.vault"
+}
+
+provider "authentik" {
+  url   = var.authentik_url
+  token = var.authentik_token
+}
 
 provider "vault" {
-  address      = "https://openbao.vault:8200"
-  ca_cert_file = "/etc/ssl/vault/ca.crt"
-  token        = local.token_vault
+  address          = var.vault_addr
+  ca_cert_file     = "/etc/ssl/vault/ca.crt"
+  skip_child_token = "true"
+  auth_login_jwt {
+    role  = "auth"
+    jwt   = local.token_vault
+    mount = "kubernetes"
+  }
 }

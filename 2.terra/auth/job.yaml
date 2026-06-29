@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "terra-job-vault"
+  name: "terra-job-authentik"
   annotations:
     argocd.argoproj.io/hook: PostSync
 spec:
@@ -10,11 +10,12 @@ spec:
     metadata:
       annotations:
         inject-certs: "enabled"
-        vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
+        vault.security.banzaicloud.io/vault-addr: "https://openbao.vault:8200"
         vault.security.banzaicloud.io/vault-role: "auth"
         vault.security.banzaicloud.io/vault-path: "kubernetes"
-        vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
+        vault.security.banzaicloud.io/vault-tls-secret: "openbao-tls"
     spec:
+      serviceAccountName: "authentik"
       containers:
         - name: terraform
           image: hashicorp/terraform:latest
@@ -31,6 +32,10 @@ spec:
               terraform init --upgrade
               terraform apply -auto-approve
           env:
+            - name: TF_VAR_authentik_url
+              value: "https://auth.weebo.poc"
+            - name: TF_VAR_authentik_token
+              value: "vault:mv/data/main-config#AUTHENTIK_BOOTSTRAP_TOKEN"
             - name: TF_VAR_vault_addr
               value: "https://openbao.vault:8200"
           volumeMounts:
@@ -39,28 +44,23 @@ spec:
             - mountPath: /scripts
               name: "script-vol"
             - mountPath: /etc/ssl/vault
-              name: vault-tls
-            - mountPath: /var/run/vault
-              name: vault-token
+              name: openbao-tls
       restartPolicy: Never
       volumes:
         - name: "script-vol"
           configMap:
-            name: "terra-vault-config"
+            name: "terra-auth-config"
         - name: terra-job
           persistentVolumeClaim:
-            claimName: "terra-job-vault"
-        - name: vault-tls
+            claimName: "terra-job-authentik"
+        - name: openbao-tls
           secret:
             secretName: "openbao-tls"
-        - name: vault-token
-          secret:
-            secretName: "openbao-unseal-keys"
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "terra-job-vault-empty"
+  name: "terra-job-authentik-empty"
 spec:
   backoffLimit: 10
   template:
@@ -82,4 +82,4 @@ spec:
       volumes:
         - name: terra-job
           persistentVolumeClaim:
-            claimName: "terra-job-vault"
+            claimName: "terra-job-authentik"
