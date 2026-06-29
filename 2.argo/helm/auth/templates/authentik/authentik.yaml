@@ -1,0 +1,92 @@
+{{- if .Values.authentik.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: authentik
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: authentik
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - Replace=true
+  destination:
+    namespace: auth
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: authentik
+    repoURL: https://charts.goauthentik.io
+    targetRevision: {{ .Values.authentik.version }}
+    helm:
+      releaseName: authentik
+      valuesObject:
+        global:
+          env:
+            - name: POSTGRES_PASSWORD
+              value: "vault:mv/data/main-config#AUTHENTIK_POSTGRES_USER_PASSWORD"
+          podAnnotations:
+            inject-certs: "enabled"
+            vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
+            vault.security.banzaicloud.io/vault-role: "auth"
+            vault.security.banzaicloud.io/vault-path: "kubernetes"
+            vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
+        authentik:
+          bootstrap_token: "vault:mv/data/main-config#AUTHENTIK_BOOTSTRAP_TOKEN"
+          bootstrap_password: "vault:mv/data/main-config#AUTHENTIK_BOOTSTRAP_PASSWORD"
+          secret_key: "vault:mv/data/main-config#AUTHENTIK_SECRET_KEY"
+          error_reporting:
+            enabled: true
+
+        server:
+          ingress:
+            ingressClassName: traefik
+            enabled: true
+            hosts:
+            - {{ .Values.dns.domain }}
+            https: false
+            tls:
+            - secretName: {{ .Values.dns.certificate.name }}
+              hosts:
+              - {{ .Values.dns.domain }}
+        postgresql:
+          enabled: true
+          primary:
+            automountServiceAccountToken: true
+            extraEnvVars:
+              - name: POSTGRES_PASSWORD
+                value: "vault:mv/data/main-config#AUTHENTIK_POSTGRES_USER_PASSWORD"
+            podAnnotations:
+              vault.security.banzaicloud.io/vault-addr: "https://vault.vault:8200"
+              vault.security.banzaicloud.io/vault-role: "auth"
+              vault.security.banzaicloud.io/vault-path: "kubernetes"
+              vault.security.banzaicloud.io/vault-tls-secret: "vault-tls"
+          auth:
+            usePasswordFiles: false
+            existingSecret: ""
+            #existingSecret: "authentik-postgresql-auth"
+            # secretKeys:
+            #   adminPasswordKey: "password-admin"
+          serviceAccount:
+            name: authentik
+            create: false
+        redis:
+          enabled: true
+        additionalObjects:
+          - apiVersion: v1
+            kind: Secret
+            metadata:
+              name: authentik-postgresql-auth
+              namespace: auth
+            type: Opaque
+            data:
+              password-admin: {{ "vault:mv/data/main-config#AUTHENTIK_POSTGRES_PASSWORD" | b64enc }}
+
+{{- end -}}
