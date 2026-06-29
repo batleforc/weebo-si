@@ -64,3 +64,5 @@ project:
         kind: "Vault"
       - group: "trust.cert-manager.io"
         kind: "Bundle"
+      - group: "cert-manager.io"
+        kind: "Certificate"
