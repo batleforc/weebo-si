@@ -12,6 +12,23 @@ authentik:
   argoAuth:
     enabled: true
 
+dns:
+  domain: auth.weebo.poc
+  certificate:
+    enabled: true
+    name: auth-tls
+    issuerRef: "outbound"
+    issuerRefKind: ClusterIssuer
+  createWithCRD: false
+  ipv4:
+    enabled: true
+    addresses:
+      - ""
+  ipv6:
+    enabled: true
+    addresses:
+      - ""
+
 repo: ""
 project: ""
 branch: ""
