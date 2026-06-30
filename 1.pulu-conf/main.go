@@ -186,6 +186,9 @@ g, authentik Admins, role:admin`),
 					"networkPolicy": pulumi.Map{
 						"create": pulumi.Bool(true),
 					},
+					"podAnnotations": pulumi.Map{
+						"inject-certs": pulumi.String("enabled"),
+					},
 				},
 				"server": pulumi.Map{
 					"ingress": pulumi.Map{
