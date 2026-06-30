@@ -18,6 +18,7 @@ vaultInstance:
     enabled: true
     version: 1.23.1
   dns: vault.weebo.poc
+  deployed: true
 
 repo: ""
 project: ""

@@ -45,6 +45,11 @@ spec:
     - name: vault-raft
       persistentVolumeClaim:
         claimName: vault-raft
+{{- if .Values.vaultInstance.deployed }}
+    - name: etc-ssl-certs
+      secret:
+        secretName: "weebo.poc"
+{{- end }}
 
   vaultContainerSpec:
     name: vault
@@ -53,6 +58,10 @@ spec:
       name: vault-config
     - mountPath: /openbao/data
       name: vault-raft
+{{- if .Values.vaultInstance.deployed }}
+    - mountPath: /etc/ssl/certs
+      name: etc-ssl-certs
+{{- end }}
   # Support for distributing the generated CA certificate Secret to other namespaces.
   # Define a list of namespaces or use ["*"] for all namespaces.
   caNamespaces:
