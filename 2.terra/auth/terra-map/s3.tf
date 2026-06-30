@@ -20,6 +20,8 @@ resource "authentik_provider_oauth2" "s3" {
     data.authentik_property_mapping_provider_scope.scope-openid.id,
     data.authentik_property_mapping_provider_scope.scope-offline.id,
   ]
+  grant_types = ["authorization_code"]
+
 }
 
 resource "authentik_application" "s3" {

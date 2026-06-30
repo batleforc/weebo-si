@@ -26,6 +26,8 @@ resource "authentik_provider_oauth2" "che" {
     data.authentik_property_mapping_provider_scope.scope-openid.id,
     data.authentik_property_mapping_provider_scope.scope-offline.id,
   ]
+  grant_types = ["authorization_code"]
+
 }
 
 resource "authentik_application" "che" {
