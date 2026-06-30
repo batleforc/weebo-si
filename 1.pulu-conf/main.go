@@ -187,6 +187,11 @@ g, authentik Admins, role:admin`),
 						"create": pulumi.Bool(true),
 					},
 					"podAnnotations": pulumi.Map{
+						"inject-certs": pulumi.String("disabled"),
+					},
+				},
+				"dex": pulumi.Map{
+					"podAnnotations": pulumi.Map{
 						"inject-certs": pulumi.String("enabled"),
 					},
 				},
