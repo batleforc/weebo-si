@@ -6,7 +6,7 @@ spec:
   sources:
     - useDefaultCAs: true
     - secret:
-        name: "weebo.poc"
+        name: "main-ca.crt"
         includeAllKeys: true
   target:
     configMap:
