@@ -9,7 +9,6 @@ spec:
   template:
     metadata:
       annotations:
-        inject-certs: "enabled"
         vault.security.banzaicloud.io/vault-addr: "https://openbao.vault:8200"
         vault.security.banzaicloud.io/vault-role: "auth"
         vault.security.banzaicloud.io/vault-path: "kubernetes"
@@ -45,6 +44,8 @@ spec:
               name: "script-vol"
             - mountPath: /etc/ssl/vault
               name: openbao-tls
+            - mountPath: /etc/ssl/certs
+              name: etc-ssl-certs
       restartPolicy: Never
       volumes:
         - name: "script-vol"
@@ -56,6 +57,9 @@ spec:
         - name: openbao-tls
           secret:
             secretName: "openbao-tls"
+        - name: etc-ssl-certs
+          secret:
+            secretName: "weebo.poc"
 ---
 apiVersion: batch/v1
 kind: Job
