@@ -73,3 +73,5 @@ project:
         kind: "Certificate"
       - group: "policies.kyverno.io"
         kind: "MutatingPolicy"
+      - group: "kyverno.io"
+        kind: "ClusterPolicy"
