@@ -49,6 +49,7 @@ spec:
           - id: weebo-kube
             redirectURIs:
             - 'https://dex.4.weebo.fr/callback'
+            - 'http://localhost:8000'
             name: 'Kube App'
             secret: $KUBE_CLIENT_SECRET
 
