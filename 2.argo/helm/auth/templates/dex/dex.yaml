@@ -41,14 +41,23 @@ spec:
             name: weebo
             config:
               issuer: {{ .Values.dex.mainConnector.issuer }}
-              clientID: {{ .Values.dex.mainConnector.clientID }}
+              clientID: $AUTHENTIK_CLIENT_ID
               redirectURI: "https://dex.4.weebo.fr/dex/callback"
-              clientSecret: $LAB_CLIENT_SECRET
+              clientSecret: $AUTHENTIK_CLIENT_SECRET
+          staticClients:
+          - id: weebo-kube
+            redirectURIs:
+            - 'https://dex.4.weebo.fr/callback'
+            name: 'Kube App'
+            secret: $KUBE_CLIENT_SECRET
+
         envVars:
-          - name: "LAB_CLIENT_SECRET"
-            value: "vault:mv/data/dex/config#LAB_CLIENT_SECRET"
+          - name: "AUTHENTIK_CLIENT_SECRET"
+            value: "vault:mv/data/dex/auth#AUTHENTIK_CLIENT_SECRET"
+          - name: "AUTHENTIK_CLIENT_ID"
+            value: "vault:mv/data/dex/auth#AUTHENTIK_CLIENT_ID"
           - name: "KUBE_CLIENT_SECRET"
-            value: "vault:mv/data/dex/auth#KUBE_CLIENT_SECRET"
+            value: "vault:mv/data/dex/config#KUBE_CLIENT_SECRET"
         ingress:
           enabled: true
           annotations:

@@ -22,8 +22,8 @@ tasks:
   default:
     desc: "Login to Vault CLI"
     env:
-      VAULT_ADDR: "https://localhost:8200"
-      VAULT_CACERT: ".tmp/vault-ca.crt"
+      VAULT_ADDR: "https://vault.weebo.poc" #"https://localhost:8200"
+      #VAULT_CACERT: ".tmp/vault-ca.crt"
     vars:
       VAULT_TOKEN:
         sh: task vault:pwd
@@ -45,5 +45,5 @@ tasks:
     cmds:
       - rm -rf weebo-si-int-ca.pem weebo-si-int-ca.key
       - task vault -- list -tls-skip-verify  -format=json pki_int/certs | jq .[] | awk '{print "task vault -- read -tls-skip-verify   -format=json pki_int/cert/" $1 " | jq -r .data.certificate | cat >> weebo-si-int-ca.pem"}' | bash
-      - sudo cp weebo-si-int-ca.pem /etc/ssl/certs/weebo-si-int-ca.crt
+      - sudo cp weebo-si-int-ca.pem /etc/pki/ca-trust/source/anchors/weebo-si-int-ca.pem
       - sudo update-ca-trust

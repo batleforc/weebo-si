@@ -50,6 +50,18 @@ resource "vault_kv_secret_v2" "che-app" {
   )
 }
 
+resource "vault_kv_secret_v2" "che-app" {
+  mount = "mv"
+  name  = "dex/auth"
+  data_json = jsonencode(
+    {
+      AUTHENTIK_CLIENT_ID     = authentik_provider_oauth2.che.client_id,
+      AUTHENTIK_CLIENT_SECRET = authentik_provider_oauth2.che.client_secret,
+      AUTHENTIK_URL           = "https://auth.weebo.poc/application/o/${authentik_application.che.slug}/",
+    }
+  )
+}
+
 resource "authentik_policy_binding" "che-access" {
   target = authentik_application.che.uuid
   group  = authentik_group.weebo_moderator.id

@@ -3,8 +3,8 @@ dex:
   version: "0.24.1"
   issuer: "dex.weebo.poc"
   mainConnector:
-    issuer: "https://auth.batleforc.fr/application/o/lab/"
-    clientID: "lab"
+    issuer: "https://auth.weebo.poc/application/o/che-cluster/"
+    clientID: "che-cluster"
 
 authentik:
   enabled: true
