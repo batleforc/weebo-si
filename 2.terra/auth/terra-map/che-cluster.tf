@@ -50,7 +50,7 @@ resource "vault_kv_secret_v2" "che-app" {
   )
 }
 
-resource "vault_kv_secret_v2" "che-app" {
+resource "vault_kv_secret_v2" "che-app-2" {
   mount = "mv"
   name  = "dex/auth"
   data_json = jsonencode(
