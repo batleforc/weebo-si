@@ -13,7 +13,7 @@ resource "authentik_provider_oauth2" "che" {
     },
     {
       matching_mode = "strict",
-      url           = "https://dex.4.weebo.fr/dex/callback",
+      url           = "https://dex.weebo.poc/dex/callback",
     },
     {
       matching_mode = "strict",

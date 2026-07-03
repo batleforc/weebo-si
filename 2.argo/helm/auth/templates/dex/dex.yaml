@@ -43,12 +43,12 @@ spec:
             config:
               issuer: {{ .Values.dex.mainConnector.issuer }}
               clientID: $AUTHENTIK_CLIENT_ID
-              redirectURI: "https://dex.4.weebo.fr/dex/callback"
+              redirectURI: "https://dex.weebo.poc/dex/callback"
               clientSecret: $AUTHENTIK_CLIENT_SECRET
           staticClients:
           - id: weebo-kube
             redirectURIs:
-            - 'https://dex.4.weebo.fr/callback'
+            - 'https://dex.weebo.poc/callback'
             - 'http://localhost:8000'
             name: 'Kube App'
             secret: $KUBE_CLIENT_SECRET
