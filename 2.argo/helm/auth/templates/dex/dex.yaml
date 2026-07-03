@@ -26,6 +26,7 @@ spec:
           vault.security.banzaicloud.io/vault-role: "auth-read"
           vault.security.banzaicloud.io/vault-path: "kubernetes"
           vault.security.banzaicloud.io/vault-tls-secret: "openbao-tls"
+          inject-certs: "enabled"
         config:
           issuer: "https://{{ .Values.dex.issuer }}"
           storage:
