@@ -715,6 +715,14 @@ func main() {
 							"8.8.8.8",
 							"2001:4860:4860::8844",
 						},
+						"extraHostEntries": []map[string]interface{}{
+							{
+								"ip": serverNetwork.Routing.Ipv4.Ip,
+								"aliases": []string{
+									"dex.weebo.poc",
+								},
+							},
+						},
 						"interfaces": []map[string]interface{}{
 							{
 								"addresses": []string{
@@ -746,6 +754,13 @@ func main() {
 				if oidcClientID == "" {
 					return "", fmt.Errorf("OIDC_CLIENT_ID environment variable is not set")
 				}
+				oidcCert := os.Getenv("OIDC_CERT")
+				if oidcCert == "" {
+					return "", fmt.Errorf("OIDC_CERT environment variable is not set")
+				}
+				// escape newlines so the PEM survives embedding in a double-quoted YAML scalar;
+				// literal line breaks there get folded into spaces by YAML, corrupting the PEM markers
+				oidcCert = strings.ReplaceAll(oidcCert, "\n", "\\n")
 				conf["cluster"].(map[string]interface{})["apiServer"].(map[string]interface{})["extraArgs"].(map[string]interface{})["authentication-config"] = "/var/lib/apiserver/authentication.yaml"
 				conf["cluster"].(map[string]interface{})["apiServer"].(map[string]interface{})["extraVolumes"] = []map[string]interface{}{
 					{
@@ -767,6 +782,7 @@ jwt:
       audiences:
         - '%s'
       audienceMatchPolicy: MatchAny
+      certificateAuthority: "%s"
     claimValidationRules:
       - expression: "claims.email_verified == true"
         message: "email must be verified"
@@ -781,7 +797,7 @@ jwt:
       - expression: "!user.username.startsWith('system:')"
         message: "username cannot used reserved system: prefix"
       - expression: "user.groups.all(group, !group.startsWith('system:'))"
-        message: "groups cannot used reserved system: prefix"`, oidcIssuerUrl, oidcClientID),
+        message: "groups cannot used reserved system: prefix"`, oidcIssuerUrl, oidcClientID, oidcCert),
 					},
 				}
 			}

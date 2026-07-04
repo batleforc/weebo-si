@@ -45,6 +45,7 @@ spec:
               clientID: $AUTHENTIK_CLIENT_ID
               redirectURI: "https://dex.weebo.poc/callback"
               clientSecret: $AUTHENTIK_CLIENT_SECRET
+              insecureEnableGroups: true
               scopes:
                 - openid
                 - email
