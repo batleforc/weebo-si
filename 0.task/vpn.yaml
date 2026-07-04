@@ -13,13 +13,20 @@ tasks:
       NB_ADMIN_URL: "https://vpn.batleforc.fr"
     cmds:
       - netbird up -F
-  chrome:
+  chrome:main:
     desc: "Start Chrome configured to use the VPN in sockets mode and force dns resolution through the VPN with 10.96.0.11 as dns server"
     env:
       NB_USE_NETSTACK_MODE: "true"
       NB_SOCKS5_LISTENER_PORT: "30000"
     cmds:
       - google-chrome --proxy-server="socks5://localhost:30000" --no-sandbox --user-data-dir=/tmp/chrome --host-resolver-rules="MAP * 10.96.0.11, EXCLUDE localhost"
+  chrome:lab:
+    desc: "Start Chrome configured to use the VPN in sockets mode and force dns resolution through the VPN with 10.128.0.10 as dns server"
+    env:
+      NB_USE_NETSTACK_MODE: "true"
+      NB_SOCKS5_LISTENER_PORT: "30000"
+    cmds:
+      - google-chrome --proxy-server="socks5://localhost:30000" --no-sandbox --user-data-dir=/tmp/chrome --host-resolver-rules="MAP * 10.128.0.10, EXCLUDE localhost"
   curl:
     desc: "Curl that use the VPN in sockets mode"
     env:
