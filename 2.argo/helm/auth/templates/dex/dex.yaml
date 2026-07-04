@@ -56,7 +56,7 @@ spec:
             - 'https://dex.weebo.poc/callback'
             - 'http://localhost:8000'
             name: 'Kube App'
-            secret: $KUBE_CLIENT_SECRET
+            secretEnv: KUBE_CLIENT_SECRET
 
         envVars:
           - name: "AUTHENTIK_CLIENT_SECRET"
