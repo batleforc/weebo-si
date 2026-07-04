@@ -13,6 +13,9 @@ vault:
 storage:
   local:
     enabled: true
+  main:
+    enabled: true
+    project: infra
 
 vpn:
   enabled: true
@@ -40,6 +43,7 @@ project:
       - https://charts.zitadel.com
       - https://charts.dexidp.io
       - https://kyverno.github.io/kyverno/
+      - https://charts.longhorn.io
     includeBaseRepo: true
     dest:
       - server: "https://kubernetes.default.svc"

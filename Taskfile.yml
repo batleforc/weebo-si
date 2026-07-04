@@ -38,9 +38,14 @@ tasks:
       - talosctl {{ .CLI_ARGS }}
   k9s:
     env:
-      KUBECONFIG: 0.config/kubeconfig.yaml
+      KUBECONFIG: 0.config/kubeconfig.oidc.yaml
     cmds:
       - k9s
+  lfk:
+    env:
+      KUBECONFIG: 0.config/kubeconfig.oidc.yaml
+    cmds:
+      - lfk {{ .CLI_ARGS }}
   c:
     env:
       KUBECONFIG: 0.config/kubeconfig.yaml

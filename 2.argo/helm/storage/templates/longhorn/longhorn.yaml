@@ -1,0 +1,69 @@
+{{- if .Values.longhorn.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: longhorn
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - CreateNamespace=true
+  source:
+    chart: longhorn
+    repoURL: https://charts.longhorn.io
+    targetRevision: {{ .Values.longhorn.version }}
+    helm:
+      releaseName: longhorn
+      valuesObject:
+        metrics:
+          addInternals: true
+        defaultSettings:
+          # Default data path on Talos nodes
+          defaultDataPath: /var/mnt/staticdisk # Use /var/mnt/longhorn with UserVolumeConfig on Talos v1.10+
+          # Default replica count
+          defaultReplicaCount: 1
+          # Storage over-provisioning percentage
+          storageOverProvisioningPercentage: 100
+          # Storage minimal available percentage
+          storageMinimalAvailablePercentage: 15
+          # Default data locality
+          defaultDataLocality: best-effort
+          # Create the default disk on all new nodes when no disks already exist
+          createDefaultDiskLabeledNodes: false
+          # Node drain policy
+          nodeDrainPolicy: block-for-eviction
+          # Guaranteed instance manager CPU
+          guaranteedInstanceManagerCPU: 4
+
+        persistence:
+          # Default storage class
+          defaultClass: true
+          defaultClassReplicaCount: 1
+          defaultFsType: ext4
+
+        # Resource limits
+        longhornManager:
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+
+        longhornDriver:
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+
+        # Enable the UI
+        longhornUI:
+          replicas: 1
+  destination:
+    name: "in-cluster"
+    namespace: longhorn
+{{- end -}}

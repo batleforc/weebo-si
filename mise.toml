@@ -18,6 +18,7 @@ claude = "latest"
 talosctl = "latest"
 fnox = "latest"
 vault = "latest"
+"github:janosmiko/lfk" = "latest"
 
 [plugins]
 kkrew = "https://github.com/soupglasses/mise-krew"
