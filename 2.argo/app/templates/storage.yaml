@@ -11,7 +11,7 @@ spec:
   project: {{ .Values.storage.main.project }}
   source:
     repoURL: '{{ .Values.repo }}'
-    path: '2.argo/helm/storage/main'
+    path: '2.argo/helm/storage'
     targetRevision: '{{ .Values.branch }}'
     helm:
       releaseName: ingress
