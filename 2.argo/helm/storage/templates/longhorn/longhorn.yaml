@@ -13,7 +13,8 @@ spec:
   syncPolicy:
     automated: {}
     syncOptions:
-    - CreateNamespace=true
+      - CreateNamespace=true
+      - ServerSideApply=true
   source:
     chart: longhorn
     repoURL: https://charts.longhorn.io
@@ -21,8 +22,6 @@ spec:
     helm:
       releaseName: longhorn
       valuesObject:
-        metrics:
-          addInternals: true
         defaultSettings:
           # Default data path on Talos nodes
           defaultDataPath: /var/mnt/staticdisk # Use /var/mnt/longhorn with UserVolumeConfig on Talos v1.10+
