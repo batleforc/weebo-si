@@ -23,10 +23,9 @@ tasks:
       - kubectl {{ .CLI_ARGS }}
   k-oidc:
     silent: true
-    env:
-      KUBECONFIG: "0.config/kubeconfig.oidc.yaml"
+
     cmds:
-      - kubectl {{ .CLI_ARGS }}
+      - kubectl {{ .CLI_ARGS }} --kubeconfig 0.config/kubeconfig.oidc.yaml
   docs:run:
     dir: 0.docs
     cmds:
