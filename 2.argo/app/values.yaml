@@ -79,3 +79,5 @@ project:
         kind: "MutatingPolicy"
       - group: "kyverno.io"
         kind: "ClusterPolicy"
+      - group: "scheduling.k8s.io"
+        kind: "PriorityClass"
