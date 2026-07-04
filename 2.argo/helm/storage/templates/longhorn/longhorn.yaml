@@ -22,6 +22,9 @@ spec:
     helm:
       releaseName: longhorn
       valuesObject:
+        preUpgradeChecker:
+          # Disable the Helm pre-upgrade hook when Longhorn is managed by ArgoCD
+          jobEnabled: false
         defaultSettings:
           # Default data path on Talos nodes
           defaultDataPath: /var/mnt/staticdisk # Use /var/mnt/longhorn with UserVolumeConfig on Talos v1.10+
