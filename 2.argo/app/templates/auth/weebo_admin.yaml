@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: weebo-admin-crb
+  namespace: development
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cluster-admin
+subjects:
+- kind: Group
+  name: "labsso:weebo_admin"
+  apiGroup: rbac.authorization.k8s.io

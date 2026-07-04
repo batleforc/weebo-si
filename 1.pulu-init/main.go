@@ -769,6 +769,7 @@ func main() {
 						"readonly":  true,
 					},
 				}
+				// Only indent with spaces, not tabs, because Kube YAML parser is strict about this.
 				conf["machine"].(map[string]interface{})["files"] = []map[string]interface{}{
 					{
 						"permissions": 0644,
@@ -790,7 +791,8 @@ jwt:
       username:
         expression: '"labsso:" + claims.email'
       groups:
-        expression: "claims.groups"
+        claim: "groups"
+        prefix: "labsso:"
       uid:
         expression: "claims.sub"
     userValidationRules:
