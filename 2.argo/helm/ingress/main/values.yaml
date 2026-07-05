@@ -30,7 +30,7 @@ traefik:
     enabled: false
 
 authentik:
-  enabled: false
+  enabled: true
 
 repo: ""
 project: ""
