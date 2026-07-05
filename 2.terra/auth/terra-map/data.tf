@@ -29,3 +29,7 @@ data "authentik_property_mapping_provider_scope" "scope-offline" {
 data "authentik_property_mapping_provider_scope" "scope-api" {
   name = "authentik default OAuth Mapping: authentik API access"
 }
+
+data "authentik_outpost" "embedded" {
+  name = "authentik Embedded Outpost"
+}
