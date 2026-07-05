@@ -1,6 +1,7 @@
 longhorn:
   enabled: true
   version: 1.12.0
+  domain: longhorn.weebo.poc
 
 # https://oneuptime.com/blog/post/2026-03-03-set-up-longhorn-storage-on-talos-linux/view
 

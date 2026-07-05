@@ -1,0 +1,27 @@
+{{- if .Values.longhorn.enabled -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: longhorn
+  namespace: auth
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  secretName: longhorn-tls
+  commonName: {{ .Values.longhorn.domain }}
+  dnsNames:
+    - {{ .Values.longhorn.domain }}
+  issuerRef:
+    name: vault-issuer
+    kind: ClusterIssuer
+  privateKey:
+    size: 4096
+  subject:
+    organizationalUnits:
+      - Infra
+    organizations:
+      - WeeboSI
+  usages:
+    - digital signature
+    - key encipherment
+{{- end -}}

@@ -1,0 +1,36 @@
+{{- if .Values.longhorn.enabled -}}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: longhorn
+  namespace: longhorn
+  labels:
+    app.kubernetes.io/name: longhorn
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.longhorn.domain }}`)
+      priority: 10
+      services:
+        - name: longhorn-frontend
+          namespace: longhorn
+          port: 80
+          passHostHeader: true
+      middlewares:
+        - name: authentik
+          namespace: authentik
+        # - name: outpost-vpn
+        #   namespace: traefik
+    - kind: Rule
+      match: Host(`{{ .Values.longhorn.domain }}`) && PathPrefix(`/outpost.goauthentik.io/`)
+      priority: 15
+      services:
+        - name: authentik-server
+          namespace: authentik
+          port: 80
+          passHostHeader: true
+  tls:
+    secretName: longhorn-tls
+{{- end -}}
