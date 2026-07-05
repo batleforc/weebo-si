@@ -49,7 +49,7 @@ traefik:
         - 100.64.0.0/16
 
 authentik:
-  enabled: false
+  enabled: true
 
 repo: ""
 project: ""
