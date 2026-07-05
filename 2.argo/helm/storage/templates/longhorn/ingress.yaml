@@ -20,7 +20,7 @@ spec:
           passHostHeader: true
       middlewares:
         - name: authentik
-          namespace: authentik
+          namespace: auth
         # - name: outpost-vpn
         #   namespace: traefik
     - kind: Rule
@@ -28,7 +28,7 @@ spec:
       priority: 15
       services:
         - name: authentik-server
-          namespace: authentik
+          namespace: auth
           port: 80
           passHostHeader: true
   tls:
