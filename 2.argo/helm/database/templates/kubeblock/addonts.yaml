@@ -16,6 +16,7 @@ spec:
   source:
     chart: {{ .name }}
     repoURL: https://apecloud.github.io/helm-charts
+    targetRevision: {{ default .version $.Values.kubeblock.version }}
     helm:
       releaseName: kubeblock
       valuesObject:
