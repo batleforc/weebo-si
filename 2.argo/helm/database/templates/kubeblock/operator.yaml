@@ -15,7 +15,7 @@ spec:
     syncOptions:
     - CreateNamespace=true
   source:
-    chart: kubeblock
+    chart: kubeblocks
     repoURL: https://apecloud.github.io/helm-charts
     targetRevision: {{ .Values.kubeblock.version }}
     helm:
