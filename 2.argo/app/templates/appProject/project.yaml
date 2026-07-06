@@ -1,4 +1,5 @@
-{{ range .Values.project}}
+{{ range .Values.project }}
+---
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
