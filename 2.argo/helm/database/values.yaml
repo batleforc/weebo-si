@@ -1,0 +1,7 @@
+repo: ""
+branch: ""
+project: ""
+
+kubeblock:
+  enabled: true
+  crd_version: 1.0.2
