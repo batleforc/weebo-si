@@ -11,10 +11,12 @@ spec:
     repoURL: "https://github.com/apecloud/kubeblocks"
     targetRevision: "{{ .Values.kubeblock.crd_version }}"
   destination:
-    namespace: argocd
+    namespace: {{ .Release.Namespace}}
     server: "https://kubernetes.default.svc"
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
 {{- end -}}
