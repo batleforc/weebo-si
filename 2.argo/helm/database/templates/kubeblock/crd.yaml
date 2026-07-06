@@ -10,6 +10,8 @@ spec:
     path: deploy/helm/crds
     repoURL: "https://github.com/apecloud/kubeblocks"
     targetRevision: "{{ .Values.kubeblock.crd_version }}"
+    directory:
+      recurse: true
   destination:
     namespace: {{ .Release.Namespace}}
     server: "https://kubernetes.default.svc"
