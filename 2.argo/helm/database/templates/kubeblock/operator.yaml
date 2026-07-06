@@ -21,6 +21,13 @@ spec:
     helm:
       releaseName: kubeblock
       valuesObject:
+        image:
+          registry: docker.io
+        dataProtection:
+          image:
+            registry: docker.io
+        addonChartsImage:
+          registry: docker.io
   destination:
     name: "in-cluster"
     namespace: {{ .Release.Namespace }}
