@@ -1,21 +1,21 @@
 {{- if .Values.kubeblock.enabled -}}
+{{- range .Values.kubeblock.addons }}
+{{- if .enabled }}
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: kubeblock
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "-5"
   finalizers:
   - resources-finalizer.argocd.argoproj.io
 spec:
-  project: {{ .Values.project }}
+  project: {{ $.Values.project }}
   syncPolicy:
     automated: {}
   source:
-    chart: kubeblocks
+    chart: {{ .name }}
     repoURL: https://apecloud.github.io/helm-charts
-    targetRevision: {{ .Values.kubeblock.version }}
     helm:
       releaseName: kubeblock
       valuesObject:
@@ -28,5 +28,7 @@ spec:
           registry: docker.io
   destination:
     name: "in-cluster"
-    namespace: {{ .Release.Namespace }}
-{{- end -}}
+    namespace: {{ $.Release.Namespace }}
+{{- end }}
+{{- end }}
+{{- end }}

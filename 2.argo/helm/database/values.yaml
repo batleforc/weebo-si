@@ -6,3 +6,6 @@ kubeblock:
   enabled: true
   crd_version: v1.0.2
   version: 1.0.2
+  addons:
+    - name: clickhouse
+      enabled: true
