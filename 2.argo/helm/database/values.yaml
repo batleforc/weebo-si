@@ -4,4 +4,4 @@ project: ""
 
 kubeblock:
   enabled: true
-  crd_version: 1.0.2
+  crd_version: v1.0.2
