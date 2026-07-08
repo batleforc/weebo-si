@@ -3,4 +3,4 @@ branch: ""
 project: ""
 
 clickstack:
-  enabled: false
+  enabled: true

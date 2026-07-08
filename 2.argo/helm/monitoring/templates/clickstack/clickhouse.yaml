@@ -13,4 +13,14 @@ spec:
       shards: 1
       template:
         replicas: 1
+        volumeClaimTemplates:
+          - name: data
+            spec:
+              # specify storage class name supports Volume Expansion
+              storageClassName: longhorn
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 10Gi
 {{- end -}}
