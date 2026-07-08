@@ -13,6 +13,11 @@ spec:
       shards: 1
       template:
         replicas: 1
+        systemAccounts:
+          - name: admin
+            secretRef:
+              name: udf-account-info
+              namespace: {{ .Release.Namespace }}
         volumeClaimTemplates:
           - name: data
             spec:

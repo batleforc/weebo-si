@@ -21,3 +21,4 @@ configMapGenerator:
       - ./terra-map/dex-bootstrap.tf
       - ./terra-map/pki.tf
       - ./terra-map/auth-policy.tf
+      - ./terra-map/monitoring.tf
