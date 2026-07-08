@@ -1,3 +1,6 @@
 repo: ""
 branch: ""
 project: ""
+
+clickstack:
+  enabled: true

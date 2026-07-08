@@ -103,8 +103,23 @@
     "0.task": "taskfile"
   },
   "yaml.schemas": {
+    "file:///var/home/max/.vscode/extensions/continue.continue-1.2.22-linux-x64/config-yaml-schema.json": [
+      ".continue/**/*.yaml"
+    ],
     "https://json.schemastore.org/kustomization.json": "file:///home/maxime/git/weebo-si/capi.argo/infra/app/mono-node/cluster.yaml",
-    "https://json.schemastore.org/helmfile.json": "file:///home/maxime/git/weebo-si/capi.argo/helm/cluster-target/template/network.yaml"
+    "https://json.schemastore.org/helmfile.json": "file:///home/maxime/git/weebo-si/capi.argo/helm/cluster-target/template/network.yaml",
+    "file:///var/home/max/.vscode/extensions/continue.continue-2.0.0-linux-x64/config-yaml-schema.json": [
+      ".continue/**/*.yaml"
+    ],
+    "https://www.schemastore.org/helmfile.json": "file:///var/mnt/data/git/weebo-si/2.argo/helm/monitoring/templates/clickhouse.yaml"
   },
-  "robotcode.disableExtension": true
+  "robotcode.disableExtension": true,
+  "yaml.disableSchemaDetection": [
+    "**/.github/workflows/*.yml",
+    "**/.github/workflows/*.yaml",
+    "**/.gitea/workflows/*.yml",
+    "**/.gitea/workflows/*.yaml",
+    "**/.forgejo/workflows/*.yml",
+    "**/.forgejo/workflows/*.yaml"
+  ]
 }

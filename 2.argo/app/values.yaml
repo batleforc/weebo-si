@@ -100,8 +100,8 @@ project:
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"
-      - group: "apiextensions.k8s.io"
-        kind: "CustomResourceDefinition"
+      - group: "apps.kubeblocks.io"
+        kind: "Cluster"
   - name: database
     sourceRepo:
       - https://apecloud.github.io/helm-charts

@@ -1,0 +1,36 @@
+{{- if .Values.monitoring.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: {{ .Values.monitoring.project }}
+  source:
+    repoURL: '{{ .Values.repo }}'
+    path: '2.argo/helm/monitoring'
+    targetRevision: '{{ .Values.branch }}'
+    helm:
+      releaseName: ingress
+      valuesObject:
+        project: "{{ .Values.monitoring.project }}"
+        repo: "{{ .Values.repo }}"
+        branch: "{{ .Values.branch }}"
+        traefik:
+          ips: "{{ .Values.traefik.ips }}"
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'monitoring'
+  syncPolicy:
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

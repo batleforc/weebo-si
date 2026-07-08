@@ -1,0 +1,16 @@
+{{- if .Values.clickstack.enabled -}}
+apiVersion: apps.kubeblocks.io/v1
+kind: Cluster
+metadata:
+  name: cs-clickhouse
+  namespace: {{ .Release.Namespace }}
+spec:
+  clusterDef: clickhouse
+  terminationPolicy: Delete
+  topology: standalone # or cluster
+  shardings:
+    - name: clickhouse
+      shards: 1
+      template:
+        replicas: 1
+{{- end -}}
