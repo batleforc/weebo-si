@@ -16,7 +16,7 @@ spec:
         systemAccounts:
           - name: admin
             secretRef:
-              name: udf-account-info
+              name: clichouse-admin-secret
               namespace: {{ .Release.Namespace }}
         volumeClaimTemplates:
           - name: data
