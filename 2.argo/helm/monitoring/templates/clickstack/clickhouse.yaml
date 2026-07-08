@@ -13,6 +13,10 @@ spec:
       shards: 1
       template:
         replicas: 1
+        securityContext:
+          runAsUser: 1000
+          fsGroup: 1000
+          privileged: false
         volumeClaimTemplates:
           - name: data
             spec:
