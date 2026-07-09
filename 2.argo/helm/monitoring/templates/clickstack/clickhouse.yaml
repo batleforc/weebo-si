@@ -18,6 +18,14 @@ spec:
             secretRef:
               name: clichouse-admin-secret
               namespace: {{ .Release.Namespace }}
+          - name: app
+            secretRef:
+              name: clichouse-app-secret
+              namespace: {{ .Release.Namespace }}
+          - name: otel
+            secretRef:
+              name: clichouse-otel-secret
+              namespace: {{ .Release.Namespace }}
         volumeClaimTemplates:
           - name: data
             spec:
