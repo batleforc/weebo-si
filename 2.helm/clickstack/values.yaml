@@ -59,7 +59,7 @@ hyperdx:
       repository: docker.hyperdx.io/hyperdx/hyperdx
       tag:
       pullPolicy: IfNotPresent
-    replicas: 1     # ignored when autoscaling.enabled is true (HPA manages replicas)
+    replicas: 1 # ignored when autoscaling.enabled is true (HPA manages replicas)
     resources: {}
     livenessProbe:
       enabled: true
@@ -258,7 +258,7 @@ hyperdx:
   # Use annotations for provider-specific bindings (e.g., eks.amazonaws.com/role-arn).
   serviceAccount:
     create: false
-    name: ""            # if empty and create is true, uses the chart fullname
+    name: "" # if empty and create is true, uses the chart fullname
     annotations: {}
 
   # ── K8s CronJob ──────────────────────────────────────────
@@ -283,7 +283,7 @@ mongodb:
   spec:
     members: 1
     type: ReplicaSet
-    version: "5.0.32"
+    version: "8.3.4"
     security:
       authentication:
         modes: ["SCRAM"]
@@ -340,7 +340,7 @@ clickhouse:
       containerTemplate:
         image:
           repository: clickhouse/clickhouse-server
-          tag: "25.7-alpine"
+          tag: "26.4-alpine"
       replicas: 1
       shards: 1
       keeperClusterRef:
@@ -356,12 +356,12 @@ clickhouse:
         extraUsersConfig:
           users:
             app:
-              password: '{{ .Values.hyperdx.secrets.CLICKHOUSE_APP_PASSWORD }}'
+              password: "{{ .Values.hyperdx.secrets.CLICKHOUSE_APP_PASSWORD }}"
               profile: default
               grants:
                 - query: "GRANT SHOW ON *.*, SELECT ON system.*, SELECT ON default.*"
             otelcollector:
-              password: '{{ .Values.hyperdx.secrets.CLICKHOUSE_PASSWORD }}'
+              password: "{{ .Values.hyperdx.secrets.CLICKHOUSE_PASSWORD }}"
               profile: default
               grants:
                 - query: "GRANT SELECT,INSERT,CREATE,SHOW ON default.*"
