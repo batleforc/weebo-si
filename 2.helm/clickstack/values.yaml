@@ -300,6 +300,18 @@ mongodb:
         scramCredentialsSecretName: '{{ include "clickstack.mongodb.fullname" . }}-scram'
     additionalMongodConfig:
       storage.wiredTiger.engineConfig.journalCompressor: zlib
+    statefulSet:
+      spec:
+        volumeClaimTemplates:
+          - metadata:
+              name: data-volume
+            spec:
+              storageClassName: longhorn
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 10Gi
 
 clickhouse:
   enabled: true
@@ -315,6 +327,7 @@ clickhouse:
     spec:
       replicas: 1
       dataVolumeClaimSpec:
+        storageClassName: longhorn
         accessModes:
           - ReadWriteOnce
         resources:
@@ -333,6 +346,7 @@ clickhouse:
       keeperClusterRef:
         name: '{{ include "clickstack.clickhouse.keeper" . }}'
       dataVolumeClaimSpec:
+        storageClassName: longhorn
         accessModes:
           - ReadWriteOnce
         resources:
