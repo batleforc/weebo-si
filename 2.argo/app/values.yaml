@@ -106,7 +106,7 @@ project:
     sourceRepo:
       - https://apecloud.github.io/helm-charts
       - https://github.com/apecloud/kubeblocks
-      - oci://ghcr.io/clickhouse
+      - oci://ghcr.io/clickhouse/clickhouse-operator-helm
       - https://mongodb.github.io/helm-charts
     includeBaseRepo: true
     dest:
