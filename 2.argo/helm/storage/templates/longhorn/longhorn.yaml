@@ -54,6 +54,11 @@ spec:
           defaultClassReplicaCount: 1
           defaultFsType: ext4
 
+        csi:
+          attacherReplicaCount: 1
+          provisionerReplicaCount: 1
+          resizerReplicaCount: 1
+          snapshotterReplicaCount: 1
         # Resource limits
         longhornManager:
           resources:
