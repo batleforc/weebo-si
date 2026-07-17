@@ -6,22 +6,55 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   clusterDef: clickhouse
+  topology: cluster
   terminationPolicy: Delete
-  topology: standalone # or cluster
+  componentSpecs:
+    - name: ch-keeper
+      componentDef: clickhouse-keeper-1
+      replicas: 1
+      resources:
+        limits:
+          cpu: "0.5"
+          memory: "1Gi"
+        requests:
+          cpu: "0.5"
+          memory: "1Gi"
+      systemAccounts:
+          - name: admin
+            secretRef:
+              name: clichouse-admin-secret
+              namespace: {{ .Release.Namespace }}
+      volumeClaimTemplates:
+        - name: data
+          spec:
+            storageClassName: longhorn
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 10Gi
   shardings:
     - name: clickhouse
       shards: 1
       template:
+        name: clickhouse
+        componentDef: clickhouse-1
         replicas: 1
         systemAccounts:
           - name: admin
             secretRef:
               name: clichouse-admin-secret
               namespace: {{ .Release.Namespace }}
+        resources:
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+          requests:
+            cpu: "0.5"
+            memory: "1Gi"
         volumeClaimTemplates:
           - name: data
             spec:
-              # specify storage class name supports Volume Expansion
               storageClassName: longhorn
               accessModes:
                 - ReadWriteOnce
