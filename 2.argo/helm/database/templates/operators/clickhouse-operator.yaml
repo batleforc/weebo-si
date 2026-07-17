@@ -12,6 +12,8 @@ spec:
   project: {{ .Values.project }}
   syncPolicy:
     automated: {}
+    syncOptions:
+      - ServerSideApply=true
   source:
     chart: {{ .Values.clickhouseOperator.chart }}
     repoURL: {{ .Values.clickhouseOperator.repoURL }}
