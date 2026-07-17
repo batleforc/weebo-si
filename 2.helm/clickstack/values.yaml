@@ -357,18 +357,6 @@ clickhouse:
           requests:
             storage: 10Gi
       settings:
-        extraUsersConfig:
-          users:
-            app:
-              password: "{{ .Values.hyperdx.secrets.CLICKHOUSE_APP_PASSWORD }}"
-              profile: default
-              grants:
-                - query: "GRANT SHOW ON *.*, SELECT ON system.*, SELECT ON default.*"
-            otelcollector:
-              password: "{{ .Values.hyperdx.secrets.CLICKHOUSE_PASSWORD }}"
-              profile: default
-              grants:
-                - query: "GRANT SELECT,INSERT,CREATE,SHOW ON default.*"
         extraConfig:
           max_connections: 4096
           keep_alive_timeout: 64
