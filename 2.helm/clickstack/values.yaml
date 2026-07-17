@@ -326,6 +326,8 @@ clickhouse:
   keeper:
     spec:
       replicas: 1
+      podDisruptionBudget:
+        policy: Disabled
       dataVolumeClaimSpec:
         storageClassName: longhorn
         accessModes:
@@ -343,6 +345,8 @@ clickhouse:
           tag: "26.4-alpine"
       replicas: 1
       shards: 1
+      podDisruptionBudget:
+        policy: Disabled
       keeperClusterRef:
         name: '{{ include "clickstack.clickhouse.keeper" . }}'
       dataVolumeClaimSpec:
