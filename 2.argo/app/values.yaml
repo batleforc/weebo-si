@@ -106,6 +106,8 @@ project:
     sourceRepo:
       - https://apecloud.github.io/helm-charts
       - https://github.com/apecloud/kubeblocks
+      - oci://ghcr.io/clickhouse
+      - https://mongodb.github.io/helm-charts
     includeBaseRepo: true
     dest:
       - server: "https://kubernetes.default.svc"
