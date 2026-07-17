@@ -149,3 +149,7 @@ project:
         kind: "ComponentDefinition"
       - group: "apps.kubeblocks.io"
         kind: "ComponentVersion"
+      - group: "admissionregistration.k8s.io"
+        kind: "MutatingWebhookConfiguration"
+      - group: "admissionregistration.k8s.io"
+        kind: "ValidatingWebhookConfiguration"
