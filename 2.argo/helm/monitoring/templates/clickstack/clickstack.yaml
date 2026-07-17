@@ -1,0 +1,97 @@
+{{- if .Values.clickstack.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: clickstack
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  source:
+    repoURL: '{{ .Values.repo }}'
+    path: '2.helm/clickstack'
+    targetRevision: '{{ .Values.branch }}'
+    helm:
+      releaseName: clickstack
+      valuesObject:
+        fullnameOverride: clickstack
+        hyperdx:
+          existingSecret: true
+          secrets: {}
+          deployment:
+            useExistingConfigSecret: true
+            existingConfigSecret: clickstack-hyperdx-config
+            existingConfigConnectionsKey: connections.json
+            existingConfigSourcesKey: sources.json
+        clickhouse:
+          cluster:
+            spec:
+              containerTemplate:
+                env:
+                  - name: CLICKHOUSE_APP_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: clickstack-secret
+                        key: CLICKHOUSE_APP_PASSWORD
+                  - name: CLICKHOUSE_OTEL_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: clickstack-secret
+                        key: CLICKHOUSE_PASSWORD
+              settings:
+                extraUsersConfig:
+                  users:
+                    app:
+                      password:
+                        - '@from_env': CLICKHOUSE_APP_PASSWORD
+                      profile: default
+                      grants:
+                        - query: "GRANT SHOW ON *.*, SELECT ON system.*, SELECT ON default.*"
+                    otelcollector:
+                      password:
+                        - '@from_env': CLICKHOUSE_OTEL_PASSWORD
+                      profile: default
+                      grants:
+                        - query: "GRANT SELECT,INSERT,CREATE,SHOW ON default.*"
+        mongodb:
+          spec:
+            members: 1
+            type: ReplicaSet
+            version: "5.0.32"
+            security:
+              authentication:
+                modes: ["SCRAM"]
+            users:
+              - name: hyperdx
+                db: hyperdx
+                passwordSecretRef:
+                  name: clickstack-mongo-password
+                roles:
+                  - name: dbOwner
+                    db: hyperdx
+                  - name: clusterMonitor
+                    db: admin
+                scramCredentialsSecretName: clickstack-mongodb-scram
+            additionalMongodConfig:
+              storage.wiredTiger.engineConfig.journalCompressor: zlib
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: '{{ .Release.Namespace }}'
+  syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+    automated:
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

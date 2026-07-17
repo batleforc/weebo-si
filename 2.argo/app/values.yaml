@@ -102,6 +102,10 @@ project:
         kind: "Namespace"
       - group: "apps.kubeblocks.io"
         kind: "Cluster"
+      - group: "rbac.authorization.k8s.io"
+        kind: "ClusterRole"
+      - group: "rbac.authorization.k8s.io"
+        kind: "ClusterRoleBinding"
   - name: database
     sourceRepo:
       - https://apecloud.github.io/helm-charts

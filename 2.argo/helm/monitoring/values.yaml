@@ -4,3 +4,4 @@ project: ""
 
 clickstack:
   enabled: true
+  domain: clickstack.weebo.poc

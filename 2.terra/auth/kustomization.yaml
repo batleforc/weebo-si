@@ -26,3 +26,4 @@ configMapGenerator:
       - ./terra-map/che-cluster.tf
       - ./terra-map/s3.tf
       - ./terra-map/longhorn.tf
+      - ./terra-map/clickstack.tf

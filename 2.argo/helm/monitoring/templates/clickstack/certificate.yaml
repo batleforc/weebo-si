@@ -1,0 +1,27 @@
+{{- if .Values.clickstack.enabled -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: clickstack
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  secretName: clickstack-tls
+  commonName: {{ .Values.clickstack.domain }}
+  dnsNames:
+    - {{ .Values.clickstack.domain }}
+  issuerRef:
+    name: vault-issuer
+    kind: ClusterIssuer
+  privateKey:
+    size: 4096
+  subject:
+    organizationalUnits:
+      - Infra
+    organizations:
+      - WeeboSI
+  usages:
+    - digital signature
+    - key encipherment
+{{- end -}}

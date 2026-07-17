@@ -1,0 +1,24 @@
+annotations:
+  artifacthub.io/license: MIT
+  artifacthub.io/links: |
+    - name: Chart Source
+      url: https://github.com/hyperdxio/helm-charts
+    - name: Upstream Project
+      url: https://github.com/hyperdxio/hyperdx
+apiVersion: v2
+appVersion: 2.29.0
+dependencies:
+- alias: otel-collector
+  condition: otel-collector.enabled
+  name: opentelemetry-collector
+  repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+  version: ~0.146.0
+description: A Helm chart for ClickStack - Full-stack observability with ClickHouse,
+  OpenTelemetry, and HyperDX
+home: https://clickhouse.com/docs/use-cases/observability/clickstack
+name: clickstack
+sources:
+- https://github.com/hyperdxio/hyperdx
+- https://github.com/hyperdxio/helm-charts
+type: application
+version: 3.0.1
