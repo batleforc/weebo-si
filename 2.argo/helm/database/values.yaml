@@ -15,10 +15,10 @@ clickhouseOperator:
   enabled: true
   repoURL: oci://ghcr.io/clickhouse/clickhouse-operator-helm
   chart: clickhouse-operator-helm
-  version: 0.0.2
+  version: 0.0.6
 
 mongodbOperator:
   enabled: true
   repoURL: https://mongodb.github.io/helm-charts
   chart: mongodb-kubernetes
-  version: 1.7.0
+  version: 1.9.1
