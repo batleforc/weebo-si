@@ -51,7 +51,7 @@ spec:
                     configMap:
                       name: clickstack-clickhouse-users
               settings:
-                extraUsersConfig: null
+                extraUsersConfig: {}
         additionalManifests:
           - apiVersion: v1
             kind: ConfigMap
