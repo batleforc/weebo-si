@@ -12,13 +12,13 @@ kubeblock:
       version: 1.0.3
 
 clickhouseOperator:
-  enabled: false
+  enabled: true
   repoURL: oci://ghcr.io/clickhouse
   chart: clickhouse-operator-helm
   version: 0.0.2
 
 mongodbOperator:
-  enabled: false
+  enabled: true
   repoURL: https://mongodb.github.io/helm-charts
   chart: mongodb-kubernetes
   version: 1.7.0
