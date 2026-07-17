@@ -41,21 +41,37 @@ spec:
                       secretKeyRef:
                         name: clickstack-secret
                         key: CLICKHOUSE_PASSWORD
+                volumeMounts:
+                  - name: clickhouse-users-config
+                    mountPath: /etc/clickhouse-server/users.d/
+                    readOnly: true
+              podTemplate:
+                volumes:
+                  - name: clickhouse-users-config
+                    configMap:
+                      name: clickstack-clickhouse-users
               settings:
-                extraUsersConfig:
-                  users:
-                    app:
-                      password:
-                        - '@from_env': CLICKHOUSE_APP_PASSWORD
-                      profile: default
-                      grants:
-                        - query: "GRANT SHOW ON *.*, SELECT ON system.*, SELECT ON default.*"
-                    otelcollector:
-                      password:
-                        - '@from_env': CLICKHOUSE_OTEL_PASSWORD
-                      profile: default
-                      grants:
-                        - query: "GRANT SELECT,INSERT,CREATE,SHOW ON default.*"
+                extraUsersConfig: null
+        additionalManifests:
+          - apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: clickstack-clickhouse-users
+            data:
+              users.yaml: |
+                users:
+                  app:
+                    password:
+                      - '@from_env': CLICKHOUSE_APP_PASSWORD
+                    profile: default
+                    grants:
+                      - query: "GRANT SHOW ON *.*, SELECT ON system.*, SELECT ON default.*"
+                  otelcollector:
+                    password:
+                      - '@from_env': CLICKHOUSE_OTEL_PASSWORD
+                    profile: default
+                    grants:
+                      - query: "GRANT SELECT,INSERT,CREATE,SHOW ON default.*"
         mongodb:
           spec:
             members: 1
