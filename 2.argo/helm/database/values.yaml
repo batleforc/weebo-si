@@ -13,7 +13,7 @@ kubeblock:
 
 clickhouseOperator:
   enabled: true
-  repoURL: oci://ghcr.io/clickhouse
+  repoURL: oci://ghcr.io/clickhouse/clickhouse-operator-helm
   chart: clickhouse-operator-helm
   version: 0.0.2
 
