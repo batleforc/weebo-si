@@ -3,10 +3,22 @@ branch: ""
 project: ""
 
 kubeblock:
-  enabled: true
+  enabled: false
   crd_version: v1.0.2
   version: 1.0.2
   addons:
     - name: clickhouse
-      enabled: true
+      enabled: false
       version: 1.0.3
+
+clickhouseOperator:
+  enabled: false
+  repoURL: oci://ghcr.io/clickhouse
+  chart: clickhouse-operator-helm
+  version: 0.0.2
+
+mongodbOperator:
+  enabled: false
+  repoURL: https://mongodb.github.io/helm-charts
+  chart: mongodb-kubernetes
+  version: 1.7.0

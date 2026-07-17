@@ -1,0 +1,31 @@
+{{- if .Values.clickhouseOperator.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: clickhouse-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  syncPolicy:
+    automated: {}
+  source:
+    chart: {{ .Values.clickhouseOperator.chart }}
+    repoURL: {{ .Values.clickhouseOperator.repoURL }}
+    targetRevision: {{ .Values.clickhouseOperator.version }}
+    helm:
+      releaseName: clickhouse-operator
+      valuesObject:
+        webhook:
+          enable: false
+        certManager:
+          enable: false
+        crd:
+          enable: true
+  destination:
+    name: "in-cluster"
+    namespace: {{ .Release.Namespace }}
+{{- end -}}

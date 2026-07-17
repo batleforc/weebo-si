@@ -1,0 +1,28 @@
+{{- if .Values.mongodbOperator.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mongodb-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  syncPolicy:
+    automated: {}
+  source:
+    chart: {{ .Values.mongodbOperator.chart }}
+    repoURL: {{ .Values.mongodbOperator.repoURL }}
+    targetRevision: {{ .Values.mongodbOperator.version }}
+    helm:
+      releaseName: mongodb-operator
+      valuesObject:
+        operator:
+          watchedResources:
+            - mongodbcommunity
+  destination:
+    name: "in-cluster"
+    namespace: {{ .Release.Namespace }}
+{{- end -}}
