@@ -29,6 +29,12 @@ spec:
         clickhouse:
           cluster:
             spec:
+              settings:
+                defaultUserPassword:
+                  passwordType: password
+                  configMap:
+                    name: clickhouse-config
+                    key: default_password
               containerTemplate:
                 env:
                   - name: CLICKHOUSE_APP_PASSWORD
@@ -63,9 +69,6 @@ spec:
             data:
               users.yaml: |
                 users:
-                  default:
-                    password:
-                      - '@from_env': CLICKHOUSE_ADMIN_PASSWORD
                   app:
                     password:
                       - '@from_env': CLICKHOUSE_APP_PASSWORD
