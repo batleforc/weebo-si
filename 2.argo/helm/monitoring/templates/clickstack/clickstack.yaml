@@ -29,12 +29,12 @@ spec:
         clickhouse:
           cluster:
             spec:
-              settings:
-                defaultUserPassword:
-                  passwordType: password
-                  secret:
-                    name: clickstack-secret
-                    key: CLICKHOUSE_ADMIN_PASSWORD
+              # settings:
+              #   defaultUserPassword:
+              #     passwordType: password
+              #     secret:
+              #       name: clickstack-secret
+              #       key: CLICKHOUSE_ADMIN_PASSWORD
               containerTemplate:
                 env:
                   - name: CLICKHOUSE_APP_PASSWORD
