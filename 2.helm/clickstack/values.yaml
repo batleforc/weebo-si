@@ -340,10 +340,10 @@ clickhouse:
   # See https://clickhouse.com/docs/clickhouse-operator/guides/configuration
   cluster:
     spec:
-      # containerTemplate:
-      #   image:
-      #     repository: clickhouse/clickhouse-server
-      #     tag: "26.4-alpine"
+      containerTemplate:
+        image:
+          repository: clickhouse/clickhouse-server
+          tag: "25.8-alpine"
       replicas: 1
       shards: 1
       podDisruptionBudget:
