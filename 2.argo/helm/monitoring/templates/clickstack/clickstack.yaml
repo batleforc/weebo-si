@@ -32,9 +32,9 @@ spec:
               settings:
                 defaultUserPassword:
                   passwordType: password
-                  configMap:
-                    name: clickhouse-config
-                    key: default_password
+                  secret:
+                    name: clickstack-secret
+                    key: CLICKHOUSE_ADMIN_PASSWORD
               containerTemplate:
                 env:
                   - name: CLICKHOUSE_APP_PASSWORD
