@@ -20,8 +20,7 @@ spec:
       releaseName: mongodb-operator
       valuesObject:
         operator:
-          watchNamespace:
-            - monitoring
+          watchNamespace: 'monitoring'
           env: dev
           watchedResources:
             - mongodbcommunity
