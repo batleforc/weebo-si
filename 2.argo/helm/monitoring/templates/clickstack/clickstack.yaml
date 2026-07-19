@@ -73,6 +73,7 @@ spec:
                     password:
                       - '@from_env': CLICKHOUSE_APP_PASSWORD
                     profile: default
+                    quota: "default"
                     grants:
                       - query: "GRANT SHOW ON *.*, SELECT ON system.*, SELECT ON default.*"
               otelcollector.yaml: |
@@ -81,6 +82,7 @@ spec:
                     password:
                       - '@from_env': CLICKHOUSE_OTEL_PASSWORD
                     profile: default
+                    quota: "default"
                     grants:
                       - query: "GRANT SELECT,INSERT,CREATE,SHOW ON default.*"
         mongodb:
