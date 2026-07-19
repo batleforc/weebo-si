@@ -20,6 +20,7 @@ spec:
         fullnameOverride: clickstack
         hyperdx:
           existingSecret: true
+          frontendUrl: "https://{{ .Values.clickstack.domain }}"
           secrets: {}
           deployment:
             useExistingConfigSecret: true
