@@ -46,7 +46,7 @@ spec:
                     valueFrom:
                       secretKeyRef:
                         name: clickstack-secret
-                        key: CLICKHOUSE_OTEL_PASSWORD
+                        key: CLICKHOUSE_PASSWORD
                   - name: CLICKHOUSE_ADMIN_PASSWORD
                     valueFrom:
                       secretKeyRef:
