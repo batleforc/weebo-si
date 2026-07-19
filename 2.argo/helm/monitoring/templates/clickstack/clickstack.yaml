@@ -67,24 +67,32 @@ spec:
             metadata:
               name: clickstack-clickhouse-users
             data:
-              app.yaml: |
-                users:
-                  reader:
-                    password:
-                      - '@from_env': CLICKHOUSE_APP_PASSWORD
-                    profile: default
-                    quota: "default"
-                    grants:
-                      - query: "GRANT SHOW ON *.*, SELECT ON system.*, SELECT ON default.*"
-              otelcollector.yaml: |
-                users:
-                  otelcollector:
-                    password:
-                      - '@from_env': CLICKHOUSE_OTEL_PASSWORD
-                    profile: default
-                    quota: "default"
-                    grants:
-                      - query: "GRANT SELECT,INSERT,CREATE,SHOW ON default.*"
+              app.xml: |
+                <clickhouse>
+                    <users>
+                        <reader>
+                            <password from_env="CLICKHOUSE_APP_PASSWORD"></password>
+                            <profile>default</profile>
+                            <quota>default</quota>
+                            <grants>
+                                <query>GRANT SHOW ON *.*, SELECT ON system.*, SELECT ON default.*</query>
+                            </grants>
+                        </reader>
+                    </users>
+                </clickhouse>
+              otelcollector.xml: |
+                <clickhouse>
+                    <users>
+                        <otelcollector>
+                            <password from_env="CLICKHOUSE_OTEL_PASSWORD"></password>
+                            <profile>default</profile>
+                            <quota>default</quota>
+                            <grants>
+                                <query>GRANT SELECT,INSERT,CREATE,SHOW ON default.*</query>
+                            </grants>
+                        </otelcollector>
+                    </users>
+                </clickhouse>
         mongodb:
           spec:
             members: 1
