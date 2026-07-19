@@ -20,7 +20,7 @@ resource "random_string" "monitoring-clickhouse-otel-password" {
 
 resource "random_string" "monitoring-mongodb-password" {
   length  = 42
-  special = true
+  special = false
 }
 
 resource "vault_kv_secret_v2" "monitoring-clickhouse" {
