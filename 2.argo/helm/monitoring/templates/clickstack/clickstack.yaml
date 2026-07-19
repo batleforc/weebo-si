@@ -37,16 +37,6 @@ spec:
               #       key: CLICKHOUSE_ADMIN_PASSWORD
               containerTemplate:
                 env:
-                  - name: CLICKHOUSE_APP_PASSWORD
-                    valueFrom:
-                      secretKeyRef:
-                        name: clickstack-secret
-                        key: CLICKHOUSE_APP_PASSWORD
-                  - name: CLICKHOUSE_OTEL_PASSWORD
-                    valueFrom:
-                      secretKeyRef:
-                        name: clickstack-secret
-                        key: CLICKHOUSE_PASSWORD
                   - name: CLICKHOUSE_ADMIN_PASSWORD
                     valueFrom:
                       secretKeyRef:
@@ -59,40 +49,8 @@ spec:
               podTemplate:
                 volumes:
                   - name: clickhouse-users-config
-                    configMap:
-                      name: clickstack-clickhouse-users
-        additionalManifests:
-          - apiVersion: v1
-            kind: ConfigMap
-            metadata:
-              name: clickstack-clickhouse-users
-            data:
-              app.xml: |
-                <clickhouse>
-                    <users>
-                        <reader>
-                            <password from_env="CLICKHOUSE_APP_PASSWORD"></password>
-                            <profile>default</profile>
-                            <quota>default</quota>
-                            <grants>
-                                <query>GRANT SHOW ON *.*, SELECT ON system.*, SELECT ON default.*</query>
-                            </grants>
-                        </reader>
-                    </users>
-                </clickhouse>
-              otelcollector.xml: |
-                <clickhouse>
-                    <users>
-                        <otelcollector>
-                            <password from_env="CLICKHOUSE_OTEL_PASSWORD"></password>
-                            <profile>default</profile>
-                            <quota>default</quota>
-                            <grants>
-                                <query>GRANT SELECT,INSERT,CREATE,SHOW ON default.*</query>
-                            </grants>
-                        </otelcollector>
-                    </users>
-                </clickhouse>
+                    secret:
+                      secretName: clickstack-clickhouse-users
         mongodb:
           spec:
             members: 1
