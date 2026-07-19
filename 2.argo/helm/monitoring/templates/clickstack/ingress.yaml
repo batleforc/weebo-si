@@ -18,17 +18,17 @@ spec:
           namespace: {{ .Release.Namespace }}
           port: 3000
           passHostHeader: true
-      middlewares:
-        - name: authentik
-          namespace: auth
-    - kind: Rule
-      match: Host(`{{ .Values.clickstack.domain }}`) && PathPrefix(`/outpost.goauthentik.io/`)
-      priority: 15
-      services:
-        - name: authentik-server
-          namespace: auth
-          port: 80
-          passHostHeader: true
+    #   middlewares:
+    #     - name: authentik
+    #       namespace: auth
+    # - kind: Rule
+    #   match: Host(`{{ .Values.clickstack.domain }}`) && PathPrefix(`/outpost.goauthentik.io/`)
+    #   priority: 15
+    #   services:
+    #     - name: authentik-server
+    #       namespace: auth
+    #       port: 80
+    #       passHostHeader: true
   tls:
     secretName: clickstack-tls
 {{- end -}}
