@@ -1,6 +1,6 @@
 resource "authentik_provider_proxy" "clickstack" {
   name               = "clickstack"
-  internal_host      = "http://clickstack.clickstack.svc.cluster.local:3000"
+  internal_host      = "http://clickstack.monitoring.svc.cluster.local:3000"
   external_host      = "https://clickstack.weebo.poc"
   authorization_flow = data.authentik_flow.default-authorization-flow.id
   invalidation_flow  = data.authentik_flow.default-invalidation-flow.id
