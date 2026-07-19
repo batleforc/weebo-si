@@ -55,7 +55,6 @@ spec:
           spec:
             members: 1
             type: ReplicaSet
-            version: "5.0.32"
             security:
               authentication:
                 modes: ["SCRAM"]
