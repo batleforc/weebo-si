@@ -118,6 +118,8 @@ project:
         namespace: "argocd"
       - server: "https://kubernetes.default.svc"
         namespace: "database"
+      - server: "https://kubernetes.default.svc"
+        namespace: "monitoring"
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"
