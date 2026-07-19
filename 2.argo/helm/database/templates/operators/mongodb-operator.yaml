@@ -20,6 +20,7 @@ spec:
       releaseName: mongodb-operator
       valuesObject:
         operator:
+          env: dev
           watchedResources:
             - mongodbcommunity
   destination:
