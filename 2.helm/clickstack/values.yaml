@@ -362,13 +362,13 @@ clickhouse:
           users:
             app:
               password:
-                "@from_env": CLICKHOUSE_APP_PASSWORD
+                - "@from_env": CLICKHOUSE_APP_PASSWORD
               profile: default
               grants:
                 - query: "GRANT SHOW ON *.*, SELECT ON system.*, SELECT ON default.*"
             otelcollector:
               password:
-                "@from_env": CLICKHOUSE_OTEL_PASSWORD
+                - "@from_env": CLICKHOUSE_OTEL_PASSWORD
               profile: default
               grants:
                 - query: "GRANT SELECT,INSERT,CREATE,SHOW ON default.*"
