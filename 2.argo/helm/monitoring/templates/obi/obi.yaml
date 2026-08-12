@@ -24,6 +24,15 @@ spec:
     helm:
       releaseName: obi
       valuesObject:
+        podAnnotations:
+          vault.security.banzaicloud.io/vault-addr: "https://openbao.vault:8200"
+          vault.security.banzaicloud.io/vault-role: "auth-read"
+          vault.security.banzaicloud.io/vault-path: "kubernetes"
+          vault.security.banzaicloud.io/vault-tls-secret: "openbao-tls"
+        env:
+          OTEL_EBPF_KUBE_CLUSTER_NAME: "weebo-si"
+          OTEL_EXPORTER_OTLP_HEADERS: "Authentication=Bearer ${OTEL_EXPORTER_OTLP_HEADERS_AUTHENTICATION}"
+          OTEL_EXPORTER_OTLP_HEADERS_AUTHENTICATION: "vault:mv/data/obi/config#API_KEY"
         config:
           create: true
           data:
