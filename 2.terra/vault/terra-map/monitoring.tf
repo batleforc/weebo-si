@@ -36,6 +36,6 @@ resource "vault_kv_secret_v2" "monitoring-clickhouse" {
     }
   )
   lifecycle {
-    ignore_changes = [data_json.HYPERDX_API_KEY]
+    ignore_changes = [data_json]
   }
 }
