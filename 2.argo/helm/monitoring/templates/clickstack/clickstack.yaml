@@ -36,6 +36,10 @@ spec:
               #     secret:
               #       name: clickstack-secret
               #       key: CLICKHOUSE_ADMIN_PASSWORD
+              dataVolumeClaimSpec:
+                resources:
+                  requests:
+                    storage: 20Gi
               containerTemplate:
                 resources:
                   requests:
