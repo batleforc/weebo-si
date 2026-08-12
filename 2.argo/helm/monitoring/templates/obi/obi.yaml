@@ -31,7 +31,7 @@ spec:
           vault.security.banzaicloud.io/vault-tls-secret: "openbao-tls"
         env:
           OTEL_EBPF_KUBE_CLUSTER_NAME: "weebo-si"
-          OTEL_EXPORTER_OTLP_HEADERS: "Authorization=Bearer ${OTEL_EXPORTER_OTLP_HEADERS_AUTHENTICATION}"
+          OTEL_EXPORTER_OTLP_HEADERS: "authorization=${OTEL_EXPORTER_OTLP_HEADERS_AUTHENTICATION}"
           OTEL_EXPORTER_OTLP_HEADERS_AUTHENTICATION: "vault:mv/data/obi/config#API_KEY"
         config:
           create: true
