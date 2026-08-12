@@ -90,7 +90,8 @@ project:
       - group: "scheduling.k8s.io"
         kind: "PriorityClass"
   - name: monitoring
-    sourceRepo: []
+    sourceRepo:
+      - https://open-telemetry.github.io/opentelemetry-helm-charts
     includeBaseRepo: true
     dest:
       - server: "https://kubernetes.default.svc"
