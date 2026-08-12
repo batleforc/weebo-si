@@ -24,6 +24,16 @@ spec:
     helm:
       releaseName: obi
       valuesObject:
+        volumes:
+          - name: bpffs
+            hostPath:
+              path: /sys/fs/bpf
+              type: Directory
+
+        volumeMounts:
+          - name: bpffs
+            mountPath: /sys/fs/bpf
+            mountPropagation: HostToContainer
         podAnnotations:
           vault.security.banzaicloud.io/vault-addr: "https://openbao.vault:8200"
           vault.security.banzaicloud.io/vault-role: "auth-read"
