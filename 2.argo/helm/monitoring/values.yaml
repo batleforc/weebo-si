@@ -5,3 +5,7 @@ project: ""
 clickstack:
   enabled: true
   domain: clickstack.weebo.poc
+
+obi:
+  enabled: true
+  version: "0.11.0"

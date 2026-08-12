@@ -35,4 +35,7 @@ resource "vault_kv_secret_v2" "monitoring-clickhouse" {
       MONGODB_PASSWORD          = random_string.monitoring-mongodb-password.result
     }
   )
+  lifecycle {
+    ignore_changes = [data_json.HYPERDX_API_KEY]
+  }
 }

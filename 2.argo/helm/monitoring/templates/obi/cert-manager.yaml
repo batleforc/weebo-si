@@ -1,0 +1,41 @@
+{{- if .Values.obi.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: obi
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  syncPolicy:
+    automated: {}
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+    syncOptions:
+    - CreateNamespace=true
+  source:
+    chart: opentelemetry-ebpf-instrumentation
+    repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
+    targetRevision: {{ .Values.obi.version }}
+    helm:
+      releaseName: obi
+      valuesObject:
+        config:
+          create: true
+          data:
+            cluster_name: "weebo-si"
+            otel_traces_export:
+              endpoint: "http://clickstack-otel-collector.monitoring:4317"
+            otel_metrics_export:
+              endpoint: "http://clickstack-otel-collector.monitoring:4318"
+            network:
+              enabled: true
+  destination:
+    name: in-cluster
+    namespace: obi
+
+{{- end -}}

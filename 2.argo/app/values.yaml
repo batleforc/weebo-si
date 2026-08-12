@@ -97,6 +97,8 @@ project:
         namespace: "argocd"
       - server: "https://kubernetes.default.svc"
         namespace: "monitoring"
+      - server: "https://kubernetes.default.svc"
+        namespace: "obi"
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"
