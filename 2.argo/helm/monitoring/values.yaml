@@ -15,6 +15,24 @@ clickstack:
     enabled: true
     mongoshImage: "mongo:7"
     curlImage: "curlimages/curl:8.11.1"
+  # Dashboards are reconciled from dashboards/*.json (chart root) by the
+  # clickstack-dashboards Job, which logs in with the bootstrap admin account
+  # and drives the same /dashboards routes the UI does -- hence the dependency
+  # on bootstrap.enabled. See dashboards/README.md for the round trip.
+  dashboards:
+    enabled: true
+    pythonImage: "python:3.13-alpine"
+    # Stamped as a tag on every dashboard this repo owns. Dashboards without it
+    # were built by hand in the UI and are never updated or pruned.
+    managedTag: "managed-by-argocd"
+    # Delete managed dashboards whose JSON file was removed from git. Turning
+    # this off makes the Job additive, at the cost of leaving orphans behind.
+    prune: true
+    # Log the planned changes and exit without touching the instance.
+    dryRun: false
+    # Names deleted outright, tag or no tag -- the escape hatch for dashboards
+    # created in the UI. A name here must not also have a file in dashboards/.
+    delete: []
 
 # Shared ingestion plumbing: one Vault-held key, fanned out to every namespace
 # labelled with otel.ingestLabel, plus the Kubernetes-wide collectors.

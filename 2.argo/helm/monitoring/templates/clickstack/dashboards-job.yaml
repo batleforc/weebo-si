@@ -1,0 +1,104 @@
+{{- if and .Values.clickstack.enabled .Values.clickstack.bootstrap.enabled .Values.clickstack.dashboards.enabled -}}
+---
+# Dashboard definitions, one JSON document per file, straight out of
+# dashboards/ at the root of this chart. Empty on a fresh checkout: the
+# ConfigMap renders with no data, the Job runs and changes nothing.
+#
+# ConfigMaps cap at 1 MiB in total -- a HyperDX dashboard with a dozen tiles is
+# a few KiB, so that is tens of dashboards before this needs rethinking.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickstack-dashboards
+  namespace: {{ .Release.Namespace }}
+data:
+{{ (.Files.Glob "dashboards/*.json").AsConfig | indent 2 }}
+---
+# The reconciler itself, kept as a real .py file in the repo rather than inlined
+# in the Job's args so it stays lintable.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickstack-dashboards-sync
+  namespace: {{ .Release.Namespace }}
+data:
+  sync.py: |
+{{ .Files.Get "files/clickstack-dashboards.py" | indent 4 }}
+---
+# Makes dashboards.json-in-git the source of truth for HyperDX dashboards:
+# files are created/updated, managed dashboards whose file disappeared are
+# pruned, and anything named in clickstack.dashboards.delete is removed
+# outright. See files/clickstack-dashboards.py for why this has to go through
+# the session-authenticated UI routes.
+#
+# PostSync for the same reason as clickstack-bootstrap (re-runs on every sync,
+# so a committed dashboard change lands without manual steps), but one sync
+# wave later: there is no team, no admin account and so no session to open
+# until clickstack-bootstrap has registered.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: clickstack-dashboards
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  backoffLimit: 5
+  ttlSecondsAfterFinished: 900
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: clickstack-dashboards
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: sync
+          image: {{ .Values.clickstack.dashboards.pythonImage | quote }}
+          command: ["python3", "/opt/clickstack/sync.py"]
+          env:
+            # Port 8000, not the app port: /login/password and /dashboards are
+            # only served by the API listener (hyperdx.service.apiPort).
+            - name: API_URL
+              value: "http://clickstack:8000"
+            - name: DASHBOARD_DIR
+              value: /dashboards
+            - name: MANAGED_TAG
+              value: {{ .Values.clickstack.dashboards.managedTag | quote }}
+            - name: PRUNE
+              value: {{ .Values.clickstack.dashboards.prune | quote }}
+            - name: DRY_RUN
+              value: {{ .Values.clickstack.dashboards.dryRun | quote }}
+            # JSON rather than a newline-joined string so the list survives
+            # Helm's quoting untouched.
+            - name: DELETE_NAMES
+              value: {{ .Values.clickstack.dashboards.delete | default list | toJson | quote }}
+            # Same account clickstack-bootstrap registers -- the only one that
+            # exists, and the reason this Job requires bootstrap.enabled.
+            - name: ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: clickstack-bootstrap
+                  key: ADMIN_EMAIL
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clickstack-bootstrap
+                  key: ADMIN_PASSWORD
+          volumeMounts:
+            - name: dashboards
+              mountPath: /dashboards
+              readOnly: true
+            - name: sync
+              mountPath: /opt/clickstack
+              readOnly: true
+      volumes:
+        - name: dashboards
+          configMap:
+            name: clickstack-dashboards
+            optional: true
+        - name: sync
+          configMap:
+            name: clickstack-dashboards-sync
+{{- end -}}

@@ -1,0 +1,516 @@
+{
+  "name": "ArgoCD",
+  "tags": [
+    "infra"
+  ],
+  "tiles": [
+    {
+      "id": "apps-total",
+      "x": 0,
+      "y": 0,
+      "w": 6,
+      "h": 3,
+      "config": {
+        "name": "Applications",
+        "configType": "sql",
+        "sqlTemplate": "WITH latest AS (\n  SELECT\n    Attributes['name'] AS app,\n    argMax(Attributes['sync_status'], TimeUnix) AS sync_status,\n    argMax(Attributes['health_status'], TimeUnix) AS health_status,\n    argMax(Attributes['operation'], TimeUnix) AS operation,\n    argMax(Attributes['autosync_enabled'], TimeUnix) AS autosync,\n    argMax(Attributes['project'], TimeUnix) AS project,\n    argMax(Attributes['dest_namespace'], TimeUnix) AS dest_namespace\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'argocd_app_info' AND $__timeFilter(TimeUnix)\n  GROUP BY app\n)\nSELECT count() AS \"Applications\" FROM latest",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "apps-outofsync",
+      "x": 6,
+      "y": 0,
+      "w": 6,
+      "h": 3,
+      "config": {
+        "name": "Out of sync",
+        "configType": "sql",
+        "sqlTemplate": "WITH latest AS (\n  SELECT\n    Attributes['name'] AS app,\n    argMax(Attributes['sync_status'], TimeUnix) AS sync_status,\n    argMax(Attributes['health_status'], TimeUnix) AS health_status,\n    argMax(Attributes['operation'], TimeUnix) AS operation,\n    argMax(Attributes['autosync_enabled'], TimeUnix) AS autosync,\n    argMax(Attributes['project'], TimeUnix) AS project,\n    argMax(Attributes['dest_namespace'], TimeUnix) AS dest_namespace\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'argocd_app_info' AND $__timeFilter(TimeUnix)\n  GROUP BY app\n)\nSELECT countIf(sync_status != 'Synced') AS \"Out of sync\" FROM latest",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ],
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "apps-degraded",
+      "x": 12,
+      "y": 0,
+      "w": 6,
+      "h": 3,
+      "config": {
+        "name": "Degraded",
+        "configType": "sql",
+        "sqlTemplate": "WITH latest AS (\n  SELECT\n    Attributes['name'] AS app,\n    argMax(Attributes['sync_status'], TimeUnix) AS sync_status,\n    argMax(Attributes['health_status'], TimeUnix) AS health_status,\n    argMax(Attributes['operation'], TimeUnix) AS operation,\n    argMax(Attributes['autosync_enabled'], TimeUnix) AS autosync,\n    argMax(Attributes['project'], TimeUnix) AS project,\n    argMax(Attributes['dest_namespace'], TimeUnix) AS dest_namespace\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'argocd_app_info' AND $__timeFilter(TimeUnix)\n  GROUP BY app\n)\nSELECT countIf(health_status != 'Healthy') AS \"Degraded\" FROM latest",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ],
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "apps-syncing",
+      "x": 18,
+      "y": 0,
+      "w": 6,
+      "h": 3,
+      "config": {
+        "name": "Operation running",
+        "configType": "sql",
+        "sqlTemplate": "WITH latest AS (\n  SELECT\n    Attributes['name'] AS app,\n    argMax(Attributes['sync_status'], TimeUnix) AS sync_status,\n    argMax(Attributes['health_status'], TimeUnix) AS health_status,\n    argMax(Attributes['operation'], TimeUnix) AS operation,\n    argMax(Attributes['autosync_enabled'], TimeUnix) AS autosync,\n    argMax(Attributes['project'], TimeUnix) AS project,\n    argMax(Attributes['dest_namespace'], TimeUnix) AS dest_namespace\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'argocd_app_info' AND $__timeFilter(TimeUnix)\n  GROUP BY app\n)\nSELECT countIf(operation != '') AS \"Operation running\" FROM latest",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "sync-over-time",
+      "x": 0,
+      "y": 3,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Sync status over time",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  Attributes['sync_status'] AS \"Sync status\",\n  countDistinct(Attributes['name']) AS \"Applications\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'argocd_app_info' AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Sync status\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "health-over-time",
+      "x": 12,
+      "y": 3,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Health over time",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  Attributes['health_status'] AS \"Health\",\n  countDistinct(Attributes['name']) AS \"Applications\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'argocd_app_info' AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Health\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "apps-table",
+      "x": 0,
+      "y": 9,
+      "w": 24,
+      "h": 8,
+      "config": {
+        "name": "Applications",
+        "configType": "sql",
+        "sqlTemplate": "WITH latest AS (\n  SELECT\n    Attributes['name'] AS app,\n    argMax(Attributes['sync_status'], TimeUnix) AS sync_status,\n    argMax(Attributes['health_status'], TimeUnix) AS health_status,\n    argMax(Attributes['operation'], TimeUnix) AS operation,\n    argMax(Attributes['autosync_enabled'], TimeUnix) AS autosync,\n    argMax(Attributes['project'], TimeUnix) AS project,\n    argMax(Attributes['dest_namespace'], TimeUnix) AS dest_namespace\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'argocd_app_info' AND $__timeFilter(TimeUnix)\n  GROUP BY app\n)\nSELECT\n  app AS \"Application\",\n  project AS \"Project\",\n  dest_namespace AS \"Namespace\",\n  sync_status AS \"Sync\",\n  health_status AS \"Health\",\n  autosync AS \"Auto-sync\"\nFROM latest\nORDER BY sync_status = 'Synced' ASC, health_status = 'Healthy' ASC, app ASC",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "sync-outcomes",
+      "x": 0,
+      "y": 17,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Syncs by outcome",
+        "source": "Metrics",
+        "displayType": "stacked_bar",
+        "select": [
+          {
+            "aggFn": "increase",
+            "aggCondition": "",
+            "aggConditionLanguage": "lucene",
+            "valueExpression": "Value",
+            "metricName": "argocd_app_sync_total",
+            "metricType": "sum",
+            "numberFormat": {
+              "output": "number",
+              "mantissa": 0,
+              "thousandSeparated": true
+            }
+          }
+        ],
+        "where": "",
+        "whereLanguage": "sql",
+        "granularity": "auto",
+        "groupBy": [
+          {
+            "aggCondition": "",
+            "valueExpression": "Attributes['phase']"
+          }
+        ],
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "reconcile-p95",
+      "x": 12,
+      "y": 17,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Reconciliation p95",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  if(idx = 0 OR length(bounds) = 0, 0, bounds[least(idx, length(bounds))]) AS \"p95 (s)\"\nFROM (\n  SELECT\n    ts,\n    bounds,\n    arrayFirstIndex(c -> c >= arraySum(counts) * 0.95, arrayCumSum(counts)) AS idx\n  FROM (\n    SELECT\n      $__timeInterval(TimeUnix) AS ts,\n      any(ExplicitBounds) AS bounds,\n      sumForEach(BucketCounts) AS counts\n    FROM default.otel_metrics_histogram\n    WHERE MetricName = 'argocd_app_reconcile' AND $__timeFilter(TimeUnix)\n    GROUP BY ts\n  )\n)\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "duration",
+          "unit": "s",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "reconcile-rate",
+      "x": 0,
+      "y": 23,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Reconciliations/s",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  greatest(max(total) - min(total), 0) / $__interval_s AS \"Reconciliations/s\"\nFROM (\n  SELECT $__timeInterval(TimeUnix) AS ts, TimeUnix, sum(Count) AS total\n  FROM default.otel_metrics_histogram\n  WHERE MetricName = 'argocd_app_reconcile' AND $__timeFilter(TimeUnix)\n  GROUP BY ts, TimeUnix\n)\nGROUP BY ts\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "k8s-requests",
+      "x": 8,
+      "y": 23,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "K8s API requests by app",
+        "source": "Metrics",
+        "displayType": "line",
+        "select": [
+          {
+            "aggFn": "increase",
+            "aggCondition": "",
+            "aggConditionLanguage": "lucene",
+            "valueExpression": "Value",
+            "metricName": "argocd_app_k8s_request_total",
+            "metricType": "sum",
+            "numberFormat": {
+              "output": "number",
+              "mantissa": 0,
+              "thousandSeparated": true
+            }
+          }
+        ],
+        "where": "",
+        "whereLanguage": "sql",
+        "granularity": "auto",
+        "groupBy": [
+          {
+            "aggCondition": "",
+            "valueExpression": "Attributes['name']"
+          }
+        ],
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "git-requests",
+      "x": 16,
+      "y": 23,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Repo-server git requests",
+        "source": "Metrics",
+        "displayType": "line",
+        "select": [
+          {
+            "aggFn": "increase",
+            "aggCondition": "",
+            "aggConditionLanguage": "lucene",
+            "valueExpression": "Value",
+            "metricName": "argocd_git_request_total",
+            "metricType": "sum",
+            "numberFormat": {
+              "output": "number",
+              "mantissa": 0,
+              "thousandSeparated": true
+            }
+          }
+        ],
+        "where": "",
+        "whereLanguage": "sql",
+        "granularity": "auto",
+        "groupBy": [
+          {
+            "aggCondition": "",
+            "valueExpression": "Attributes['request_type']"
+          }
+        ],
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "memory",
+      "x": 0,
+      "y": 29,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Memory (working set)",
+        "source": "Metrics",
+        "displayType": "line",
+        "select": [
+          {
+            "aggFn": "avg",
+            "aggCondition": "",
+            "aggConditionLanguage": "lucene",
+            "valueExpression": "Value",
+            "metricName": "k8s.pod.memory.working_set",
+            "metricType": "gauge",
+            "numberFormat": {
+              "output": "byte",
+              "mantissa": 0
+            }
+          }
+        ],
+        "where": "ResourceAttributes['k8s.namespace.name'] = 'argocd'",
+        "whereLanguage": "sql",
+        "granularity": "auto",
+        "groupBy": [
+          {
+            "aggCondition": "",
+            "valueExpression": "ResourceAttributes['k8s.pod.name']"
+          }
+        ],
+        "numberFormat": {
+          "output": "byte",
+          "mantissa": 0
+        }
+      }
+    },
+    {
+      "id": "cpu",
+      "x": 12,
+      "y": 29,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "CPU usage (cores)",
+        "source": "Metrics",
+        "displayType": "line",
+        "select": [
+          {
+            "aggFn": "avg",
+            "aggCondition": "",
+            "aggConditionLanguage": "lucene",
+            "valueExpression": "Value",
+            "metricName": "k8s.pod.cpu.usage",
+            "metricType": "gauge",
+            "numberFormat": {
+              "output": "number",
+              "mantissa": 2
+            }
+          }
+        ],
+        "where": "ResourceAttributes['k8s.namespace.name'] = 'argocd'",
+        "whereLanguage": "sql",
+        "granularity": "auto",
+        "groupBy": [
+          {
+            "aggCondition": "",
+            "valueExpression": "ResourceAttributes['k8s.pod.name']"
+          }
+        ],
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "restarts",
+      "x": 0,
+      "y": 35,
+      "w": 8,
+      "h": 5,
+      "config": {
+        "name": "Container restarts",
+        "source": "Metrics",
+        "displayType": "line",
+        "select": [
+          {
+            "aggFn": "max",
+            "aggCondition": "",
+            "aggConditionLanguage": "lucene",
+            "valueExpression": "Value",
+            "metricName": "k8s.container.restarts",
+            "metricType": "gauge",
+            "numberFormat": {
+              "output": "number",
+              "mantissa": 0,
+              "thousandSeparated": true
+            }
+          }
+        ],
+        "where": "ResourceAttributes['k8s.namespace.name'] = 'argocd'",
+        "whereLanguage": "sql",
+        "granularity": "auto",
+        "groupBy": [
+          {
+            "aggCondition": "",
+            "valueExpression": "ResourceAttributes['k8s.container.name']"
+          }
+        ],
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "redis",
+      "x": 8,
+      "y": 35,
+      "w": 8,
+      "h": 5,
+      "config": {
+        "name": "Redis requests",
+        "source": "Metrics",
+        "displayType": "line",
+        "select": [
+          {
+            "aggFn": "increase",
+            "aggCondition": "",
+            "aggConditionLanguage": "lucene",
+            "valueExpression": "Value",
+            "metricName": "argocd_redis_request_total",
+            "metricType": "sum",
+            "numberFormat": {
+              "output": "number",
+              "mantissa": 0,
+              "thousandSeparated": true
+            }
+          }
+        ],
+        "where": "",
+        "whereLanguage": "sql",
+        "granularity": "auto",
+        "groupBy": [
+          {
+            "aggCondition": "",
+            "valueExpression": "Attributes['failed']"
+          }
+        ],
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "log-errors",
+      "x": 16,
+      "y": 35,
+      "w": 8,
+      "h": 5,
+      "config": {
+        "name": "Errors & warnings",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(Timestamp) AS ts,\n  ResourceAttributes['k8s.container.name'] AS \"Component\",\n  count() AS \"Errors\"\nFROM default.otel_logs\nWHERE ResourceAttributes['k8s.namespace.name'] = 'argocd'\n  AND lower(SeverityText) IN ('error', 'warn', 'warning', 'fatal')\n  AND $__timeFilter(Timestamp)\nGROUP BY ts, \"Component\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "logs",
+      "x": 0,
+      "y": 40,
+      "w": 24,
+      "h": 8,
+      "config": {
+        "name": "ArgoCD errors & warnings",
+        "source": "Logs",
+        "displayType": "search",
+        "select": "Timestamp, ResourceAttributes['k8s.container.name'] AS component, SeverityText, Body",
+        "where": "ResourceAttributes['k8s.namespace.name'] = 'argocd' AND lower(SeverityText) IN ('error', 'warn', 'warning', 'fatal')",
+        "whereLanguage": "sql",
+        "orderBy": "Timestamp DESC"
+      }
+    }
+  ]
+}

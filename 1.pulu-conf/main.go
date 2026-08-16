@@ -15,6 +15,35 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
 )
 
+// otelScrapeAnnotations opts a pod into the otel-node agent's annotation-driven
+// metric discovery (k8s_observer + receiver_creator, configured in
+// 2.argo/helm/monitoring/templates/otel/node-collector.yaml). Without these the
+// argocd_* Prometheus metrics are never collected -- discovery is opt-in and
+// nothing else in the cluster asks for it.
+//
+// The keys are suffixed with the metrics port on purpose. receivercreator's
+// getHintAnnotation resolves "<prefix>.<port>/<hint>" before falling back to the
+// bare "<prefix>/<hint>", and it evaluates one endpoint per declared container
+// port -- so an unsuffixed hint would also make it scrape /metrics on
+// argocd-server's 8080, the applicationset controller's 8081/7000, and so on.
+//
+// The chart merges these over global.podAnnotations
+// (mergeOverwrite (deepCopy .Values.global.podAnnotations) .Values.<c>.podAnnotations),
+// so inject-certs is preserved. Ingress on each component's "metrics" port is
+// already allowed from every namespace by the chart's own NetworkPolicies.
+func otelScrapeAnnotations(metricsPort string) pulumi.Map {
+	prefix := "io.opentelemetry.discovery.metrics." + metricsPort
+	return pulumi.Map{
+		prefix + "/enabled": pulumi.String("true"),
+		// Mandatory: receivercreator has no default scraper and silently skips
+		// the endpoint when the hint is absent. prometheus_simple is why
+		// otel-node runs the contrib image rather than otelcol-k8s.
+		prefix + "/scraper": pulumi.String("prometheus_simple"),
+		// `endpoint` in backticks is substituted with the discovered host:port.
+		prefix + "/config": pulumi.String("collection_interval: \"30s\"\nendpoint: \"`endpoint`\"\nmetrics_path: \"/metrics\"\n"),
+	}
+}
+
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		conf := config.New(ctx, "")
@@ -195,7 +224,24 @@ g, authentik Admins, role:admin`),
 						"inject-certs": pulumi.String("enabled"),
 					},
 				},
+				// Metrics ports as declared on each container: controller 8082,
+				// server 8083, repo-server 8084, applicationset 8080,
+				// notifications 9001. dex and redis expose no argocd_* metrics
+				// and are left alone.
+				"controller": pulumi.Map{
+					"podAnnotations": otelScrapeAnnotations("8082"),
+				},
+				"repoServer": pulumi.Map{
+					"podAnnotations": otelScrapeAnnotations("8084"),
+				},
+				"applicationSet": pulumi.Map{
+					"podAnnotations": otelScrapeAnnotations("8080"),
+				},
+				"notifications": pulumi.Map{
+					"podAnnotations": otelScrapeAnnotations("9001"),
+				},
 				"server": pulumi.Map{
+					"podAnnotations": otelScrapeAnnotations("8083"),
 					"ingress": pulumi.Map{
 						"enabled": pulumi.Bool(deployed),
 						"tls":     pulumi.Bool(true),
