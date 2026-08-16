@@ -152,6 +152,38 @@ of three shapes:
   tips this instance over its 4.5 GiB query limit, while an HLL is exact at
   two-figure cardinality.
 
+- `storage.json` — which pod is using the disks. Fill and growth per
+  filesystem with a days-to-full projection, PVC usage per pod, Longhorn's own
+  per-volume accounting, pod ephemeral usage, and the SSD's SMART attributes.
+
+  Three sources, deliberately kept apart because they measure different things:
+  kubelet's `k8s.volume.*` (what the filesystem inside a claim reports),
+  Longhorn's `longhorn_volume_actual_size_bytes` (what a thin-provisioned
+  volume actually costs on disk, snapshots included), and
+  `k8s.pod.filesystem.usage` (writable layers and emptyDirs, which belong to no
+  claim). Only the last one works on a fresh checkout; the other two need the
+  enablement below.
+
+  **`local-path` claims are not attributable to a pod, and cannot be made so
+  from here.** Kubelet only reports usage for volumes whose driver measures
+  them: the four longhorn claims carry a `pvcRef` in `/stats/summary`, the
+  hostPath-backed local-path ones carry nothing. Their bytes land in the `/var`
+  total and in the *Unattributed on /var* tile, next to the container image
+  store. Moving a claim to the `longhorn` class is what makes it visible.
+
+  Two mountpoints are hardcoded in the top-row tiles — `/var` and
+  `/var/mnt/staticdisk`, the latter being `defaultDataPath` in the Longhorn
+  Application. Change that path and these two tiles need editing; the
+  filesystem table below them is generic and needs nothing.
+
+  Enablement, both of which this commit also makes:
+  - `metric_groups: [… volume]` + `k8s_api_config` on the kubeletstats
+    receiver in `templates/otel/node-collector.yaml`, plus PVC/PV read rules in
+    `clusterRole.rules` — the receiver fails at startup without them. ArgoCD
+    sync.
+  - `annotations` on the Longhorn Application opting longhorn-manager's `:9500`
+    into otel-node's discovery. Also an ArgoCD sync, of the `storage` app.
+
 - `network.json` — what gets dropped, in two halves.
 
   The NIC half (`system.network.dropped`, `system.network.errors`,

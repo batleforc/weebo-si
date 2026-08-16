@@ -1,0 +1,336 @@
+{
+  "name": "Storage",
+  "tags": [
+    "infra"
+  ],
+  "tiles": [
+    {
+      "id": "legend",
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 6,
+      "config": {
+        "name": "What lives where",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "**Three different things share these disks, and only the first is a PVC.**\n\n`/var/mnt/staticdisk` is Longhorn's data path \u2014 every longhorn PVC, plus its snapshots and replica overhead. `/var` holds everything else: container images, pod writable layers, emptyDirs, and every `local-path` PVC. A claim on the default `local-path` class does not touch the Longhorn disk at all.\n\n**Three sources, three levels of truth.** *PVC usage* is what the filesystem inside the volume reports (kubelet). *On disk* is what Longhorn actually allocated \u2014 lower than the claim because volumes are thin-provisioned, higher than the filesystem once snapshots accumulate. *Pod ephemeral* is the writable layer and emptyDirs, which land on `/var` and belong to no claim at all.\n\n**`local-path` claims cannot be attributed to a pod here, and that is a kubelet limit, not a gap in this dashboard.** Kubelet only measures volumes whose driver reports usage \u2014 the four Longhorn claims do, the hostPath-backed `local-path` ones do not, so they appear in neither table. Their data is inside the `/var` total and inside *Unattributed on /var*, together with the container image store. Moving a claim to the `longhorn` class is what makes it measurable.\n\n**Days to full** extrapolates the growth measured across the selected range, so it only means anything over a window long enough to contain real growth \u2014 a 15-minute range will produce nonsense. Widen the picker to a day or more before believing it."
+      }
+    },
+    {
+      "id": "pct-var",
+      "x": 0,
+      "y": 6,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "/var used",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(100 * used / nullIf(used + free + reserved, 0), 1) AS \"/var used\"\nFROM (\n  SELECT\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'used') AS used,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'free') AS free,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'reserved') AS reserved\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.filesystem.usage'\n    AND Attributes['mountpoint'] = '/var'\n    AND $__timeFilter(TimeUnix)\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "unit": "%"
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 75,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 88,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pct-longhorn",
+      "x": 4,
+      "y": 6,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Longhorn disk used",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(100 * used / nullIf(used + free + reserved, 0), 1) AS \"Longhorn disk used\"\nFROM (\n  SELECT\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'used') AS used,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'free') AS free,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'reserved') AS reserved\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.filesystem.usage'\n    AND Attributes['mountpoint'] = '/var/mnt/staticdisk'\n    AND $__timeFilter(TimeUnix)\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "unit": "%"
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 75,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 88,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pvc-total",
+      "x": 8,
+      "y": 6,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "PVC data on disk",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(sum(v) / 1073741824, 2) AS \"PVC data\"\nFROM (\n  SELECT Attributes['volume'] AS vol, argMax(Value, TimeUnix) AS v\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'longhorn_volume_actual_size_bytes' AND $__timeFilter(TimeUnix)\n  GROUP BY vol\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2,
+          "unit": "GiB"
+        }
+      }
+    },
+    {
+      "id": "ephemeral-total",
+      "x": 12,
+      "y": 6,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Pod ephemeral total",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(sum(v) / 1073741824, 2) AS \"Ephemeral\"\nFROM (\n  SELECT ResourceAttributes['k8s.pod.uid'] AS uid, argMax(Value, TimeUnix) AS v\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'k8s.pod.filesystem.usage' AND $__timeFilter(TimeUnix)\n  GROUP BY uid\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2,
+          "unit": "GiB"
+        }
+      }
+    },
+    {
+      "id": "snapshot-overhead",
+      "x": 16,
+      "y": 6,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Snapshot + replica overhead",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(greatest(0, disk - vols) / 1073741824, 2) AS \"Overhead\"\nFROM (\n  SELECT\n    sumIf(v, metric = 'longhorn_disk_usage_bytes') AS disk,\n    sumIf(v, metric = 'longhorn_volume_actual_size_bytes') AS vols\n  FROM (\n    SELECT\n      MetricName AS metric,\n      concat(Attributes['disk'], Attributes['volume']) AS series,\n      argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_gauge\n    WHERE MetricName IN ('longhorn_disk_usage_bytes', 'longhorn_volume_actual_size_bytes')\n      AND $__timeFilter(TimeUnix)\n    GROUP BY metric, series\n  )\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2,
+          "unit": "GiB"
+        }
+      }
+    },
+    {
+      "id": "unattributed",
+      "x": 20,
+      "y": 6,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Unattributed on /var",
+        "configType": "sql",
+        "sqlTemplate": "-- /var minus what pods own: container images, local-path claim data\n-- and the system itself. Nothing here can be pinned on a pod.\nSELECT round(greatest(0, var_used - ephemeral) / 1073741824, 1) AS \"Unattributed\"\nFROM (\n  SELECT\n    (\n      SELECT argMaxIf(Value, TimeUnix, Attributes['state'] = 'used')\n      FROM default.otel_metrics_sum\n      WHERE MetricName = 'system.filesystem.usage'\n        AND Attributes['mountpoint'] = '/var'\n        AND $__timeFilter(TimeUnix)\n    ) AS var_used,\n    (\n      SELECT sum(v) FROM (\n        SELECT ResourceAttributes['k8s.pod.uid'] AS uid, argMax(Value, TimeUnix) AS v\n        FROM default.otel_metrics_gauge\n        WHERE MetricName = 'k8s.pod.filesystem.usage' AND $__timeFilter(TimeUnix)\n        GROUP BY uid\n      )\n    ) AS ephemeral\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "unit": "GiB"
+        }
+      }
+    },
+    {
+      "id": "fs-table",
+      "x": 0,
+      "y": 9,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Filesystems, and when they fill",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  mountpoint AS \"Mount\",\n  fstype AS \"Type\",\n  formatReadableSize(used_last) AS \"Used\",\n  formatReadableSize(total) AS \"Size\",\n  round(100 * used_last / nullIf(total, 0), 1) AS \"Used %\",\n  formatReadableSize(greatest(0, used_last - used_first)\n    / nullIf(dateDiff('second', t_first, t_last), 0) * 86400) AS \"Growth/day\",\n  if(used_last > used_first,\n     round((total - used_last)\n       / ((used_last - used_first) / nullIf(dateDiff('second', t_first, t_last), 0))\n       / 86400, 1),\n     NULL) AS \"Days to full\"\nFROM (\n  SELECT\n    Attributes['mountpoint'] AS mountpoint,\n    any(Attributes['type']) AS fstype,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'used') AS used_last,\n    argMinIf(Value, TimeUnix, Attributes['state'] = 'used') AS used_first,\n    minIf(TimeUnix, Attributes['state'] = 'used') AS t_first,\n    maxIf(TimeUnix, Attributes['state'] = 'used') AS t_last,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'used')\n      + argMaxIf(Value, TimeUnix, Attributes['state'] = 'free')\n      + argMaxIf(Value, TimeUnix, Attributes['state'] = 'reserved') AS total\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.filesystem.usage' AND $__timeFilter(TimeUnix)\n  GROUP BY mountpoint\n)\nORDER BY used_last DESC",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "fs-time",
+      "x": 12,
+      "y": 9,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Disk used over time",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  Attributes['mountpoint'] AS \"Mount\",\n  argMax(Value, TimeUnix) AS \"Used\"\nFROM default.otel_metrics_sum\nWHERE MetricName = 'system.filesystem.usage'\n  AND Attributes['state'] = 'used'\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Mount\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "byte",
+          "mantissa": 1,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "h-who",
+      "x": 0,
+      "y": 16,
+      "w": 24,
+      "h": 2,
+      "config": {
+        "name": "Who is using it",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "### Who is using it\nClaims on the left as the pod's own filesystem sees them, the same volumes on the right as Longhorn actually stores them. A `local-path` claim appears only on the left \u2014 Longhorn knows nothing about it."
+      }
+    },
+    {
+      "id": "pvc-usage",
+      "x": 0,
+      "y": 18,
+      "w": 12,
+      "h": 8,
+      "config": {
+        "name": "PVC usage, by pod",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ns AS \"Namespace\",\n  pvc AS \"Claim\",\n  pod AS \"Pod\",\n  formatReadableSize(cap - avail) AS \"Used\",\n  formatReadableSize(cap) AS \"Capacity\",\n  round(100 * (cap - avail) / nullIf(cap, 0), 1) AS \"Used %\",\n  round(cap - avail) AS \"Bytes\"\nFROM (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    -- k8s_api_config supplies the claim name; the volume name from the\n    -- pod spec is the fallback when the API lookup is off.\n    if(ResourceAttributes['k8s.persistentvolumeclaim.name'] != '',\n       ResourceAttributes['k8s.persistentvolumeclaim.name'],\n       ResourceAttributes['k8s.volume.name']) AS pvc,\n    ResourceAttributes['k8s.pod.name'] AS pod,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.volume.capacity') AS cap,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.volume.available') AS avail\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.volume.capacity', 'k8s.volume.available')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY ns, pvc, pod\n)\nWHERE cap > 0\nORDER BY \"Bytes\" DESC\nLIMIT 40",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "longhorn-volumes",
+      "x": 12,
+      "y": 18,
+      "w": 12,
+      "h": 8,
+      "config": {
+        "name": "Longhorn volumes, as stored",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  Attributes['pvc_namespace'] AS \"Namespace\",\n  Attributes['pvc'] AS \"Claim\",\n  formatReadableSize(argMaxIf(Value, TimeUnix,\n    MetricName = 'longhorn_volume_actual_size_bytes')) AS \"On disk\",\n  formatReadableSize(argMaxIf(Value, TimeUnix,\n    MetricName = 'longhorn_volume_capacity_bytes')) AS \"Claimed\",\n  round(100 * argMaxIf(Value, TimeUnix,\n    MetricName = 'longhorn_volume_actual_size_bytes')\n    / nullIf(argMaxIf(Value, TimeUnix,\n      MetricName = 'longhorn_volume_capacity_bytes'), 0), 1) AS \"Of claim %\",\n  round(argMaxIf(Value, TimeUnix,\n    MetricName = 'longhorn_volume_actual_size_bytes')) AS \"Bytes\"\nFROM default.otel_metrics_gauge\nWHERE MetricName IN ('longhorn_volume_actual_size_bytes',\n                     'longhorn_volume_capacity_bytes')\n  AND $__timeFilter(TimeUnix)\nGROUP BY \"Namespace\", \"Claim\"\nORDER BY \"Bytes\" DESC\nLIMIT 40",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "pod-ephemeral",
+      "x": 0,
+      "y": 26,
+      "w": 12,
+      "h": 8,
+      "config": {
+        "name": "Pod ephemeral usage",
+        "configType": "sql",
+        "sqlTemplate": "-- Writable layer + emptyDirs, which live on /var and belong to no claim.\nSELECT\n  ResourceAttributes['k8s.namespace.name'] AS \"Namespace\",\n  ResourceAttributes['k8s.pod.name'] AS \"Pod\",\n  formatReadableSize(argMax(Value, TimeUnix)) AS \"Used\",\n  round(argMax(Value, TimeUnix)) AS \"Bytes\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'k8s.pod.filesystem.usage' AND $__timeFilter(TimeUnix)\nGROUP BY \"Namespace\", \"Pod\"\nORDER BY \"Bytes\" DESC\nLIMIT 30",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "growth-time",
+      "x": 12,
+      "y": 26,
+      "w": 12,
+      "h": 8,
+      "config": {
+        "name": "Volume growth, by claim",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  concat(Attributes['pvc_namespace'], '/', Attributes['pvc']) AS \"Claim\",\n  argMax(Value, TimeUnix) AS \"On disk\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'longhorn_volume_actual_size_bytes' AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Claim\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "byte",
+          "mantissa": 1,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "h-disk",
+      "x": 0,
+      "y": 34,
+      "w": 24,
+      "h": 2,
+      "config": {
+        "name": "The disk itself",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "### The disk itself\nLonghorn's own view of the SSD, and what the drive reports about its health. `Reserved` is the slice Longhorn refuses to schedule into; `Scheduled` is what it has promised to claims, which can exceed what they currently use."
+      }
+    },
+    {
+      "id": "longhorn-disk",
+      "x": 0,
+      "y": 36,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Longhorn disk accounting",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  node AS \"Node\",\n  disk AS \"Disk\",\n  formatReadableSize(usage) AS \"Used\",\n  formatReadableSize(capacity) AS \"Capacity\",\n  formatReadableSize(reservation) AS \"Reserved\",\n  round(100 * usage / nullIf(capacity, 0), 1) AS \"Used %\"\nFROM (\n  SELECT\n    Attributes['node'] AS node,\n    Attributes['disk'] AS disk,\n    argMaxIf(Value, TimeUnix, MetricName = 'longhorn_disk_usage_bytes') AS usage,\n    argMaxIf(Value, TimeUnix, MetricName = 'longhorn_disk_capacity_bytes') AS capacity,\n    argMaxIf(Value, TimeUnix,\n      MetricName = 'longhorn_disk_reservation_bytes') AS reservation\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('longhorn_disk_usage_bytes', 'longhorn_disk_capacity_bytes',\n                       'longhorn_disk_reservation_bytes')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY node, disk\n)\nORDER BY usage DESC",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "smart",
+      "x": 12,
+      "y": 36,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "SSD health (SMART)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  attribute AS \"Attribute\",\n  raw AS \"Raw value\",\n  multiIf(\n    attribute IN ('Host_Writes_32MiB', 'NAND_Writes_32MiB'),\n      concat(toString(round(raw * 32 / 1048576, 1)), ' TiB written'),\n    attribute = 'Power_On_Hours',\n      concat(toString(round(raw / 8760, 1)), ' years powered on'),\n    attribute IN ('Temperature_Celsius', 'Drive_Temperature'),\n      concat(toString(raw), ' degrees C'),\n    '') AS \"Meaning\"\nFROM (\n  SELECT\n    Attributes['attribute'] AS attribute,\n    toUInt64(argMax(Value, TimeUnix)) AS raw\n  FROM default.otel_metrics_gauge\nWHERE MetricName = 'longhorn_disk_health_attribute_raw'\n    AND Attributes['attribute'] IN (\n      'Power_On_Hours', 'Power_Cycle_Count', 'Host_Writes_32MiB', 'NAND_Writes_32MiB',\n      'Media_Wearout_Indicator', 'Temperature_Celsius', 'Drive_Temperature',\n      'Reallocated_Sector_Ct', 'Pending_Sector_Count', 'Uncorrectable_Error_Cnt',\n      'CRC_Error_Count', 'Erase_Fail_Count', 'Program_Fail_Count',\n      'End-to-End_Error_Count', 'Available_Reservd_Space')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY attribute\n)\nORDER BY \"Attribute\"",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    }
+  ]
+}

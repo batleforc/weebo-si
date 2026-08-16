@@ -101,11 +101,38 @@ spec:
                 name: {{ .Values.otel.ingestSecret }}
                 key: INGESTION_API_KEY
 
+        # Appended to the rules the presets generate, not a replacement for
+        # them. Needed by kubeletstats' k8s_api_config below: resolving a
+        # volume to the claim it belongs to is an API read, and without these
+        # the receiver fails at startup rather than degrading.
+        clusterRole:
+          rules:
+            - apiGroups: [""]
+              resources: ["persistentvolumeclaims", "persistentvolumes"]
+              verbs: ["get", "list", "watch"]
+
         config:
           receivers:
             otlp: null
             jaeger: null
             zipkin: null
+            kubeletstats:
+              # container/pod/node is the receiver's default; `volume` is not,
+              # and it is the only source of per-PVC used vs capacity. Emits
+              # k8s.volume.available and k8s.volume.capacity; there is no
+              # `used` metric, it is the difference of the two.
+              #
+              # Covers CSI claims only. Kubelet reports a pvcRef for the
+              # longhorn volumes and nothing at all for the hostPath-backed
+              # local-path ones, so those stay invisible per pod no matter what
+              # is enabled here -- their bytes only show up in /var.
+              metric_groups: [container, pod, node, volume]
+              # Puts k8s.persistentvolumeclaim.name on those series. Without
+              # it they are keyed on the volume name from the pod spec
+              # (`data`, `storage`...), which is the same string on a dozen
+              # unrelated pods.
+              k8s_api_config:
+                auth_type: serviceAccount
             # The cheapest stage to drop logs at: an excluded file is never
             # opened, so none of the tail / parse / batch work happens. The
             # filter/logs processor further down cannot do this -- by the time

@@ -27,6 +27,22 @@ spec:
     helm:
       releaseName: longhorn
       valuesObject:
+        # Opts longhorn-manager into otel-node's annotation discovery. The
+        # manager already serves Prometheus metrics on :9500 -- per-volume
+        # actual size on disk (what a thin-provisioned PVC really costs),
+        # per-disk usage, and the SSD's own SMART attributes. Feeds the
+        # longhorn half of the Storage dashboard.
+        #
+        # The chart applies .Values.annotations to several pod templates, which
+        # is harmless: the key is port-suffixed, so it only ever matches a
+        # container that actually declares 9500.
+        annotations:
+          io.opentelemetry.discovery.metrics.9500/enabled: "true"
+          io.opentelemetry.discovery.metrics.9500/scraper: "prometheus_simple"
+          io.opentelemetry.discovery.metrics.9500/config: |
+            collection_interval: "60s"
+            endpoint: "`endpoint`"
+            metrics_path: "/metrics"
         preUpgradeChecker:
           # Disable the Helm pre-upgrade hook when Longhorn is managed by ArgoCD
           jobEnabled: false
