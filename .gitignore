@@ -5,6 +5,7 @@ age.agekey
 vault-ca.crt
 .venv
 .ansible
+.kube
 talos-*.iso
 secrets.yaml
 .env

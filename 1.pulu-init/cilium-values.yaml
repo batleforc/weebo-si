@@ -36,3 +36,35 @@ ipv6:
   enabled: true
 commonLabels:
   pod-security.kubernetes.io/enforce: privileged
+# Hubble already runs (main.go enables it with the UI); this only turns on its
+# Prometheus exporter, which is the one place in the cluster that can answer
+# "this traffic was dropped, and here is why". OBI's spans stop at the protocol
+# layer: a policy denial, a refused connection or a failed DNS lookup never
+# completes an exchange, so it produces no span at all.
+#
+# Feeds the Hubble half of the "Network drops" dashboard
+# (2.argo/helm/monitoring/dashboards/network.json). The label names below are
+# what its queries read: sourceContext/destinationContext become `source` and
+# `destination`, labelsContext adds `source_namespace`/`destination_namespace`.
+hubble:
+  metrics:
+    enabled:
+      - "drop:sourceContext=workload-name|reserved-identity;destinationContext=workload-name|reserved-identity;labelsContext=source_namespace,destination_namespace"
+      - "policy:sourceContext=workload-name|reserved-identity;destinationContext=workload-name|reserved-identity;labelsContext=source_namespace,destination_namespace"
+      # `query` puts the queried name on the metric, which is the whole point
+      # here -- without it a failed lookup is a count with no subject. It is
+      # also the cardinality risk on this list; drop the option if the DNS
+      # series count ever gets out of hand.
+      - "dns:query;ignoreAAAA;labelsContext=source_namespace"
+# Opts cilium-agent into otel-node's annotation discovery, the same mechanism
+# every other scraped workload here uses. The port suffix must match the
+# container port the chart opens for hubble.metrics.port (9965), and the
+# annotations only do anything once hubble.metrics.enabled above is non-empty --
+# that is what makes the chart declare the port at all.
+podAnnotations:
+  io.opentelemetry.discovery.metrics.9965/enabled: "true"
+  io.opentelemetry.discovery.metrics.9965/scraper: "prometheus_simple"
+  io.opentelemetry.discovery.metrics.9965/config: |
+    collection_interval: "30s"
+    endpoint: "`endpoint`"
+    metrics_path: "/metrics"

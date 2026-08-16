@@ -57,8 +57,31 @@ spec:
               endpoint: {{ .Values.otel.endpoint.grpc | quote }}
             otel_metrics_export:
               endpoint: {{ .Values.otel.endpoint.http | quote }}
+            {{- if .Values.obi.networkFlows }}
+            # `enable`, not `enabled`: OBI parses this file with a plain
+            # yaml.Unmarshal, so a misspelt key is dropped without a warning and
+            # the feature stays off (NetworkFlows.Enable is what flips
+            # metrics.features to include `network`).
+            #
+            # Flows are IP-level: they show that something talked to
+            # 140.82.121.4, not that it talked to github.com. The client spans
+            # OBI already produces carry server.address and are what the Egress
+            # dashboard reads; this is for the traffic no protocol decoder
+            # covers.
             network:
-              enabled: true
+              enable: true
+              # Left at the default `socket_filter` deliberately: the `tc`
+              # source is the one that has to share traffic-control hooks with
+              # Cilium, and nothing here needs it.
+            ebpf:
+              # Cilium runs with enable-tcx=true, and the chart's default
+              # contextPropagation does attach TC programs. OBI's `auto` would
+              # pick tcx anyway; pinning it states the contract instead of
+              # leaving it to detection -- under tcx the two coexist, OBI at the
+              # head of the hook list and Cilium at the tail.
+              # https://opentelemetry.io/docs/zero-code/obi/cilium-compatibility/
+              traffic_control_backend: tcx
+            {{- end }}
   destination:
     name: in-cluster
     namespace: obi

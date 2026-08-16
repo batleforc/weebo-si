@@ -1,0 +1,296 @@
+{
+  "name": "Egress",
+  "tags": [
+    "infra"
+  ],
+  "tiles": [
+    {
+      "id": "egress-calls",
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "External calls",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\ncalls AS (\n  SELECT\n    Timestamp,\n    ServiceName,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.request.method'] AS method,\n    SpanAttributes['http.response.status_code'] AS status,\n    SpanAttributes['url.full'] AS url,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\negress AS (\n  SELECT *\n  FROM calls\n  WHERE host != ''\n    AND NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n    AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n    AND (\n      match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n      OR position(host, ':') > 0\n      OR (\n        position(host, '.') > 0\n        AND host NOT LIKE '%.cluster.local'\n        AND host NOT LIKE '%.svc'\n        AND host NOT LIKE '%.local'\n        AND host NOT LIKE '%.weebo.poc'\n        AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n      )\n    )\n)\nSELECT count() AS \"External calls\" FROM egress",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "egress-hosts",
+      "x": 4,
+      "y": 0,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "External hosts",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\ncalls AS (\n  SELECT\n    Timestamp,\n    ServiceName,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.request.method'] AS method,\n    SpanAttributes['http.response.status_code'] AS status,\n    SpanAttributes['url.full'] AS url,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\negress AS (\n  SELECT *\n  FROM calls\n  WHERE host != ''\n    AND NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n    AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n    AND (\n      match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n      OR position(host, ':') > 0\n      OR (\n        position(host, '.') > 0\n        AND host NOT LIKE '%.cluster.local'\n        AND host NOT LIKE '%.svc'\n        AND host NOT LIKE '%.local'\n        AND host NOT LIKE '%.weebo.poc'\n        AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n      )\n    )\n)\nSELECT countDistinct(host) AS \"External hosts\" FROM egress",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "egress-unanswered",
+      "x": 8,
+      "y": 0,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Unanswered calls",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\ncalls AS (\n  SELECT\n    Timestamp,\n    ServiceName,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.request.method'] AS method,\n    SpanAttributes['http.response.status_code'] AS status,\n    SpanAttributes['url.full'] AS url,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\negress AS (\n  SELECT *\n  FROM calls\n  WHERE host != ''\n    AND NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n    AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n    AND (\n      match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n      OR position(host, ':') > 0\n      OR (\n        position(host, '.') > 0\n        AND host NOT LIKE '%.cluster.local'\n        AND host NOT LIKE '%.svc'\n        AND host NOT LIKE '%.local'\n        AND host NOT LIKE '%.weebo.poc'\n        AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n      )\n    )\n)\nSELECT countIf(StatusCode = 'Error' AND status = '') AS \"Unanswered calls\" FROM egress",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "egress-failed",
+      "x": 12,
+      "y": 0,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Failed calls",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\ncalls AS (\n  SELECT\n    Timestamp,\n    ServiceName,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.request.method'] AS method,\n    SpanAttributes['http.response.status_code'] AS status,\n    SpanAttributes['url.full'] AS url,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\negress AS (\n  SELECT *\n  FROM calls\n  WHERE host != ''\n    AND NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n    AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n    AND (\n      match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n      OR position(host, ':') > 0\n      OR (\n        position(host, '.') > 0\n        AND host NOT LIKE '%.cluster.local'\n        AND host NOT LIKE '%.svc'\n        AND host NOT LIKE '%.local'\n        AND host NOT LIKE '%.weebo.poc'\n        AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n      )\n    )\n)\nSELECT countIf(StatusCode = 'Error') AS \"Failed calls\" FROM egress",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "egress-failrate",
+      "x": 16,
+      "y": 0,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Failure rate",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\ncalls AS (\n  SELECT\n    Timestamp,\n    ServiceName,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.request.method'] AS method,\n    SpanAttributes['http.response.status_code'] AS status,\n    SpanAttributes['url.full'] AS url,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\negress AS (\n  SELECT *\n  FROM calls\n  WHERE host != ''\n    AND NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n    AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n    AND (\n      match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n      OR position(host, ':') > 0\n      OR (\n        position(host, '.') > 0\n        AND host NOT LIKE '%.cluster.local'\n        AND host NOT LIKE '%.svc'\n        AND host NOT LIKE '%.local'\n        AND host NOT LIKE '%.weebo.poc'\n        AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n      )\n    )\n)\nSELECT round(100 * countIf(StatusCode = 'Error') / nullIf(count(), 0), 1) AS \"Failure %\" FROM egress",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "unit": "%"
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 5,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 25,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "egress-p95",
+      "x": 20,
+      "y": 0,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Latency p95",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\ncalls AS (\n  SELECT\n    Timestamp,\n    ServiceName,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.request.method'] AS method,\n    SpanAttributes['http.response.status_code'] AS status,\n    SpanAttributes['url.full'] AS url,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\negress AS (\n  SELECT *\n  FROM calls\n  WHERE host != ''\n    AND NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n    AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n    AND (\n      match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n      OR position(host, ':') > 0\n      OR (\n        position(host, '.') > 0\n        AND host NOT LIKE '%.cluster.local'\n        AND host NOT LIKE '%.svc'\n        AND host NOT LIKE '%.local'\n        AND host NOT LIKE '%.weebo.poc'\n        AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n      )\n    )\n)\nSELECT round(quantile(0.95)(Duration) / 1e6, 0) AS \"p95\" FROM egress",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "unit": "ms",
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "egress-rate",
+      "x": 0,
+      "y": 3,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Calls per second, by host",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\ncalls AS (\n  SELECT\n    Timestamp,\n    ServiceName,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.request.method'] AS method,\n    SpanAttributes['http.response.status_code'] AS status,\n    SpanAttributes['url.full'] AS url,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\negress AS (\n  SELECT *\n  FROM calls\n  WHERE host != ''\n    AND NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n    AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n    AND (\n      match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n      OR position(host, ':') > 0\n      OR (\n        position(host, '.') > 0\n        AND host NOT LIKE '%.cluster.local'\n        AND host NOT LIKE '%.svc'\n        AND host NOT LIKE '%.local'\n        AND host NOT LIKE '%.weebo.poc'\n        AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n      )\n    )\n)\nSELECT\n  $__timeInterval(Timestamp) AS ts,\n  host AS \"Host\",\n  count() / $__interval_s AS \"Calls/s\"\nFROM egress\nGROUP BY ts, \"Host\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "egress-failures-rate",
+      "x": 12,
+      "y": 3,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Failures per second, by host",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\ncalls AS (\n  SELECT\n    Timestamp,\n    ServiceName,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.request.method'] AS method,\n    SpanAttributes['http.response.status_code'] AS status,\n    SpanAttributes['url.full'] AS url,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\negress AS (\n  SELECT *\n  FROM calls\n  WHERE host != ''\n    AND NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n    AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n    AND (\n      match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n      OR position(host, ':') > 0\n      OR (\n        position(host, '.') > 0\n        AND host NOT LIKE '%.cluster.local'\n        AND host NOT LIKE '%.svc'\n        AND host NOT LIKE '%.local'\n        AND host NOT LIKE '%.weebo.poc'\n        AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n      )\n    )\n)\nSELECT\n  $__timeInterval(Timestamp) AS ts,\n  host AS \"Host\",\n  countIf(StatusCode = 'Error') / $__interval_s AS \"Failures/s\"\nFROM egress\nGROUP BY ts, \"Host\"\nHAVING sum(StatusCode = 'Error') > 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "egress-hosts-table",
+      "x": 0,
+      "y": 9,
+      "w": 12,
+      "h": 8,
+      "config": {
+        "name": "External dependencies",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\ncalls AS (\n  SELECT\n    Timestamp,\n    ServiceName,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.request.method'] AS method,\n    SpanAttributes['http.response.status_code'] AS status,\n    SpanAttributes['url.full'] AS url,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\negress AS (\n  SELECT *\n  FROM calls\n  WHERE host != ''\n    AND NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n    AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n    AND (\n      match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n      OR position(host, ':') > 0\n      OR (\n        position(host, '.') > 0\n        AND host NOT LIKE '%.cluster.local'\n        AND host NOT LIKE '%.svc'\n        AND host NOT LIKE '%.local'\n        AND host NOT LIKE '%.weebo.poc'\n        AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n      )\n    )\n)\nSELECT\n  host AS \"Host\",\n  count() AS \"Calls\",\n  countIf(StatusCode = 'Error') AS \"Failed\",\n  round(100 * countIf(StatusCode = 'Error') / count(), 1) AS \"Failed %\",\n  round(quantile(0.5)(Duration) / 1e6, 1) AS \"p50 (ms)\",\n  round(quantile(0.95)(Duration) / 1e6, 1) AS \"p95 (ms)\",\n  arrayStringConcat(arraySort(groupUniqArray(10)(ServiceName)), ', ') AS \"Callers\"\nFROM egress\nGROUP BY \"Host\"\nORDER BY \"Calls\" DESC\nLIMIT 50",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "egress-pairs",
+      "x": 12,
+      "y": 9,
+      "w": 12,
+      "h": 8,
+      "config": {
+        "name": "Who calls what",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\ncalls AS (\n  SELECT\n    Timestamp,\n    ServiceName,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.request.method'] AS method,\n    SpanAttributes['http.response.status_code'] AS status,\n    SpanAttributes['url.full'] AS url,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\negress AS (\n  SELECT *\n  FROM calls\n  WHERE host != ''\n    AND NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n    AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n    AND (\n      match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n      OR position(host, ':') > 0\n      OR (\n        position(host, '.') > 0\n        AND host NOT LIKE '%.cluster.local'\n        AND host NOT LIKE '%.svc'\n        AND host NOT LIKE '%.local'\n        AND host NOT LIKE '%.weebo.poc'\n        AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n      )\n    )\n)\nSELECT\n  ServiceName AS \"Service\",\n  host AS \"Host\",\n  count() AS \"Calls\",\n  countIf(StatusCode = 'Error') AS \"Failed\",\n  round(quantile(0.95)(Duration) / 1e6, 1) AS \"p95 (ms)\",\n  max(Timestamp) AS \"Last call\"\nFROM egress\nGROUP BY \"Service\", \"Host\"\nORDER BY \"Calls\" DESC\nLIMIT 50",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "egress-status",
+      "x": 0,
+      "y": 17,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Responses by status code",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\ncalls AS (\n  SELECT\n    Timestamp,\n    ServiceName,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.request.method'] AS method,\n    SpanAttributes['http.response.status_code'] AS status,\n    SpanAttributes['url.full'] AS url,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\negress AS (\n  SELECT *\n  FROM calls\n  WHERE host != ''\n    AND NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n    AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n    AND (\n      match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n      OR position(host, ':') > 0\n      OR (\n        position(host, '.') > 0\n        AND host NOT LIKE '%.cluster.local'\n        AND host NOT LIKE '%.svc'\n        AND host NOT LIKE '%.local'\n        AND host NOT LIKE '%.weebo.poc'\n        AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n      )\n    )\n)\nSELECT\n  $__timeInterval(Timestamp) AS ts,\n  if(status = '', 'no response', status) AS \"Status\",\n  count() AS \"Calls\"\nFROM egress\nWHERE method != ''\nGROUP BY ts, \"Status\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "egress-latency",
+      "x": 12,
+      "y": 17,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Latency p95, by host",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\ncalls AS (\n  SELECT\n    Timestamp,\n    ServiceName,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.request.method'] AS method,\n    SpanAttributes['http.response.status_code'] AS status,\n    SpanAttributes['url.full'] AS url,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\negress AS (\n  SELECT *\n  FROM calls\n  WHERE host != ''\n    AND NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n    AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n    AND (\n      match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n      OR position(host, ':') > 0\n      OR (\n        position(host, '.') > 0\n        AND host NOT LIKE '%.cluster.local'\n        AND host NOT LIKE '%.svc'\n        AND host NOT LIKE '%.local'\n        AND host NOT LIKE '%.weebo.poc'\n        AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n      )\n    )\n)\nSELECT\n  $__timeInterval(Timestamp) AS ts,\n  host AS \"Host\",\n  round(quantile(0.95)(Duration) / 1e6, 1) AS \"p95 (ms)\"\nFROM egress\nGROUP BY ts, \"Host\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "egress-recent-failures",
+      "x": 0,
+      "y": 23,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Recent failed external calls",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\ncalls AS (\n  SELECT\n    Timestamp,\n    ServiceName,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.request.method'] AS method,\n    SpanAttributes['http.response.status_code'] AS status,\n    SpanAttributes['url.full'] AS url,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\negress AS (\n  SELECT *\n  FROM calls\n  WHERE host != ''\n    AND NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n    AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n    AND (\n      match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n      OR position(host, ':') > 0\n      OR (\n        position(host, '.') > 0\n        AND host NOT LIKE '%.cluster.local'\n        AND host NOT LIKE '%.svc'\n        AND host NOT LIKE '%.local'\n        AND host NOT LIKE '%.weebo.poc'\n        AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n      )\n    )\n)\nSELECT\n  Timestamp AS \"Time\",\n  ServiceName AS \"Service\",\n  host AS \"Host\",\n  method AS \"Method\",\n  if(status = '', '-', status) AS \"Status\",\n  round(Duration / 1e6, 1) AS \"Duration (ms)\",\n  url AS \"URL\"\nFROM egress\nWHERE StatusCode = 'Error'\nORDER BY \"Time\" DESC\nLIMIT 50",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "egress-slowest",
+      "x": 12,
+      "y": 23,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Slowest external calls",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\ncalls AS (\n  SELECT\n    Timestamp,\n    ServiceName,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.request.method'] AS method,\n    SpanAttributes['http.response.status_code'] AS status,\n    SpanAttributes['url.full'] AS url,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\negress AS (\n  SELECT *\n  FROM calls\n  WHERE host != ''\n    AND NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n    AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n    AND (\n      match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n      OR position(host, ':') > 0\n      OR (\n        position(host, '.') > 0\n        AND host NOT LIKE '%.cluster.local'\n        AND host NOT LIKE '%.svc'\n        AND host NOT LIKE '%.local'\n        AND host NOT LIKE '%.weebo.poc'\n        AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n      )\n    )\n)\nSELECT\n  Timestamp AS \"Time\",\n  ServiceName AS \"Service\",\n  host AS \"Host\",\n  method AS \"Method\",\n  if(status = '', '-', status) AS \"Status\",\n  round(Duration / 1e6, 1) AS \"Duration (ms)\",\n  url AS \"URL\"\nFROM egress\nORDER BY \"Duration (ms)\" DESC\nLIMIT 20",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    }
+  ]
+}

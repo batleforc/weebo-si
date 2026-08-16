@@ -101,6 +101,49 @@ of three shapes:
   added). Rates then divide by `$__interval_s`, so they stay correct at any
   granularity the time picker chooses.
 
+- `egress.json` — everything the cluster calls that is not the cluster: call
+  and failure counts, failure rate, p95, the per-host dependency table, who
+  calls what, status codes over time, and the recent-failure / slowest-call
+  tables.
+
+  Built entirely from OBI's *client* spans (`SpanKind = 'Client'`), which carry
+  `server.address` with the real hostname because OBI decodes TLS. Nothing
+  needs to be scraped for this to work.
+
+  A peer counts as external when it is neither a private address
+  (10/8, 172.16/12, 192.168/16, 127/8, 169.254/16, `fc00::/7`, `fe80::/10`,
+  `::1`) nor an in-cluster name. In-cluster names are recognised by suffix:
+  `.cluster.local`, `.svc`, `.local`, `.weebo.poc`, or a last label that is a
+  namespace in this cluster — that list comes from `otel_logs_kv_rollup_15m`,
+  so it covers every namespace that logs, updates itself, and costs nothing
+  (reading it out of `otel_traces` instead blew the 4.5 GiB query limit).
+  Two consequences worth knowing: **the ingress domain is hardcoded**, so
+  renaming `weebo.poc` means editing these queries; and the node's own IP is
+  public (OVH), so if a workload ever dials the node IP directly it reads as
+  external.
+
+  "Failed" is `StatusCode = 'Error'`, OTel's own verdict, which covers HTTP,
+  DB and RPC peers alike. It includes the `401` half of a registry token
+  handshake — `ghcr.io` sitting near 33% "failed" with a matching count of
+  `200`s is the normal HEAD → 401 → auth → 200 dance, not an outage. The
+  "Unanswered calls" tile is the unambiguous one: an errored span with no
+  status code at all is a call that got no response.
+
+- `network.json` — what gets dropped, in two halves.
+
+  The NIC half (`system.network.dropped`, `system.network.errors`,
+  `k8s.pod.network.errors`) works today off otel-node. Same counter handling as
+  `node.json`, plus series that never moved are filtered out of the line charts
+  so an idle cluster shows an empty chart instead of a legend full of flat
+  zeroes.
+
+  The `Hubble ·` half stays empty until `hubble.metrics.enabled` is set in
+  `1.pulu-init/cilium-values.yaml` and scraped — which is a Pulumi change
+  (`task pulunit:up`), not an ArgoCD sync. It is the only source here for
+  *policy* drops and DNS failures: OBI never sees them, because a denied or
+  unresolved connection completes no protocol exchange and so produces no span.
+  `action = 'dropped'` is the denial (Hubble lowercases the flow verdict).
+
 ## Round trip: build it in the UI, then commit it
 
 There is no export button. Get the JSON from the API with the same credentials

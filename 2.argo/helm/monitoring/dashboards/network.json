@@ -1,0 +1,256 @@
+{
+  "name": "Network drops",
+  "tags": [
+    "infra"
+  ],
+  "tiles": [
+    {
+      "id": "drop-packets",
+      "x": 0,
+      "y": 0,
+      "w": 6,
+      "h": 3,
+      "config": {
+        "name": "Packets dropped by NICs",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt64(greatest(0, sum(d))) AS \"Packets dropped\"\nFROM (\n  SELECT concat(ResourceAttributes['k8s.node.name'], ' ', Attributes['device'], ' ', Attributes['direction']) AS series, max(Value) - min(Value) AS d\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.network.dropped' AND $__timeFilter(TimeUnix)\n  GROUP BY series\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "drop-nic-errors",
+      "x": 6,
+      "y": 0,
+      "w": 6,
+      "h": 3,
+      "config": {
+        "name": "NIC errors",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt64(greatest(0, sum(d))) AS \"NIC errors\"\nFROM (\n  SELECT concat(ResourceAttributes['k8s.node.name'], ' ', Attributes['device'], ' ', Attributes['direction']) AS series, max(Value) - min(Value) AS d\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.network.errors' AND $__timeFilter(TimeUnix)\n  GROUP BY series\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "drop-hubble-flows",
+      "x": 12,
+      "y": 0,
+      "w": 6,
+      "h": 3,
+      "config": {
+        "name": "Hubble \u00b7 flows dropped",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt64(greatest(0, sum(d))) AS \"Flows dropped\"\nFROM (\n  SELECT concat(ResourceAttributes['k8s.node.name'], '|', Attributes['reason'], '|', Attributes['source'], '|', Attributes['destination']) AS series, max(Value) - min(Value) AS d\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'hubble_drop_total' AND $__timeFilter(TimeUnix)\n  GROUP BY series\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "drop-hubble-denied",
+      "x": 18,
+      "y": 0,
+      "w": 6,
+      "h": 3,
+      "config": {
+        "name": "Hubble \u00b7 policy denials",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt64(greatest(0, sum(d))) AS \"Denied\"\nFROM (\n  SELECT concat(ResourceAttributes['k8s.node.name'], '|', Attributes['direction'], '|', Attributes['source'], '|', Attributes['destination']) AS series, max(Value) - min(Value) AS d\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'hubble_policy_verdicts_total' AND Attributes['action'] = 'dropped' AND $__timeFilter(TimeUnix)\n  GROUP BY series\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "drop-packets-rate",
+      "x": 0,
+      "y": 3,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Dropped packets/s, by interface",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  series AS \"Interface\",\n  rate AS \"Dropped/s\"\nFROM (\n  SELECT\n    ts,\n    series,\n    sum(d) / $__interval_s AS rate,\n    sum(sum(d)) OVER (PARTITION BY series) AS total\n  FROM (\n    SELECT\n      ts,\n      series,\n      key,\n      v - lagInFrame(v) OVER (PARTITION BY key ORDER BY ts) AS d,\n      row_number() OVER (PARTITION BY key ORDER BY ts) AS rn\n    FROM (\n      SELECT\n        $__timeInterval(TimeUnix) AS ts,\n        concat(Attributes['device'], ' ', Attributes['direction']) AS series,\n        concat(ResourceAttributes['k8s.node.name'], '|', concat(Attributes['device'], ' ', Attributes['direction'])) AS key,\n        argMax(Value, TimeUnix) AS v\n      FROM default.otel_metrics_sum\n      WHERE MetricName = 'system.network.dropped' AND $__timeFilter(TimeUnix)\n      GROUP BY ts, series, key\n    )\n  )\n  WHERE rn > 1 AND d >= 0\n  GROUP BY ts, series\n)\n-- series that never moved would otherwise fill the legend with flat zeroes\nWHERE total > 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "drop-errors-rate",
+      "x": 12,
+      "y": 3,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Interface errors/s",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  series AS \"Interface\",\n  rate AS \"Errors/s\"\nFROM (\n  SELECT\n    ts,\n    series,\n    sum(d) / $__interval_s AS rate,\n    sum(sum(d)) OVER (PARTITION BY series) AS total\n  FROM (\n    SELECT\n      ts,\n      series,\n      key,\n      v - lagInFrame(v) OVER (PARTITION BY key ORDER BY ts) AS d,\n      row_number() OVER (PARTITION BY key ORDER BY ts) AS rn\n    FROM (\n      SELECT\n        $__timeInterval(TimeUnix) AS ts,\n        concat(Attributes['device'], ' ', Attributes['direction']) AS series,\n        concat(ResourceAttributes['k8s.node.name'], '|', concat(Attributes['device'], ' ', Attributes['direction'])) AS key,\n        argMax(Value, TimeUnix) AS v\n      FROM default.otel_metrics_sum\n      WHERE MetricName = 'system.network.errors' AND $__timeFilter(TimeUnix)\n      GROUP BY ts, series, key\n    )\n  )\n  WHERE rn > 1 AND d >= 0\n  GROUP BY ts, series\n)\n-- series that never moved would otherwise fill the legend with flat zeroes\nWHERE total > 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "drop-pod-errors",
+      "x": 0,
+      "y": 9,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Pod network errors",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  namespace AS \"Namespace\",\n  pod AS \"Pod\",\n  direction AS \"Direction\",\n  toUInt64(greatest(0, max(Value) - min(Value))) AS \"Errors\"\nFROM (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS namespace,\n    ResourceAttributes['k8s.pod.name'] AS pod,\n    Attributes['direction'] AS direction,\n    Attributes['interface'] AS interface,\n    Value,\n    TimeUnix\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'k8s.pod.network.errors' AND $__timeFilter(TimeUnix)\n)\nGROUP BY \"Namespace\", \"Pod\", \"Direction\", interface\nHAVING \"Errors\" > 0\nORDER BY \"Errors\" DESC\nLIMIT 30",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "drop-iface-table",
+      "x": 12,
+      "y": 9,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Drops and errors by interface",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  node AS \"Node\",\n  device AS \"Interface\",\n  direction AS \"Direction\",\n  toUInt64(greatest(0, maxIf(Value, MetricName = 'system.network.dropped')\n                     - minIf(Value, MetricName = 'system.network.dropped'))) AS \"Dropped\",\n  toUInt64(greatest(0, maxIf(Value, MetricName = 'system.network.errors')\n                     - minIf(Value, MetricName = 'system.network.errors'))) AS \"Errors\"\nFROM (\n  SELECT\n    ResourceAttributes['k8s.node.name'] AS node,\n    Attributes['device'] AS device,\n    Attributes['direction'] AS direction,\n    MetricName,\n    Value\n  FROM default.otel_metrics_sum\n  WHERE MetricName IN ('system.network.dropped', 'system.network.errors')\n    AND $__timeFilter(TimeUnix)\n)\nGROUP BY \"Node\", \"Interface\", \"Direction\"\nHAVING \"Dropped\" > 0 OR \"Errors\" > 0\nORDER BY \"Dropped\" DESC, \"Errors\" DESC\nLIMIT 30",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "hubble-drop-reason",
+      "x": 0,
+      "y": 16,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Hubble \u00b7 dropped flows/s, by reason",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  series AS \"Reason\",\n  rate AS \"Drops/s\"\nFROM (\n  SELECT\n    ts,\n    series,\n    sum(d) / $__interval_s AS rate,\n    sum(sum(d)) OVER (PARTITION BY series) AS total\n  FROM (\n    SELECT\n      ts,\n      series,\n      key,\n      v - lagInFrame(v) OVER (PARTITION BY key ORDER BY ts) AS d,\n      row_number() OVER (PARTITION BY key ORDER BY ts) AS rn\n    FROM (\n      SELECT\n        $__timeInterval(TimeUnix) AS ts,\n        concat(Attributes['reason'], ' (', Attributes['protocol'], ')') AS series,\n        concat(ResourceAttributes['k8s.node.name'], '|', concat(Attributes['reason'], ' (', Attributes['protocol'], ')')) AS key,\n        argMax(Value, TimeUnix) AS v\n      FROM default.otel_metrics_sum\n      WHERE MetricName = 'hubble_drop_total' AND $__timeFilter(TimeUnix)\n      GROUP BY ts, series, key\n    )\n  )\n  WHERE rn > 1 AND d >= 0\n  GROUP BY ts, series\n)\n-- series that never moved would otherwise fill the legend with flat zeroes\nWHERE total > 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "hubble-drop-pairs",
+      "x": 12,
+      "y": 16,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Hubble \u00b7 dropped flows/s, by peer",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  series AS \"Source -> destination\",\n  rate AS \"Drops/s\"\nFROM (\n  SELECT\n    ts,\n    series,\n    sum(d) / $__interval_s AS rate,\n    sum(sum(d)) OVER (PARTITION BY series) AS total\n  FROM (\n    SELECT\n      ts,\n      series,\n      key,\n      v - lagInFrame(v) OVER (PARTITION BY key ORDER BY ts) AS d,\n      row_number() OVER (PARTITION BY key ORDER BY ts) AS rn\n    FROM (\n      SELECT\n        $__timeInterval(TimeUnix) AS ts,\n        concat(if(Attributes['source'] = '', '?', Attributes['source']), ' -> ', if(Attributes['destination'] = '', '?', Attributes['destination'])) AS series,\n        concat(ResourceAttributes['k8s.node.name'], '|', concat(if(Attributes['source'] = '', '?', Attributes['source']), ' -> ', if(Attributes['destination'] = '', '?', Attributes['destination']))) AS key,\n        argMax(Value, TimeUnix) AS v\n      FROM default.otel_metrics_sum\n      WHERE MetricName = 'hubble_drop_total' AND $__timeFilter(TimeUnix)\n      GROUP BY ts, series, key\n    )\n  )\n  WHERE rn > 1 AND d >= 0\n  GROUP BY ts, series\n)\n-- series that never moved would otherwise fill the legend with flat zeroes\nWHERE total > 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "hubble-denied-table",
+      "x": 0,
+      "y": 22,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Hubble \u00b7 policy denials",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  direction AS \"Direction\",\n  source AS \"Source\",\n  destination AS \"Destination\",\n  match AS \"Match\",\n  toUInt64(greatest(0, sum(d))) AS \"Denied\"\nFROM (\n  SELECT\n    Attributes['direction'] AS direction,\n    if(Attributes['source'] = '', '?', Attributes['source']) AS source,\n    if(Attributes['destination'] = '', '?', Attributes['destination']) AS destination,\n    Attributes['match'] AS match,\n    ResourceAttributes['k8s.node.name'] AS node,\n    max(Value) - min(Value) AS d\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'hubble_policy_verdicts_total'\n    AND Attributes['action'] = 'dropped'\n    AND $__timeFilter(TimeUnix)\n  GROUP BY direction, source, destination, match, node\n)\nGROUP BY \"Direction\", \"Source\", \"Destination\", \"Match\"\nHAVING \"Denied\" > 0\nORDER BY \"Denied\" DESC\nLIMIT 30",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "hubble-dns",
+      "x": 12,
+      "y": 22,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Hubble \u00b7 failed DNS answers",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  rcode AS \"Response code\",\n  query AS \"Query\",\n  source AS \"Asked by\",\n  toUInt64(greatest(0, sum(d))) AS \"Answers\"\nFROM (\n  SELECT\n    Attributes['rcode'] AS rcode,\n    if(Attributes['query'] = '', '(query label not enabled)', Attributes['query']) AS query,\n    if(Attributes['source'] = '', '?', Attributes['source']) AS source,\n    ResourceAttributes['k8s.node.name'] AS node,\n    max(Value) - min(Value) AS d\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'hubble_dns_responses_total'\n    AND Attributes['rcode'] NOT IN ('', 'No Error')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY rcode, query, source, node\n)\nGROUP BY \"Response code\", \"Query\", \"Asked by\"\nHAVING \"Answers\" > 0\nORDER BY \"Answers\" DESC\nLIMIT 30",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    }
+  ]
+}

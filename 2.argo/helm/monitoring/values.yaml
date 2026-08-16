@@ -77,3 +77,9 @@ otel:
 obi:
   enabled: true
   version: "0.11.0"
+  # Network flow metrics, on top of the application traces OBI produces by
+  # default. IP-level and per-flow, so this is the noisier, more expensive half
+  # of OBI -- the flag is the rollback switch that keeps tracing working if the
+  # extra eBPF work or the flow cardinality turns out not to be worth it. Until
+  # 2026-08-16 this was spelt `enabled` in the config and had never been on.
+  networkFlows: true
