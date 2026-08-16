@@ -63,6 +63,35 @@ path "${vault_mount.main-vault.path}/metadata/{{identity.entity.aliases.${data.v
 EOT
 }
 
+# mv_reader_policy is templated on the caller's namespace, so a workload in
+# "obi" can only ever read mv/obi/*. That forced the ClickStack ingestion key to
+# be duplicated into a per-namespace path. This policy is the escape hatch: a
+# single shared, read-only path holding nothing but the ingestion key, so one
+# ClusterSecretStore can fan it out to every telemetry producer.
+resource "vault_policy" "otel_ingest_reader_policy" {
+  name = "otel_ingest_reader_policy"
+
+  policy = <<EOT
+path "${vault_mount.main-vault.path}/data/monitoring/otel" {
+  capabilities = ["read"]
+}
+path "${vault_mount.main-vault.path}/metadata/monitoring/otel" {
+  capabilities = ["read","list"]
+}
+EOT
+}
+
+# Bound to the External Secrets controller itself rather than to the consuming
+# workloads: a ClusterSecretStore authenticates as ESO, not as the namespace it
+# writes the Secret into.
+resource "vault_kubernetes_auth_backend_role" "otel-ingest" {
+  role_name                        = "otel-ingest"
+  bound_service_account_names      = ["external-secrets"]
+  bound_service_account_namespaces = ["external-secrets"]
+  token_ttl                        = 3600
+  token_policies                   = [vault_policy.otel_ingest_reader_policy.name]
+}
+
 resource "vault_kubernetes_auth_backend_role" "auth-write" {
   role_name                        = "auth"
   bound_service_account_names      = ["authentik", "default"]

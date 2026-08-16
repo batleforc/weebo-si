@@ -1,0 +1,35 @@
+{{- if .Values.otel.enabled -}}
+---
+# Cluster-scoped counterpart of monitoring-store. mv_reader_policy templates the
+# readable path on the *caller's* namespace, so it can never serve one key to
+# obi/, monitoring/ and every future producer at once -- which is why the
+# ingestion key used to be duplicated per namespace. This store instead
+# authenticates as the External Secrets controller under the dedicated
+# otel-ingest role, whose policy exposes exactly one path: mv/monitoring/otel.
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: otel-ingest-store
+  annotations:
+    ## Add this annotation to disable controller warning events for unmaintained stores
+    external-secrets.io/disable-maintenance-checks: "true"
+spec:
+  provider:
+    vault:
+      server: "https://openbao.vault:8200"
+      path: "mv"
+      caProvider:
+        type: Secret
+        name: openbao-tls
+        # Replicated into every namespace by the Vault CR's caNamespaces: ["*"],
+        # but a ClusterSecretStore has no ambient namespace so it must be pinned.
+        namespace: vault
+        key: ca.crt
+      auth:
+        kubernetes:
+          mountPath: "kubernetes"
+          role: "otel-ingest"
+          serviceAccountRef:
+            name: "external-secrets"
+            namespace: "external-secrets"
+{{- end -}}

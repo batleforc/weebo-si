@@ -22,6 +22,19 @@ spec:
           existingSecret: true
           frontendUrl: "https://{{ .Values.clickstack.domain }}"
           secrets: {}
+          config:
+            # Read by the gateway collector's clickhouse exporter, which
+            # interpolates it as ${env:HYPERDX_OTEL_EXPORTER_TABLES_TTL:-720h}
+            # in the config HyperDX pushes over OpAMP. It lands in the CREATE
+            # TABLE statement, so it only applies to tables the exporter creates
+            # -- existing ones need an ALTER TABLE ... MODIFY TTL by hand.
+            HYPERDX_OTEL_EXPORTER_TABLES_TTL: {{ .Values.clickstack.tablesTtl | quote }}
+          service:
+            # The bootstrap Job talks to /register/password and /installation,
+            # which only the API port serves. Not exposed through the
+            # IngressRoute, so it stays cluster-internal.
+            apiPort:
+              enabled: true
           deployment:
             useExistingConfigSecret: true
             existingConfigSecret: clickstack-hyperdx-config

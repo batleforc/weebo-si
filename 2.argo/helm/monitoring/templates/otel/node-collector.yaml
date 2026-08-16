@@ -1,0 +1,210 @@
+{{- if and .Values.otel.enabled .Values.otel.node.enabled -}}
+---
+# Per-node agent: container logs, kubelet/pod metrics and host metrics.
+#
+# These receivers cannot be added to ClickStack's own gateway collector: its
+# configuration is pushed over OpAMP by HyperDX (buildOtelCollectorConfig in
+# packages/api/src/opamp/controllers/opampController.ts) and anything written
+# into its ConfigMap is overwritten on the next poll. So this is a plain
+# upstream collector that forwards everything to that gateway over OTLP.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: otel-node
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  source:
+    chart: opentelemetry-collector
+    repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
+    targetRevision: {{ .Values.otel.version }}
+    helm:
+      releaseName: otel-node
+      valuesObject:
+        fullnameOverride: otel-node
+        mode: daemonset
+        # contrib, not the smaller otelcol-k8s distro: annotation discovery
+        # needs whatever receiver a workload names in its `scraper` hint, and
+        # the usual one for a plain /metrics endpoint (prometheus_simple) is not
+        # shipped in otelcol-k8s.
+        image:
+          repository: otel/opentelemetry-collector-contrib
+        command:
+          name: otelcol-contrib
+
+        presets:
+          logsCollection:
+            enabled: true
+            # Survives a collector restart without replaying every log file
+            # from the start. Runs the container as root to write /var/lib/otelcol.
+            storeCheckpoints: true
+          hostMetrics:
+            enabled: true
+          kubeletMetrics:
+            enabled: true
+          kubernetesAttributes:
+            enabled: true
+          # Pod-annotation driven collection, via k8s_observer + receiver_creator.
+          # The observer is scoped to ${K8S_NODE_NAME}, so each pod is handled by
+          # the agent on its own node -- no duplication.
+          #
+          # Annotations go on the POD TEMPLATE (spec.template.metadata.annotations),
+          # not on the Deployment itself: k8s_observer watches Pods.
+          #
+          # Metric scraping is opt in -- nothing is scraped until a workload asks:
+          #
+          #   io.opentelemetry.discovery.metrics/enabled: "true"
+          #   io.opentelemetry.discovery.metrics/scraper: "prometheus_simple"
+          #   io.opentelemetry.discovery.metrics/config: |
+          #     collection_interval: "30s"
+          #     endpoint: "`endpoint`"
+          #     metrics_path: "/metrics"
+          #
+          # `endpoint` in backticks is the discovered host:port. `scraper` is
+          # mandatory -- receivercreator/discovery.go has no fallback. Suffix the
+          # key with a container port to target one port
+          # (io.opentelemetry.discovery.metrics.9090/config); it wins over the
+          # bare key.
+          #
+          # Logs are NOT handled here -- filelog above tails every container and
+          # the filter/logs processor below drops what is not wanted.
+          annotationDiscovery:
+            metrics:
+              enabled: true
+
+        # Nothing is ingested over the network here, so no receiver ports --
+        # this matters more than usual for a DaemonSet, whose ports default to
+        # hostPort and would squat on 4317/4318/6831/14250/14268/9411 on every
+        # node.
+        ports:
+          otlp:
+            enabled: false
+          otlp-http:
+            enabled: false
+          jaeger-compact:
+            enabled: false
+          jaeger-thrift:
+            enabled: false
+          jaeger-grpc:
+            enabled: false
+          zipkin:
+            enabled: false
+
+        extraEnvs:
+          - name: INGESTION_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.otel.ingestSecret }}
+                key: INGESTION_API_KEY
+
+        config:
+          receivers:
+            otlp: null
+            jaeger: null
+            zipkin: null
+            # The cheapest stage to drop logs at: an excluded file is never
+            # opened, so none of the tail / parse / batch work happens. The
+            # filter/logs processor further down cannot do this -- by the time
+            # it runs the line has already been read and turned into a record.
+            filelog:
+              # This list REPLACES the one the logsCollection preset builds
+              # (`.config` is overlaid last), hence the collector's own log file
+              # is restated here. Without it the agent tails its own output and
+              # feeds itself.
+              exclude:
+                - /var/log/pods/{{ .Release.Namespace }}_otel-node*_*/opentelemetry-collector/*.log
+              {{- range .Values.otel.node.logExcludes }}
+                - /var/log/pods/{{ . }}/*.log
+              {{- end }}
+              # Default is 200ms. Each poll stats every matched file, so on a
+              # node with a few hundred containers this is the difference
+              # between ~5 and ~1 filesystem sweeps per second.
+              poll_interval: {{ .Values.otel.node.pollInterval }}
+          exporters:
+            debug: null
+            otlphttp/hyperdx:
+              endpoint: {{ .Values.otel.endpoint.http }}
+              # Empty-scheme bearertokenauth on the gateway: the header is the
+              # bare key, not "Bearer <key>".
+              headers:
+                authorization: ${env:INGESTION_API_KEY}
+          processors:
+            resource/cluster:
+              attributes:
+                - key: k8s.cluster.name
+                  value: {{ .Values.otel.clusterName }}
+                  action: upsert
+            # Merged into the k8sattributes processor built by the
+            # kubernetesAttributes preset (the preset renders first, then this
+            # `config` block is overlaid on top of it, so `extract.metadata`
+            # survives). Surfaces the opt-out annotation as a resource attribute
+            # for filter/logs below -- filelog itself has no idea which pod a
+            # file belongs to.
+            k8sattributes:
+              extract:
+                annotations:
+                  - tag_name: {{ .Values.otel.logsAnnotation }}
+                    key: {{ .Values.otel.logsAnnotation }}
+                    from: pod
+            # Second stage, for what cannot be expressed as a file path. Opt a
+            # workload out by annotating its POD TEMPLATE
+            # (spec.template.metadata.annotations, not the Deployment):
+            #
+            #   {{ .Values.otel.logsAnnotation }}: "false"
+            #
+            # Absent annotation reads as nil, which never equals "false", so the
+            # default stays "collect everything".
+            filter/logs:
+              error_mode: ignore
+              logs:
+                log_record:
+                  - 'resource.attributes["{{ .Values.otel.logsAnnotation }}"] == "false"'
+                  {{- if .Values.otel.node.minSeverity }}
+                  # The `severity_number > 0` guard is not optional: the
+                  # `container` operator leaves it at 0 (UNSPECIFIED) for any
+                  # line whose level it cannot classify, and 0 sorts below every
+                  # real level -- without the guard this condition silently drops
+                  # every unparsed log in the cluster, which is most of them.
+                  - 'severity_number > 0 and severity_number < {{ .Values.otel.node.minSeverity }}'
+                  {{- end }}
+          service:
+            pipelines:
+              traces: null
+              # Receivers are left empty on purpose: the presets above append
+              # filelog / kubeletstats / hostmetrics, and k8sattributes is
+              # prepended to the processor list -- which is what puts the
+              # annotation in place before filter/logs reads it.
+              logs:
+                receivers: []
+                processors: [memory_limiter, resource/cluster, filter/logs, batch]
+                exporters: [otlphttp/hyperdx]
+              metrics:
+                receivers: [prometheus]
+                processors: [memory_limiter, resource/cluster, batch]
+                exporters: [otlphttp/hyperdx]
+
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            cpu: 50m
+            memory: 128Mi
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: '{{ .Release.Namespace }}'
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

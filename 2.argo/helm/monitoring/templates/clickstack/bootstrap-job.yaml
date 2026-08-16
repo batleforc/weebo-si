@@ -1,0 +1,125 @@
+{{- if and .Values.clickstack.enabled .Values.clickstack.bootstrap.enabled -}}
+---
+# Removes the two manual steps ClickStack otherwise requires: opening the signup
+# form, and copying the generated ingestion key out of Team Settings.
+#
+#   1. POST /register/password creates the first user *and* the Team, which is
+#      also what triggers setupTeamDefaults() -> DEFAULT_CONNECTIONS /
+#      DEFAULT_SOURCES (already supplied by clickstack-hyperdx-config).
+#   2. The Team's apiKey is then overwritten with the Vault-held value. HyperDX
+#      generates it as a random uuidv4 in models/team.ts with no way to seed it,
+#      and INGESTION_API_KEY is ignored on the `hyperdx` prod image
+#      (opampController.ts only honours it for the all-in-one/local images), so
+#      the value has to be forced in MongoDB. HyperDX re-reads the teams
+#      collection on every OpAMP poll, so the collector picks the new key up
+#      within seconds -- no restart needed.
+#
+# PostSync rather than a plain Job so it re-runs on every sync of this app,
+# which is what makes rotating the key in Vault take effect.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: clickstack-bootstrap
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 5
+  ttlSecondsAfterFinished: 900
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: clickstack-bootstrap
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: register
+          image: {{ .Values.clickstack.bootstrap.curlImage | quote }}
+          env:
+            - name: API_URL
+              value: "http://clickstack:8000"
+            - name: ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: clickstack-bootstrap
+                  key: ADMIN_EMAIL
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clickstack-bootstrap
+                  key: ADMIN_PASSWORD
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+
+              echo "waiting for the HyperDX API on ${API_URL}"
+              attempt=0
+              until curl -sf -o /dev/null "${API_URL}/health"; do
+                attempt=$((attempt + 1))
+                if [ "${attempt}" -ge 120 ]; then
+                  echo "API never became ready (10 min)" >&2
+                  exit 1
+                fi
+                sleep 5
+              done
+
+              # express res.json() emits no whitespace, so a substring match is
+              # enough and saves pulling jq into the image.
+              state=$(curl -sf "${API_URL}/installation" || echo '{}')
+              case "${state}" in
+                *'"isTeamExisting":true'*)
+                  echo "team already exists, skipping registration"
+                  exit 0
+                  ;;
+              esac
+
+              cat > /tmp/payload.json <<EOF
+              {"email":"${ADMIN_EMAIL}","password":"${ADMIN_PASSWORD}","confirmPassword":"${ADMIN_PASSWORD}"}
+              EOF
+
+              status=$(curl -sS -o /tmp/register.out -w '%{http_code}' \
+                -X POST -H 'Content-Type: application/json' \
+                --data-binary @/tmp/payload.json \
+                "${API_URL}/register/password")
+
+              case "${status}" in
+                # 409 = teamAlreadyExists, i.e. someone won the race; harmless.
+                200|409) echo "registration returned HTTP ${status}" ;;
+                *)
+                  echo "registration failed with HTTP ${status}" >&2
+                  cat /tmp/register.out >&2
+                  exit 1
+                  ;;
+              esac
+      containers:
+        - name: seed-api-key
+          image: {{ .Values.clickstack.bootstrap.mongoshImage | quote }}
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: clickstack-secret
+                  key: MONGO_URI
+            - name: INGESTION_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: clickstack-secret
+                  key: INGESTION_API_KEY
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              exec mongosh "${MONGO_URI}" --quiet --eval '
+                const key = process.env.INGESTION_API_KEY;
+                if (!key) {
+                  throw new Error("INGESTION_API_KEY is empty");
+                }
+                const res = db.teams.updateOne({}, { $set: { apiKey: key } });
+                if (res.matchedCount === 0) {
+                  throw new Error("no team document -- registration did not complete");
+                }
+                print("team apiKey aligned with Vault (modified=" + res.modifiedCount + ")");
+              '
+{{- end -}}

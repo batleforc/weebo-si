@@ -15,6 +15,9 @@ spec:
     managedNamespaceMetadata:
       labels:
         pod-security.kubernetes.io/enforce: privileged
+        # Opts the namespace into the clickstack-ingest ClusterExternalSecret,
+        # which is the only thing needed to hand OBI the ingestion key.
+        {{ .Values.otel.ingestLabel }}: "true"
     syncOptions:
     - CreateNamespace=true
   source:
@@ -34,23 +37,26 @@ spec:
           - name: bpffs
             mountPath: /sys/fs/bpf
             mountPropagation: HostToContainer
-        podAnnotations:
-          vault.security.banzaicloud.io/vault-addr: "https://openbao.vault:8200"
-          vault.security.banzaicloud.io/vault-role: "auth-read"
-          vault.security.banzaicloud.io/vault-path: "kubernetes"
-          vault.security.banzaicloud.io/vault-tls-secret: "openbao-tls"
         env:
-          OTEL_EBPF_KUBE_CLUSTER_NAME: "weebo-si"
-          OTEL_EXPORTER_OTLP_HEADERS: "authorization=${OTEL_EXPORTER_OTLP_HEADERS_AUTHENTICATION}"
-          OTEL_EXPORTER_OTLP_HEADERS_AUTHENTICATION: "vault:mv/data/obi/config#API_KEY"
+          OTEL_EBPF_KUBE_CLUSTER_NAME: {{ .Values.otel.clusterName | quote }}
+        # Replaces the bank-vaults webhook injection of
+        # vault:mv/data/obi/config#API_KEY -- a second, hand-maintained copy of
+        # the ClickStack key, which also relied on ${VAR} being expanded inside
+        # another env var (Kubernetes only expands the $(VAR) form). The value
+        # now arrives pre-formatted from the shared secret.
+        envValueFrom:
+          OTEL_EXPORTER_OTLP_HEADERS:
+            secretKeyRef:
+              name: {{ .Values.otel.ingestSecret }}
+              key: OTEL_EXPORTER_OTLP_HEADERS
         config:
           create: true
           data:
-            cluster_name: "weebo-si"
+            cluster_name: {{ .Values.otel.clusterName | quote }}
             otel_traces_export:
-              endpoint: "http://clickstack-otel-collector.monitoring:4317"
+              endpoint: {{ .Values.otel.endpoint.grpc | quote }}
             otel_metrics_export:
-              endpoint: "http://clickstack-otel-collector.monitoring:4318"
+              endpoint: {{ .Values.otel.endpoint.http | quote }}
             network:
               enabled: true
   destination:

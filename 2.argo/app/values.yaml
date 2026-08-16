@@ -109,6 +109,12 @@ project:
         kind: "ClusterRole"
       - group: "rbac.authorization.k8s.io"
         kind: "ClusterRoleBinding"
+      # Fan-out of the ClickStack ingestion key to every namespace that
+      # produces telemetry; both kinds are cluster-scoped by design.
+      - group: "external-secrets.io"
+        kind: "ClusterSecretStore"
+      - group: "external-secrets.io"
+        kind: "ClusterExternalSecret"
   - name: database
     sourceRepo:
       - https://apecloud.github.io/helm-charts

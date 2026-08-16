@@ -5,6 +5,56 @@ project: ""
 clickstack:
   enabled: true
   domain: clickstack.weebo.poc
+  # Retention baked into the otel_* tables by the gateway collector's clickhouse
+  # exporter. Upstream default is 720h (30d), which is what drives most of the
+  # disk and background-merge cost on a small cluster.
+  tablesTtl: 168h
+  # Vault path holding the first HyperDX account, consumed by the bootstrap Job
+  # so the signup form never has to be opened by hand.
+  bootstrap:
+    enabled: true
+    mongoshImage: "mongo:7"
+    curlImage: "curlimages/curl:8.11.1"
+
+# Shared ingestion plumbing: one Vault-held key, fanned out to every namespace
+# labelled with otel.ingestLabel, plus the Kubernetes-wide collectors.
+otel:
+  enabled: true
+  version: "0.146.1"
+  clusterName: weebo-si
+  ingestLabel: weebo.io/otel-ingest
+  ingestSecret: clickstack-ingest
+  # Pod-template annotation that opts a workload out of log collection, applied
+  # by otel-node's filter/logs processor. Set it to "false" on the pod template
+  # to drop that pod's logs.
+  logsAnnotation: weebo.io/logs
+  # ClickStack's own gateway collector, which is OpAMP-driven by HyperDX and so
+  # cannot have receivers added to it -- everything below ships to it via OTLP.
+  endpoint:
+    grpc: http://clickstack-otel-collector.monitoring:4317
+    http: http://clickstack-otel-collector.monitoring:4318
+  # DaemonSet: pod logs, node metrics, kubelet metrics.
+  node:
+    enabled: true
+    # Log files the agent never opens -- the only way to spend zero CPU/IO on a
+    # workload's logs. Each entry is a glob against the
+    # <namespace>_<pod>_<uid>/<container> part of the path; the
+    # /var/log/pods/ prefix and /*.log suffix are added automatically.
+    # Examples:
+    #   - kube-system_*/*        drop a whole namespace
+    #   - '*/istio-proxy'        drop one sidecar everywhere
+    #   - default_noisy-app-*/*  drop one workload
+    logExcludes: []
+    # filelog polls every matched file on this interval; upstream default is
+    # 200ms, which is far more than a homelab needs.
+    pollInterval: 1s
+    # Drop log records below this OTel severity. Empty string disables the
+    # condition entirely. Only affects records whose severity was actually
+    # parsed -- see the UNSPECIFIED guard in node-collector.yaml.
+    minSeverity: SEVERITY_NUMBER_INFO
+  # Deployment: cluster-level metrics and Kubernetes events.
+  cluster:
+    enabled: true
 
 obi:
   enabled: true

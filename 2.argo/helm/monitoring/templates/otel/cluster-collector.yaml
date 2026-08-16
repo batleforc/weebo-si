@@ -1,0 +1,114 @@
+{{- if and .Values.otel.enabled .Values.otel.cluster.enabled -}}
+---
+# Singleton collector for the cluster-wide signals that must not be gathered
+# once per node: Kubernetes events (k8sobjects) and control-plane/object
+# metrics (k8s_cluster). Deliberately mode: deployment with a single replica --
+# running these on a DaemonSet would either duplicate every event or require
+# the leader-election extension.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: otel-cluster
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  source:
+    chart: opentelemetry-collector
+    repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
+    targetRevision: {{ .Values.otel.version }}
+    helm:
+      releaseName: otel-cluster
+      valuesObject:
+        fullnameOverride: otel-cluster
+        mode: deployment
+        replicaCount: 1
+        image:
+          repository: otel/opentelemetry-collector-k8s
+        command:
+          name: otelcol-k8s
+
+        presets:
+          kubernetesEvents:
+            enabled: true
+          clusterMetrics:
+            enabled: true
+          kubernetesAttributes:
+            enabled: true
+
+        ports:
+          otlp:
+            enabled: false
+          otlp-http:
+            enabled: false
+          jaeger-compact:
+            enabled: false
+          jaeger-thrift:
+            enabled: false
+          jaeger-grpc:
+            enabled: false
+          zipkin:
+            enabled: false
+
+        extraEnvs:
+          - name: INGESTION_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.otel.ingestSecret }}
+                key: INGESTION_API_KEY
+
+        config:
+          receivers:
+            otlp: null
+            jaeger: null
+            zipkin: null
+          exporters:
+            debug: null
+            otlphttp/hyperdx:
+              endpoint: {{ .Values.otel.endpoint.http }}
+              headers:
+                authorization: ${env:INGESTION_API_KEY}
+          processors:
+            resource/cluster:
+              attributes:
+                - key: k8s.cluster.name
+                  value: {{ .Values.otel.clusterName }}
+                  action: upsert
+          service:
+            pipelines:
+              traces: null
+              # Receivers stay empty: the presets append k8sobjects to logs and
+              # k8s_cluster to metrics.
+              logs:
+                receivers: []
+                processors: [memory_limiter, resource/cluster, batch]
+                exporters: [otlphttp/hyperdx]
+              metrics:
+                receivers: [prometheus]
+                processors: [memory_limiter, resource/cluster, batch]
+                exporters: [otlphttp/hyperdx]
+
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            cpu: 50m
+            memory: 128Mi
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: '{{ .Release.Namespace }}'
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

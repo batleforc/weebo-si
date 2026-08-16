@@ -28,6 +28,8 @@ spec:
     managedNamespaceMetadata:
       labels:
         pod-security.kubernetes.io/enforce: privileged
+        # Opts the namespace into the clickstack-ingest ClusterExternalSecret.
+        weebo.io/otel-ingest: "true"
     syncOptions:
     - CreateNamespace=true
     automated:
