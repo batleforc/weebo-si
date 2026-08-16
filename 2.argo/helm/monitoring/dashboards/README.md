@@ -129,6 +129,29 @@ of three shapes:
   "Unanswered calls" tile is the unambiguous one: an errored span with no
   status code at all is a call that got no response.
 
+- `dependencies.json` — the call map: every edge OBI observed, in one place.
+  Counts, distinct edges, workloads, external peers and the share of traffic
+  that leaves; calls by zone as a pie and over time; the full adjacency table
+  (zone → caller → peer → protocol, with calls, failures and latency); fan-out
+  per workload beside inbound load per service; every failing edge with the
+  status codes it returned; and a search tile of recent failed client spans.
+
+  Peers are bucketed into four zones — `kube-apiserver`, `in-cluster`,
+  `loopback`, `external` — by the same rules `egress.json` uses to decide what
+  counts as outside, so the two dashboards always agree on the boundary.
+
+  Two tile shapes appear here for the first time. **Markdown** tiles
+  (`displayType: "markdown"` + a `markdown` string) carry the legend and the
+  section headers; the renderer skips the query for them, but the API's schema
+  still rejects a tile with no `source`/`connection`/`sqlTemplate`, hence the
+  `SELECT 1 … LIMIT 1` placeholder on each. A **pie** tile carries the zone
+  split. Both are supported from HyperDX 2.32.
+
+  The counting tiles use `uniq()` rather than `countDistinct()` on purpose:
+  ClickHouse's exact implementation builds the full set of edge strings and
+  tips this instance over its 4.5 GiB query limit, while an HLL is exact at
+  two-figure cardinality.
+
 - `network.json` — what gets dropped, in two halves.
 
   The NIC half (`system.network.dropped`, `system.network.errors`,

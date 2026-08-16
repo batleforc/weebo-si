@@ -1,0 +1,337 @@
+{
+  "name": "Dependency map",
+  "tags": [
+    "infra"
+  ],
+  "tiles": [
+    {
+      "id": "legend",
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 5,
+      "config": {
+        "name": "How to read this map",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_traces WHERE $__timeFilter(Timestamp) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "markdown",
+        "markdown": "**One row per edge \u2014 a workload calling a peer, as the kernel saw it.** OBI's eBPF probes read every call on the node, TLS included, so peers appear by hostname and nothing here is inferred from manifests.\n\n**Zones.** `kube-apiserver` \u2014 the 10.128.0.1 service IP. &nbsp; `in-cluster` \u2014 service names and pod IPs. &nbsp; `loopback` \u2014 127.0.0.1 and self-calls. &nbsp; `external` \u2014 anything that is neither a private address nor a name this cluster owns.\n\n**Failed** is OTel's own verdict on the span, so it reads the same for HTTP, gRPC, SQL and Redis. Two edges fail by design: `ghcr.io` answers 401 to every HEAD before the token exchange, and the NetBird control stream is a long poll OBI closes unanswered at 60 s. A dependency that is hard down produces *fewer rows*, not failed ones \u2014 see the Network drops dashboard for that."
+      }
+    },
+    {
+      "id": "n-calls",
+      "x": 0,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Calls observed",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\nraw AS (\n  SELECT\n    Timestamp,\n    ServiceName AS caller,\n    ResourceAttributes['k8s.namespace.name'] AS caller_ns,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.response.status_code'] AS status,\n    multiIf(SpanAttributes['db.system.name'] != '', SpanAttributes['db.system.name'],\n            SpanAttributes['rpc.system.name'] != '', SpanAttributes['rpc.system.name'],\n            'http') AS proto,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\nedges AS (\n  SELECT\n    *,\n    multiIf(\n      host = '10.128.0.1' OR host LIKE 'kubernetes.default%' OR host = 'kubernetes',\n        'kube-apiserver',\n      host = 'localhost' OR match(host, '^127\\.') OR host = '::1',\n        'loopback',\n      NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n        AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n        AND (\n          match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n          OR position(host, ':') > 0\n          OR (\n            position(host, '.') > 0\n            AND host NOT LIKE '%.cluster.local'\n            AND host NOT LIKE '%.svc'\n            AND host NOT LIKE '%.local'\n            AND host NOT LIKE '%.weebo.poc'\n            AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n          )\n        ),\n        'external',\n      'in-cluster') AS zone\n  FROM raw\n  WHERE host != ''\n)\nSELECT count() AS \"Calls\" FROM edges",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "n-edges",
+      "x": 4,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Distinct edges",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\nraw AS (\n  SELECT\n    Timestamp,\n    ServiceName AS caller,\n    ResourceAttributes['k8s.namespace.name'] AS caller_ns,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.response.status_code'] AS status,\n    multiIf(SpanAttributes['db.system.name'] != '', SpanAttributes['db.system.name'],\n            SpanAttributes['rpc.system.name'] != '', SpanAttributes['rpc.system.name'],\n            'http') AS proto,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\nedges AS (\n  SELECT\n    *,\n    multiIf(\n      host = '10.128.0.1' OR host LIKE 'kubernetes.default%' OR host = 'kubernetes',\n        'kube-apiserver',\n      host = 'localhost' OR match(host, '^127\\.') OR host = '::1',\n        'loopback',\n      NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n        AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n        AND (\n          match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n          OR position(host, ':') > 0\n          OR (\n            position(host, '.') > 0\n            AND host NOT LIKE '%.cluster.local'\n            AND host NOT LIKE '%.svc'\n            AND host NOT LIKE '%.local'\n            AND host NOT LIKE '%.weebo.poc'\n            AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n          )\n        ),\n        'external',\n      'in-cluster') AS zone\n  FROM raw\n  WHERE host != ''\n)\n-- uniq(), not countDistinct(): the exact set of edge strings is a 4 GiB\n-- allocation on this instance, and an HLL is exact at this cardinality.\nSELECT uniq(caller, host) AS \"Edges\" FROM edges",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "n-workloads",
+      "x": 8,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Workloads calling",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\nraw AS (\n  SELECT\n    Timestamp,\n    ServiceName AS caller,\n    ResourceAttributes['k8s.namespace.name'] AS caller_ns,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.response.status_code'] AS status,\n    multiIf(SpanAttributes['db.system.name'] != '', SpanAttributes['db.system.name'],\n            SpanAttributes['rpc.system.name'] != '', SpanAttributes['rpc.system.name'],\n            'http') AS proto,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\nedges AS (\n  SELECT\n    *,\n    multiIf(\n      host = '10.128.0.1' OR host LIKE 'kubernetes.default%' OR host = 'kubernetes',\n        'kube-apiserver',\n      host = 'localhost' OR match(host, '^127\\.') OR host = '::1',\n        'loopback',\n      NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n        AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n        AND (\n          match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n          OR position(host, ':') > 0\n          OR (\n            position(host, '.') > 0\n            AND host NOT LIKE '%.cluster.local'\n            AND host NOT LIKE '%.svc'\n            AND host NOT LIKE '%.local'\n            AND host NOT LIKE '%.weebo.poc'\n            AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n          )\n        ),\n        'external',\n      'in-cluster') AS zone\n  FROM raw\n  WHERE host != ''\n)\nSELECT uniq(caller) AS \"Workloads\" FROM edges",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "n-external",
+      "x": 12,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "External peers",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\nraw AS (\n  SELECT\n    Timestamp,\n    ServiceName AS caller,\n    ResourceAttributes['k8s.namespace.name'] AS caller_ns,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.response.status_code'] AS status,\n    multiIf(SpanAttributes['db.system.name'] != '', SpanAttributes['db.system.name'],\n            SpanAttributes['rpc.system.name'] != '', SpanAttributes['rpc.system.name'],\n            'http') AS proto,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\nedges AS (\n  SELECT\n    *,\n    multiIf(\n      host = '10.128.0.1' OR host LIKE 'kubernetes.default%' OR host = 'kubernetes',\n        'kube-apiserver',\n      host = 'localhost' OR match(host, '^127\\.') OR host = '::1',\n        'loopback',\n      NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n        AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n        AND (\n          match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n          OR position(host, ':') > 0\n          OR (\n            position(host, '.') > 0\n            AND host NOT LIKE '%.cluster.local'\n            AND host NOT LIKE '%.svc'\n            AND host NOT LIKE '%.local'\n            AND host NOT LIKE '%.weebo.poc'\n            AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n          )\n        ),\n        'external',\n      'in-cluster') AS zone\n  FROM raw\n  WHERE host != ''\n)\nSELECT uniqIf(host, zone = 'external') AS \"External peers\" FROM edges",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "n-leaving",
+      "x": 16,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Traffic leaving",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\nraw AS (\n  SELECT\n    Timestamp,\n    ServiceName AS caller,\n    ResourceAttributes['k8s.namespace.name'] AS caller_ns,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.response.status_code'] AS status,\n    multiIf(SpanAttributes['db.system.name'] != '', SpanAttributes['db.system.name'],\n            SpanAttributes['rpc.system.name'] != '', SpanAttributes['rpc.system.name'],\n            'http') AS proto,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\nedges AS (\n  SELECT\n    *,\n    multiIf(\n      host = '10.128.0.1' OR host LIKE 'kubernetes.default%' OR host = 'kubernetes',\n        'kube-apiserver',\n      host = 'localhost' OR match(host, '^127\\.') OR host = '::1',\n        'loopback',\n      NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n        AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n        AND (\n          match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n          OR position(host, ':') > 0\n          OR (\n            position(host, '.') > 0\n            AND host NOT LIKE '%.cluster.local'\n            AND host NOT LIKE '%.svc'\n            AND host NOT LIKE '%.local'\n            AND host NOT LIKE '%.weebo.poc'\n            AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n          )\n        ),\n        'external',\n      'in-cluster') AS zone\n  FROM raw\n  WHERE host != ''\n)\nSELECT round(100 * countIf(zone = 'external') / nullIf(count(), 0), 2) AS \"Leaving\" FROM edges",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2,
+          "unit": "%"
+        }
+      }
+    },
+    {
+      "id": "n-broken",
+      "x": 20,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Edges with failures",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\nraw AS (\n  SELECT\n    Timestamp,\n    ServiceName AS caller,\n    ResourceAttributes['k8s.namespace.name'] AS caller_ns,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.response.status_code'] AS status,\n    multiIf(SpanAttributes['db.system.name'] != '', SpanAttributes['db.system.name'],\n            SpanAttributes['rpc.system.name'] != '', SpanAttributes['rpc.system.name'],\n            'http') AS proto,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\nedges AS (\n  SELECT\n    *,\n    multiIf(\n      host = '10.128.0.1' OR host LIKE 'kubernetes.default%' OR host = 'kubernetes',\n        'kube-apiserver',\n      host = 'localhost' OR match(host, '^127\\.') OR host = '::1',\n        'loopback',\n      NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n        AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n        AND (\n          match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n          OR position(host, ':') > 0\n          OR (\n            position(host, '.') > 0\n            AND host NOT LIKE '%.cluster.local'\n            AND host NOT LIKE '%.svc'\n            AND host NOT LIKE '%.local'\n            AND host NOT LIKE '%.weebo.poc'\n            AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n          )\n        ),\n        'external',\n      'in-cluster') AS zone\n  FROM raw\n  WHERE host != ''\n)\nSELECT uniq(caller, host) AS \"Failing edges\"\nFROM edges WHERE StatusCode = 'Error'",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "zone-share",
+      "x": 0,
+      "y": 8,
+      "w": 8,
+      "h": 7,
+      "config": {
+        "name": "Where the calls go",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\nraw AS (\n  SELECT\n    Timestamp,\n    ServiceName AS caller,\n    ResourceAttributes['k8s.namespace.name'] AS caller_ns,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.response.status_code'] AS status,\n    multiIf(SpanAttributes['db.system.name'] != '', SpanAttributes['db.system.name'],\n            SpanAttributes['rpc.system.name'] != '', SpanAttributes['rpc.system.name'],\n            'http') AS proto,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\nedges AS (\n  SELECT\n    *,\n    multiIf(\n      host = '10.128.0.1' OR host LIKE 'kubernetes.default%' OR host = 'kubernetes',\n        'kube-apiserver',\n      host = 'localhost' OR match(host, '^127\\.') OR host = '::1',\n        'loopback',\n      NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n        AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n        AND (\n          match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n          OR position(host, ':') > 0\n          OR (\n            position(host, '.') > 0\n            AND host NOT LIKE '%.cluster.local'\n            AND host NOT LIKE '%.svc'\n            AND host NOT LIKE '%.local'\n            AND host NOT LIKE '%.weebo.poc'\n            AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n          )\n        ),\n        'external',\n      'in-cluster') AS zone\n  FROM raw\n  WHERE host != ''\n)\nSELECT zone AS \"Zone\", count() AS \"Calls\"\nFROM edges\nGROUP BY \"Zone\"\nORDER BY \"Calls\" DESC",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "pie",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "zone-time",
+      "x": 8,
+      "y": 8,
+      "w": 16,
+      "h": 7,
+      "config": {
+        "name": "Calls per second, by zone",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\nraw AS (\n  SELECT\n    Timestamp,\n    ServiceName AS caller,\n    ResourceAttributes['k8s.namespace.name'] AS caller_ns,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.response.status_code'] AS status,\n    multiIf(SpanAttributes['db.system.name'] != '', SpanAttributes['db.system.name'],\n            SpanAttributes['rpc.system.name'] != '', SpanAttributes['rpc.system.name'],\n            'http') AS proto,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\nedges AS (\n  SELECT\n    *,\n    multiIf(\n      host = '10.128.0.1' OR host LIKE 'kubernetes.default%' OR host = 'kubernetes',\n        'kube-apiserver',\n      host = 'localhost' OR match(host, '^127\\.') OR host = '::1',\n        'loopback',\n      NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n        AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n        AND (\n          match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n          OR position(host, ':') > 0\n          OR (\n            position(host, '.') > 0\n            AND host NOT LIKE '%.cluster.local'\n            AND host NOT LIKE '%.svc'\n            AND host NOT LIKE '%.local'\n            AND host NOT LIKE '%.weebo.poc'\n            AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n          )\n        ),\n        'external',\n      'in-cluster') AS zone\n  FROM raw\n  WHERE host != ''\n)\nSELECT\n  $__timeInterval(Timestamp) AS ts,\n  zone AS \"Zone\",\n  count() / $__interval_s AS \"Calls/s\"\nFROM edges\nGROUP BY ts, \"Zone\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "h-map",
+      "x": 0,
+      "y": 15,
+      "w": 24,
+      "h": 2,
+      "config": {
+        "name": "The map",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_traces WHERE $__timeFilter(Timestamp) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "markdown",
+        "markdown": "### The map\nEvery edge, external first, then by volume. This is the adjacency list the two tables below summarise."
+      }
+    },
+    {
+      "id": "map",
+      "x": 0,
+      "y": 17,
+      "w": 24,
+      "h": 11,
+      "config": {
+        "name": "Every edge",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\nraw AS (\n  SELECT\n    Timestamp,\n    ServiceName AS caller,\n    ResourceAttributes['k8s.namespace.name'] AS caller_ns,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.response.status_code'] AS status,\n    multiIf(SpanAttributes['db.system.name'] != '', SpanAttributes['db.system.name'],\n            SpanAttributes['rpc.system.name'] != '', SpanAttributes['rpc.system.name'],\n            'http') AS proto,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\nedges AS (\n  SELECT\n    *,\n    multiIf(\n      host = '10.128.0.1' OR host LIKE 'kubernetes.default%' OR host = 'kubernetes',\n        'kube-apiserver',\n      host = 'localhost' OR match(host, '^127\\.') OR host = '::1',\n        'loopback',\n      NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n        AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n        AND (\n          match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n          OR position(host, ':') > 0\n          OR (\n            position(host, '.') > 0\n            AND host NOT LIKE '%.cluster.local'\n            AND host NOT LIKE '%.svc'\n            AND host NOT LIKE '%.local'\n            AND host NOT LIKE '%.weebo.poc'\n            AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n          )\n        ),\n        'external',\n      'in-cluster') AS zone\n  FROM raw\n  WHERE host != ''\n)\nSELECT\n  zone AS \"Zone\",\n  caller AS \"Caller\",\n  caller_ns AS \"Namespace\",\n  host AS \"Peer\",\n  proto AS \"Proto\",\n  count() AS \"Calls\",\n  countIf(StatusCode = 'Error') AS \"Failed\",\n  round(quantile(0.5)(Duration) / 1e6, 1) AS \"p50 (ms)\",\n  round(quantile(0.95)(Duration) / 1e6, 1) AS \"p95 (ms)\"\nFROM edges\nGROUP BY \"Zone\", \"Caller\", \"Namespace\", \"Peer\", \"Proto\"\nORDER BY \"Zone\" = 'external' DESC, \"Calls\" DESC\nLIMIT 200",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "h-who",
+      "x": 0,
+      "y": 28,
+      "w": 24,
+      "h": 2,
+      "config": {
+        "name": "Who depends on whom",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_traces WHERE $__timeFilter(Timestamp) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "markdown",
+        "markdown": "### Who depends on whom\nOutbound fan-out on the left, inbound load on the right. A workload with external peers is one whose deploys and logins depend on somebody else's uptime."
+      }
+    },
+    {
+      "id": "fanout",
+      "x": 0,
+      "y": 30,
+      "w": 12,
+      "h": 8,
+      "config": {
+        "name": "Fan-out per workload",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\nraw AS (\n  SELECT\n    Timestamp,\n    ServiceName AS caller,\n    ResourceAttributes['k8s.namespace.name'] AS caller_ns,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.response.status_code'] AS status,\n    multiIf(SpanAttributes['db.system.name'] != '', SpanAttributes['db.system.name'],\n            SpanAttributes['rpc.system.name'] != '', SpanAttributes['rpc.system.name'],\n            'http') AS proto,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\nedges AS (\n  SELECT\n    *,\n    multiIf(\n      host = '10.128.0.1' OR host LIKE 'kubernetes.default%' OR host = 'kubernetes',\n        'kube-apiserver',\n      host = 'localhost' OR match(host, '^127\\.') OR host = '::1',\n        'loopback',\n      NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n        AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n        AND (\n          match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n          OR position(host, ':') > 0\n          OR (\n            position(host, '.') > 0\n            AND host NOT LIKE '%.cluster.local'\n            AND host NOT LIKE '%.svc'\n            AND host NOT LIKE '%.local'\n            AND host NOT LIKE '%.weebo.poc'\n            AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n          )\n        ),\n        'external',\n      'in-cluster') AS zone\n  FROM raw\n  WHERE host != ''\n)\nSELECT\n  caller AS \"Workload\",\n  any(caller_ns) AS \"Namespace\",\n  uniq(host) AS \"Peers\",\n  uniqIf(host, zone = 'external') AS \"External\",\n  count() AS \"Calls\",\n  countIf(StatusCode = 'Error') AS \"Failed\"\nFROM edges\nGROUP BY \"Workload\"\nORDER BY \"External\" DESC, \"Calls\" DESC\nLIMIT 40",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "inbound",
+      "x": 12,
+      "y": 30,
+      "w": 12,
+      "h": 8,
+      "config": {
+        "name": "Inbound, by service",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ServiceName AS \"Service\",\n  ResourceAttributes['k8s.namespace.name'] AS \"Namespace\",\n  count() AS \"Requests\",\n  countIf(StatusCode = 'Error') AS \"Failed\",\n  round(quantile(0.95)(Duration) / 1e6, 1) AS \"p95 (ms)\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server' AND $__timeFilter(Timestamp)\nGROUP BY \"Service\", \"Namespace\"\nORDER BY \"Requests\" DESC\nLIMIT 40",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "h-broken",
+      "x": 0,
+      "y": 38,
+      "w": 24,
+      "h": 2,
+      "config": {
+        "name": "What is failing",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_traces WHERE $__timeFilter(Timestamp) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "markdown",
+        "markdown": "### What is failing\nEvery edge that returned an error, with the codes it returned. Check the codes column before treating a row as an outage."
+      }
+    },
+    {
+      "id": "failing",
+      "x": 0,
+      "y": 40,
+      "w": 12,
+      "h": 8,
+      "config": {
+        "name": "Edges with failures",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\nraw AS (\n  SELECT\n    Timestamp,\n    ServiceName AS caller,\n    ResourceAttributes['k8s.namespace.name'] AS caller_ns,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.response.status_code'] AS status,\n    multiIf(SpanAttributes['db.system.name'] != '', SpanAttributes['db.system.name'],\n            SpanAttributes['rpc.system.name'] != '', SpanAttributes['rpc.system.name'],\n            'http') AS proto,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\nedges AS (\n  SELECT\n    *,\n    multiIf(\n      host = '10.128.0.1' OR host LIKE 'kubernetes.default%' OR host = 'kubernetes',\n        'kube-apiserver',\n      host = 'localhost' OR match(host, '^127\\.') OR host = '::1',\n        'loopback',\n      NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n        AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n        AND (\n          match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n          OR position(host, ':') > 0\n          OR (\n            position(host, '.') > 0\n            AND host NOT LIKE '%.cluster.local'\n            AND host NOT LIKE '%.svc'\n            AND host NOT LIKE '%.local'\n            AND host NOT LIKE '%.weebo.poc'\n            AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n          )\n        ),\n        'external',\n      'in-cluster') AS zone\n  FROM raw\n  WHERE host != ''\n)\nSELECT\n  zone AS \"Zone\",\n  caller AS \"Caller\",\n  host AS \"Peer\",\n  count() AS \"Calls\",\n  countIf(StatusCode = 'Error') AS \"Failed\",\n  round(100 * countIf(StatusCode = 'Error') / count(), 1) AS \"Failed %\",\n  arrayStringConcat(arraySort(groupUniqArrayIf(6)(\n    if(status = '', 'no response', status), StatusCode = 'Error')), ', ') AS \"Codes\"\nFROM edges\nGROUP BY \"Zone\", \"Caller\", \"Peer\"\nHAVING \"Failed\" > 0\nORDER BY \"Failed\" DESC\nLIMIT 30",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "failing-time",
+      "x": 12,
+      "y": 40,
+      "w": 12,
+      "h": 8,
+      "config": {
+        "name": "Failures per second, by edge",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nnamespaces AS (\n  SELECT DISTINCT Value AS ns\n  FROM default.otel_logs_kv_rollup_15m\n  WHERE ColumnIdentifier = 'ResourceAttributes' AND Key = 'k8s.namespace.name' AND Value != ''\n),\nraw AS (\n  SELECT\n    Timestamp,\n    ServiceName AS caller,\n    ResourceAttributes['k8s.namespace.name'] AS caller_ns,\n    Duration,\n    StatusCode,\n    SpanAttributes['http.response.status_code'] AS status,\n    multiIf(SpanAttributes['db.system.name'] != '', SpanAttributes['db.system.name'],\n            SpanAttributes['rpc.system.name'] != '', SpanAttributes['rpc.system.name'],\n            'http') AS proto,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\[([^\\]]+)\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n),\nedges AS (\n  SELECT\n    *,\n    multiIf(\n      host = '10.128.0.1' OR host LIKE 'kubernetes.default%' OR host = 'kubernetes',\n        'kube-apiserver',\n      host = 'localhost' OR match(host, '^127\\.') OR host = '::1',\n        'loopback',\n      NOT match(host, '^(10\\.|127\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)')\n        AND NOT (position(host, ':') > 0 AND match(lower(host), '^(::1$|fc|fd|fe[89ab])'))\n        AND (\n          match(host, '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$')\n          OR position(host, ':') > 0\n          OR (\n            position(host, '.') > 0\n            AND host NOT LIKE '%.cluster.local'\n            AND host NOT LIKE '%.svc'\n            AND host NOT LIKE '%.local'\n            AND host NOT LIKE '%.weebo.poc'\n            AND splitByChar('.', host)[-1] NOT IN (SELECT ns FROM namespaces)\n          )\n        ),\n        'external',\n      'in-cluster') AS zone\n  FROM raw\n  WHERE host != ''\n)\nSELECT\n  $__timeInterval(Timestamp) AS ts,\n  concat(caller, ' -> ', host) AS \"Edge\",\n  countIf(StatusCode = 'Error') / $__interval_s AS \"Failures/s\"\nFROM edges\nGROUP BY ts, \"Edge\"\nHAVING sum(StatusCode = 'Error') > 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "recent",
+      "x": 0,
+      "y": 48,
+      "w": 24,
+      "h": 8,
+      "config": {
+        "name": "Recent failed calls, any peer",
+        "source": "Traces",
+        "displayType": "search",
+        "select": "Timestamp, ServiceName, SpanAttributes['server.address'] AS peer, SpanName, SpanAttributes['http.response.status_code'] AS status, round(Duration / 1e6, 1) AS duration_ms",
+        "where": "SpanKind = 'Client' AND StatusCode = 'Error'",
+        "whereLanguage": "sql",
+        "orderBy": "Timestamp DESC"
+      }
+    }
+  ]
+}
