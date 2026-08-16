@@ -138,6 +138,17 @@ spec:
                 - key: k8s.cluster.name
                   value: {{ .Values.otel.clusterName }}
                   action: upsert
+            # hostmetrics describes the node but names it nowhere: its resource
+            # carries only what resource/cluster adds, because k8sattributes is
+            # not in the metrics pipeline (and could not help anyway -- it keys
+            # off a pod, and these metrics are about the host). kubeletstats sets
+            # k8s.node.name itself, so this only fills the system.* gap; the
+            # upsert is a no-op on everything else, being the same node.
+            resource/node:
+              attributes:
+                - key: k8s.node.name
+                  value: ${env:K8S_NODE_NAME}
+                  action: upsert
             # Merged into the k8sattributes processor built by the
             # kubernetesAttributes preset (the preset renders first, then this
             # `config` block is overlaid on top of it, so `extract.metadata`
@@ -182,9 +193,17 @@ spec:
                 receivers: []
                 processors: [memory_limiter, resource/cluster, filter/logs, batch]
                 exporters: [otlphttp/hyperdx]
+              # k8sattributes has to be named explicitly here: the preset only
+              # prepends it to pipelines this `config` block leaves alone, and
+              # spelling out the processor list opts metrics out of it. Without
+              # it the pod-scoped k8s metadata (deployment/daemonset/statefulset
+              # name, image, labels) is missing from every metric -- kubeletstats
+              # sets only pod/namespace/node itself, and receiver_creator only
+              # the six defaults it derives from the discovered endpoint. Matches
+              # what otel-cluster already does.
               metrics:
                 receivers: [prometheus]
-                processors: [memory_limiter, resource/cluster, batch]
+                processors: [k8sattributes, memory_limiter, resource/cluster, resource/node, batch]
                 exporters: [otlphttp/hyperdx]
 
         resources:

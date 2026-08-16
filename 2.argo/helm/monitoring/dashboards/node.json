@@ -1,0 +1,524 @@
+{
+  "name": "Node",
+  "tags": [
+    "infra"
+  ],
+  "tiles": [
+    {
+      "id": "nodes-ready",
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Nodes ready",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  countIf(ready = 1) AS \"Nodes ready\"\nFROM (\n  SELECT ResourceAttributes['k8s.node.name'] AS node, argMax(Value, TimeUnix) AS ready\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'k8s.node.condition_ready' AND $__timeFilter(TimeUnix)\n  GROUP BY node\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "nodes-notready",
+      "x": 4,
+      "y": 0,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Nodes NOT ready",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  countIf(ready != 1) AS \"Nodes not ready\"\nFROM (\n  SELECT ResourceAttributes['k8s.node.name'] AS node, argMax(Value, TimeUnix) AS ready\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'k8s.node.condition_ready' AND $__timeFilter(TimeUnix)\n  GROUP BY node\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ],
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "cpu-now",
+      "x": 8,
+      "y": 0,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "CPU",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(avg(\"CPU %\"), 1) AS \"CPU %\" FROM (\nSELECT\n  ts,\n  greatest(0, least(100, 100 * (1 - idle_d / total_d))) AS \"CPU %\"\nFROM (\n  SELECT\n    ts,\n    idle - lagInFrame(idle) OVER (ORDER BY ts) AS idle_d,\n    total - lagInFrame(total) OVER (ORDER BY ts) AS total_d,\n    row_number() OVER (ORDER BY ts) AS rn\n  FROM (\n    SELECT ts, sumIf(v, state = 'idle') AS idle, sum(v) AS total\n    FROM (\n      SELECT\n        $__timeInterval(TimeUnix) AS ts,\n        Attributes['cpu'] AS cpu,\n        Attributes['state'] AS state,\n        argMax(Value, TimeUnix) AS v\n      FROM default.otel_metrics_sum\n      WHERE MetricName = 'system.cpu.time' AND $__timeFilter(TimeUnix)\n      GROUP BY ts, cpu, state\n    )\n    GROUP BY ts\n  )\n)\nWHERE rn > 1 AND total_d > 0\nORDER BY ts\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 75,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 90,
+            "color": "chart-error"
+          }
+        ],
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "mem-now",
+      "x": 12,
+      "y": 0,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Memory",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(avg(\"Memory %\"), 1) AS \"Memory %\" FROM (\nSELECT\n  ts,\n  100 * used / nullIf(total, 0) AS \"Memory %\"\nFROM (\n  SELECT ts, sumIf(v, state = 'used') AS used, sum(v) AS total\n  FROM (\n    SELECT $__timeInterval(TimeUnix) AS ts, Attributes['state'] AS state, argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'system.memory.usage' AND $__timeFilter(TimeUnix)\n    GROUP BY ts, state\n  )\n  GROUP BY ts\n)\nORDER BY ts\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 80,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 92,
+            "color": "chart-error"
+          }
+        ],
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "fs-now",
+      "x": 16,
+      "y": 0,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Fullest filesystem",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(max(pct), 1) AS \"Fullest disk %\" FROM (\n  SELECT\n    mountpoint,\n    100 * argMax(used, ts) / nullIf(argMax(used + free + reserved, ts), 0) AS pct\n  FROM (\n  SELECT\n    $__timeInterval(TimeUnix) AS ts,\n    Attributes['mountpoint'] AS mountpoint,\n    any(Attributes['type']) AS fstype,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'used') AS used,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'free') AS free,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'reserved') AS reserved\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.filesystem.usage' AND $__timeFilter(TimeUnix)\n  GROUP BY ts, mountpoint\n  )\n  GROUP BY mountpoint\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 80,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 90,
+            "color": "chart-error"
+          }
+        ],
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "pods-now",
+      "x": 20,
+      "y": 0,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Pods",
+        "configType": "sql",
+        "sqlTemplate": "SELECT countDistinct(ResourceAttributes['k8s.pod.name']) AS \"Pods\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'k8s.pod.cpu.usage' AND $__timeFilter(TimeUnix)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "cpu-util",
+      "x": 0,
+      "y": 3,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "CPU utilisation",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  greatest(0, least(100, 100 * (1 - idle_d / total_d))) AS \"CPU %\"\nFROM (\n  SELECT\n    ts,\n    idle - lagInFrame(idle) OVER (ORDER BY ts) AS idle_d,\n    total - lagInFrame(total) OVER (ORDER BY ts) AS total_d,\n    row_number() OVER (ORDER BY ts) AS rn\n  FROM (\n    SELECT ts, sumIf(v, state = 'idle') AS idle, sum(v) AS total\n    FROM (\n      SELECT\n        $__timeInterval(TimeUnix) AS ts,\n        Attributes['cpu'] AS cpu,\n        Attributes['state'] AS state,\n        argMax(Value, TimeUnix) AS v\n      FROM default.otel_metrics_sum\n      WHERE MetricName = 'system.cpu.time' AND $__timeFilter(TimeUnix)\n      GROUP BY ts, cpu, state\n    )\n    GROUP BY ts\n  )\n)\nWHERE rn > 1 AND total_d > 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "cpu-state",
+      "x": 12,
+      "y": 3,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "CPU by state",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  state AS \"State\",\n  greatest(0, 100 * d / nullIf(cores * $__interval_s, 0)) AS \"CPU %\"\nFROM (\n  SELECT\n    ts,\n    state,\n    cores,\n    v - lagInFrame(v) OVER (PARTITION BY state ORDER BY ts) AS d,\n    row_number() OVER (PARTITION BY state ORDER BY ts) AS rn\n  FROM (\n    SELECT ts, state, sum(v) AS v, count() AS cores\n    FROM (\n      SELECT\n        $__timeInterval(TimeUnix) AS ts,\n        Attributes['state'] AS state,\n        Attributes['cpu'] AS cpu,\n        argMax(Value, TimeUnix) AS v\n      FROM default.otel_metrics_sum\n      WHERE MetricName = 'system.cpu.time' AND $__timeFilter(TimeUnix)\n        AND Attributes['state'] != 'idle'\n      GROUP BY ts, state, cpu\n    )\n    GROUP BY ts, state\n  )\n)\nWHERE rn > 1 AND d >= 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "load",
+      "x": 0,
+      "y": 9,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Load average",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  avgIf(Value, MetricName = 'system.cpu.load_average.1m') AS \"1m\",\n  avgIf(Value, MetricName = 'system.cpu.load_average.5m') AS \"5m\",\n  avgIf(Value, MetricName = 'system.cpu.load_average.15m') AS \"15m\"\nFROM default.otel_metrics_gauge\nWHERE MetricName IN ('system.cpu.load_average.1m', 'system.cpu.load_average.5m',\n                     'system.cpu.load_average.15m')\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "mem-state",
+      "x": 12,
+      "y": 9,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Memory by state",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  state AS \"State\",\n  v AS \"Bytes\"\nFROM (\n  SELECT $__timeInterval(TimeUnix) AS ts, Attributes['state'] AS state, argMax(Value, TimeUnix) AS v\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.memory.usage' AND $__timeFilter(TimeUnix)\n  GROUP BY ts, state\n)\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "byte",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "mem-util",
+      "x": 0,
+      "y": 15,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Memory utilisation",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  100 * used / nullIf(total, 0) AS \"Memory %\"\nFROM (\n  SELECT ts, sumIf(v, state = 'used') AS used, sum(v) AS total\n  FROM (\n    SELECT $__timeInterval(TimeUnix) AS ts, Attributes['state'] AS state, argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'system.memory.usage' AND $__timeFilter(TimeUnix)\n    GROUP BY ts, state\n  )\n  GROUP BY ts\n)\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "fs-time",
+      "x": 12,
+      "y": 15,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Filesystem used",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  mountpoint AS \"Mount point\",\n  100 * used / nullIf(used + free + reserved, 0) AS \"Used %\"\nFROM (\n  SELECT\n    $__timeInterval(TimeUnix) AS ts,\n    Attributes['mountpoint'] AS mountpoint,\n    any(Attributes['type']) AS fstype,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'used') AS used,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'free') AS free,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'reserved') AS reserved\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.filesystem.usage' AND $__timeFilter(TimeUnix)\n  GROUP BY ts, mountpoint\n)\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "fs-table",
+      "x": 0,
+      "y": 21,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Filesystems",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  mountpoint AS \"Mount point\",\n  argMax(fstype, ts) AS \"Type\",\n  formatReadableSize(argMax(used, ts)) AS \"Used\",\n  formatReadableSize(argMax(used + free + reserved, ts)) AS \"Size\",\n  round(100 * argMax(used, ts) / nullIf(argMax(used + free + reserved, ts), 0), 1) AS \"Used %\"\nFROM (\n  SELECT\n    $__timeInterval(TimeUnix) AS ts,\n    Attributes['mountpoint'] AS mountpoint,\n    any(Attributes['type']) AS fstype,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'used') AS used,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'free') AS free,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'reserved') AS reserved\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.filesystem.usage' AND $__timeFilter(TimeUnix)\n  GROUP BY ts, mountpoint\n)\nGROUP BY mountpoint\nORDER BY \"Used %\" DESC",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "disk-bytes",
+      "x": 8,
+      "y": 21,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Disk throughput",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  series AS \"Device\",\n  d / $__interval_s AS \"Bytes/s\"\nFROM (\n  SELECT\n    ts,\n    series,\n    v - lagInFrame(v) OVER (PARTITION BY series ORDER BY ts) AS d,\n    row_number() OVER (PARTITION BY series ORDER BY ts) AS rn\n  FROM (\n    SELECT\n      $__timeInterval(TimeUnix) AS ts,\n      concat(Attributes['device'], ' ', Attributes['direction']) AS series,\n      argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'system.disk.io' AND $__timeFilter(TimeUnix)\n        AND Attributes['device'] NOT LIKE 'loop%'\n    GROUP BY ts, series\n  )\n)\nWHERE rn > 1 AND d >= 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "data_rate",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "disk-iops",
+      "x": 16,
+      "y": 21,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Disk IOPS",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  series AS \"Device\",\n  d / $__interval_s AS \"Ops/s\"\nFROM (\n  SELECT\n    ts,\n    series,\n    v - lagInFrame(v) OVER (PARTITION BY series ORDER BY ts) AS d,\n    row_number() OVER (PARTITION BY series ORDER BY ts) AS rn\n  FROM (\n    SELECT\n      $__timeInterval(TimeUnix) AS ts,\n      concat(Attributes['device'], ' ', Attributes['direction']) AS series,\n      argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'system.disk.operations' AND $__timeFilter(TimeUnix)\n        AND Attributes['device'] NOT LIKE 'loop%'\n    GROUP BY ts, series\n  )\n)\nWHERE rn > 1 AND d >= 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "disk-busy",
+      "x": 0,
+      "y": 27,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Disk busy",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  series AS \"Device\",\n  d / ($__interval_s / 100) AS \"Busy %\"\nFROM (\n  SELECT\n    ts,\n    series,\n    v - lagInFrame(v) OVER (PARTITION BY series ORDER BY ts) AS d,\n    row_number() OVER (PARTITION BY series ORDER BY ts) AS rn\n  FROM (\n    SELECT\n      $__timeInterval(TimeUnix) AS ts,\n      Attributes['device'] AS series,\n      argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'system.disk.io_time' AND $__timeFilter(TimeUnix)\n        AND Attributes['device'] NOT LIKE 'loop%'\n    GROUP BY ts, series\n  )\n)\nWHERE rn > 1 AND d >= 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "net-bytes",
+      "x": 8,
+      "y": 27,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Network throughput",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  series AS \"Interface\",\n  d / $__interval_s AS \"Bytes/s\"\nFROM (\n  SELECT\n    ts,\n    series,\n    v - lagInFrame(v) OVER (PARTITION BY series ORDER BY ts) AS d,\n    row_number() OVER (PARTITION BY series ORDER BY ts) AS rn\n  FROM (\n    SELECT\n      $__timeInterval(TimeUnix) AS ts,\n      concat(Attributes['device'], ' ', Attributes['direction']) AS series,\n      argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'system.network.io' AND $__timeFilter(TimeUnix)\n        AND Attributes['device'] NOT IN ('lo', 'sit0', 'ip6tnl0', 'tunl0', 'erspan0', 'gre0', 'gretap0')\n    GROUP BY ts, series\n  )\n)\nWHERE rn > 1 AND d >= 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "data_rate",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "net-packets",
+      "x": 16,
+      "y": 27,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Network packets",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  series AS \"Interface\",\n  d / $__interval_s AS \"Packets/s\"\nFROM (\n  SELECT\n    ts,\n    series,\n    v - lagInFrame(v) OVER (PARTITION BY series ORDER BY ts) AS d,\n    row_number() OVER (PARTITION BY series ORDER BY ts) AS rn\n  FROM (\n    SELECT\n      $__timeInterval(TimeUnix) AS ts,\n      concat(Attributes['device'], ' ', Attributes['direction']) AS series,\n      argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'system.network.packets' AND $__timeFilter(TimeUnix)\n        AND Attributes['device'] NOT IN ('lo', 'sit0', 'ip6tnl0', 'tunl0', 'erspan0', 'gre0', 'gretap0')\n    GROUP BY ts, series\n  )\n)\nWHERE rn > 1 AND d >= 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "net-problems",
+      "x": 0,
+      "y": 33,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Network errors & drops",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  series AS \"Problem\",\n  d / $__interval_s AS \"Per second\"\nFROM (\n  SELECT\n    ts,\n    series,\n    v - lagInFrame(v) OVER (PARTITION BY series ORDER BY ts) AS d,\n    row_number() OVER (PARTITION BY series ORDER BY ts) AS rn\n  FROM (\n    SELECT\n      $__timeInterval(TimeUnix) AS ts,\n      concat(if(MetricName = 'system.network.errors', 'errors', 'dropped'),\n             ' ', Attributes['direction']) AS series,\n      sum(Value) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName IN ('system.network.errors', 'system.network.dropped')\n      AND $__timeFilter(TimeUnix)\n    GROUP BY ts, series\n  )\n)\nWHERE rn > 1 AND d >= 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "tcp",
+      "x": 8,
+      "y": 33,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "TCP connections",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  state AS \"State\",\n  v AS \"Connections\"\nFROM (\n  SELECT $__timeInterval(TimeUnix) AS ts, Attributes['state'] AS state, argMax(Value, TimeUnix) AS v\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.network.connections' AND $__timeFilter(TimeUnix)\n    AND Attributes['protocol'] = 'tcp'\n  GROUP BY ts, state\n)\nWHERE v >= 1\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "pods-ns",
+      "x": 16,
+      "y": 33,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Pods per namespace",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  ResourceAttributes['k8s.namespace.name'] AS \"Namespace\",\n  countDistinct(ResourceAttributes['k8s.pod.name']) AS \"Pods\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'k8s.pod.cpu.usage' AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Namespace\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "top-cpu",
+      "x": 0,
+      "y": 39,
+      "w": 12,
+      "h": 8,
+      "config": {
+        "name": "Top pods by CPU",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ResourceAttributes['k8s.namespace.name'] AS \"Namespace\",\n  ResourceAttributes['k8s.pod.name'] AS \"Pod\",\n  round(avg(Value), 3) AS \"Cores (avg)\",\n  round(max(Value), 3) AS \"Cores (peak)\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'k8s.pod.cpu.usage' AND $__timeFilter(TimeUnix)\nGROUP BY \"Namespace\", \"Pod\"\nORDER BY \"Cores (avg)\" DESC\nLIMIT 20",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "top-mem",
+      "x": 12,
+      "y": 39,
+      "w": 12,
+      "h": 8,
+      "config": {
+        "name": "Top pods by memory",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ResourceAttributes['k8s.namespace.name'] AS \"Namespace\",\n  ResourceAttributes['k8s.pod.name'] AS \"Pod\",\n  formatReadableSize(avg(Value)) AS \"Working set (avg)\",\n  formatReadableSize(max(Value)) AS \"Working set (peak)\",\n  round(avg(Value)) AS \"Bytes\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'k8s.pod.memory.working_set' AND $__timeFilter(TimeUnix)\nGROUP BY \"Namespace\", \"Pod\"\nORDER BY \"Bytes\" DESC\nLIMIT 20",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "restarts",
+      "x": 0,
+      "y": 47,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Container restarts",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ResourceAttributes['k8s.namespace.name'] AS \"Namespace\",\n  ResourceAttributes['k8s.pod.name'] AS \"Pod\",\n  ResourceAttributes['k8s.container.name'] AS \"Container\",\n  toUInt64(max(Value)) AS \"Restarts\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'k8s.container.restarts' AND $__timeFilter(TimeUnix)\nGROUP BY \"Namespace\", \"Pod\", \"Container\"\nHAVING \"Restarts\" > 0\nORDER BY \"Restarts\" DESC\nLIMIT 20",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "node-logs",
+      "x": 12,
+      "y": 47,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Node & system errors",
+        "source": "Logs",
+        "displayType": "search",
+        "select": "Timestamp, ResourceAttributes['k8s.namespace.name'] AS namespace, ResourceAttributes['k8s.pod.name'] AS pod, SeverityText, Body",
+        "where": "ResourceAttributes['k8s.node.name'] != '' AND lower(SeverityText) IN ('error', 'fatal')",
+        "whereLanguage": "sql",
+        "orderBy": "Timestamp DESC"
+      }
+    }
+  ]
+}

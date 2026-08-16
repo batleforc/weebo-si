@@ -79,6 +79,18 @@ of three shapes:
   `pulumi up`, not on an ArgoCD sync. The CPU/memory/restart/log tiles work
   today, since kubeletstats and filelog already cover every namespace.
 
+- `node.json` — host health: CPU (total and by state), load average, memory by
+  state, filesystem fill, disk throughput/IOPS/busy, network
+  throughput/packets/errors, TCP connections, pods per namespace, the top pods
+  by CPU and memory, container restarts, and node-wide error logs.
+
+  Everything cumulative (`system.cpu.time`, `system.disk.*`,
+  `system.network.*`) is diffed between time buckets with `lagInFrame` and the
+  first bucket of each series dropped — without that, the first point reports
+  the counter's entire lifetime total (eth0 read 21 GB/s before the guard was
+  added). Rates then divide by `$__interval_s`, so they stay correct at any
+  granularity the time picker chooses.
+
 ## Round trip: build it in the UI, then commit it
 
 There is no export button. Get the JSON from the API with the same credentials
