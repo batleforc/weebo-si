@@ -39,6 +39,14 @@ spec:
           kubernetesAttributes:
             enabled: true
 
+        # Nothing ever connects to this collector -- it only pulls (k8sobjects,
+        # k8s_cluster) and pushes to the gateway. With every port below disabled
+        # the chart would render a Service with no spec.ports, which the API
+        # server rejects; mode: deployment creates one unless told otherwise
+        # (daemonset is the only mode that skips it by default).
+        service:
+          enabled: false
+
         ports:
           otlp:
             enabled: false
