@@ -60,7 +60,7 @@
       "config": {
         "name": "CPU",
         "configType": "sql",
-        "sqlTemplate": "SELECT round(avg(\"CPU %\"), 1) AS \"CPU %\" FROM (\nSELECT\n  ts,\n  greatest(0, least(100, 100 * (1 - idle_d / total_d))) AS \"CPU %\"\nFROM (\n  SELECT\n    ts,\n    idle - lagInFrame(idle) OVER (ORDER BY ts) AS idle_d,\n    total - lagInFrame(total) OVER (ORDER BY ts) AS total_d,\n    row_number() OVER (ORDER BY ts) AS rn\n  FROM (\n    SELECT ts, sumIf(v, state = 'idle') AS idle, sum(v) AS total\n    FROM (\n      SELECT\n        $__timeInterval(TimeUnix) AS ts,\n        Attributes['cpu'] AS cpu,\n        Attributes['state'] AS state,\n        argMax(Value, TimeUnix) AS v\n      FROM default.otel_metrics_sum\n      WHERE MetricName = 'system.cpu.time' AND $__timeFilter(TimeUnix)\n      GROUP BY ts, cpu, state\n    )\n    GROUP BY ts\n  )\n)\nWHERE rn > 1 AND total_d > 0\nORDER BY ts\n)",
+        "sqlTemplate": "SELECT\n  round(greatest(0, least(100, 100 * (1 - idle_d / nullIf(total_d, 0)))), 1) AS \"CPU %\"\nFROM (\n  SELECT sumIf(d, state = 'idle') AS idle_d, sum(d) AS total_d\n  FROM (\n    SELECT\n      Attributes['cpu'] AS cpu,\n      Attributes['state'] AS state,\n      max(Value) - min(Value) AS d\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'system.cpu.time' AND $__timeFilter(TimeUnix)\n    GROUP BY cpu, state\n  )\n)",
         "connection": "Local ClickHouse",
         "source": "Metrics",
         "displayType": "number",
@@ -92,7 +92,7 @@
       "config": {
         "name": "Memory",
         "configType": "sql",
-        "sqlTemplate": "SELECT round(avg(\"Memory %\"), 1) AS \"Memory %\" FROM (\nSELECT\n  ts,\n  100 * used / nullIf(total, 0) AS \"Memory %\"\nFROM (\n  SELECT ts, sumIf(v, state = 'used') AS used, sum(v) AS total\n  FROM (\n    SELECT $__timeInterval(TimeUnix) AS ts, Attributes['state'] AS state, argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'system.memory.usage' AND $__timeFilter(TimeUnix)\n    GROUP BY ts, state\n  )\n  GROUP BY ts\n)\nORDER BY ts\n)",
+        "sqlTemplate": "SELECT\n  round(100 * used / nullIf(total, 0), 1) AS \"Memory %\"\nFROM (\n  SELECT sumIf(v, state = 'used') AS used, sum(v) AS total\n  FROM (\n    SELECT Attributes['state'] AS state, argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'system.memory.usage' AND $__timeFilter(TimeUnix)\n    GROUP BY state\n  )\n)",
         "connection": "Local ClickHouse",
         "source": "Metrics",
         "displayType": "number",
@@ -124,7 +124,7 @@
       "config": {
         "name": "Fullest filesystem",
         "configType": "sql",
-        "sqlTemplate": "SELECT round(max(pct), 1) AS \"Fullest disk %\" FROM (\n  SELECT\n    mountpoint,\n    100 * argMax(used, ts) / nullIf(argMax(used + free + reserved, ts), 0) AS pct\n  FROM (\n  SELECT\n    $__timeInterval(TimeUnix) AS ts,\n    Attributes['mountpoint'] AS mountpoint,\n    any(Attributes['type']) AS fstype,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'used') AS used,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'free') AS free,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'reserved') AS reserved\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.filesystem.usage' AND $__timeFilter(TimeUnix)\n  GROUP BY ts, mountpoint\n  )\n  GROUP BY mountpoint\n)",
+        "sqlTemplate": "SELECT round(max(pct), 1) AS \"Fullest disk %\" FROM (\n  SELECT 100 * used / nullIf(used + free + reserved, 0) AS pct\n  FROM (\n  SELECT\n    Attributes['mountpoint'] AS mountpoint,\n    any(Attributes['type']) AS fstype,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'used') AS used,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'free') AS free,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'reserved') AS reserved\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.filesystem.usage' AND $__timeFilter(TimeUnix)\n  GROUP BY mountpoint\n  )\n)",
         "connection": "Local ClickHouse",
         "source": "Metrics",
         "displayType": "number",
@@ -294,7 +294,7 @@
       "config": {
         "name": "Filesystems",
         "configType": "sql",
-        "sqlTemplate": "SELECT\n  mountpoint AS \"Mount point\",\n  argMax(fstype, ts) AS \"Type\",\n  formatReadableSize(argMax(used, ts)) AS \"Used\",\n  formatReadableSize(argMax(used + free + reserved, ts)) AS \"Size\",\n  round(100 * argMax(used, ts) / nullIf(argMax(used + free + reserved, ts), 0), 1) AS \"Used %\"\nFROM (\n  SELECT\n    $__timeInterval(TimeUnix) AS ts,\n    Attributes['mountpoint'] AS mountpoint,\n    any(Attributes['type']) AS fstype,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'used') AS used,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'free') AS free,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'reserved') AS reserved\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.filesystem.usage' AND $__timeFilter(TimeUnix)\n  GROUP BY ts, mountpoint\n)\nGROUP BY mountpoint\nORDER BY \"Used %\" DESC",
+        "sqlTemplate": "SELECT\n  mountpoint AS \"Mount point\",\n  fstype AS \"Type\",\n  formatReadableSize(used) AS \"Used\",\n  formatReadableSize(used + free + reserved) AS \"Size\",\n  round(100 * used / nullIf(used + free + reserved, 0), 1) AS \"Used %\"\nFROM (\n  SELECT\n    Attributes['mountpoint'] AS mountpoint,\n    any(Attributes['type']) AS fstype,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'used') AS used,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'free') AS free,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'reserved') AS reserved\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.filesystem.usage' AND $__timeFilter(TimeUnix)\n  GROUP BY mountpoint\n)\nORDER BY \"Used %\" DESC",
         "connection": "Local ClickHouse",
         "source": "Metrics",
         "displayType": "table",

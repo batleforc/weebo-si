@@ -59,11 +59,21 @@ of three shapes:
   Prometheus counters. `from`/`metricTables`/`connection` come from the source.
 - **raw SQL** — `configType: "sql"` + `sqlTemplate` + `connection`. Needed for
   anything the builder cannot express (counting series, `argMax` over labels).
-  Bind it to the dashboard time picker with the `$__timeFilter(col)`,
-  `$__timeInterval(col)` and `$__interval_s` macros — without them the tile
-  ignores the range. Line charts infer their axes from ClickHouse column
-  *types*, so return one Date/DateTime column, one numeric column, and
-  optionally a string column per series.
+  Line charts infer their axes from ClickHouse column *types*, so return one
+  Date/DateTime column, one numeric column, and optionally a string column per
+  series.
+
+  The two macro families are **not** interchangeable, and the Job rejects the
+  mistake rather than letting it reach the UI:
+
+  - `$__timeFilter(col)` and friends bind to the selected range and belong in
+    every raw SQL tile. A tile without one queries the whole table and silently
+    ignores the time picker (the Job warns).
+  - `$__timeInterval(col)` and `$__interval_s` resolve from the chart
+    *granularity*, which only `line` / `bar` / `stacked_bar` / `heatmap` tiles
+    have. Using either on a `number`, `table` or `search` tile fails at render
+    with ``Substitution `intervalSeconds` is not set`` — a table or number tile
+    should aggregate over the whole range instead of bucketing it.
 - **PromQL** — `configType: "promql"` + `promqlExpression`.
 
 ## What is here

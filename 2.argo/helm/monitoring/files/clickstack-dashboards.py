@@ -57,6 +57,14 @@ SERVER_OWNED_KEYS = frozenset(
 
 
 OBJECT_ID = re.compile(r"^[0-9a-f]{24}$")
+# macros.ts: INTERVAL_MACROS resolve from the chart granularity, TIME_RANGE_MACROS
+# from the selected range.
+INTERVAL_MACRO = re.compile(r"\$__(?:timeInterval(?:_ms)?|interval_s)\b")
+TIME_RANGE_MACRO = re.compile(
+    r"\$__(?:timeFilter(?:_ms)?|dateFilter|dateTimeFilter|dt|fromTime(?:_ms)?"
+    r"|toTime(?:_ms)?)\b"
+)
+TIME_SERIES_DISPLAY_TYPES = frozenset({"line", "bar", "stacked_bar", "heatmap"})
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -196,6 +204,35 @@ def resolve_one(value, names, where):
     )
 
 
+def check_raw_sql_tiles(payload, where):
+    """Catches the two ways a raw SQL tile silently fails to honour the picker.
+
+    Both are macro-binding rules rather than SQL errors, so ClickHouse validates
+    the query happily and the breakage only shows up as a dead tile in the UI.
+    """
+    for tile in payload.get("tiles") or []:
+        config = tile.get("config") or {}
+        template = config.get("sqlTemplate")
+        if not template:
+            continue
+        label = f"{where} tile {tile.get('id')!r}"
+        display = config.get("displayType")
+        # INTERVAL_MACROS resolve from the chart granularity, which only
+        # time-series charts have. Anywhere else HyperDX renders
+        # "Substitution `intervalSeconds` is not set".
+        interval = sorted(set(INTERVAL_MACRO.findall(template)))
+        if interval and display not in TIME_SERIES_DISPLAY_TYPES:
+            fail(
+                f"{label} is displayType {display!r} but uses {interval} -- the "
+                f"interval macros only bind on {sorted(TIME_SERIES_DISPLAY_TYPES)} "
+                f"tiles. Aggregate over the whole range instead of bucketing it."
+            )
+        # A raw SQL tile with no time-range macro queries the entire table and
+        # ignores the dashboard's time picker entirely.
+        if not TIME_RANGE_MACRO.search(template):
+            print(f"warn: {label} binds to no time range ($__timeFilter et al)")
+
+
 def load_desired():
     """name -> (source file, payload), with MANAGED_TAG forced onto every one."""
     desired = {}
@@ -215,6 +252,7 @@ def load_desired():
         payload.setdefault("tiles", [])
         payload["tags"] = [t for t in payload.get("tags", []) if t != MANAGED_TAG]
         payload["tags"].append(MANAGED_TAG)
+        check_raw_sql_tiles(payload, path.name)
         desired[name] = (path.name, payload)
     return desired
 
