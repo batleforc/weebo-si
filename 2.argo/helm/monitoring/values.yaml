@@ -28,6 +28,34 @@ clickstack:
   # and put it back afterwards. Accepted values are the server's own:
   # test, trace, debug, information, notice, warning, error, critical, fatal.
   clickhouseLogLevel: information
+  # ClickHouse's own system log tables. The operator switches all five on in
+  # config.d/00-logs-tables.yaml with nothing but their names, so they inherit
+  # the upstream defaults -- and upstream ships them with no retention at all.
+  # They had grown to 5.38 GiB of the 10.82 GiB in the database, with text_log
+  # alone (4.28 GiB, 90M rows) larger than otel_logs (2.74 GiB): more disk spent
+  # on ClickHouse describing itself than on the telemetry it exists to hold.
+  # clickhouseLogLevel caps how fast these fill; this caps how long they keep
+  # what they collected.
+  systemLogs:
+    # Retention for every table below, as a ClickHouse INTERVAL. Applied as a
+    # table TTL, so rows expire during the background merges that already run.
+    ttl: 3 DAY
+    # system.metric_log is 1433 columns wide -- one per ProfileEvent and
+    # CurrentMetric. A horizontal merge of a Wide part opens a write buffer per
+    # column, which lands around 4.5 GiB: exactly max_server_memory_usage, which
+    # the server derives as 0.9 x the 5Gi container limit. So every merge threw
+    # MEMORY_LIMIT_EXCEEDED, logged a full stack trace, and was retried at once
+    # -- 114 traces in the first two minutes of pod life, and no progress ever.
+    # This is upstream's own bug (ClickHouse PR #89811): wide parts start at
+    # 10 MiB while the vertical merge algorithm only engages at 131072 rows, and
+    # metric_log falls in the gap.
+    #
+    # Nothing in this repo reads the table, and the same counters are served by
+    # the server's Prometheus endpoint on :9363, so removing it loses no signal.
+    # Set it back to true only together with the upstream mitigation -- an
+    # `engine` override raising min_bytes_for_wide_part to 512 MiB so the parts
+    # stay Compact -- otherwise the merge loop comes straight back.
+    metricLog: false
   # Vault path holding the first HyperDX account, consumed by the bootstrap Job
   # so the signup form never has to be opened by hand.
   bootstrap:

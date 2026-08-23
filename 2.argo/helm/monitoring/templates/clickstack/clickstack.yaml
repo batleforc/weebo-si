@@ -48,6 +48,25 @@ spec:
                   # Merged with the chart's own settings.extraConfig, which
                   # Helm leaves alone -- both are maps under `settings`.
                   level: {{ .Values.clickstack.clickhouseLogLevel | quote }}
+                # Rendered into config.d/99-extra-config.yaml, which the server
+                # reads after the operator's own 00-logs-tables.yaml -- so these
+                # keys override it. Merged with the chart's extraConfig defaults
+                # (max_connections and friends) rather than replacing them.
+                extraConfig:
+                  {{- $ttl := printf "event_date + INTERVAL %s DELETE" .Values.clickstack.systemLogs.ttl }}
+                  {{- range $table := list "text_log" "query_log" "part_log" "asynchronous_metric_log" }}
+                  {{ $table }}:
+                    ttl: {{ $ttl | quote }}
+                  {{- end }}
+                  metric_log:
+                  {{- if .Values.clickstack.systemLogs.metricLog }}
+                    ttl: {{ $ttl | quote }}
+                  {{- else }}
+                    # Drops the element from the merged config entirely, which is
+                    # how a system log table is disabled. The operator uses the
+                    # same attribute for tcp_port_secure.
+                    "@remove": "1"
+                  {{- end }}
               # settings:
               #   defaultUserPassword:
               #     passwordType: password
