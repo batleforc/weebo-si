@@ -43,6 +43,11 @@ spec:
         clickhouse:
           cluster:
             spec:
+              settings:
+                logger:
+                  # Merged with the chart's own settings.extraConfig, which
+                  # Helm leaves alone -- both are maps under `settings`.
+                  level: {{ .Values.clickstack.clickhouseLogLevel | quote }}
               # settings:
               #   defaultUserPassword:
               #     passwordType: password

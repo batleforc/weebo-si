@@ -9,6 +9,25 @@ clickstack:
   # exporter. Upstream default is 720h (30d), which is what drives most of the
   # disk and background-merge cost on a small cluster.
   tablesTtl: 168h
+  # ClickHouse's own server logger verbosity, rendered into the
+  # ClickHouseCluster CR. The operator's default is `trace`, and on this
+  # cluster that made ClickHouse by far the loudest workload in its own
+  # database: 1.13M lines an hour, 56% of them debug and trace, tailed off
+  # stdout by otel-node and written straight back into ClickHouse -- where the
+  # extra parts drove the background merges that were hitting the 4.5 GiB
+  # query memory limit, whose exceptions were then logged. `information` cuts
+  # that feedback loop at the source, before a line is written at all, which
+  # is the only place it costs nothing.
+  #
+  # This and otel.node.dedupInterval are meant to ship together: dropping
+  # debug/trace here leaves a remainder that is mostly repeated stack frames,
+  # which is exactly what dedup collapses. Measured over 10 minutes on that
+  # pod, the pair take 203,930 lines down to 8,220 stored rows.
+  #
+  # Raise it back to `debug` or `trace` while actually debugging ClickHouse,
+  # and put it back afterwards. Accepted values are the server's own:
+  # test, trace, debug, information, notice, warning, error, critical, fatal.
+  clickhouseLogLevel: information
   # Vault path holding the first HyperDX account, consumed by the bootstrap Job
   # so the signup form never has to be opened by hand.
   bootstrap:
@@ -66,10 +85,35 @@ otel:
     # filelog polls every matched file on this interval; upstream default is
     # 200ms, which is far more than a homelab needs.
     pollInterval: 1s
-    # Drop log records below this OTel severity. Empty string disables the
-    # condition entirely. Only affects records whose severity was actually
-    # parsed -- see the UNSPECIFIED guard in node-collector.yaml.
-    minSeverity: SEVERITY_NUMBER_INFO
+    # Collapse byte-identical log records seen within this window into one,
+    # carrying a `log_count` attribute. Empty string removes the processor.
+    #
+    # Aimed at the failure mode where a workload prints the same stack trace
+    # thousands of times: the frames are byte-identical and collapse, while
+    # ordinary lines (which carry a timestamp or an id) never match and pass
+    # through untouched. Costs up to this much latency on every log record,
+    # since a window has to close before it is emitted.
+    dedupInterval: 10s
+    # Drop log records below this OTel severity.
+    #
+    # DEAD, and left here as documentation of why rather than as a knob:
+    # nothing in this agent's pipeline sets a severity. filelog's `container`
+    # operator parses the CRI wrapper (time, stream, logtag) and leaves
+    # severity_number at 0, and the `severity_number > 0` guard the condition
+    # needs -- without which it would drop every unparsed log in the cluster --
+    # is therefore never true. Measured:
+    # otelcol_processor_filter_logs.filtered_total moved by 0 over an hour in
+    # which 1.1M debug/trace lines were ingested.
+    #
+    # The severity visible in HyperDX is inferred much later, by the gateway
+    # collector, which scans the first 256 characters of the body for a level
+    # keyword. That is downstream of here and cannot be filtered on from here.
+    # Restoring this knob means parsing severity at the agent first -- and note
+    # the gateway's keyword scan is only a guess: it reads a ClickHouse stack
+    # frame as `info` and any INFO line containing the word "error" as `error`.
+    #
+    # Setting it to a severity re-enables a condition that still does nothing.
+    minSeverity: ""
   # Deployment: cluster-level metrics and Kubernetes events.
   cluster:
     enabled: true

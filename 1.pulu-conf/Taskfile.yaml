@@ -4,6 +4,10 @@ tasks:
   base:
     dir: ./1.pulu-conf
     env:
+      # Backend explicite: `pulumi login` est global (~/.pulumi/credentials.json)
+      # et les projets de weebo5 portent les memes noms, donc la stack de
+      # l'autre repo serait chargee si le login courant pointe ailleurs.
+      PULUMI_BACKEND_URL: file://{{ .ROOT_DIR }}/.tmp/pulumi
       PULUMI_CONFIG_PASSPHRASE: ""
       KUBECONFIG: ../0.config/kubeconfig.yaml
       ARGO_DNS: "argo.weebo.poc"

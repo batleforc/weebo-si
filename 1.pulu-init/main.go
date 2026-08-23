@@ -205,6 +205,40 @@ func main() {
 		ctx.Export("MasterIPv4", pulumi.String(serverNetwork.Routing.Ipv4.Ip))
 		ctx.Export("MasterIPv6", pulumi.String(serverNetwork.Routing.Ipv6.Ip))
 
+		// Longhorn disk layout, published to longhorn-manager through a node
+		// annotation instead of the chart's single defaultDataPath, because the
+		// node carries two SSDs and Longhorn must schedule on both:
+		//   - /var/mnt/staticdisk is the "staticdisk" user volume on sdb, dedicated
+		//     to Longhorn. Longhorn's own 30% default targets its stock
+		//     /var/lib/longhorn path, where the reserve shields the OS; nothing
+		//     else writes to sdb, so 10% is enough to absorb snapshot growth and
+		//     the transient second copy a rebuild needs. Over-provisioning is
+		//     already capped at 100% and scheduling still stops below
+		//     storageMinimalAvailablePercentage of real free space.
+		//   - /var/lib/longhorn lives on the EPHEMERAL partition of the boot SSD
+		//     (sda), the same filesystem as /var, the container image store, the
+		//     logs and every local-path PVC. The reservation is deliberately larger
+		//     than 30%: whatever Longhorn allocates there is invisible to kubelet's
+		//     eviction thresholds, so filling that disk takes the node down, not
+		//     just the volume.
+		longhornDisks, err := json.Marshal([]map[string]interface{}{
+			{
+				"path":            "/var/mnt/staticdisk",
+				"allowScheduling": true,
+				"storageReserved": 47986761728, // 10% of 480 GB
+				"tags":            []string{"static"},
+			},
+			{
+				"path":            "/var/lib/longhorn",
+				"allowScheduling": true,
+				"storageReserved": 200000000000, // ~42% of 476 GB, shared with the OS
+				"tags":            []string{"system"},
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to marshal longhorn disks config: %w", err)
+		}
+
 		jsonPatchConfig := urlUpdateResult.Urls().Installer().ApplyT(func(installerUrl string) (string, error) {
 			conf := map[string]interface{}{
 				"cluster": map[string]interface{}{
@@ -706,6 +740,15 @@ func main() {
 						"node.kubernetes.io/exclude-from-external-load-balancers": map[string]interface{}{
 							"$patch": "delete",
 						},
+						// "config" tells longhorn-manager to build the node's disks from
+						// the annotation below rather than from defaultDataPath. It is
+						// only honoured while the node still has no disk at all, so it
+						// shapes a freshly provisioned node; an existing node keeps the
+						// disks recorded in its nodes.longhorn.io object.
+						"node.longhorn.io/create-default-disk": "config",
+					},
+					"nodeAnnotations": map[string]interface{}{
+						"node.longhorn.io/default-disks-config": string(longhornDisks),
 					},
 					"network": map[string]interface{}{
 						"nameservers": []string{

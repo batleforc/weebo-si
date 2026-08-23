@@ -202,13 +202,46 @@ spec:
                 log_record:
                   - 'resource.attributes["{{ .Values.otel.logsAnnotation }}"] == "false"'
                   {{- if .Values.otel.node.minSeverity }}
-                  # The `severity_number > 0` guard is not optional: the
-                  # `container` operator leaves it at 0 (UNSPECIFIED) for any
-                  # line whose level it cannot classify, and 0 sorts below every
-                  # real level -- without the guard this condition silently drops
-                  # every unparsed log in the cluster, which is most of them.
+                  # DEAD unless something upstream of here starts setting a
+                  # severity -- see the note on `minSeverity` in values.yaml.
+                  # Nothing in this pipeline does: filelog's `container` operator
+                  # parses the CRI wrapper only, so every record leaves this
+                  # agent at severity_number 0, the `> 0` guard is false, and the
+                  # whole condition is a no-op. Measured, not assumed:
+                  # otelcol_processor_filter_logs.filtered_total moved by 0 over
+                  # an hour in which 1.1M debug/trace lines went through.
                   - 'severity_number > 0 and severity_number < {{ .Values.otel.node.minSeverity }}'
                   {{- end }}
+            {{- if .Values.otel.node.dedupInterval }}
+            # Collapses byte-identical records into one carrying `log_count`,
+            # over a rolling `interval` window. Timestamps are not part of the
+            # comparison (the processor keeps first/last itself), and the
+            # resource is, so two pods emitting the same line never merge.
+            #
+            # This is what makes a crash loop cheap. A ClickHouse
+            # MEMORY_LIMIT_EXCEEDED prints a ~40-frame stack trace, and every
+            # frame is byte-identical from one exception to the next -- 2.5k
+            # copies of each frame per 10 minutes here.
+            #
+            # It does NOT help with lines carrying their own timestamp or query
+            # id, which never repeat exactly. Those are cut at the source
+            # instead, by clickstack.clickhouseLogLevel in values.yaml -- and
+            # the two compound, because dropping debug/trace at the source
+            # leaves a remainder that is mostly repeated frames. Measured over
+            # 10 minutes on the loudest pod: 203,930 lines, of which 89,613
+            # survive `information`, of which 8,220 rows survive dedup. 39%
+            # saved on the raw mix, 91% on what the logger change leaves, 96%
+            # end to end.
+            #
+            # 10s window: 60s bought only 2 points more on the raw mix, and a
+            # window has to close before its records are emitted, so the short
+            # one is the better trade.
+            #
+            # Placed after filter/logs so dropped records are never held, and
+            # before batch so the exporter sees whole windows.
+            logdedup:
+              interval: {{ .Values.otel.node.dedupInterval }}
+            {{- end }}
           service:
             pipelines:
               traces: null
@@ -218,7 +251,7 @@ spec:
               # annotation in place before filter/logs reads it.
               logs:
                 receivers: []
-                processors: [memory_limiter, resource/cluster, filter/logs, batch]
+                processors: [memory_limiter, resource/cluster, filter/logs, {{ if .Values.otel.node.dedupInterval }}logdedup, {{ end }}batch]
                 exporters: [otlphttp/hyperdx]
               # k8sattributes has to be named explicitly here: the preset only
               # prepends it to pipelines this `config` block leaves alone, and

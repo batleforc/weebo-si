@@ -76,6 +76,33 @@ of three shapes:
     should aggregate over the whole range instead of bucketing it.
 - **PromQL** — `configType: "promql"` + `promqlExpression`.
 
+`tile.config.onClick` makes a row clickable, which is how a metrics tile hands
+over to the logs or traces it cannot show itself:
+
+```json
+"onClick": {
+  "type": "search",
+  "target": { "mode": "template", "template": "Logs" },
+  "whereTemplate": "ResourceAttributes['k8s.pod.name'] = '{{Pod}}'",
+  "whereLanguage": "sql"
+}
+```
+
+`whereTemplate` is a Handlebars template over the **clicked row**, so `{{Pod}}`
+is the value of the column aliased `"Pod"` — which is why the columns a template
+reads are aliased without spaces. The search opens on the dashboard's current
+time range.
+
+`target.mode: "template"` resolves the source by **name** at click time, in the
+browser, so `"Logs"` / `"Traces"` can be committed as-is. This is a different
+mechanism from the `source` / `connection` substitution above and does not go
+through it — the Job only rewrites the `source`, `connection`, `sourceId` and
+`appliesToSourceIds` keys, none of which appear inside `onClick`. Use
+`mode: "template"` rather than `mode: "id"`, whose ObjectId is per install and
+would be rewritten by nothing. `type` may also be `dashboard` (same fields) or
+`external` (`urlTemplate`, must render to an absolute http(s) URL). Supported
+from HyperDX 2.32.
+
 ## What is here
 
 - `argocd.json` — ArgoCD control-plane health: app sync/health counts and the
@@ -100,6 +127,56 @@ of three shapes:
   the counter's entire lifetime total (eth0 read 21 GB/s before the guard was
   added). Rates then divide by `$__interval_s`, so they stay correct at any
   granularity the time picker chooses.
+
+- `consumers.json` — who is eating the node, and what that workload has to say
+  for itself. One master table ranking containers by CPU with memory, restarts,
+  log and span counts side by side, then a section per axis (CPU, memory,
+  writable layer and page faults, network, telemetry volume), then four tiles
+  restricted to the top ten CPU consumers: their log and span totals, their
+  recent errors, and their slowest spans.
+
+  **A consumer here is a container, not a host process**, and that is a data
+  constraint rather than a naming choice. kubeletstats measures per container
+  (`container.cpu.usage`, `container.memory.working_set`) and every record it
+  emits carries `k8s.pod.name` — which is the only reason the drill-down works
+  at all. The OS processes on the node are not collected: hostmetrics' `process`
+  scraper is off, and turning it on would not help, because its series are keyed
+  on `process.pid` / `process.executable.name` with no cgroup or pod attribute,
+  so a host PID joins to no log and no trace. The `process.*` attributes that do
+  appear in `otel_traces` come from the Node SDK inside `hdx-oss-api`, not from
+  the node, and cover that one workload.
+
+  Every table is clickable (`onClick`, documented above): a row opens Search on
+  that container's logs or traces over the same time range. Tables that rank
+  pods rather than containers — network, telemetry volume — open the whole pod,
+  because `k8s.pod.network.io` is a per-pod counter with no container
+  dimension; the slowest-spans table opens its own `TraceId`.
+
+  The drill-down tiles resolve their top-ten set in the query, with
+  `$__timeFilter` on both halves, so the set follows the time picker instead of
+  being a committed list of workloads. They read `otel_logs` through a tuple
+  `IN` on the materialised `k8s.pod.name` / `k8s.container.name` columns, which
+  is an index lookup rather than a join — the master tile stays under a second
+  against a table taking a million rows an hour. A `LEFT JOIN` for the counts is
+  what keeps a silent container in the ranking: it shows `0` logs rather than
+  dropping out.
+
+  Three figures are easy to misread. `% req` and `% lim` are blank, not zero,
+  when a container declares no request or limit — blank means unbounded.
+  `Restarts` is the lifetime count `kubectl get pod` shows, matching
+  `node.json`'s convention, not restarts within the selected range. And `Lines`
+  is not `Rows`: otel-node's `logdedup` processor collapses byte-identical
+  records inside `otel.node.dedupInterval` and stamps the survivor with
+  `log_count`, so `Rows` counts what ClickHouse stores while `Lines` sums
+  `log_count` back up to what the workload printed. Rows written before dedup
+  was enabled carry no attribute, the map lookup returns `''`, and
+  `greatest(toUInt64OrZero(…), 1)` reads them as the single line they are — so
+  the two columns simply agree on older data rather than breaking.
+
+  There is no per-container block-IO counter in kubeletstats, so the disk
+  section reads pressure two ways instead: `container.filesystem.usage`, the
+  writable layer a container wrote outside any volume, and major page faults,
+  the reads that had to reach disk. Claims and volumes live in `storage.json`.
 
 - `egress.json` — everything the cluster calls that is not the cluster: call
   and failure counts, failure rate, p95, the per-host dependency table, who

@@ -47,7 +47,12 @@ spec:
           # Disable the Helm pre-upgrade hook when Longhorn is managed by ArgoCD
           jobEnabled: false
         defaultSettings:
-          # Default data path on Talos nodes
+          # Fallback only. The node carries two disks -- /var/mnt/staticdisk (the
+          # "staticdisk" user volume on sdb) and /var/lib/longhorn (the EPHEMERAL
+          # partition on sda, shared with /var and local-path) -- and a single
+          # path cannot express that. The real layout comes from the
+          # node.longhorn.io/default-disks-config annotation set in the Talos
+          # machine config (1.pulu-init/main.go), which this setting yields to.
           defaultDataPath: /var/mnt/staticdisk # Use /var/mnt/longhorn with UserVolumeConfig on Talos v1.10+
           # Default replica count
           defaultReplicaCount: 1
@@ -57,8 +62,11 @@ spec:
           storageMinimalAvailablePercentage: 15
           # Default data locality
           defaultDataLocality: best-effort
-          # Create the default disk on all new nodes when no disks already exist
-          createDefaultDiskLabeledNodes: false
+          # Only build default disks on nodes carrying
+          # node.longhorn.io/create-default-disk, which is what makes the
+          # annotation-driven two-disk layout win over defaultDataPath. A node
+          # provisioned without that label gets no disk at all.
+          createDefaultDiskLabeledNodes: true
           # Node drain policy
           nodeDrainPolicy: block-for-eviction
           # Guaranteed instance manager CPU
