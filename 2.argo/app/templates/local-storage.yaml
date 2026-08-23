@@ -29,13 +29,20 @@ spec:
                         }
                       ]
               }
+      # Longhorn's chart also claims the default class (persistence.defaultClass),
+      # so leaving this at "true" left the cluster with two defaults and let the
+      # API server pick between them by creation timestamp -- a PVC with no
+      # storageClassName could land on either, and which one depended on the last
+      # reinstall. Longhorn wins on purpose: it is the class that snapshots,
+      # reports usage per volume and survives a node rebuild. local-path stays
+      # available, but a claim has to name it.
       - patch: |-
           apiVersion: storage.k8s.io/v1
           kind: StorageClass
           metadata:
             name: local-path
             annotations:
-              storageclass.kubernetes.io/is-default-class: "true"
+              storageclass.kubernetes.io/is-default-class: "false"
           provisioner: rancher.io/local-path
           parameters:
             nodePath: /var/local-path-provisioner

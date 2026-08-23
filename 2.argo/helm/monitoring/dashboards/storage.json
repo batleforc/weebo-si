@@ -17,7 +17,7 @@
         "connection": "Local ClickHouse",
         "source": "Metrics",
         "displayType": "markdown",
-        "markdown": "**Three different things share these disks, and only the first is a PVC.**\n\n`/var/mnt/staticdisk` is Longhorn's data path \u2014 every longhorn PVC, plus its snapshots and replica overhead. `/var` holds everything else: container images, pod writable layers, emptyDirs, and every `local-path` PVC. A claim on the default `local-path` class does not touch the Longhorn disk at all.\n\n**Three sources, three levels of truth.** *PVC usage* is what the filesystem inside the volume reports (kubelet). *On disk* is what Longhorn actually allocated \u2014 lower than the claim because volumes are thin-provisioned, higher than the filesystem once snapshots accumulate. *Pod ephemeral* is the writable layer and emptyDirs, which land on `/var` and belong to no claim at all.\n\n**`local-path` claims cannot be attributed to a pod here, and that is a kubelet limit, not a gap in this dashboard.** Kubelet only measures volumes whose driver reports usage \u2014 the four Longhorn claims do, the hostPath-backed `local-path` ones do not, so they appear in neither table. Their data is inside the `/var` total and inside *Unattributed on /var*, together with the container image store. Moving a claim to the `longhorn` class is what makes it measurable.\n\n**Days to full** extrapolates the growth measured across the selected range, so it only means anything over a window long enough to contain real growth \u2014 a 15-minute range will produce nonsense. Widen the picker to a day or more before believing it."
+        "markdown": "**Longhorn spans both SSDs, and only one of them is its alone.**\n\n`/var/mnt/staticdisk` is the dedicated user volume on sdb. `/var/lib/longhorn` is a second Longhorn disk living on the boot SSD's EPHEMERAL partition — the same filesystem as `/var`, the container image store, the logs and every `local-path` PVC. So a longhorn PVC may now sit on either drive, and Longhorn data counts inside the `/var` figures below. What Longhorn allocates there is invisible to kubelet's eviction thresholds, which is why that disk carries a much larger reservation.\n\n**Three sources, three levels of truth.** *PVC usage* is what the filesystem inside the volume reports (kubelet). *On disk* is what Longhorn actually allocated — lower than the claim because volumes are thin-provisioned, higher than the filesystem once snapshots accumulate. *Pod ephemeral* is the writable layer and emptyDirs, which land on `/var` and belong to no claim at all.\n\n**`local-path` claims cannot be attributed to a pod here, and that is a kubelet limit, not a gap in this dashboard.** Kubelet only measures volumes whose driver reports usage — the four Longhorn claims do, the hostPath-backed `local-path` ones do not, so they appear in neither table. Their data is inside the `/var` total and inside *Unattributed on /var*, together with the container image store. Moving a claim to the `longhorn` class is what makes it measurable.\n\n**Days to full** extrapolates the growth measured across the selected range, so it only means anything over a window long enough to contain real growth — a 15-minute range will produce nonsense. Widen the picker to a day or more before believing it."
       }
     },
     {
@@ -59,9 +59,9 @@
       "w": 4,
       "h": 3,
       "config": {
-        "name": "Longhorn disk used",
+        "name": "Longhorn used (all disks)",
         "configType": "sql",
-        "sqlTemplate": "SELECT round(100 * used / nullIf(used + free + reserved, 0), 1) AS \"Longhorn disk used\"\nFROM (\n  SELECT\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'used') AS used,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'free') AS free,\n    argMaxIf(Value, TimeUnix, Attributes['state'] = 'reserved') AS reserved\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'system.filesystem.usage'\n    AND Attributes['mountpoint'] = '/var/mnt/staticdisk'\n    AND $__timeFilter(TimeUnix)\n)",
+        "sqlTemplate": "-- Longhorn's own per-disk accounting rather than a filesystem mountpoint:\n-- /var/lib/longhorn is a directory on /var, not a mount of its own, so\n-- system.filesystem.usage cannot see it. Sums every disk on every node, so\n-- adding or removing one needs no change here.\nSELECT round(100 * sum(usage) / nullIf(sum(capacity), 0), 1) AS \"Longhorn used (all disks)\"\nFROM (\n  SELECT\n    Attributes['node'] AS node,\n    Attributes['disk'] AS disk,\n    argMaxIf(Value, TimeUnix, MetricName = 'longhorn_disk_usage_bytes') AS usage,\n    argMaxIf(Value, TimeUnix, MetricName = 'longhorn_disk_capacity_bytes') AS capacity\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('longhorn_disk_usage_bytes', 'longhorn_disk_capacity_bytes')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY node, disk\n)",
         "connection": "Local ClickHouse",
         "source": "Metrics",
         "displayType": "number",
@@ -153,7 +153,7 @@
       "config": {
         "name": "Unattributed on /var",
         "configType": "sql",
-        "sqlTemplate": "-- /var minus what pods own: container images, local-path claim data\n-- and the system itself. Nothing here can be pinned on a pod.\nSELECT round(greatest(0, var_used - ephemeral) / 1073741824, 1) AS \"Unattributed\"\nFROM (\n  SELECT\n    (\n      SELECT argMaxIf(Value, TimeUnix, Attributes['state'] = 'used')\n      FROM default.otel_metrics_sum\n      WHERE MetricName = 'system.filesystem.usage'\n        AND Attributes['mountpoint'] = '/var'\n        AND $__timeFilter(TimeUnix)\n    ) AS var_used,\n    (\n      SELECT sum(v) FROM (\n        SELECT ResourceAttributes['k8s.pod.uid'] AS uid, argMax(Value, TimeUnix) AS v\n        FROM default.otel_metrics_gauge\n        WHERE MetricName = 'k8s.pod.filesystem.usage' AND $__timeFilter(TimeUnix)\n        GROUP BY uid\n      )\n    ) AS ephemeral\n)",
+        "sqlTemplate": "-- /var minus what pods own: container images, local-path claim data,\n-- the system itself, and now the replicas Longhorn stores in\n-- /var/lib/longhorn. Nothing here can be pinned on a pod. Cross-check\n-- the Longhorn share against the ephemeral-disk row in the accounting\n-- table below.\nSELECT round(greatest(0, var_used - ephemeral) / 1073741824, 1) AS \"Unattributed\"\nFROM (\n  SELECT\n    (\n      SELECT argMaxIf(Value, TimeUnix, Attributes['state'] = 'used')\n      FROM default.otel_metrics_sum\n      WHERE MetricName = 'system.filesystem.usage'\n        AND Attributes['mountpoint'] = '/var'\n        AND $__timeFilter(TimeUnix)\n    ) AS var_used,\n    (\n      SELECT sum(v) FROM (\n        SELECT ResourceAttributes['k8s.pod.uid'] AS uid, argMax(Value, TimeUnix) AS v\n        FROM default.otel_metrics_gauge\n        WHERE MetricName = 'k8s.pod.filesystem.usage' AND $__timeFilter(TimeUnix)\n        GROUP BY uid\n      )\n    ) AS ephemeral\n)",
         "connection": "Local ClickHouse",
         "source": "Metrics",
         "displayType": "number",
@@ -213,7 +213,7 @@
         "connection": "Local ClickHouse",
         "source": "Metrics",
         "displayType": "markdown",
-        "markdown": "### Who is using it\nClaims on the left as the pod's own filesystem sees them, the same volumes on the right as Longhorn actually stores them. A `local-path` claim appears only on the left \u2014 Longhorn knows nothing about it."
+        "markdown": "### Who is using it\nClaims on the left as the pod's own filesystem sees them, the same volumes on the right as Longhorn actually stores them. A `local-path` claim appears only on the left — Longhorn knows nothing about it."
       }
     },
     {
@@ -297,7 +297,7 @@
         "connection": "Local ClickHouse",
         "source": "Metrics",
         "displayType": "markdown",
-        "markdown": "### The disk itself\nLonghorn's own view of the SSD, and what the drive reports about its health. `Reserved` is the slice Longhorn refuses to schedule into; `Scheduled` is what it has promised to claims, which can exceed what they currently use."
+        "markdown": "### The disk itself\nLonghorn's own view of each disk it owns, and what the drives report about their health. One row per Longhorn disk, not per physical drive. `Reserved` is the slice Longhorn refuses to schedule into; `Scheduled` is what it has promised to claims, which can exceed what they currently use."
       }
     },
     {
@@ -325,7 +325,7 @@
       "config": {
         "name": "SSD health (SMART)",
         "configType": "sql",
-        "sqlTemplate": "SELECT\n  attribute AS \"Attribute\",\n  raw AS \"Raw value\",\n  multiIf(\n    attribute IN ('Host_Writes_32MiB', 'NAND_Writes_32MiB'),\n      concat(toString(round(raw * 32 / 1048576, 1)), ' TiB written'),\n    attribute = 'Power_On_Hours',\n      concat(toString(round(raw / 8760, 1)), ' years powered on'),\n    attribute IN ('Temperature_Celsius', 'Drive_Temperature'),\n      concat(toString(raw), ' degrees C'),\n    '') AS \"Meaning\"\nFROM (\n  SELECT\n    Attributes['attribute'] AS attribute,\n    toUInt64(argMax(Value, TimeUnix)) AS raw\n  FROM default.otel_metrics_gauge\nWHERE MetricName = 'longhorn_disk_health_attribute_raw'\n    AND Attributes['attribute'] IN (\n      'Power_On_Hours', 'Power_Cycle_Count', 'Host_Writes_32MiB', 'NAND_Writes_32MiB',\n      'Media_Wearout_Indicator', 'Temperature_Celsius', 'Drive_Temperature',\n      'Reallocated_Sector_Ct', 'Pending_Sector_Count', 'Uncorrectable_Error_Cnt',\n      'CRC_Error_Count', 'Erase_Fail_Count', 'Program_Fail_Count',\n      'End-to-End_Error_Count', 'Available_Reservd_Space')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY attribute\n)\nORDER BY \"Attribute\"",
+        "sqlTemplate": "-- Grouped by disk as well as attribute: with more than one Longhorn disk,\n-- grouping on the attribute alone collapses both drives into one row and\n-- silently reports whichever sample happened to be newest.\nSELECT\n  disk AS \"Disk\",\n  attribute AS \"Attribute\",\n  raw AS \"Raw value\",\n  multiIf(\n    attribute IN ('Host_Writes_32MiB', 'NAND_Writes_32MiB'),\n      concat(toString(round(raw * 32 / 1048576, 1)), ' TiB written'),\n    attribute = 'Power_On_Hours',\n      concat(toString(round(raw / 8760, 1)), ' years powered on'),\n    attribute IN ('Temperature_Celsius', 'Drive_Temperature'),\n      concat(toString(raw), ' degrees C'),\n    '') AS \"Meaning\"\nFROM (\n  SELECT\n    Attributes['disk'] AS disk,\n    Attributes['attribute'] AS attribute,\n    toUInt64(argMax(Value, TimeUnix)) AS raw\n  FROM default.otel_metrics_gauge\nWHERE MetricName = 'longhorn_disk_health_attribute_raw'\n    AND Attributes['attribute'] IN (\n      'Power_On_Hours', 'Power_Cycle_Count', 'Host_Writes_32MiB', 'NAND_Writes_32MiB',\n      'Media_Wearout_Indicator', 'Temperature_Celsius', 'Drive_Temperature',\n      'Reallocated_Sector_Ct', 'Pending_Sector_Count', 'Uncorrectable_Error_Cnt',\n      'CRC_Error_Count', 'Erase_Fail_Count', 'Program_Fail_Count',\n      'End-to-End_Error_Count', 'Available_Reservd_Space')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY disk, attribute\n)\nORDER BY \"Disk\", \"Attribute\"",
         "connection": "Local ClickHouse",
         "source": "Metrics",
         "displayType": "table",

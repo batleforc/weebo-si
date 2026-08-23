@@ -22,4 +22,33 @@ spec:
       - X-authentik-meta-provider
       - X-authentik-meta-app
       - X-authentik-meta-version
+---
+# Sends a browser that landed on the forward-auth endpoint back to the app root.
+#
+# The outpost builds the post-login redirect from its own request URL rather
+# than from the original one, so the 302 it returns carries
+# `rd=https://<host>/outpost.goauthentik.io/auth/traefik` whatever the browser
+# actually asked for -- measured identically on every path and on every
+# forward-auth'd host here, with authentik 2026.5.3. After the flow completes,
+# the browser is therefore sent to that endpoint; the outpost answers an empty
+# 200, and the user gets a blank page. It bites hardest on hash-routed SPAs
+# like Longhorn's, where the surviving `#/dashboard` makes it look as if the
+# app half-loaded.
+#
+# Nothing legitimate fetches this path from a browser: Traefik calls it
+# server-side through the middleware's service address, never through a router.
+# So the only traffic this rule can catch is the misdirected landing, and
+# bouncing it to `/` is safe. The fragment is not sent to the server and the
+# browser reattaches it to the new location, so deep links survive the round
+# trip.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: authentik-auth-landing
+  namespace: auth
+spec:
+  redirectRegex:
+    regex: '^(https?://[^/]+)/outpost\.goauthentik\.io/auth/traefik/?$'
+    replacement: '${1}/'
+    permanent: false
 {{- end -}}
