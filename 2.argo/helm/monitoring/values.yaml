@@ -62,6 +62,14 @@ clickstack:
     enabled: true
     mongoshImage: "mongo:7"
     curlImage: "curlimages/curl:8.11.1"
+
+  preauth:
+    enabled: true
+    repo: https://github.com/batleforc/weebo-si-hardening
+    revision: main
+    image:
+      repository: ghcr.io/batleforc/preauth-proxy
+      tag: main
   # Dashboards are reconciled from dashboards/*.json (chart root) by the
   # clickstack-dashboards Job, which logs in with the bootstrap admin account
   # and drives the same /dashboards routes the UI does -- hence the dependency

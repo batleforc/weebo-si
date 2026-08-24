@@ -1,6 +1,12 @@
 resource "authentik_provider_proxy" "clickstack" {
   name               = "clickstack"
-  internal_host      = "http://clickstack.monitoring.svc.cluster.local:3000"
+  # preauth-proxy, not HyperDX itself: the IngressRoute has pointed at the proxy
+  # since clickstack.preauth.enabled, and HyperDX is only reachable behind it.
+  # Unused in the forward-auth path this application actually takes -- the
+  # `authentik` middleware calls /outpost.goauthentik.io/auth/traefik and
+  # Traefik does the proxying -- but it is the record of what this provider
+  # fronts, so it follows the route.
+  internal_host      = "http://clickstack-preauth.monitoring.svc.cluster.local:8080"
   external_host      = "https://clickstack.weebo.poc"
   authorization_flow = data.authentik_flow.default-authorization-flow.id
   invalidation_flow  = data.authentik_flow.default-invalidation-flow.id

@@ -1,0 +1,69 @@
+{{- if and .Values.clickstack.enabled .Values.clickstack.preauth.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: clickstack-preauth
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  source:
+    repoURL: '{{ .Values.clickstack.preauth.repo }}'
+    path: 'charts/preauth-proxy'
+    targetRevision: '{{ .Values.clickstack.preauth.revision }}'
+    helm:
+      releaseName: clickstack-preauth
+      valuesObject:
+        fullnameOverride: clickstack-preauth
+        image:
+          repository: {{ .Values.clickstack.preauth.image.repository | quote }}
+          tag: {{ .Values.clickstack.preauth.image.tag | quote }}
+        credentials:
+          existingSecret: clickstack-bootstrap
+          userKey: ADMIN_EMAIL
+          secretKey: ADMIN_PASSWORD
+        config: |
+          listen: "[::]:8080"
+          upstream: "http://clickstack:3000"
+
+          passthrough:
+            header: Cookie
+            contains: "connect.sid="
+
+          credential:
+            origin: "http://clickstack:8000"
+            request:
+              method: POST
+              path: "/login/password"
+              headers:
+                Content-Type: "application/json"
+                X-Forwarded-Proto: "https"
+              body: '{"email":"${CRED_USER}","password":"${CRED_SECRET}"}'
+            accept_status: [200, 302, 303]
+            extract:
+              from_header: "Set-Cookie"
+              take: cookie-pair
+          inject:
+            header: Cookie
+            mode: append
+
+          renew:
+            on_status: [401]
+            max_replays: 1
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: '{{ .Release.Namespace }}'
+  syncPolicy:
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

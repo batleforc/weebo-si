@@ -1,4 +1,17 @@
 {{- if .Values.clickstack.enabled -}}
+{{- $preauth := .Values.clickstack.preauth.enabled -}}
+{{- $service := ternary "clickstack-preauth" "clickstack" $preauth -}}
+{{- $port := ternary 8080 3000 $preauth -}}
+# ⚠ With clickstack.preauth.enabled, the `authentik` middleware below is not
+# defence in depth -- it is the only authentication on this route. Everything it
+# lets through reaches preauth.yaml's proxy, which hands every request a
+# full-privilege HyperDX session without asking who is holding it. Dropping the
+# middleware, or routing to clickstack-preauth from anywhere else, publishes
+# HyperDX to whoever can reach that Service. See preauth.yaml and RFC 0003.
+#
+# Rollback is `clickstack.preauth.enabled: false`: the route goes back to
+# clickstack:3000 unguarded, HyperDX serves its own login form again, and the
+# proxy Application is removed. Nothing persisted has to be unwound.
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
@@ -14,21 +27,40 @@ spec:
       match: Host(`{{ .Values.clickstack.domain }}`)
       priority: 10
       services:
-        - name: clickstack
+        - name: {{ $service }}
           namespace: {{ .Release.Namespace }}
-          port: 3000
+          port: {{ $port }}
           passHostHeader: true
-    #   middlewares:
-    #     - name: authentik
-    #       namespace: auth
-    # - kind: Rule
-    #   match: Host(`{{ .Values.clickstack.domain }}`) && PathPrefix(`/outpost.goauthentik.io/`)
-    #   priority: 15
-    #   services:
-    #     - name: authentik-server
-    #       namespace: auth
-    #       port: 80
-    #       passHostHeader: true
+      {{- if $preauth }}
+      middlewares:
+        - name: authentik
+          namespace: auth
+      {{- end }}
+    {{- if $preauth }}
+    - kind: Rule
+      match: Host(`{{ .Values.clickstack.domain }}`) && PathPrefix(`/outpost.goauthentik.io/`)
+      priority: 15
+      services:
+        - name: authentik-server
+          namespace: auth
+          port: 80
+          passHostHeader: true
+    # Must outrank the rule above, which would otherwise hand this exact path to
+    # the outpost and serve the blank 200 that the redirect exists to avoid. The
+    # service is never reached -- the middleware answers with a 302 first -- but
+    # a route needs one, so it points at the app it redirects to.
+    - kind: Rule
+      match: Host(`{{ .Values.clickstack.domain }}`) && Path(`/outpost.goauthentik.io/auth/traefik`)
+      priority: 20
+      services:
+        - name: {{ $service }}
+          namespace: {{ .Release.Namespace }}
+          port: {{ $port }}
+          passHostHeader: true
+      middlewares:
+        - name: authentik-auth-landing
+          namespace: auth
+    {{- end }}
   tls:
     secretName: clickstack-tls
 {{- end -}}

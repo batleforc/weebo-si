@@ -92,6 +92,7 @@ project:
   - name: monitoring
     sourceRepo:
       - https://open-telemetry.github.io/opentelemetry-helm-charts
+      - https://github.com/batleforc/weebo-si-hardening
     includeBaseRepo: true
     dest:
       - server: "https://kubernetes.default.svc"
@@ -109,8 +110,6 @@ project:
         kind: "ClusterRole"
       - group: "rbac.authorization.k8s.io"
         kind: "ClusterRoleBinding"
-      # Fan-out of the ClickStack ingestion key to every namespace that
-      # produces telemetry; both kinds are cluster-scoped by design.
       - group: "external-secrets.io"
         kind: "ClusterSecretStore"
       - group: "external-secrets.io"
