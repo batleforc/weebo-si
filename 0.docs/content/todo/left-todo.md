@@ -1,6 +1,9 @@
 # What's left to do ?
 
+## Bone of the project
+
 - [ ] Remplacer le setup actuel d'Authentik avec l'opérateur [Weebo-Authentik](https://github.com/batleforc/weebo-authentik)
+  - [ ] Migrer Authentik vers CNPG
   - [ ] Migrer les utilisateurs et groupes existants vers l'opérateur
   - [ ] Migrer les applications existantes vers l'opérateur
 - [ ] [ProxyAuthK8S](https://github.com/batleforc/ProxyAuthK8S)
@@ -26,3 +29,61 @@
   - [ ] Image Registry
   - [ ] Package Registry
 - [ ] [Eclipse Che](https://www.eclipse.org/che/)
+
+## Documentation
+
+- [ ] Installation Guide
+- [ ] User Guide
+
+- [ ] Big Picture Infra
+- [ ] Big Picture Database
+- [ ] Big Picture Monitoring
+- [ ] Big Picture Security
+- [ ] Big Picture Dev Environment
+
+- [ ] Macro Infra
+  - [ ] Kubernetes/Talos
+  - [ ] Cilium
+  - [ ] Authentification
+    - [ ] Authentik
+      - [ ] Weebo-Authentik Operator
+      - [ ] Outpost
+      - [ ] PreAuth-Proxy
+    - [ ] Dex
+  - [ ] Vault
+    - [ ] PKI
+    - [ ] Secrets
+    - [ ] External Secrets
+  - [ ] ArgoCD
+  - [ ] Cert-Manager / Trust Manager
+  - [ ] Storage
+    - [ ] Longhorn
+    - [ ] LocalStorage
+  - [ ] ProxyAuthK8S
+- [ ] Database
+  - [ ] PostgreSQL
+    - [ ] CNPG
+  - [ ] MongoDB
+    - [ ] MongoDB Operator
+  - [ ] ClickHouse
+    - [ ] ClickHouse Operator
+  - [ ] RustFS
+    - [ ] [RustFS Operator](https://github.com/rustfs/operator)
+    - [ ] [OIDC](https://github.com/rustfs/operator/issues/207)
+- [ ] Monitoring
+  - [ ] ClickStack
+  - [ ] OpenTelemetry eBPF Instrumentation
+  - [ ] Otel Collector
+- [ ] Registry
+  - [ ] Batlehub
+  - [ ] Angos
+- [ ] Security
+  - [ ] Kloak
+  - [ ] KubeArmor
+  - [ ] Weebo-SI Hardening
+- [ ] Dev Environment
+  - [ ] Eclipse Che
+  - [ ] Future components ?
+    - [ ] Plateform ingineering ?
+    - [ ] Git provider Integration ?
+    - [ ] podman build/run ?
