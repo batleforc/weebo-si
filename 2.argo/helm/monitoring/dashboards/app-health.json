@@ -1,0 +1,597 @@
+{
+  "name": "App health",
+  "tags": [],
+  "tiles": [
+    {
+      "id": "legend",
+      "config": {
+        "name": "How to read this",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "**Is every workload in the cluster actually up?** An *app* here is a Deployment, StatefulSet or DaemonSet in any namespace \u2014 platform and business alike. Three independent axes, read top to bottom: **declared vs actual replicas**, **per-container liveness and saturation**, and **whether the thing answers** (OBI server spans and the workload's own logs).\n\n**They are not joined, and that is deliberate.** Kubernetes gives no pod \u2192 Deployment attribute in telemetry \u2014 the link runs through a ReplicaSet whose hash lives only in the pod name. Rebuilding it with a regex would be a guess that silently mis-attributes, so the workload table counts replicas and the container table is keyed on pod\\/container. Click either one to drill into logs or traces.\n\n**Degraded** means `ready < desired`, right now. A rollout in flight reads degraded for a few seconds, which is correct rather than a false alarm. Jobs and CronJobs are excluded: a finished Job sits at `ready < desired` forever.\n\n**Where each column comes from.** Replicas and readiness come from `k8s_cluster` (otel-cluster); CPU and memory from kubeletstats (otel-node); requests, failures and latency from **OBI**, so they only exist for workloads OBI instruments \u2014 a blank RED row means *not observed*, never *no traffic*. `% lim` is blank when a container declares no limit, which means unbounded, not zero. **Restarts** counts restarts **inside the selected range**, not the pod's lifetime total, so it answers \"is this crashing now?\" rather than \"has it ever crashed?\" \u2014 the lifetime figure `kubectl` shows is the next column along."
+      },
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 5
+    },
+    {
+      "id": "degraded",
+      "config": {
+        "name": "Workloads degraded",
+        "configType": "sql",
+        "sqlTemplate": "WITH dep AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name']  AS ns,\n    'Deployment'                              AS kind,\n    ResourceAttributes['k8s.deployment.name'] AS name,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.deployment.desired')   AS desired,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.deployment.available') AS ready\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.deployment.desired', 'k8s.deployment.available')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY ns, name\n),\nsts AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name']   AS ns,\n    'StatefulSet'                              AS kind,\n    ResourceAttributes['k8s.statefulset.name'] AS name,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.statefulset.desired_pods') AS desired,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.statefulset.ready_pods')   AS ready\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.statefulset.desired_pods', 'k8s.statefulset.ready_pods')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY ns, name\n),\nds AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    'DaemonSet'                              AS kind,\n    ResourceAttributes['k8s.daemonset.name'] AS name,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.daemonset.desired_scheduled_nodes') AS desired,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.daemonset.ready_nodes')             AS ready\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.daemonset.desired_scheduled_nodes', 'k8s.daemonset.ready_nodes')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY ns, name\n),\nworkloads AS (\n  SELECT ns, kind, name, desired, ready FROM dep\n  UNION ALL\n  SELECT ns, kind, name, desired, ready FROM sts\n  UNION ALL\n  SELECT ns, kind, name, desired, ready FROM ds\n)\nSELECT countIf(ready < desired) AS \"Workloads degraded\"\nFROM workloads\nWHERE name != ''",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 0,
+      "y": 5,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "pods-bad",
+      "config": {
+        "name": "Pods not running",
+        "configType": "sql",
+        "sqlTemplate": "SELECT countIf(phase NOT IN (2, 3)) AS \"Pods not running\"\nFROM (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    ResourceAttributes['k8s.pod.name']       AS pod,\n    argMax(Value, TimeUnix) AS phase\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'k8s.pod.phase' AND $__timeFilter(TimeUnix)\n  GROUP BY ns, pod\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 5,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 4,
+      "y": 5,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "ctr-not-ready",
+      "config": {
+        "name": "Containers not ready",
+        "configType": "sql",
+        "sqlTemplate": "SELECT countIf(ready != 1) AS \"Containers not ready\"\nFROM (\n  SELECT\n    ResourceAttributes['k8s.pod.name']       AS pod,\n    ResourceAttributes['k8s.container.name'] AS ctr,\n    argMax(Value, TimeUnix) AS ready\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'k8s.container.ready' AND $__timeFilter(TimeUnix)\n  GROUP BY pod, ctr\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 5,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 8,
+      "y": 5,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "restarts",
+      "config": {
+        "name": "Restarts in range",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(sum(d)) AS \"Restarts in range\"\nFROM (\n  SELECT greatest(0, max(Value) - min(Value)) AS d\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'k8s.container.restarts' AND $__timeFilter(TimeUnix)\n  GROUP BY\n    ResourceAttributes['k8s.pod.name'], ResourceAttributes['k8s.container.name']\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 5,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 12,
+      "y": 5,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "ns-affected",
+      "config": {
+        "name": "Namespaces affected",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nbad_pods AS (\n  SELECT ns FROM (\n    SELECT\n      ResourceAttributes['k8s.namespace.name'] AS ns,\n      ResourceAttributes['k8s.pod.name']       AS pod,\n      argMax(Value, TimeUnix) AS phase\n    FROM default.otel_metrics_gauge\n    WHERE MetricName = 'k8s.pod.phase' AND $__timeFilter(TimeUnix)\n    GROUP BY ns, pod\n  )\n  WHERE phase NOT IN (2, 3)\n),\nrestarted AS (\n  SELECT ns FROM (\n    SELECT\n      ResourceAttributes['k8s.namespace.name'] AS ns,\n      ResourceAttributes['k8s.pod.name']       AS pod,\n      ResourceAttributes['k8s.container.name'] AS ctr,\n      greatest(0, max(Value) - min(Value)) AS d\n    FROM default.otel_metrics_gauge\n    WHERE MetricName = 'k8s.container.restarts' AND $__timeFilter(TimeUnix)\n    GROUP BY ns, pod, ctr\n  )\n  WHERE d > 0\n)\nSELECT uniqExact(ns) AS \"Namespaces affected\"\nFROM (SELECT ns FROM bad_pods UNION ALL SELECT ns FROM restarted)\nWHERE ns != ''",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 3,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 16,
+      "y": 5,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "no-limits",
+      "config": {
+        "name": "Containers with no memory limit",
+        "configType": "sql",
+        "sqlTemplate": "SELECT countIf(lim = 0) AS \"No memory limit\"\nFROM (\n  SELECT\n    ResourceAttributes['k8s.pod.name']       AS pod,\n    ResourceAttributes['k8s.container.name'] AS ctr,\n    maxIf(Value, MetricName = 'k8s.container.memory_limit')    AS lim,\n    countIf(MetricName = 'container.memory.working_set')       AS seen\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('container.memory.working_set', 'k8s.container.memory_limit')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY pod, ctr\n)\nWHERE seen > 0",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 20,
+      "y": 5,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "requests",
+      "config": {
+        "name": "Requests served",
+        "configType": "sql",
+        "sqlTemplate": "SELECT count() AS \"Requests\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server' AND $__timeFilter(Timestamp)",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 0,
+      "y": 8,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "error-rate",
+      "config": {
+        "name": "Request error rate",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(100 * countIf(StatusCode = 'Error') / nullIf(count(), 0), 2) AS \"Error rate %\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server' AND $__timeFilter(Timestamp)",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 2
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 1,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 5,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 4,
+      "y": 8,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "p95",
+      "config": {
+        "name": "Request p95",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(quantile(0.95)(Duration) / 1e6) AS \"p95 (ms)\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server' AND $__timeFilter(Timestamp)",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "unit": "ms",
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 500,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 2000,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 8,
+      "y": 8,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "log-errors",
+      "config": {
+        "name": "Error log lines",
+        "configType": "sql",
+        "sqlTemplate": "SELECT sum(greatest(toUInt64OrZero(LogAttributes['log_count']), 1)) AS \"Error log lines\"\nFROM default.otel_logs\nWHERE $__timeFilter(Timestamp)\n  AND lower(SeverityText) IN ('error', 'fatal', 'critical')",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 100,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 1000,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 12,
+      "y": 8,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "mem-cornered",
+      "config": {
+        "name": "Containers near memory limit",
+        "configType": "sql",
+        "sqlTemplate": "SELECT countIf(lim > 0 AND 100 * peak / lim >= 90) AS \"Near memory limit\"\nFROM (\n  SELECT\n    ResourceAttributes['k8s.pod.name']       AS pod,\n    ResourceAttributes['k8s.container.name'] AS ctr,\n    maxIf(Value, MetricName = 'container.memory.working_set') AS peak,\n    maxIf(Value, MetricName = 'k8s.container.memory_limit')   AS lim\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('container.memory.working_set', 'k8s.container.memory_limit')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY pod, ctr\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 3,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 16,
+      "y": 8,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "cpu-cornered",
+      "config": {
+        "name": "Containers near CPU limit",
+        "configType": "sql",
+        "sqlTemplate": "SELECT countIf(lim > 0 AND 100 * peak / lim >= 90) AS \"Near CPU limit\"\nFROM (\n  SELECT\n    ResourceAttributes['k8s.pod.name']       AS pod,\n    ResourceAttributes['k8s.container.name'] AS ctr,\n    maxIf(Value, MetricName = 'container.cpu.usage')     AS peak,\n    maxIf(Value, MetricName = 'k8s.container.cpu_limit') AS lim\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('container.cpu.usage', 'k8s.container.cpu_limit')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY pod, ctr\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 3,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 20,
+      "y": 8,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "workloads",
+      "config": {
+        "name": "Every workload: declared vs actual",
+        "configType": "sql",
+        "sqlTemplate": "WITH dep AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name']  AS ns,\n    'Deployment'                              AS kind,\n    ResourceAttributes['k8s.deployment.name'] AS name,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.deployment.desired')   AS desired,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.deployment.available') AS ready\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.deployment.desired', 'k8s.deployment.available')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY ns, name\n),\nsts AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name']   AS ns,\n    'StatefulSet'                              AS kind,\n    ResourceAttributes['k8s.statefulset.name'] AS name,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.statefulset.desired_pods') AS desired,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.statefulset.ready_pods')   AS ready\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.statefulset.desired_pods', 'k8s.statefulset.ready_pods')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY ns, name\n),\nds AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    'DaemonSet'                              AS kind,\n    ResourceAttributes['k8s.daemonset.name'] AS name,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.daemonset.desired_scheduled_nodes') AS desired,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.daemonset.ready_nodes')             AS ready\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.daemonset.desired_scheduled_nodes', 'k8s.daemonset.ready_nodes')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY ns, name\n),\nworkloads AS (\n  SELECT ns, kind, name, desired, ready FROM dep\n  UNION ALL\n  SELECT ns, kind, name, desired, ready FROM sts\n  UNION ALL\n  SELECT ns, kind, name, desired, ready FROM ds\n)\nSELECT\n  ns   AS \"Namespace\",\n  kind AS \"Kind\",\n  name AS \"Workload\",\n  if(ready >= desired, 'ok', 'DEGRADED') AS \"Status\",\n  toUInt32(desired) AS \"Desired\",\n  toUInt32(ready)   AS \"Ready\",\n  toInt32(desired - ready) AS \"Missing\"\nFROM workloads\nWHERE name != ''\nORDER BY \"Missing\" DESC, \"Namespace\" ASC, \"Workload\" ASC\nLIMIT 300",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Logs"
+          },
+          "whereTemplate": "ResourceAttributes['k8s.namespace.name'] = '{{Namespace}}' AND ResourceAttributes['k8s.pod.name'] LIKE '{{Workload}}-%'",
+          "whereLanguage": "sql"
+        }
+      },
+      "x": 0,
+      "y": 11,
+      "w": 24,
+      "h": 9
+    },
+    {
+      "id": "containers",
+      "config": {
+        "name": "Containers, most troubled first",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nres AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    ResourceAttributes['k8s.pod.name']       AS pod,\n    ResourceAttributes['k8s.container.name'] AS ctr,\n    avgIf(Value, MetricName = 'container.cpu.usage')          AS cpu_avg,\n    maxIf(Value, MetricName = 'container.memory.working_set') AS mem_peak\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('container.cpu.usage', 'container.memory.working_set')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY ns, pod, ctr\n),\nalloc AS (\n  SELECT\n    ResourceAttributes['k8s.pod.name']       AS pod,\n    ResourceAttributes['k8s.container.name'] AS ctr,\n    maxIf(Value, MetricName = 'k8s.container.cpu_limit')    AS cpu_lim,\n    maxIf(Value, MetricName = 'k8s.container.memory_limit') AS mem_lim,\n    maxIf(Value, MetricName = 'k8s.container.restarts')     AS restarts_total,\n    greatest(0, maxIf(Value, MetricName = 'k8s.container.restarts')\n              - minIf(Value, MetricName = 'k8s.container.restarts')) AS restarts_here,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.container.ready') AS ready,\n    countIf(MetricName = 'k8s.container.ready') AS ready_seen\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.container.cpu_limit', 'k8s.container.memory_limit',\n                       'k8s.container.restarts', 'k8s.container.ready')\n    AND $__timeFilter(TimeUnix)\n  GROUP BY pod, ctr\n),\ncand AS (\n  SELECT\n    r.ns, r.pod, r.ctr, r.cpu_avg, r.mem_peak,\n    a.cpu_lim, a.mem_lim, a.restarts_total, a.restarts_here,\n    a.ready, a.ready_seen,\n    (a.restarts_here > 0)\n      + (a.ready_seen > 0 AND a.ready != 1)\n      + (a.mem_lim > 0 AND r.mem_peak / a.mem_lim >= 0.9)\n      + (a.cpu_lim > 0 AND r.cpu_avg  / a.cpu_lim >= 0.9) AS problems\n  FROM res AS r\n  LEFT JOIN alloc AS a ON r.pod = a.pod AND r.ctr = a.ctr\n  ORDER BY problems DESC, a.restarts_here DESC, r.mem_peak DESC\n  LIMIT 60\n),\nlogs AS (\n  SELECT\n    `__hdx_materialized_k8s.pod.name`       AS pod,\n    `__hdx_materialized_k8s.container.name` AS ctr,\n    sumIf(greatest(toUInt64OrZero(LogAttributes['log_count']), 1),\n          lower(SeverityText) IN ('error', 'fatal', 'critical')) AS errs\n  FROM default.otel_logs\n  WHERE $__timeFilter(Timestamp)\n    AND (`__hdx_materialized_k8s.pod.name`, `__hdx_materialized_k8s.container.name`)\n        IN (SELECT pod, ctr FROM cand)\n  GROUP BY pod, ctr\n),\nspans AS (\n  SELECT\n    ResourceAttributes['k8s.pod.name']       AS pod,\n    ResourceAttributes['k8s.container.name'] AS ctr,\n    countIf(SpanKind = 'Server')                          AS reqs,\n    countIf(SpanKind = 'Server' AND StatusCode = 'Error') AS failed,\n    quantileIf(0.95)(Duration, SpanKind = 'Server')       AS p95\n  FROM default.otel_traces\n  WHERE $__timeFilter(Timestamp)\n    AND (ResourceAttributes['k8s.pod.name'], ResourceAttributes['k8s.container.name'])\n        IN (SELECT pod, ctr FROM cand)\n  GROUP BY pod, ctr\n)\nSELECT\n  c.ns  AS \"Namespace\",\n  c.pod AS \"Pod\",\n  c.ctr AS \"Container\",\n  multiIf(c.ready_seen = 0, '', c.ready = 1, 'ready', 'NOT READY') AS \"Ready\",\n  toUInt32(c.restarts_here)  AS \"Restarts\",\n  toUInt32(c.restarts_total) AS \"Lifetime\",\n  round(c.cpu_avg, 3) AS \"CPU\",\n  if(c.cpu_lim > 0, round(100 * c.cpu_avg / c.cpu_lim), NULL) AS \"CPU % lim\",\n  round(c.mem_peak / 1048576) AS \"Mem MiB\",\n  if(c.mem_lim > 0, round(100 * c.mem_peak / c.mem_lim), NULL) AS \"Mem % lim\",\n  l.errs AS \"Log errors\",\n  s.reqs   AS \"Requests\",\n  s.failed AS \"Failed\",\n  if(s.reqs > 0, round(s.p95 / 1e6) , NULL) AS \"p95 ms\"\nFROM cand AS c\nLEFT JOIN logs  AS l ON c.pod = l.pod AND c.ctr = l.ctr\nLEFT JOIN spans AS s ON c.pod = s.pod AND c.ctr = s.ctr\nORDER BY c.problems DESC, \"Restarts\" DESC, \"Log errors\" DESC",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Logs"
+          },
+          "whereTemplate": "ResourceAttributes['k8s.pod.name'] = '{{Pod}}' AND ResourceAttributes['k8s.container.name'] = '{{Container}}'",
+          "whereLanguage": "sql"
+        }
+      },
+      "x": 0,
+      "y": 20,
+      "w": 24,
+      "h": 10
+    },
+    {
+      "id": "req-rate",
+      "config": {
+        "name": "Requests/s, by service",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(Timestamp) AS ts,\n  ServiceName AS \"Service\",\n  count() / $__interval_s AS \"Requests/s\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server' AND $__timeFilter(Timestamp)\nGROUP BY ts, \"Service\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      },
+      "x": 0,
+      "y": 30,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "fail-rate",
+      "config": {
+        "name": "Failed requests/s, by service",
+        "configType": "sql",
+        "sqlTemplate": "WITH failing AS (\n  SELECT ServiceName\n  FROM default.otel_traces\n  WHERE SpanKind = 'Server' AND StatusCode = 'Error' AND $__timeFilter(Timestamp)\n  GROUP BY ServiceName\n)\nSELECT\n  $__timeInterval(Timestamp) AS ts,\n  ServiceName AS \"Service\",\n  countIf(StatusCode = 'Error') / $__interval_s AS \"Failed/s\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server' AND $__timeFilter(Timestamp)\n  AND ServiceName IN (SELECT ServiceName FROM failing)\nGROUP BY ts, \"Service\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      },
+      "x": 12,
+      "y": 30,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "latency",
+      "config": {
+        "name": "p95 latency, by service",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(Timestamp) AS ts,\n  ServiceName AS \"Service\",\n  quantile(0.95)(Duration) / 1e6 AS \"p95 (ms)\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server' AND $__timeFilter(Timestamp)\nGROUP BY ts, \"Service\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "unit": "ms",
+          "thousandSeparated": true
+        }
+      },
+      "x": 0,
+      "y": 36,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "log-error-rate",
+      "config": {
+        "name": "Error logs/min, by namespace",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(Timestamp) AS ts,\n  `__hdx_materialized_k8s.namespace.name` AS \"Namespace\",\n  sum(greatest(toUInt64OrZero(LogAttributes['log_count']), 1))\n    / nullIf($__interval_s / 60, 0) AS \"Errors/min\"\nFROM default.otel_logs\nWHERE $__timeFilter(Timestamp)\n  AND lower(SeverityText) IN ('error', 'fatal', 'critical')\nGROUP BY ts, \"Namespace\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      },
+      "x": 12,
+      "y": 36,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "services",
+      "config": {
+        "name": "Services OBI can see",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ServiceName AS \"Service\",\n  ResourceAttributes['k8s.namespace.name'] AS \"Namespace\",\n  count() AS \"Requests\",\n  countIf(StatusCode = 'Error') AS \"Failed\",\n  round(100 * countIf(StatusCode = 'Error') / nullIf(count(), 0), 2) AS \"Failed %\",\n  round(quantile(0.95)(Duration) / 1e6) AS \"p95 ms\",\n  round(quantile(0.99)(Duration) / 1e6) AS \"p99 ms\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server' AND $__timeFilter(Timestamp)\nGROUP BY \"Service\", \"Namespace\"\nORDER BY \"Failed\" DESC, \"Requests\" DESC\nLIMIT 40",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Traces"
+          },
+          "whereTemplate": "ServiceName = '{{Service}}'",
+          "whereLanguage": "sql"
+        }
+      },
+      "x": 0,
+      "y": 42,
+      "w": 12,
+      "h": 7
+    },
+    {
+      "id": "namespaces",
+      "config": {
+        "name": "Namespaces, worst first",
+        "configType": "sql",
+        "sqlTemplate": "WITH\npods AS (\n  SELECT ns, count() AS n, countIf(phase NOT IN (2, 3)) AS bad\n  FROM (\n    SELECT\n      ResourceAttributes['k8s.namespace.name'] AS ns,\n      ResourceAttributes['k8s.pod.name']       AS pod,\n      argMax(Value, TimeUnix) AS phase\n    FROM default.otel_metrics_gauge\n    WHERE MetricName = 'k8s.pod.phase' AND $__timeFilter(TimeUnix)\n    GROUP BY ns, pod\n  )\n  GROUP BY ns\n),\nrestarts AS (\n  SELECT ns, sum(d) AS restarts\n  FROM (\n    SELECT\n      ResourceAttributes['k8s.namespace.name'] AS ns,\n      ResourceAttributes['k8s.pod.name']       AS pod,\n      ResourceAttributes['k8s.container.name'] AS ctr,\n      greatest(0, max(Value) - min(Value)) AS d\n    FROM default.otel_metrics_gauge\n    WHERE MetricName = 'k8s.container.restarts' AND $__timeFilter(TimeUnix)\n    GROUP BY ns, pod, ctr\n  )\n  GROUP BY ns\n),\nlogs AS (\n  SELECT\n    `__hdx_materialized_k8s.namespace.name` AS ns,\n    sumIf(greatest(toUInt64OrZero(LogAttributes['log_count']), 1),\n          lower(SeverityText) IN ('error', 'fatal', 'critical')) AS errs\n  FROM default.otel_logs\n  WHERE $__timeFilter(Timestamp)\n  GROUP BY ns\n)\nSELECT\n  p.ns AS \"Namespace\",\n  toUInt32(p.n)   AS \"Pods\",\n  toUInt32(p.bad) AS \"Not running\",\n  toUInt32(r.restarts) AS \"Restarts\",\n  toUInt64(l.errs)     AS \"Log errors\"\nFROM pods AS p\nLEFT JOIN restarts AS r ON p.ns = r.ns\nLEFT JOIN logs     AS l ON p.ns = l.ns\nWHERE p.ns != ''\nORDER BY \"Not running\" DESC, \"Restarts\" DESC, \"Log errors\" DESC\nLIMIT 60",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Logs"
+          },
+          "whereTemplate": "ResourceAttributes['k8s.namespace.name'] = '{{Namespace}}' AND lower(SeverityText) IN ('error', 'fatal', 'critical')",
+          "whereLanguage": "sql"
+        }
+      },
+      "x": 12,
+      "y": 42,
+      "w": 12,
+      "h": 7
+    },
+    {
+      "id": "recent-errors",
+      "config": {
+        "name": "Recent application errors",
+        "source": "Logs",
+        "displayType": "search",
+        "select": "Timestamp, ResourceAttributes['k8s.namespace.name'] AS namespace, ResourceAttributes['k8s.pod.name'] AS pod, ResourceAttributes['k8s.container.name'] AS container, SeverityText, Body",
+        "where": "lower(SeverityText) IN ('error', 'fatal', 'critical')",
+        "whereLanguage": "sql",
+        "orderBy": "Timestamp DESC"
+      },
+      "x": 0,
+      "y": 49,
+      "w": 12,
+      "h": 7
+    },
+    {
+      "id": "slowest",
+      "config": {
+        "name": "Slowest requests served",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  Timestamp   AS \"When\",\n  ServiceName AS \"Service\",\n  SpanName    AS \"Operation\",\n  round(Duration / 1e6) AS \"ms\",\n  StatusCode  AS \"Status\",\n  SpanAttributes['http.response.status_code'] AS \"HTTP\",\n  TraceId     AS \"TraceId\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server' AND $__timeFilter(Timestamp)\nORDER BY Duration DESC\nLIMIT 30",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Traces"
+          },
+          "whereTemplate": "TraceId = '{{TraceId}}'",
+          "whereLanguage": "sql"
+        }
+      },
+      "x": 12,
+      "y": 49,
+      "w": 12,
+      "h": 7
+    }
+  ]
+}

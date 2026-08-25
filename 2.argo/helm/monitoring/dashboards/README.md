@@ -128,6 +128,59 @@ from HyperDX 2.32.
   added). Rates then divide by `$__interval_s`, so they stay correct at any
   granularity the time picker chooses.
 
+- `node-health.json` — the same telemetry as `node.json`, reduced to a
+  pass/fail. Twelve `colorRules` verdicts (ready, CPU, memory, fullest
+  filesystem, load per core, telemetry age, I/O wait, steal, disk busy, NIC
+  errors, pods not running, restarts), a row per node, then only the trends
+  that back a red number. It answers "is anything wrong?"; `node.json` answers
+  "what exactly".
+
+  Two tiles exist here and nowhere else. **Telemetry age** is seconds since the
+  last hostmetrics sample — read it first, because if otel-node has stopped,
+  every other tile on the page is stale and green means nothing. It also reads
+  red whenever the time picker ends in the past, which is not an outage.
+  **Steal** separates a node losing CPU to the OVH hypervisor from one that is
+  genuinely busy; `node.json` plots neither.
+
+  Mind which tiles are averages. CPU, I/O wait, steal and disk-busy are counter
+  deltas over the *whole* selected range, so a 24 h window hides a ten-minute
+  spike — narrow the picker. Memory, filesystem and load read the latest
+  sample. The thresholds are opinions rather than physics; edit `colorRules`
+  when this cluster proves them wrong.
+
+- `app-health.json` — is every workload actually up? An *app* here is a
+  Deployment, StatefulSet or DaemonSet in any namespace, platform and business
+  alike. Three axes: declared vs actual replicas (`k8s_cluster`), per-container
+  liveness and saturation (kubeletstats + `k8s_cluster`), and whether the thing
+  answers (OBI server spans and its own logs).
+
+  **The three are deliberately not joined into one table.** Kubernetes exposes
+  no pod → Deployment attribute in telemetry: the link runs through a
+  ReplicaSet whose hash survives only in the pod name. Rebuilding it with a
+  regex would silently mis-attribute every workload whose name contains a dash,
+  so the workload table counts replicas and the container table is keyed on
+  pod/container. Both are clickable. The one place a name is matched is the
+  workload table's `onClick`, which opens `k8s.pod.name LIKE '<workload>-%'` —
+  a drill-down that may over-match, not a figure anything is computed from.
+
+  Jobs and CronJobs are excluded from "degraded" on purpose: a finished Job
+  sits at `ready < desired` forever and would be permanent noise. A rollout in
+  flight does read degraded for a few seconds, which is correct.
+
+  Blank is not zero. A blank RED row means OBI does not instrument that
+  workload — *not observed*, never *no traffic*. A blank `% lim` means the
+  container declares no limit, i.e. unbounded. **Restarts** counts restarts
+  *inside the selected range* (`max - min` per container), which is the figure
+  that answers "is this crashing now?"; the lifetime count `kubectl` shows is
+  the next column along. The delta is grouped by pod name, so a Deployment pod
+  replaced mid-range lands in a new group and cannot inflate the count — but a
+  StatefulSet pod, whose name survives recreation, resets its counter to zero
+  and would briefly over-report.
+
+  `k8s.container.ready` is read defensively: the container table only calls a
+  container "NOT READY" when that metric was actually seen, so the tile degrades
+  to blank rather than accusing every container if the metric ever disappears.
+
 - `consumers.json` — who is eating the node, and what that workload has to say
   for itself. One master table ranking containers by CPU with memory, restarts,
   log and span counts side by side, then a section per axis (CPU, memory,
