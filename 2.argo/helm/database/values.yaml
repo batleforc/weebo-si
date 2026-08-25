@@ -22,3 +22,8 @@ mongodbOperator:
   repoURL: https://mongodb.github.io/helm-charts
   chart: mongodb-kubernetes
   version: 1.9.1
+
+cnpgOperator:
+  enabled: true
+  repoURL: https://cloudnative-pg.github.io/charts
+  version: 0.29.0

@@ -1,0 +1,27 @@
+{{- if .Values.cnpgOperator.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cnpg-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true
+  source:
+    chart: cloudnative-pg
+    repoURL: {{ .Values.cnpgOperator.repoURL }}
+    targetRevision: {{ .Values.cnpgOperator.version }}
+    helm:
+      releaseName: cnpg
+  destination:
+    namespace: {{ .Release.Namespace }}
+    name: "in-cluster"
+{{- end }}

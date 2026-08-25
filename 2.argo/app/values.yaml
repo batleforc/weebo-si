@@ -104,8 +104,6 @@ project:
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"
-      - group: "apps.kubeblocks.io"
-        kind: "Cluster"
       - group: "rbac.authorization.k8s.io"
         kind: "ClusterRole"
       - group: "rbac.authorization.k8s.io"
@@ -120,6 +118,7 @@ project:
       - https://github.com/apecloud/kubeblocks
       - oci://ghcr.io/clickhouse/clickhouse-operator-helm
       - https://mongodb.github.io/helm-charts
+      - https://cloudnative-pg.github.io/charts
     includeBaseRepo: true
     dest:
       - server: "https://kubernetes.default.svc"
@@ -135,30 +134,6 @@ project:
         kind: "CustomResourceDefinition"
       - group: "rbac.authorization.k8s.io"
         kind: "ClusterRole"
-      - group: "extensions.kubeblocks.io"
-        kind: "Addon"
-      - group: "dataprotection.kubeblocks.io"
-        kind: "StorageProvider"
-      - group: "rbac.authorization.k8s.io"
-        kind: "ClusterRoleBinding"
-      - group: "parameters.kubeblocks.io"
-        kind: "ParamConfigRenderer"
-      - group: "dataprotection.kubeblocks.io"
-        kind: "ActionSet"
-      - group: "apps.kubeblocks.io"
-        kind: "ShardingDefinition"
-      - group: "operations.kubeblocks.io"
-        kind: "OpsDefinition"
-      - group: "parameters.kubeblocks.io"
-        kind: "ParametersDefinition"
-      - group: "dataprotection.kubeblocks.io"
-        kind: "BackupPolicyTemplate"
-      - group: "apps.kubeblocks.io"
-        kind: "ClusterDefinition"
-      - group: "apps.kubeblocks.io"
-        kind: "ComponentDefinition"
-      - group: "apps.kubeblocks.io"
-        kind: "ComponentVersion"
       - group: "admissionregistration.k8s.io"
         kind: "MutatingWebhookConfiguration"
       - group: "admissionregistration.k8s.io"
