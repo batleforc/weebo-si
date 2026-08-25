@@ -64,3 +64,10 @@ tasks:
       - yq e -i '.users[0].user.exec.args[3] = "--oidc-client-id={{ .OIDC_CLIENT_ID }}"' 0.config/kubeconfig.oidc.yaml
       - yq e -i '.clusters[0].cluster.server = "{{ .server_url }}"' 0.config/kubeconfig.oidc.yaml
       - yq e -i '.clusters[0].cluster."certificate-authority-data" = "{{ .server_ca }}"' 0.config/kubeconfig.oidc.yaml
+  secscan:
+    desc: "Run security scan"
+    env:
+      KUBECONFIG: 0.config/kubeconfig.yaml
+    cmds:
+      - kubescape scan --format html --output kubescape.html
+      - popeye -A --save --out html --output-file popeye.html

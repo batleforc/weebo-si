@@ -19,6 +19,8 @@ talosctl = "latest"
 fnox = "latest"
 vault = "latest"
 "github:janosmiko/lfk" = "latest"
+popeye = "latest"
+"github:kubescape/kubescape" = { version = "latest" }
 
 [plugins]
 kkrew = "https://github.com/soupglasses/mise-krew"
