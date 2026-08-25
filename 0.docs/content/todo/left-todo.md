@@ -16,6 +16,7 @@
 - [ ] [Batlehub](https://batleforc.git.batleforc.fr/batlehub/)
   - [ ] [OIDC](https://batleforc.git.batleforc.fr/batlehub/guide/admin-config.html#auth) : Allow users to login with OIDC
   - [ ] [OIDC Kube](https://batleforc.git.batleforc.fr/batlehub/guide/admin-config.html#kubernetes-service-accounts) : Allow Kubernetes to authenticate with OIDC (e.g. Create a configuration in pod from service account that can be used to pull artifacts from a private registry)
+  - [ ] [OIDC CI](https://batleforc.git.batleforc.fr/batlehub/guide/admin-config.html#github-actions) : Directly push artifacts to batlehub registry from GitHub Actions using OIDC (Like VsCode Extension or other)
 - [ ] [Kuberarmor](https://kubearmor.com/)
 - [ ] [Kloak](https://une-tasse-de.cafe/blog/kloak/)
 - [ ] [Weebo Si Hardening](https://github.com/batleforc/weebo-si-hardening)
