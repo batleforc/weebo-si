@@ -1,0 +1,319 @@
+# Default values for rustfs.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+replicaCount: 4
+
+# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+image:
+  rustfs: # This sets the rustfs image repository and tag.
+    repository: rustfs/rustfs
+    # This sets the pull policy for images.
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  initImage: # This sets the init container image repository and tag.
+    repository: busybox
+    pullPolicy: IfNotPresent
+    tag: "stable"
+
+# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+imagePullSecrets: []
+
+imageRegistryCredentials:
+  enabled: false
+  registry: ""
+  username: ""
+  password: ""
+  email: ""
+
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+
+mode:
+  standalone:
+    enabled: false
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 0
+        maxUnavailable: 1
+    existingClaim:
+      dataClaim: ""
+      logsClaim: ""
+  distributed:
+    enabled: true
+
+secret:
+  existingSecret: ""
+  # SECURITY: rendering fails by default unless one of the following is true:
+  #   1. `secret.existingSecret` names a Kubernetes Secret you control, or
+  #   2. `secret.rustfs.access_key` and `secret.rustfs.secret_key` are both
+  #      set to non-empty, non-default values, or
+  #   3. `secret.allowInsecureDefaults: true` is set (only for local dev).
+  # This prevents accidental deployment with the well-known default
+  # `rustfsadmin/rustfsadmin` credentials.
+  allowInsecureDefaults: false
+  rustfs:
+    access_key: ""
+    secret_key: ""
+
+config:
+  rustfs:
+    # Examples
+    # volumes: "/data/rustfs0,/data/rustfs1,/data/rustfs2,/data/rustfs3"
+    # volumes: "http://rustfs-{0...3}.rustfs-headless:9000/data/rustfs{0...3}"
+    volumes: ""
+    address: ":9000"
+    console_enable: "true"
+    console_address: ":9001"
+    log_level: "info"
+    region: "us-east-1"
+    obs_log_directory: "/logs"
+    obs_environment: "development"
+    # Optionally enable support for virtual-hosted-style requests.
+    # See more information: https://docs.rustfs.com/integration/virtual.html
+    domains: "" # e.g. "example.com"
+    ec:
+      storage_class_standard: "EC:4" # Storage class for standard storage class in erasure coding mode, default is "STANDARD"
+    log_rotation: # Specify log rotation settings
+      # size: 100 # Default value: 100 MB
+      # time: hour # Default value: hour, eg: day,hour,minute,second
+      # keep_files: 30 # number of rotated log files to keep
+    scanner:
+      # Scanner speed preset: fastest|fast|default|slow|slowest
+      speed: ""
+      # Override start delay in seconds (optional)
+      start_delay_secs: ""
+      # Enable/disable scanner sleeps for throttling
+      idle_mode: ""
+      # Timeout for scanner cache saves in seconds (minimum 1 second)
+      cache_save_timeout_secs: ""
+    # Drive timeout profile preset: default|high_latency
+    # - default: keep current timeout defaults.
+    # - high_latency: use higher timeout defaults for scanner-sensitive operations.
+    timeout_profile: ""
+    obs_endpoint:
+      enabled: false # If true, rustfs will export metrics, traces, logs and profiling data to the specified OTLP endpoints. If false, the individual settings for metrics, traces, logs and profiling endpoints will be ignored and all data will not be exported.
+      base_endpoint: "" #Root OTLP/HTTP endpoint, e.g. http://otel-collector:4318
+      use_stdout: false # If true, rustfs will also export logs to stdout in addition to the OTLP logs endpoint.
+      metrics:
+        enabled: false
+        endpoint: "" # If specified, rustfs will export metrics to this OTLP endpoint. e.g. "http://localhost:4318/v1/metrics"
+      trace:
+        enabled: false
+        endpoint: "" # If specified, rustfs will export traces to this OTLP endpoint. e.g. "http://localhost:4318/v1/traces"
+      logs:
+        enabled: false
+        endpoint: "" # If specified, rustfs will export logs to this OTLP endpoint. e.g. "http://localhost:4318/v1/logs"
+      profiling:
+        enabled: false
+        endpoint: "" # If specified, rustfs will export profiling data to this endpoint. e.g. "http://localhost:6060/debug/pprof/profile"
+    kms:
+      enabled: false
+      type: "vault" # Only Support vault currently.
+      vault:
+        vault_backend: "" # Only support vault kv2 and vault transit.
+        vault_address: ""
+        vault_token: ""
+        vault_mount_path: ""
+        default_key: ""
+
+
+extraEnv: [] # This is for setting extra environment variables in the rustfs container. It should be a list of key value pairs. For example:
+# extraEnv:
+#   - name: RUSTFS_ERASURE_SET_DRIVE_COUNT
+#     value: "16"
+#   - name: RUSTFS_STORAGE_CLASS_STANDARD
+#     value: "EC:4"
+
+
+# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# This is for setting Kubernetes Annotations to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+podAnnotations: {}
+
+# This is for setting Kubernetes Labels to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+podLabels: {}
+
+# Labels to add to all deployed objects
+commonLabels: {}
+
+podSecurityContext:
+  fsGroup: 10001
+  runAsUser: 10001
+  runAsGroup: 10001
+
+containerSecurityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+
+service:
+  annotations: {}
+  headlessAnnotations: {} # Applied to the headless Service when mode.distributed.enabled=true
+  traefikAnnotations: # Applied to the Service when mode.distributed.enabled=true and ingress.className=traefik
+    traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
+    traefik.ingress.kubernetes.io/service.sticky.cookie.httponly: "true"
+    traefik.ingress.kubernetes.io/service.sticky.cookie.name: rustfs
+    traefik.ingress.kubernetes.io/service.sticky.cookie.samesite: none
+    traefik.ingress.kubernetes.io/service.sticky.cookie.secure: "true"
+  type: ClusterIP
+  endpoint:
+    port: 9000
+    nodePort: 32000
+  console:
+    port: 9001
+    nodePort: 32001
+
+# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
+ingress:
+  enabled: true
+  className: "nginx" # Specify the classname, traefik or nginx. Different classname has different annotations for session sticky.
+  traefikAnnotations: {} # Deprecated: use service.traefikAnnotations instead
+  nginxAnnotations:
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/session-cookie-expires: "3600"
+    nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+    nginx.ingress.kubernetes.io/session-cookie-max-age: "3600"
+    nginx.ingress.kubernetes.io/session-cookie-name: rustfs
+  annotations: {}
+  customAnnotations: # Deprecated: use ingress.annotations instead
+    {}
+  hosts:
+    - host: example.rustfs.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    enabled: false # Enable tls and access rustfs via https.
+
+    certManager:
+      enabled: false # Enable certmanager to generate certificate for rustfs, default false.
+
+    existingSecret:
+      # To use an existing secret for tls certificates in the ingress enable this,
+      # set the name of the existing secret and make sure that the secret contains
+      # values for the keys "crt" and "key".
+      enabled: false
+      name: ""
+
+    # If the certmanager is not used and no existing secret is used to provide a tls certificate,
+    # then this certificate can be configured here. A secret will be created and used.
+    # Note: The following input will be base64 encoded during secret creation. There is no need
+    #       to provide it base64 encoded here already.
+    crt: tls.crt
+    key: tls.key
+
+gatewayApi:
+  enabled: false
+  gatewayClass: traefik # Only support for traefik and contour gatewayClass at the moment.
+  listeners: # Specify which listeners to create on the Gateway.
+    http:
+      name: web
+      port: 8000
+    https:
+      name: websecure
+      port: 8443
+  hostname: example.rustfs.com
+  existingGateway:
+    name: ""
+    namespace: ""
+
+mtls:
+  enabled: false
+  clientCertPath: "/opt/tls/client_cert.pem"
+  clientKeyPath: "/opt/tls/client_key.pem"
+  existingIssuerRef:
+    enabled: false
+    name: ""
+    kind: ""
+    group: ""
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 200m
+  #   memory: 512Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+livenessProbe:
+  enabled: true # omitted
+  httpGet:
+    path: /health
+    port: 9000
+    scheme: HTTP
+  initialDelaySeconds: 30
+  periodSeconds: 5
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true # omitted
+  httpGet:
+    path: /health/ready
+    port: endpoint
+    scheme: HTTP
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    enabled: true
+    topologyKey: kubernetes.io/hostname
+  nodeAffinity: {}
+
+storageclass:
+  name: local-path
+  dataStorageSize: 256Mi
+  logStorageSize: 256Mi
+  pvcAnnotations: {}
+    #pvcAnnotations:
+    #  data:
+    #    key: value
+    #  logs:
+    #    key: value
+
+pdb:
+  create: false
+  # Minimum number/percentage of pods that should remain scheduled
+  minAvailable: ""
+  # Maximum number/percentage of pods that may be made unavailable
+  maxUnavailable: 1
+
+# Whether information about services should be injected into pod's environment variable
+enableServiceLinks: false
+
+extraManifests: []
