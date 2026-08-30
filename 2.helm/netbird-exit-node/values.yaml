@@ -2,7 +2,7 @@ netbird:
   test: false
   enabled: true
   # renovate: datasource=docker depName=11notes/netbird-exit-node versioning=loose
-  version: "0.73"
+  version: "0.77.1"
   image: 11notes/netbird-exit-node
   url: "https://vpn.batleforc.fr"
   peer_name: "lab-exit-node"
