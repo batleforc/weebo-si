@@ -42,8 +42,21 @@ tasks:
     cmds:
       - task vault -- kv put -tls-skip-verify -mount=mv netbird/vpn-exit-node KUBERNETES_SETUP_KEY={{ .TOKEN }}
   trust-intermediate:
+    desc: "Trust the Weebo PKI (root + intermediate CA) on this host"
+    vars:
+      CA_BUNDLE: .tmp/weebo-si-ca.pem
     cmds:
-      - rm -rf weebo-si-int-ca.pem weebo-si-int-ca.key
-      - task vault -- list -tls-skip-verify  -format=json pki_int/certs | jq .[] | awk '{print "task vault -- read -tls-skip-verify   -format=json pki_int/cert/" $1 " | jq -r .data.certificate | cat >> weebo-si-int-ca.pem"}' | bash
-      - sudo cp weebo-si-int-ca.pem /etc/pki/ca-trust/source/anchors/weebo-si-int-ca.pem
+      # pki/certs & pki_int/certs list the *issued* (leaf) certs, not the CAs:
+      # the CA certs live under <mount>/cert/ca.
+      - mkdir -p .tmp
+      - rm -f {{ .CA_BUNDLE }}
+      # vault -field=... prints without a trailing newline, hence the echo between certs
+      - task vault -- read -tls-skip-verify -field=certificate pki/cert/ca >> {{ .CA_BUNDLE }}
+      - echo >> {{ .CA_BUNDLE }}
+      - task vault -- read -tls-skip-verify -field=certificate pki_int/cert/ca >> {{ .CA_BUNDLE }}
+      - echo >> {{ .CA_BUNDLE }}
+      - openssl crl2pkcs7 -nocrl -certfile {{ .CA_BUNDLE }} | openssl pkcs7 -print_certs -noout
+      # drop the previous anchor, it only held leaf certificates
+      - sudo rm -f /etc/pki/ca-trust/source/anchors/weebo-si-int-ca.pem /etc/pki/ca-trust/source/anchors/weebo-si-int-ca.crt
+      - sudo cp {{ .CA_BUNDLE }} /etc/pki/ca-trust/source/anchors/weebo-si-ca.pem
       - sudo update-ca-trust
