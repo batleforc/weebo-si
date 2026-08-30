@@ -25,9 +25,13 @@ on:
       - "renovate.json5"
       - ".github/workflows/renovate.yml"
 
-# The App token below does the writing; the job itself only needs to read.
+# Renovate runs as the built-in GITHUB_TOKEN, so the job itself needs the write
+# scopes: branches and commits (contents), the PRs, and the Dependency Dashboard
+# (an issue).
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
+  issues: write
 
 concurrency:
   group: renovate
@@ -37,23 +41,13 @@ jobs:
   renovate:
     runs-on: ubuntu-latest
     steps:
-      # A GitHub App rather than a PAT, matching the UPDATECLIBOT pattern this
-      # repo already used. It also means Renovate's PRs trigger workflows,
-      # which PRs opened with the default GITHUB_TOKEN do not.
-      - name: Generate app token
-        id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        with:
-          app-id: ${{ secrets.RENOVATE_APP_ID }}
-          private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
-
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Run Renovate
         uses: renovatebot/github-action@5402b206248e5a8c8427a15102702eb9c1793efc # v46.2.4
         with:
-          token: ${{ steps.app-token.outputs.token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
         env:
           RENOVATE_PLATFORM: github
           RENOVATE_REPOSITORIES: batleforc/weebo-si
