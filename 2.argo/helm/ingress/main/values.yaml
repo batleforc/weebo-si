@@ -1,5 +1,6 @@
 certManager:
   enabled: true
+  # renovate: datasource=docker depName=quay.io/jetstack/charts/cert-manager
   version: 1.20.2
   installCRDs: true
   certIssuer:
@@ -15,11 +16,13 @@ certManager:
 
 trustManager:
   enabled: true
+  # renovate: datasource=docker depName=quay.io/jetstack/charts/trust-manager
   version: "0.24.0"
   installCRDs: true
 
 traefik:
   enabled: true
+  # renovate: datasource=docker depName=ghcr.io/traefik/helm/traefik
   version: 40.2.0
   ips: ""
   kubeCRD:

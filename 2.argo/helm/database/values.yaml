@@ -2,28 +2,22 @@ repo: ""
 branch: ""
 project: ""
 
-kubeblock:
-  enabled: false
-  crd_version: v1.0.2
-  version: 1.0.2
-  addons:
-    - name: clickhouse
-      enabled: false
-      version: 1.0.3
-
 clickhouseOperator:
   enabled: true
   repoURL: oci://ghcr.io/clickhouse/clickhouse-operator-helm
   chart: clickhouse-operator-helm
+  # renovate: datasource=docker depName=ghcr.io/clickhouse/clickhouse-operator-helm
   version: 0.0.6
 
 mongodbOperator:
   enabled: true
   repoURL: https://mongodb.github.io/helm-charts
   chart: mongodb-kubernetes
+  # renovate: datasource=helm depName=mongodb-kubernetes registryUrl=https://mongodb.github.io/helm-charts
   version: 1.9.1
 
 cnpgOperator:
   enabled: true
   repoURL: https://cloudnative-pg.github.io/charts
+  # renovate: datasource=helm depName=cloudnative-pg registryUrl=https://cloudnative-pg.github.io/charts
   version: 0.29.0

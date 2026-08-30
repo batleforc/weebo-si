@@ -114,8 +114,6 @@ project:
         kind: "ClusterExternalSecret"
   - name: database
     sourceRepo:
-      - https://apecloud.github.io/helm-charts
-      - https://github.com/apecloud/kubeblocks
       - oci://ghcr.io/clickhouse/clickhouse-operator-helm
       - https://mongodb.github.io/helm-charts
       - https://cloudnative-pg.github.io/charts

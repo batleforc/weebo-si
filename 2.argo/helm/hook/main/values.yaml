@@ -1,5 +1,6 @@
 kyverno:
   enabled: true
+  # renovate: datasource=helm depName=kyverno registryUrl=https://kyverno.github.io/kyverno/
   version: 3.8.1
 
 hookApp:

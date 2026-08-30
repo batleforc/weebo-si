@@ -1,0 +1,101 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+
+  // Runs on GitHub Actions against github.com/batleforc/weebo-si (.github/
+  // workflows/renovate.yml); platform/token/repository live there, not here.
+  // Base branch is the repo default, develop.
+  //
+  // Renovate is the only version automation in this repo. Updatecli was kept
+  // for one coordinated bump (kubeblock, whose crd_version and version had to
+  // move together); that chart was removed on 2026-08-30 and Updatecli with it.
+  //
+  // Nothing here is autodiscovered: the upstream charts are pinned as arbitrary
+  // keys in values.yaml that Helm-templated ArgoCD Applications interpolate into
+  // targetRevision, which defeats both the built-in argocd manager and Updatecli's
+  // helm crawler. Every pin carries a `# renovate:` comment -- a new one is
+  // invisible without it.
+
+  extends: [
+    'config:recommended',
+    ':dependencyDashboard',
+    ':semanticCommits',
+    'helpers:pinGitHubActionDigests',
+  ],
+
+  timezone: 'Europe/Paris',
+  schedule: ['* 1-6 * * *'],
+  labels: ['Upgrade', 'Renovate'],
+
+  // The charts here are pinned in ArgoCD Applications that sync automatically,
+  // so a merged PR is a production deploy. Nothing self-merges; a few days of
+  // soak also filters out charts that get yanked or re-tagged shortly after
+  // release.
+  automerge: false,
+  minimumReleaseAge: '3 days',
+  prConcurrentLimit: 10,
+  prHourlyLimit: 4,
+
+  ignorePaths: [
+    '**/node_modules/**',
+    '.tmp/**',
+    // Vendored subchart of the ClickStack fork -- it is a build output of
+    // `helm dependency update`, not a thing to bump in place.
+    '2.helm/clickstack/charts/**',
+  ],
+
+  customManagers: [
+    {
+      customType: 'regex',
+      description: 'Upstream chart/image versions pinned as plain values keys and consumed by ArgoCD Application templates (targetRevision) or image templates',
+      managerFilePatterns: [
+        '2.argo/helm/**/values.yaml',
+        '2.helm/**/values.yaml',
+      ],
+      matchStrings: [
+        '#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+?))?(?:\\s+versioning=(?<versioning>\\S+?))?\\s*\\n\\s*version:\\s*["\']?(?<currentValue>[^"\'\\s]+)',
+      ],
+      // Empty template => fall back to each datasource's own default versioning.
+      versioningTemplate: '{{#if versioning}}{{{versioning}}}{{/if}}',
+    },
+  ],
+
+  packageRules: [
+    {
+      description: 'Chart majors are a decision, not a chore: open them from the dashboard checkbox',
+      matchFileNames: ['2.argo/**', '2.helm/**'],
+      matchUpdateTypes: ['major'],
+      dependencyDashboardApproval: true,
+    },
+    {
+      description: 'ClickHouse server version is load-bearing for the ClickStack dashboard SQL -- tiles are validated against 25.8 and silently fail on other majors',
+      matchDepNames: ['clickhouse/clickhouse-server'],
+      matchUpdateTypes: ['major', 'minor'],
+      dependencyDashboardApproval: true,
+      addLabels: ['revalidate-dashboards'],
+    },
+    {
+      description: 'ClickStack is a fork: a Chart.yaml dependency bump also needs `helm dependency update` re-vendoring by hand',
+      matchFileNames: ['2.helm/clickstack/Chart.yaml'],
+      dependencyDashboardApproval: true,
+      addLabels: ['needs-revendor'],
+    },
+    {
+      description: 'Docs site: one PR for the whole lockfile',
+      matchFileNames: ['0.docs/**'],
+      groupName: 'docs site',
+    },
+    {
+      description: 'Pulumi programs share a dependency set',
+      matchManagers: ['gomod'],
+      groupName: 'pulumi go modules',
+    },
+    {
+      matchManagers: ['terraform'],
+      groupName: 'terraform providers',
+    },
+    {
+      matchManagers: ['github-actions'],
+      groupName: 'forgejo actions',
+    },
+  ],
+}

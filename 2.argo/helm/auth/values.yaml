@@ -1,5 +1,6 @@
 dex:
   enabled: true
+  # renovate: datasource=helm depName=dex registryUrl=https://charts.dexidp.io
   version: "0.24.1"
   issuer: "dex.weebo.poc"
   mainConnector:
@@ -8,6 +9,7 @@ dex:
 
 authentik:
   enabled: true
+  # renovate: datasource=helm depName=authentik registryUrl=https://charts.goauthentik.io
   version: 2026.5.3
   argoAuth:
     enabled: true

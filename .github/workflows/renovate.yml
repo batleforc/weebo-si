@@ -1,0 +1,64 @@
+name: Renovate
+
+# Renovate runs on the GitHub side: `origin` fetches from
+# github.com/batleforc/weebo-si, that is where the default branch (develop)
+# and the issue tracker live, and the Dependency Dashboard is an issue.
+# Configuration is in renovate.json5 at the repo root.
+
+on:
+  schedule:
+    - cron: "0 1 * * *" # Nightly; renovate.json5 narrows this further.
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: "Dry run: resolve everything, write nothing"
+        type: boolean
+        default: false
+      logLevel:
+        description: "Renovate log level"
+        type: choice
+        options: ["info", "debug"]
+        default: "info"
+  push:
+    branches: ["develop"]
+    paths:
+      - "renovate.json5"
+      - ".github/workflows/renovate.yml"
+
+# The App token below does the writing; the job itself only needs to read.
+permissions:
+  contents: read
+
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      # A GitHub App rather than a PAT, matching the UPDATECLIBOT pattern this
+      # repo already used. It also means Renovate's PRs trigger workflows,
+      # which PRs opened with the default GITHUB_TOKEN do not.
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.RENOVATE_APP_ID }}
+          private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run Renovate
+        uses: renovatebot/github-action@5402b206248e5a8c8427a15102702eb9c1793efc # v46.2.4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+        env:
+          RENOVATE_PLATFORM: github
+          RENOVATE_REPOSITORIES: batleforc/weebo-si
+          RENOVATE_AUTODISCOVER: "false"
+          RENOVATE_ONBOARDING: "false"
+          RENOVATE_REQUIRE_CONFIG: required
+          RENOVATE_DRY_RUN: ${{ inputs.dryRun == true && 'full' || '' }}
+          LOG_LEVEL: ${{ inputs.logLevel || 'info' }}

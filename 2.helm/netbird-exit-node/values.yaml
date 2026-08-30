@@ -1,6 +1,7 @@
 netbird:
   test: false
   enabled: true
+  # renovate: datasource=docker depName=11notes/netbird-exit-node versioning=loose
   version: "0.73"
   image: 11notes/netbird-exit-node
   url: "https://vpn.batleforc.fr"
@@ -23,6 +24,7 @@ netbird:
   adminMode:
     enabled: true
     image: netbirdio/netbird
+    # renovate: datasource=docker depName=netbirdio/netbird versioning=loose
     version: "0.73.2"
     pullPolicy: Always
     capabilities:

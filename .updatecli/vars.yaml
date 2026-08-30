@@ -1,7 +1,0 @@
-github:
-  user: "Forgejo Bot"
-  email: "bots@batleforc.io"
-  username: "forgejo-actions"
-  token: "GITHUB_TOKEN"
-  owner: "batleforc"
-  repository: "weebo-si"

@@ -93,6 +93,7 @@ clickstack:
 # labelled with otel.ingestLabel, plus the Kubernetes-wide collectors.
 otel:
   enabled: true
+  # renovate: datasource=helm depName=opentelemetry-collector registryUrl=https://open-telemetry.github.io/opentelemetry-helm-charts
   version: "0.146.1"
   clusterName: weebo-si
   ingestLabel: weebo.io/otel-ingest
@@ -156,6 +157,7 @@ otel:
 
 obi:
   enabled: true
+  # renovate: datasource=helm depName=opentelemetry-ebpf-instrumentation registryUrl=https://open-telemetry.github.io/opentelemetry-helm-charts
   version: "0.11.0"
   # Network flow metrics, on top of the application traces OBI produces by
   # default. IP-level and per-flow, so this is the noisier, more expensive half

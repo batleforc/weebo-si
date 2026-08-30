@@ -1,10 +1,12 @@
 bankVault:
   enabled: true
   ns: vault-operator
+  # renovate: datasource=docker depName=ghcr.io/bank-vaults/helm-charts/vault-operator
   version: 1.24.0
 
 externalSecrets:
   enabled: true
+  # renovate: datasource=docker depName=ghcr.io/external-secrets/charts/external-secrets
   version: "2.2.0"
 
 vaultApp:
@@ -12,10 +14,12 @@ vaultApp:
 
 vaultInstance:
   enabled: true
+  # renovate: datasource=docker depName=openbao/openbao
   version: "2.5.5"
   image: openbao/openbao
   hook:
     enabled: true
+    # renovate: datasource=docker depName=ghcr.io/bank-vaults/helm-charts/vault-secrets-webhook
     version: 1.23.1
   dns: vault.weebo.poc
   deployed: true
