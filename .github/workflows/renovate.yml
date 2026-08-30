@@ -7,7 +7,7 @@ name: Renovate
 
 on:
   schedule:
-    - cron: "0 1 * * *" # Nightly; renovate.json5 narrows this further.
+    - cron: "0 1 * * *" # 03:00 Europe/Paris. The only timing gate -- renovate.json5 sets no schedule.
   workflow_dispatch:
     inputs:
       dryRun:

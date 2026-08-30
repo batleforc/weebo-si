@@ -23,14 +23,25 @@
   ],
 
   timezone: 'Europe/Paris',
-  schedule: ['* 1-6 * * *'],
   labels: ['Upgrade', 'Renovate'],
+
+  // No `schedule` here on purpose. The workflow cron is the only timing gate;
+  // an internal schedule on top of it means a manual workflow_dispatch outside
+  // the window half-works -- Renovate commits the branch but does not open the
+  // PR -- which is exactly what happened on the first run.
 
   // The charts here are pinned in ArgoCD Applications that sync automatically,
   // so a merged PR is a production deploy. Nothing self-merges; a few days of
   // soak also filters out charts that get yanked or re-tagged shortly after
   // release.
   automerge: false,
+
+  // The built-in GITHUB_TOKEN cannot read Dependabot alerts -- the Actions
+  // `permissions:` block has no scope for them -- so Renovate logs "Cannot
+  // access vulnerability alerts" on every run. OSV needs no permission at all
+  // and covers the language deps (0.docs npm, the two pulumi go.mod) where
+  // advisories actually exist; Helm charts and images are out of scope for both.
+  osvVulnerabilityAlerts: true,
   minimumReleaseAge: '3 days',
   prConcurrentLimit: 10,
   prHourlyLimit: 4,
