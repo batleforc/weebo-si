@@ -158,7 +158,7 @@ otel:
 obi:
   enabled: true
   # renovate: datasource=helm depName=opentelemetry-ebpf-instrumentation registryUrl=https://open-telemetry.github.io/opentelemetry-helm-charts
-  version: "0.11.0"
+  version: "0.13.0"
   # Network flow metrics, on top of the application traces OBI produces by
   # default. IP-level and per-flow, so this is the noisier, more expensive half
   # of OBI -- the flag is the rollback switch that keeps tracing working if the
