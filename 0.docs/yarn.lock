@@ -2103,14 +2103,6 @@ baseline-browser-mapping@^2.10.12:
   resolved "https://registry.yarnpkg.com/baseline-browser-mapping/-/baseline-browser-mapping-2.10.33.tgz#27c299b096404978831958d429f48390424c4f9b"
   integrity sha512-bA6+tcSLpz2tIEdDXZPpPTIuxBcC4+w6SieaYyfigIa4h8GlFxbA17v22Vx3JUtuZQj9SgOsnbK+aTBzyDyEuw==
 
-beautiful-mermaid@^1.1.3:
-  version "1.1.3"
-  resolved "https://registry.yarnpkg.com/beautiful-mermaid/-/beautiful-mermaid-1.1.3.tgz#33622aacd24f3cf37d61a1912673a4710ed90461"
-  integrity sha512-TItrtrAyHp1vwFfFVYauWGrquouk/6SS21Aq3RsxindSYZODcN4xYrPZD6BiZRU+o5mKJzDPz9MUSMvELdylyg==
-  dependencies:
-    elkjs "^0.11.0"
-    entities "^7.0.1"
-
 boxen@7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/boxen/-/boxen-7.0.0.tgz#9e5f8c26e716793fc96edcf7cf754cdf5e3fbf32"
@@ -2776,11 +2768,6 @@ electron-to-chromium@^1.5.328:
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.366.tgz#54cfb4090db768d58dce9ef5a2f8b837e61ebe6b"
   integrity sha512-OlRuhb688YTCzzU3gXPLn6nGyd+F+53INE1qaKKlu6kETErE8FYsyDh0XqXEU+uBRn0MpCzz2vfNwORhkap8qg==
 
-elkjs@^0.11.0:
-  version "0.11.1"
-  resolved "https://registry.yarnpkg.com/elkjs/-/elkjs-0.11.1.tgz#d27fcdbbf5a8aeeff80420d17d1666f78cfc8544"
-  integrity sha512-zxxR9k+rx5ktMwT/FwyLdPCrq7xN6e4VGGHH8hA01vVYKjTFik7nHOxBnAYtrgYUB1RpAiLvA1/U2YraWxyKKg==
-
 emoji-regex@^8.0.0:
   version "8.0.0"
   resolved "https://registry.yarnpkg.com/emoji-regex/-/emoji-regex-8.0.0.tgz#e818fd69ce5ccfcb404594f842963bf53164cc37"
@@ -2803,11 +2790,6 @@ entities@^6.0.0:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/entities/-/entities-6.0.1.tgz#c28c34a43379ca7f61d074130b2f5f7020a30694"
   integrity sha512-aN97NXWF6AWBTahfVOIrB/NShkzi5H7F9r1s9mD3cDj4Ko5f2qhhVoYMibXF7GlLveb/D2ioWay8lxI97Ven3g==
-
-entities@^7.0.1:
-  version "7.0.1"
-  resolved "https://registry.yarnpkg.com/entities/-/entities-7.0.1.tgz#26e8a88889db63417dcb9a1e79a3f1bc92b5976b"
-  integrity sha512-TWrgLOFUQTH994YUyl1yT4uyavY5nNB5muff+RtWaqNVCAK408b5ZnnbNAUEWLTCpum9w6arT70i1XdQ4UeOPA==
 
 es-module-lexer@^1.3.1, es-module-lexer@^1.7.0:
   version "1.7.0"
@@ -4541,9 +4523,9 @@ react-router-devtools@^6.2.0:
     "@rollup/rollup-linux-x64-gnu" "^4.53.2"
 
 react-router@^7.15.1:
-  version "7.16.0"
-  resolved "https://registry.yarnpkg.com/react-router/-/react-router-7.16.0.tgz#fb41536aef2ccc2c7be12ea6be819a1e56eb6343"
-  integrity sha512-wArC8lVyJb3+jM9OpDyW6hLCizACWkvQR/sSGqSs+o5uEXEtGlqdZ4v8hENR3Jad6i+LRkK93q/+bQAcvl6V1A==
+  version "7.18.3"
+  resolved "https://registry.yarnpkg.com/react-router/-/react-router-7.18.3.tgz#2a3257aa7c5edd5a71f878063e4c7f3fcfc4b76a"
+  integrity sha512-gyXgtdr5uACJ5b1Q4udzjVV+tb/rlHIMJKuJ0e89R4Kzgz47z/rgP0dIKxktqIEUhDHluGTPJJH/wRha7CyqsA==
   dependencies:
     cookie "^1.0.1"
     set-cookie-parser "^2.6.0"
