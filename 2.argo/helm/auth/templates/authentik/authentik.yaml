@@ -22,7 +22,7 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   source:
-    chart: authentik
+    chart: {{ .Values.project }}
     repoURL: https://charts.goauthentik.io
     targetRevision: {{ .Values.authentik.version }}
     helm:

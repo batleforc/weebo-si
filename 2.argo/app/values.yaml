@@ -52,6 +52,7 @@ project:
       - https://charts.dexidp.io
       - https://kyverno.github.io/kyverno/
       - https://charts.longhorn.io
+      - https://charts.goauthentik.io
     includeBaseRepo: true
     dest:
       - server: "https://kubernetes.default.svc"
