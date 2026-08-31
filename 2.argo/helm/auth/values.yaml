@@ -10,7 +10,7 @@ dex:
 authentik:
   enabled: true
   # renovate: datasource=helm depName=authentik registryUrl=https://charts.goauthentik.io
-  version: 2026.5.3
+  version: 2026.8.0
   argoAuth:
     enabled: true
 
