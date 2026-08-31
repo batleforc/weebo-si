@@ -28,10 +28,20 @@ on:
 # Renovate runs as the built-in GITHUB_TOKEN, so the job itself needs the write
 # scopes: branches and commits (contents), the PRs, and the Dependency Dashboard
 # (an issue).
+#
+# `statuses: write` is not optional: `minimumReleaseAge` in renovate.json5 makes
+# Renovate post a `renovate/stability-days` commit status on every branch it
+# pushes. Any error from that POST is turned into REPOSITORY_CHANGED, which
+# aborts the whole repository run ("Repository has changed during renovation")
+# after the branch is pushed but before the PR is opened -- with the job still
+# exiting 0. `checks: read` is what reads CI check runs back; it only works
+# today because the repo is public.
 permissions:
   contents: write
   pull-requests: write
   issues: write
+  statuses: write
+  checks: read
 
 concurrency:
   group: renovate
