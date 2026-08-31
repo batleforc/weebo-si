@@ -11,7 +11,7 @@ spec:
   project: {{ .Values.auth.project }}
   source:
     repoURL: '{{ .Values.repo }}'
-    path: '2.argo/helm/auth'
+    path: '2.argo/helm/auth/main'
     targetRevision: '{{ .Values.branch }}'
     helm:
       releaseName: auth
