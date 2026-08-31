@@ -1,0 +1,28 @@
+schemaVersion: 1
+name: poc
+description: The weebo poc mesh
+
+transport:
+  kind: netbird
+  managementUrl: https://vpn.batleforc.fr
+  socksPort: 0
+
+dns:
+  hosts:
+  suffixes: [svc.cluster.local, weebo.poc] # <- yours
+  upstream:
+    - { addr: "10.128.0.10:53", via: transport, proto: tcp }
+  fallback: query
+  authoritative: true
+  # The only name allowed to resolve before the transport exists.
+  bootstrap: [vpn.batleforc.fr]
+
+tools:
+  zen:
+    profile: perso
+    bookmarks:
+      - { title: Argo, url: "https://argo.weebo.poc/" }
+      - { title: Vault, url: "https://vault.weebo.poc/" }
+      - { title: Auth, url: "https://auth.weebo.poc/" }
+      - { title: Monitoring, url: "https://clickstack.weebo.poc/" }
+      - { title: Longhorn, url: "https://longhorn.weebo.poc/" }

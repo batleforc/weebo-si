@@ -1,0 +1,6 @@
+kubeconfig.yaml
+talosconfig.yaml
+*
+!kubeconfig.oidc-template.yaml
+!.gitignore
+!netctx.yaml
