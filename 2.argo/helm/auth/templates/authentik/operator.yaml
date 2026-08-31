@@ -29,6 +29,8 @@ spec:
       releaseName: authentik
       valuesObject:
         replicaCount: {{ .Values.authentik.operator.replicaCount }}
+        image:
+          tag: v{{ .Values.authentik.operator.version }}
 
 
 {{- end -}}
