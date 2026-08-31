@@ -20,9 +20,9 @@ spec:
   destination:
     namespace: auth
     server: https://kubernetes.default.svc
-  project: default
+  project: {{ .Values.project }}
   source:
-    chart: {{ .Values.project }}
+    chart: authentik
     repoURL: https://charts.goauthentik.io
     targetRevision: {{ .Values.authentik.version }}
     helm:
