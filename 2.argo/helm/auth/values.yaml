@@ -13,6 +13,10 @@ authentik:
   version: 2026.8.0
   argoAuth:
     enabled: true
+  operator:
+    enabled: true
+    version: 0.6.0
+    replicaCount: 1
 
 dns:
   domain: auth.weebo.poc
