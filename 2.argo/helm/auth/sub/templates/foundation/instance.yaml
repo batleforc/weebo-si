@@ -14,6 +14,19 @@ spec:
     name: {{ .Values.foundation.token.secretName }}
     namespace: auth
     key: token
+{{- if .Values.foundation.tls.caSecretRef.enabled }}
+  # auth.weebo.poc is signed by the weebo PKI, which the operator's
+  # distroless trust store knows nothing about. The operator reads this
+  # Secret over the Kubernetes API and adds the PEM on top of the platform
+  # roots (needs operator >= 0.10.0; on 0.9.0 the CRD has no caSecretRef
+  # under `tls` and the apiserver prunes this whole block). values.yaml
+  # `foundation.tls`.
+  tls:
+    caSecretRef:
+      name: {{ .Values.foundation.tls.caSecretRef.name | quote }}
+      namespace: {{ .Values.foundation.tls.caSecretRef.namespace | quote }}
+      key: {{ .Values.foundation.tls.caSecretRef.key | quote }}
+{{- end }}
   secretStore:
     # `backend` stays kubernetes on purpose. It is the DEFAULT destination, used
     # only by an application that lists no `secretTargets` -- switching it to

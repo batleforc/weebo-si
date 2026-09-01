@@ -355,6 +355,22 @@ kubectl -n auth get externalsecret authentik-api-token
 kubectl get authentikinstance main -o yaml | yq '.status.conditions'
 ```
 
+> **If the conditions show a TLS error, this is why.** `auth.weebo.poc` is
+> served by a `vault-issuer` cert-manager Certificate — the weebo PKI, a
+> private CA — and the operator image is `distroless/cc`, whose trust store
+> is the public roots and nothing else. Unlike the openbao case in 3.2 the
+> `weebo.poc` bundle *does* cover this cert, so there are two ways to hand it
+> over: `foundation.tls.caSecretRef.enabled` (operator >= 0.10.0, reads the
+> `weebo.poc` Secret's `main-ca.crt` over the API and adds it on top of the
+> platform roots — pre-wired in `sub/values.yaml`, flip it in the same commit
+> that bumps `authentik.operator.version`), or `inject-certs: "enabled"` as a
+> podAnnotation on the operator chart, which mounts the same bundle over
+> `/etc/ssl/certs` the way the authentik and dex pods already do. The CR
+> field keeps the trust decision next to the URL it applies to; the
+> annotation works on any version. `spec.tls.insecureSkipVerify` is the third
+> option and is not one — it is a no-op before 0.10.0 and turns verification
+> off after it.
+
 > The allow-list is default-deny **once any policy exists**, so
 > `namespacePolicy` must already list every namespace that will hold an
 > `AuthentikApplication`. It lists `auth` today; extend

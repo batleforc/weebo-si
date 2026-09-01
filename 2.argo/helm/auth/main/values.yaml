@@ -21,8 +21,10 @@ authentik:
     # `secretTargets` (the fan-out that unblocks phase 4); 0.8.0 adds
     # `secretStore.vault.caSecretRef`, without which the operator cannot
     # verify openbao's self-signed TLS and every Vault target fails its
-    # reconcile. See MIGRATION.md 3.2.
-    version: 0.9.0
+    # reconcile. See MIGRATION.md 3.2. 0.10.0 adds the same thing for the
+    # Authentik API itself (`spec.tls.caSecretRef`) and is what
+    # sub.foundation.tls waits on -- bump this and that flag together.
+    version: 0.10.0
     replicaCount: 1
   # Phase toggles for the adoption of the Terraform-managed Authentik objects
   # by the operator. Only the flags live here; every spec they switch on is in
@@ -39,6 +41,15 @@ authentik:
         enabled: true
       namespacePolicy:
         enabled: true
+      # Verify the Authentik API cert against the weebo.poc bundle instead of
+      # the operator image's public roots -- auth.weebo.poc is signed by the
+      # private PKI, which distroless/cc does not carry. Needs operator
+      # >= 0.10.0: flip this and authentik.operator.version in ONE commit,
+      # otherwise the apiserver prunes the block and nothing changes.
+      # sub/values.yaml `foundation.tls` carries the Secret coordinates.
+      tls:
+        caSecretRef:
+          enabled: false
       # Vault CONNECTION on the AuthentikInstance. The instance's default
       # backend stays `kubernetes`; this block only exists so that a phase-4
       # application may name an explicit `secretTargets` Vault path. Turning it

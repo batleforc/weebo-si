@@ -39,6 +39,38 @@ foundation:
     vaultKey: mv/main-config
     vaultProperty: AUTHENTIK_BOOTSTRAP_TOKEN
     refreshInterval: 24h
+  # TLS on the operator -> Authentik API connection (AuthentikInstance
+  # spec.tls). auth.weebo.poc is served by a cert-manager Certificate from
+  # `vault-issuer` (pki_int), i.e. a PRIVATE CA, and the operator image is
+  # distroless/cc -- its trust store carries the public roots only, so
+  # nothing in that pod chains to the cert it is asked to verify.
+  #
+  # Unlike the openbao case below, the `weebo.poc` bundle DOES cover this
+  # one: it is the public roots plus the PKI chain from mv/cert-manager/
+  # config, which is what signs auth.weebo.poc. `weebo.poc` is the
+  # trust-manager Bundle's SECRET target (2.argo/helm/ingress/sub/templates/
+  # bundle/bundle.yaml, authorized in ingress/main .../trust-manager.yaml),
+  # replicated into every namespace under the key main-ca.crt.
+  #
+  # The operator reads the Secret over the Kubernetes API and adds it ON TOP
+  # of the platform trust store -- no volume, same mechanism as the Vault
+  # caSecretRef. Needs operator >= 0.10.0: 0.9.0's CRD has `tls` but no
+  # `caSecretRef` under it, so the apiserver would prune this block silently
+  # and nothing would change. Flip `enabled` in the SAME commit that bumps
+  # authentik.operator.version.
+  #
+  # The alternative -- `inject-certs: "enabled"` as a podAnnotation on the
+  # operator chart, mounting the same bundle over /etc/ssl/certs -- works too
+  # (that is what the authentik and dex pods do), but it is process-wide and
+  # invisible from the CR. This field keeps the trust decision next to the
+  # URL it applies to.
+  tls:
+    caSecretRef:
+      enabled: false
+      name: weebo.poc
+      namespace: auth
+      key: main-ca.crt
+
   # Vault SecretStore for the auth namespace. The `auth` Vault role is bound to
   # the `default`/`authentik` service accounts in this namespace and carries
   # mv_policy, so it can read mv/main-config (mv_reader_policy could not --
