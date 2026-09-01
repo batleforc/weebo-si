@@ -7,7 +7,7 @@ bankVault:
 externalSecrets:
   enabled: true
   # renovate: datasource=docker depName=ghcr.io/external-secrets/charts/external-secrets
-  version: "2.2.0"
+  version: "2.10.0"
 
 vaultApp:
   enabled: true
