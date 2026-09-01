@@ -32,13 +32,13 @@ authentik:
   # whose first half is importing the object's authentikId. Runbook:
   # 2.argo/helm/auth/MIGRATION.md
   sub:
-    enabled: false
+    enabled: true
     foundation: # phase 0 -- AuthentikInstance + allow-list
-      enabled: false
+      enabled: true
       secretStore:
-        enabled: false
+        enabled: true
       namespacePolicy:
-        enabled: false
+        enabled: true
       # Vault CONNECTION on the AuthentikInstance. The instance's default
       # backend stays `kubernetes`; this block only exists so that a phase-4
       # application may name an explicit `secretTargets` Vault path. Turning it
