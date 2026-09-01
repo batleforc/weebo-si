@@ -11,8 +11,8 @@ Two files hold the whole migration:
 - `2.terra/auth/migration/` — the one-shot jobs that make Terraform *forget*
   what the operator has taken over.
 
-**Requires operator 0.7.0** (`authentik.operator.version` in
-`main/values.yaml`). Two of 0.7.0's changes are load-bearing here and neither
+**Requires operator 0.8.0** (`authentik.operator.version` in
+`main/values.yaml`). Four changes are load-bearing here and none of them
 exists in 0.6.0:
 
 - **`AuthentikFlow`**, cluster-scoped and slug-keyed. `flow.tf`'s
@@ -23,6 +23,19 @@ exists in 0.6.0:
   each Vault entry pinning an exact path. This is what turns phase 4 from
   "pick one of three bad options" into a normal phase; section 3 is rewritten
   around it.
+- **`AuthentikInstance.spec.secretStore.vault.caSecretRef`** (0.8.0) — the CA
+  the operator verifies Vault's TLS with, read from a Kubernetes Secret over
+  the API rather than from a mounted file. This is the whole of prerequisite 2
+  in 3.2; without it there is no supported way to make the operator trust
+  openbao.
+- **`AUTHENTIK_URL` is the per-application issuer** (0.8.0). It used to be
+  the gateway's REST `base_path`. `upsert_oauth2_provider` now takes the
+  application's slug and the gateway carries a `web_base_url` separate from
+  the API base, so the credential written out is
+  `<spec.url>/application/o/<slug>/` — character for character what
+  `harbor.tf`/`s3.tf`/`argo.tf`/`che-cluster.tf` interpolate today. Section
+  3.3 used to be a list of consumers to patch around this; it is now a
+  no-op.
 
 0.7.0 also gives `oauth2.signingKey` a default of
 `"authentik Self-signed Certificate"` — the same certificate
@@ -112,7 +125,7 @@ Five oauth2 applications feed a `vault_kv_secret_v2` with their
 | s3 | `mv/s3/auth` | nobody in this repo (rustfs OIDC, same) |
 | argo | `mv/argocd/auth` | `main/templates/authentik/auth-secret.yaml` → argocd's OIDC issuer |
 | che-cluster | `mv/eclipse-che/auth` | `1.pulu-init/Taskfile.yaml` → `OIDC_ISSUER_URL` |
-| che-cluster | `mv/dex/auth` | nobody — `dex.yaml` reads only CLIENT_ID/CLIENT_SECRET |
+| che-cluster | `mv/dex/auth` | `main/templates/dex/dex.yaml` → the weebo connector's `issuer` |
 | vault | *(none)* | `vault.tf` consumes client_id/secret directly, in Terraform |
 
 **Terraform cannot read a client secret back** once it stops managing the
@@ -147,19 +160,19 @@ entries hold today, so nothing is dropped. (A Vault write is a full KV v2
 those three keys are the whole document; check before adding a target to a
 path that holds anything else.)
 
-### 3.2 Two prerequisites, neither of them in this chart
+### 3.2 Two prerequisites — one in this chart, one in Terraform
 
 The instance's default `backend` stays `kubernetes` — nothing should land at
 `mv/weebo-authentik/auth/<crName>`. But a Vault *target* reuses the instance's
 `secretStore.vault` block for address/mount/auth, and the operator errors the
 reconcile if that block is missing. So `foundation.vault.enabled` must be on
-before the first phase-4 app, and two things outside this chart must be true:
+before the first phase-4 app, and two things must be true first:
 
 1. **The operator's ServiceAccount must be bound to the `auth` Vault role.**
-   That role (`mv_policy`, full CRUD on `mv/*`) binds
+   That role (`mv_policy`, full CRUD on `mv/*`) bound
    `bound_service_account_names = ["authentik", "default"]` in namespace `auth`
-   — and the operator runs as `authentik-weebo-authentik`, which is in neither.
-   Add it in `2.terra/vault/terra-map/auth-base.tf`:
+   — and the operator runs as `authentik-weebo-authentik`, which was in
+   neither. Done in `2.terra/vault/terra-map/auth-base.tf`:
 
    ```hcl
    resource "vault_kubernetes_auth_backend_role" "auth-write" {
@@ -169,42 +182,86 @@ before the first phase-4 app, and two things outside this chart must be true:
    ```
 
    Do not instead point the operator chart at the existing `authentik` SA: the
-   authentik server chart already owns that name in this namespace.
+   authentik server chart already owns that name in this namespace. This one
+   still has to be applied by the `terra-vault` job before phase 4 — check
+   the live role, not just the `.tf`:
 
-2. **The operator pod must trust openbao's self-signed CA.** Unlike ESO's
-   `SecretStore`, `AuthentikInstance.spec.secretStore.vault` has no
-   `caProvider` and no skip-verify (`spec.tls.insecureSkipVerify` covers the
-   *Authentik* API, not Vault). The operator builds its Vault client from the
-   address alone, so the CA has to arrive out of band. `vaultrs` reads
-   `$VAULT_CACERT`, and the chart exposes `extraEnv` — but it exposes no
-   `extraVolumes`, so there is no supported way to mount `openbao-tls` at a
-   path to point that variable at. The bank-vaults `inject-certs: "enabled"`
-   podAnnotation (used by `authentik.yaml` already) is the likely way in via
-   `podAnnotations`, which the chart does support. **Verify this on a scratch
-   app before migrating a real one** — a `secretTargets` write that cannot
-   reach Vault fails the reconcile, it does not silently skip.
+   ```bash
+   bao read auth/kubernetes/role/auth   # bound_service_account_names must
+                                        # list authentik-weebo-authentik
+   ```
 
-### 3.3 The one gap 0.7.0 does not close
+2. **The operator must trust openbao's self-signed CA** — `caSecretRef`,
+   already set in `sub/values.yaml`. Unlike ESO's `SecretStore`,
+   `spec.secretStore.vault` has no `caProvider`, and `spec.tls.
+   insecureSkipVerify` covers the *Authentik* API, not Vault. 0.8.0 added the
+   field that closes this:
 
-The operator writes `AUTHENTIK_URL` as the instance's **base** URL
-(`https://auth.weebo.poc`). Terraform writes the **per-application issuer**
-(`https://auth.weebo.poc/application/o/<slug>/`). Adopting an app therefore
-rewrites that key into a different shape, and there is no CRD field to
-override it.
+   ```yaml
+   caSecretRef:
+     name: openbao-tls
+     namespace: auth
+     key: ca.crt
+   ```
 
-Only two consumers care, and both are fixable in this repo:
+   The operator `GET`s that Secret through the Kubernetes API and hands the
+   PEM to its Vault client — no volume, which matters because the operator
+   chart exposes `podAnnotations` and `extraEnv` but **no `extraVolumes`**, so
+   there is no file for a `$VAULT_CACERT` to point at.
 
-- `main/templates/authentik/auth-secret.yaml` — templates `url` straight out
-  of `AUTHENTIK_URL`. Build the issuer in the ExternalSecret's template
-  instead: `{{ .url }}/application/o/argo/`, or drop the Vault key and
-  hardcode the issuer next to the rest of argocd's OIDC config.
-- `1.pulu-init/Taskfile.yaml` line 37 — same story for `OIDC_ISSUER_URL`;
-  append `/application/o/che-cluster/` in the task.
+   Do not reach for `inject-certs: "enabled"` here. That Kyverno policy
+   (`2.argo/helm/hook/sub/templates/mount-cert.yaml`) mounts the `weebo.poc`
+   trust bundle over `/etc/ssl/certs`, and that bundle is the public roots
+   plus the PKI chain from `mv/cert-manager/config` — neither of which signs
+   `openbao-tls`. It is what lets a pod trust `https://auth.weebo.poc`; it
+   does nothing for `https://openbao.vault:8200`. The pods that do reach Vault
+   get its CA from the bank-vaults webhook mounting `openbao-tls` itself, and
+   that webhook only mutates a container that already carries a `vault:`-
+   prefixed env var — the operator has none.
 
-Which is why the migration order is **`harbor` → `s3` → `argo` → `che` →
-`vault`**: harbor and s3 have no in-repo reader of `AUTHENTIK_URL` at all, so
-they migrate with zero consumer changes and prove the Vault plumbing from 3.2
-before anything load-bearing depends on it.
+   `openbao-tls` exists in `auth` because the Vault CR sets
+   `caNamespaces: ["*"]`; `key: ca.crt` is the same one the namespace's ESO
+   `SecretStore` already verifies Vault with. A configured-but-unreadable CA
+   is a hard reconcile error, never a silent fall-back to the system roots —
+   which is the behaviour you want, but it means a typo here surfaces as a
+   failed application reconcile, not as a warning.
+
+### 3.3 `AUTHENTIK_URL` — closed in 0.8.0, and now the invariant
+
+This used to be the one gap adoption could not close: the operator wrote the
+instance's **base** URL where Terraform writes the **per-application issuer**,
+so every adoption rewrote the key into a different shape and two in-repo
+consumers had to be patched around it.
+
+0.8.0 writes `<spec.url>/application/o/<slug>/`. With `spec.url` =
+`https://auth.weebo.poc` and the CR slugs in `sub/values.yaml` matching the
+`.tf` ones (they do — `harbor`, `s3`, `argo`, `che-cluster`, `vault`), the
+value is byte-identical to Terraform's.
+
+**So the phase-4 KV diff must now be empty.** Not "empty except
+`AUTHENTIK_URL`" — empty. A diff on *any* of the three keys means something is
+wrong (a slug mismatch, a rotated secret, an instance `url` with a trailing
+path) and is a stop-and-investigate, not an expected shape change.
+
+The consumers therefore need no changes, and every one of them should read the
+key rather than keep its own copy of the issuer:
+
+| Consumer | Reads | State |
+| --- | --- | --- |
+| `main/templates/authentik/auth-secret.yaml` | `mv/argocd/auth#AUTHENTIK_URL` → argocd's OIDC issuer | already did |
+| `1.pulu-init/Taskfile.yaml` | `mv/eclipse-che/auth#AUTHENTIK_URL` → `OIDC_ISSUER_URL` | already did |
+| `main/templates/dex/dex.yaml` | `mv/dex/auth#AUTHENTIK_URL` → the weebo connector's `issuer` | switched to it; used to hardcode `dex.mainConnector.issuer` |
+| harbor, s3 | — | configured in their own UIs, out of this repo |
+
+`vault.tf` is the deliberate exception: it builds `oidc_discovery_url` from
+`authentik_application.vault.slug` in Terraform, and the `vault` application
+never leaves Terraform anyway — see the closing paragraph of this section.
+
+The migration order stays **`harbor` → `s3` → `argo` → `che` → `vault`**, but
+for a smaller reason than before: harbor and s3 have no in-repo consumer of
+their credentials at all, so they prove the Vault plumbing from 3.2 — the role
+binding, the CA, the `secretTargets` path — before anything load-bearing
+depends on it.
 
 `vault` stays last or never regardless: `vault.tf` derives an entire OIDC auth
 backend, two roles and two identity-group aliases from the provider's client id
@@ -249,18 +306,20 @@ Each phase is the same five moves. Only the objects change.
 counterpart on the Authentik side, so there is nothing to import or adopt.
 
 The operator itself is already deployed by
-`main/templates/authentik/operator.yaml` (chart 0.7.0, namespace `auth`, its
-own self-signed webhook issuer). Confirm it is healthy and actually on 0.7.0
-first — 0.6.0 has neither `AuthentikFlow` nor `secretTargets`, and the CRDs
-ship in the chart, so an unsynced operator Application means phase 2b and
-phase 4 CRs get rejected by the apiserver:
+`main/templates/authentik/operator.yaml` (chart 0.8.0, namespace `auth`, its
+own self-signed webhook issuer). Confirm it is healthy and actually on 0.8.0
+first — the CRDs ship in the chart, so an unsynced operator Application means
+phase 2b and phase 4 CRs get rejected by the apiserver (0.6.0 has neither
+`AuthentikFlow` nor `secretTargets`; 0.7.0 has no `caSecretRef`):
 
 ```bash
 kubectl -n auth get deploy -l app.kubernetes.io/name=weebo-authentik \
-  -o jsonpath='{.items[*].spec.template.spec.containers[*].image}'   # expect :v0.7.0
+  -o jsonpath='{.items[*].spec.template.spec.containers[*].image}'   # expect :v0.8.0
 kubectl get crd | grep authentik.weebo.io   # expect 9 (8 + authentikflows)
 kubectl get crd authentikapplications.authentik.weebo.io -o yaml \
   | grep -c secretTargets                                            # expect >0
+kubectl get crd authentikinstances.authentik.weebo.io -o yaml \
+  | grep -c caSecretRef                                              # expect >0
 ```
 
 Then, in `main/values.yaml`, set:
@@ -428,11 +487,17 @@ Read section 3 first. Order: **`harbor` → `s3` → `argo` → `che` → `vault
 
 Before the first one, once:
 
-1. Do both prerequisites in 3.2 (Vault role binding, CA trust) and turn on
+1. Confirm both prerequisites in 3.2 — the `auth` role really lists
+   `authentik-weebo-authentik` on the live Vault, and `caSecretRef` is on the
+   rendered instance — then turn on
    `foundation: { vault: { enabled: true } }`. On its own this writes nothing
    anywhere — it only puts the connection block on the `AuthentikInstance`.
 2. Confirm the instance still reports Ready. A malformed vault block surfaces
-   here, before any credential is at stake.
+   here, before any credential is at stake. Note that a wrong CA or an
+   unbound ServiceAccount does *not*: the instance carries the connection but
+   never dials it, so the first login happens on the first application
+   reconcile. `harbor` being first in the order is what makes that a cheap
+   failure.
 
 Then, per app, the same five moves plus one:
 
@@ -444,14 +509,18 @@ bao kv get -format=json mv/registry/auth > /tmp/registry-auth-before.json
 # 4. applications.harbor.enabled = true, sync, patch status.authentikId from
 #    the importer's authentikapplication-harbor.yaml.
 
-# 5. Diff the KV entry. CLIENT_ID and CLIENT_SECRET must be byte-identical;
-#    AUTHENTIK_URL changes shape (3.3) and that is the expected diff.
+# 5. Diff the KV entry. All three keys must be byte-identical -- since 0.8.0
+#    AUTHENTIK_URL is the same per-application issuer Terraform wrote (3.3),
+#    so this diff is expected to be EMPTY.
 diff <(jq -S .data.data /tmp/registry-auth-before.json) \
      <(bao kv get -format=json mv/registry/auth | jq -S .data.data)
 ```
 
-A changed `AUTHENTIK_CLIENT_SECRET` means something rotated the credential —
-stop and restore from the snapshot before touching the next app.
+Any diff at all is a stop. A changed `AUTHENTIK_CLIENT_SECRET` means something
+rotated the credential; a changed `AUTHENTIK_URL` means the CR's slug does not
+match the live application's, which would also point every consumer at an
+issuer that does not exist. Restore from the snapshot before touching the next
+app.
 
 Only then `state rm` the provider, the application, the policy binding **and**
 the `vault_kv_secret_v2`, and delete all four blocks from the `.tf` file. The
@@ -487,9 +556,13 @@ reversible while Terraform still holds the state:
   to the PVC before touching anything. Restore with `terraform state push`
   from a shell on that volume, and revert the `.tf` edits.
 
-- **Phase 4 is the one exception to "nothing is destroyed".** Adopting an
-  oauth2 app rewrites its Vault KV path, and KV v2 keeps versions but the
-  consumers read the latest. Rolling back means restoring the snapshot taken
-  in phase 4 step 3 (`bao kv put mv/<path> @before.json`) *after* the CR is
-  gone, or the operator's next reconcile writes it straight back. Disable the
+- **Phase 4 is still the one exception to "nothing is destroyed"** — less so
+  since 0.8.0, but not zero. Adopting an oauth2 app *writes* its Vault KV path
+  (a full KV v2 `set`, so a new version every reconcile) rather than reading
+  it. The content should be identical now that `AUTHENTIK_URL` matches (3.3),
+  which makes a rollback uneventful in the expected case; it is the
+  unexpected case — the diff in phase 4 step 5 came back non-empty — where
+  this matters. Restore the snapshot from step 3
+  (`bao kv put mv/<path> @before.json`) *after* the CR is gone, or the
+  operator's next reconcile writes its own version straight back. Disable the
   CR first, then restore.

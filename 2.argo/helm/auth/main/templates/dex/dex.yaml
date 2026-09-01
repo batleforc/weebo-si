@@ -41,7 +41,13 @@ spec:
             id: weebo
             name: weebo
             config:
-              issuer: {{ .Values.dex.mainConnector.issuer }}
+              # Same source as clientID/clientSecret below: the per-application
+              # OIDC issuer authentik itself publishes, not a second copy of it
+              # maintained here. mv/dex/auth is written by the che application
+              # (2.terra/auth/terra-map/che-cluster.tf today, its
+              # AuthentikApplication's secretTargets after the migration), so
+              # this tracks the slug automatically instead of drifting from it.
+              issuer: $AUTHENTIK_URL
               clientID: $AUTHENTIK_CLIENT_ID
               redirectURI: "https://dex.weebo.poc/callback"
               clientSecret: $AUTHENTIK_CLIENT_SECRET
@@ -60,6 +66,8 @@ spec:
             secretEnv: KUBE_CLIENT_SECRET
 
         envVars:
+          - name: "AUTHENTIK_URL"
+            value: "vault:mv/data/dex/auth#AUTHENTIK_URL"
           - name: "AUTHENTIK_CLIENT_SECRET"
             value: "vault:mv/data/dex/auth#AUTHENTIK_CLIENT_SECRET"
           - name: "AUTHENTIK_CLIENT_ID"

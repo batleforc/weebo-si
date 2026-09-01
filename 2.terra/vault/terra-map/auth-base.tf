@@ -94,7 +94,7 @@ resource "vault_kubernetes_auth_backend_role" "otel-ingest" {
 
 resource "vault_kubernetes_auth_backend_role" "auth-write" {
   role_name                        = "auth"
-  bound_service_account_names      = ["authentik", "default"]
+  bound_service_account_names      = ["authentik", "default", "authentik-weebo-authentik"]
   bound_service_account_namespaces = ["auth"]
   token_ttl                        = 3600
   token_policies                   = [vault_policy.mv_policy.name]

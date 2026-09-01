@@ -52,11 +52,10 @@ foundation:
   # >= 0.7.0); the operator errors out on a Vault target when the instance
   # carries no vault block, so it has to be here before any of them is enabled.
   #
-  # Two prerequisites, both outside this chart -- see MIGRATION.md 3.2:
-  #   1. the operator's ServiceAccount must be bound to the `auth` Vault role
-  #      (2.terra/vault/terra-map/auth-base.tf), and
-  #   2. the operator pod must trust openbao's self-signed CA (it has no
-  #      caProvider/insecureSkipVerify field for Vault, unlike ESO).
+  # One prerequisite is left outside this chart -- see MIGRATION.md 3.2: the
+  # operator's own ServiceAccount (authentik-weebo-authentik) must be bound to
+  # the `auth` Vault role in 2.terra/vault/terra-map/auth-base.tf. The other
+  # one, trusting openbao's self-signed CA, is `caSecretRef` below.
   vault:
     enabled: false
     address: "https://openbao.vault:8200"
@@ -66,6 +65,26 @@ foundation:
     # Only used by targets that DON'T pin a path. Every target below pins one,
     # so this prefix should never actually appear in Vault.
     pathPrefix: weebo-authentik
+    # openbao's serving cert is self-signed by the bank-vaults operator, and
+    # that CA is NOT in the weebo.poc trust bundle -- the bundle carries the
+    # public roots plus the PKI chain from mv/cert-manager/config, neither of
+    # which signs openbao-tls. So the system trust store cannot verify
+    # https://openbao.vault:8200 and the CA has to be named explicitly.
+    #
+    # Operator >= 0.8.0 reads it from this Secret through the Kubernetes API
+    # and hands the PEM to its Vault client, instead of expecting a mounted
+    # file -- which is what makes this workable at all, the operator chart
+    # exposing podAnnotations/extraEnv but no extraVolumes.
+    #
+    # bank-vaults replicates openbao-tls into every namespace
+    # (Vault CR `caNamespaces: ["*"]`), and this is the same Secret/key the
+    # auth namespace's ESO SecretStore already verifies Vault with. A
+    # configured-but-unreadable CA fails the reconcile; it never silently
+    # falls back to the system roots.
+    caSecretRef:
+      name: openbao-tls
+      namespace: auth
+      key: ca.crt
 
 # ---------------------------------------------------------------------------
 # Phase 1 -- identity. Cluster-scoped, nothing outside Authentik reads them,
@@ -169,12 +188,13 @@ flows:
 # `foundation.vault.enabled`. Ignored for proxy providers -- they have no
 # client secret.
 #
-# CAVEAT, unchanged in 0.7.0: the operator writes AUTHENTIK_URL as the
-# instance BASE url (https://auth.weebo.poc), while 2.terra/auth writes the
-# per-application issuer (.../application/o/<slug>/). Only two consumers read
-# that key -- argocd's ExternalSecret and 1.pulu-init's Taskfile -- and both
-# must be fixed before argo/che migrate. harbor and s3 have no in-repo reader
-# of AUTHENTIK_URL at all, which is why they go first. See MIGRATION.md 3.3.
+# The three keys written are AUTHENTIK_CLIENT_ID / AUTHENTIK_CLIENT_SECRET /
+# AUTHENTIK_URL, and since 0.8.0 the last one is the per-application issuer
+# `<instance url>/application/o/<slug>/` -- the same value 2.terra/auth
+# interpolates, so adoption leaves these paths byte-identical and no consumer
+# needs changing. That makes `slug` below load-bearing: it is what the issuer
+# is built from, so a slug that does not match the live application silently
+# points every consumer at a non-existent issuer. See MIGRATION.md 3.3.
 # ---------------------------------------------------------------------------
 applications:
 
@@ -236,8 +256,8 @@ applications:
     metaIcon: "https://maxleriche.net/public/media/techno/argo.png"
     accessGroup: weebo-moderator
     # AUTHENTIK_URL here is read by main/templates/authentik/auth-secret.yaml
-    # and becomes argocd's OIDC issuer -- it must stay issuer-shaped. Fix that
-    # ExternalSecret before enabling this app.
+    # and becomes argocd's OIDC issuer, so the `slug` above is what argocd
+    # ends up trusting.
     secretTargets:
       - backend: vault
         path: argocd/auth
@@ -271,9 +291,10 @@ applications:
     metaIcon: "https://maxleriche.net/public/media/application/eclipse-che.png"
     accessGroup: weebo-moderator
     # che-cluster.tf writes the SAME credentials to two paths; the fan-out
-    # reproduces that in one CR. dex.yaml only reads CLIENT_ID/CLIENT_SECRET
-    # from mv/dex/auth, but 1.pulu-init's Taskfile reads AUTHENTIK_URL from
-    # mv/eclipse-che/auth as OIDC_ISSUER_URL -- fix that first.
+    # reproduces that in one CR. Both destinations feed a consumer that reads
+    # AUTHENTIK_URL as an issuer -- 1.pulu-init's Taskfile (OIDC_ISSUER_URL,
+    # from mv/eclipse-che/auth) and dex.yaml's weebo connector (from
+    # mv/dex/auth) -- so `slug: che-cluster` below has to stay put.
     secretTargets:
       - backend: vault
         path: eclipse-che/auth

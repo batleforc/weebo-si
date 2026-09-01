@@ -3,9 +3,11 @@ dex:
   # renovate: datasource=helm depName=dex registryUrl=https://charts.dexidp.io
   version: "0.24.1"
   issuer: "dex.weebo.poc"
-  mainConnector:
-    issuer: "https://auth.weebo.poc/application/o/che-cluster/"
-    clientID: "che-cluster"
+  # The weebo connector's issuer and clientID are NOT pinned here: dex reads
+  # both from mv/dex/auth (AUTHENTIK_URL / AUTHENTIK_CLIENT_ID), which is
+  # written by whoever owns the che application. Hardcoding the issuer meant
+  # keeping a second copy of "https://auth.weebo.poc/application/o/che-cluster/"
+  # in sync with the che app's slug by hand.
 
 authentik:
   enabled: true
@@ -16,7 +18,10 @@ authentik:
   operator:
     enabled: true
     # 0.7.0 adds the AuthentikFlow CRD (phase 2b) and per-application
-    # `secretTargets` (the fan-out that unblocks phase 4). See MIGRATION.md.
+    # `secretTargets` (the fan-out that unblocks phase 4); 0.8.0 adds
+    # `secretStore.vault.caSecretRef`, without which the operator cannot
+    # verify openbao's self-signed TLS and every Vault target fails its
+    # reconcile. See MIGRATION.md 3.2.
     version: 0.8.0
     replicaCount: 1
   # Phase toggles for the adoption of the Terraform-managed Authentik objects
@@ -59,7 +64,7 @@ authentik:
         enabled: false
       s3:
         enabled: false
-      argo: # needs the AUTHENTIK_URL consumer fix (MIGRATION.md 3.3)
+      argo: # 0.8.0 writes the same issuer TF did, so no consumer fix (3.3)
         enabled: false
       che:
         enabled: false

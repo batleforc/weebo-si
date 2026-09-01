@@ -30,10 +30,21 @@ spec:
       address: {{ .Values.foundation.vault.address | quote }}
       mount: {{ .Values.foundation.vault.mount | quote }}
       kubernetesAuthMount: {{ .Values.foundation.vault.kubernetesAuthMount | quote }}
-      # mv_policy, via 2.terra/vault/terra-map/auth-base.tf's `auth` role. The
-      # operator's OWN ServiceAccount must be in that role's
-      # bound_service_account_names -- it is not, today. MIGRATION.md 3.2.
+      # mv_policy, via 2.terra/vault/terra-map/auth-base.tf's `auth` role,
+      # whose bound_service_account_names must list the operator's OWN
+      # ServiceAccount, authentik-weebo-authentik. MIGRATION.md 3.2.
       kubernetesAuthRole: {{ .Values.foundation.vault.kubernetesAuthRole | quote }}
       pathPrefix: {{ .Values.foundation.vault.pathPrefix | quote }}
+{{- with .Values.foundation.vault.caSecretRef }}
+      # openbao serves a cert self-signed by the bank-vaults operator, which
+      # nothing in the pod's system trust store chains to. The operator reads
+      # this Secret over the Kubernetes API and feeds the PEM to its Vault
+      # client (needs operator >= 0.8.0) -- the chart has no extraVolumes, so
+      # there is no file to point a VAULT_CACERT at. MIGRATION.md 3.2.
+      caSecretRef:
+        name: {{ .name | quote }}
+        namespace: {{ .namespace | quote }}
+        key: {{ .key | quote }}
+{{- end }}
 {{- end }}
 {{- end -}}
