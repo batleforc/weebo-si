@@ -89,7 +89,7 @@ hyperdx:
     # Additional volume mounts to apply to the HyperDX container.
     volumeMounts: []
     waitForMongodb:
-      image: "busybox@sha256:1fcf5df59121b92d61e066df1788e8df0cc35623f5d62d9679a41e163b6a0cdb"
+      image: "busybox@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616"
       pullPolicy: IfNotPresent
     # Default connections and sources (ENABLED BY DEFAULT)
     # Set to empty string to disable: defaultConnections: "" or defaultSources: ""
