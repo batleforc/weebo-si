@@ -195,8 +195,8 @@ brand:
   brandingDefaultFlowBackground: "https://maxleriche.net/assets/home_hero.png"
   # Filled in from the live brand by the importer -- flow.tf copies these off
   # the built-in `authentik-default` brand, so do not invent values here.
-  flowAuthentication: ""
-  flowInvalidation: ""
+  flowAuthentication: "default-authentication-flow"
+  flowInvalidation: "default-invalidation-flow"
   flowRecovery: ""
   flowUnenrollment: ""
   flowUserSettings: ""
