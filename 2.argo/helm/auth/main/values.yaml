@@ -66,7 +66,7 @@ authentik:
       users:
         enabled: true
     brand: # phase 2a
-      enabled: false
+      enabled: true
     flows: # phase 2b -- needs operator >= 0.7.0
       deviceCode:
         enabled: false
