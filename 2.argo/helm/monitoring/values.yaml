@@ -60,7 +60,7 @@ clickstack:
   # so the signup form never has to be opened by hand.
   bootstrap:
     enabled: true
-    mongoshImage: "mongo:7"
+    mongoshImage: "mongo:8"
     curlImage: "curlimages/curl:8.11.1"
 
   preauth:
