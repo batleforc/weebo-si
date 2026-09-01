@@ -43,6 +43,6 @@ resource "vault_kv_secret_v2" "argo" {
 
 resource "authentik_policy_binding" "argo-access" {
   target = authentik_application.argo.uuid
-  group  = authentik_group.weebo_moderator.id
+  group  = data.authentik_group.weebo_moderator.id
   order  = 0
 }

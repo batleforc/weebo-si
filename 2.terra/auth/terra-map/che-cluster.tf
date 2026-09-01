@@ -68,6 +68,6 @@ resource "vault_kv_secret_v2" "che-app-2" {
 
 resource "authentik_policy_binding" "che-access" {
   target = authentik_application.che.uuid
-  group  = authentik_group.weebo_moderator.id
+  group  = data.authentik_group.weebo_moderator.id
   order  = 0
 }

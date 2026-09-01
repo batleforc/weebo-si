@@ -45,6 +45,6 @@ resource "vault_kv_secret_v2" "s3" {
 
 resource "authentik_policy_binding" "s3-access" {
   target = authentik_application.s3.uuid
-  group  = authentik_group.weebo_moderator.id
+  group  = data.authentik_group.weebo_moderator.id
   order  = 0
 }

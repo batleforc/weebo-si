@@ -88,7 +88,7 @@ resource "vault_identity_group" "vault_authentik_reader" {
 }
 
 resource "vault_identity_group_alias" "vault_authentik_reader" {
-  name           = authentik_group.weebo_moderator.name
+  name           = data.authentik_group.weebo_moderator.name
   mount_accessor = vault_jwt_auth_backend.vault_authentik.accessor
   canonical_id   = vault_identity_group.vault_authentik_reader.id
 }
@@ -120,13 +120,13 @@ resource "vault_identity_group" "vault_authentik_weebo_admin" {
 }
 
 resource "vault_identity_group_alias" "vault_authentik_weebo_admin" {
-  name           = authentik_group.weebo_admin.name
+  name           = data.authentik_group.weebo_admin.name
   mount_accessor = vault_jwt_auth_backend.vault_authentik.accessor
   canonical_id   = vault_identity_group.vault_authentik_weebo_admin.id
 }
 
 resource "authentik_policy_binding" "vault-access" {
   target = authentik_application.vault.uuid
-  group  = authentik_group.weebo_moderator.id
+  group  = data.authentik_group.weebo_moderator.id
   order  = 0
 }

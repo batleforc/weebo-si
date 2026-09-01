@@ -18,7 +18,6 @@ configMapGenerator:
       - ./terra-map/main.tf
       - ./terra-map/data.tf
       - ./terra-map/group.tf
-      - ./terra-map/user.tf
       - ./terra-map/argo.tf
       - ./terra-map/flow.tf
       - ./terra-map/harbor.tf

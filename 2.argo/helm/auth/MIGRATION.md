@@ -434,9 +434,9 @@ Only once that is green, hand over from Terraform:
 
 ```bash
 cd 2.terra/auth
-kubectl -n auth delete job terra-state-rm --ignore-not-found
-sed 's/PHASE_PLACEHOLDER/identity/' migration/state-rm-job.yaml | kubectl apply -f -
-kubectl -n auth logs -f job/terra-state-rm
+task k -- -n auth delete job terra-state-rm --ignore-not-found
+sed 's/PHASE_PLACEHOLDER/identity/' migration/state-rm-job.yaml | task k -- apply -f -
+task k -- -n auth logs -f job/terra-state-rm
 
 # then downgrade group.tf to data sources and delete user.tf
 sh migration/rewrite-group-refs.sh

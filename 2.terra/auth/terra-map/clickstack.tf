@@ -48,6 +48,6 @@ resource "authentik_outpost_provider_attachment" "clickstack" {
 
 resource "authentik_policy_binding" "clickstack-access" {
   target = authentik_application.clickstack.uuid
-  group  = authentik_group.weebo_admin.id
+  group  = data.authentik_group.weebo_admin.id
   order  = 0
 }
