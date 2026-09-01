@@ -76,7 +76,7 @@ clickstack:
   # on bootstrap.enabled. See dashboards/README.md for the round trip.
   dashboards:
     enabled: true
-    pythonImage: "python:3.13-alpine"
+    pythonImage: "python:3.14-alpine"
     # Stamped as a tag on every dashboard this repo owns. Dashboards without it
     # were built by hand in the UI and are never updated or pruned.
     managedTag: "managed-by-argocd"
