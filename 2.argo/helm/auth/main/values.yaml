@@ -42,14 +42,18 @@ authentik:
       namespacePolicy:
         enabled: true
       # Verify the Authentik API cert against the weebo.poc bundle instead of
-      # the operator image's public roots -- auth.weebo.poc is signed by the
-      # private PKI, which distroless/cc does not carry. Needs operator
-      # >= 0.10.0: flip this and authentik.operator.version in ONE commit,
-      # otherwise the apiserver prunes the block and nothing changes.
-      # sub/values.yaml `foundation.tls` carries the Secret coordinates.
+      # the operator image's public roots. NOT optional in practice:
+      # auth.weebo.poc is signed by the private PKI (dns.certificate ->
+      # vault-issuer -> pki_int) and the operator image is distroless/cc,
+      # which carries the public roots only -- with this off, every reconcile
+      # dies with
+      #   failed to verify TLS certificate: invalid peer certificate: UnknownIssuer
+      # Needs operator >= 0.10.0 (pinned above); on 0.9.0 the apiserver would
+      # prune the block and nothing would change. sub/values.yaml
+      # `foundation.tls` carries the Secret coordinates.
       tls:
         caSecretRef:
-          enabled: false
+          enabled: true
       # Vault CONNECTION on the AuthentikInstance. The instance's default
       # backend stays `kubernetes`; this block only exists so that a phase-4
       # application may name an explicit `secretTargets` Vault path. Turning it

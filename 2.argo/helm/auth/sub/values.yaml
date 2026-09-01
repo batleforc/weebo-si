@@ -56,14 +56,15 @@ foundation:
   # of the platform trust store -- no volume, same mechanism as the Vault
   # caSecretRef. Needs operator >= 0.10.0: 0.9.0's CRD has `tls` but no
   # `caSecretRef` under it, so the apiserver would prune this block silently
-  # and nothing would change. Flip `enabled` in the SAME commit that bumps
-  # authentik.operator.version.
+  # and nothing would change. Turned ON in main/values.yaml -- without it the
+  # operator cannot reach the API at all ("invalid peer certificate:
+  # UnknownIssuer"), so this is not a phase flag to stage like the others.
   #
   # The alternative -- `inject-certs: "enabled"` as a podAnnotation on the
   # operator chart, mounting the same bundle over /etc/ssl/certs -- works too
-  # (that is what the authentik and dex pods do), but it is process-wide and
-  # invisible from the CR. This field keeps the trust decision next to the
-  # URL it applies to.
+  # (that is what the authentik and dex pods do, and it is the only option on
+  # operator < 0.10.0), but it is process-wide and invisible from the CR.
+  # This field keeps the trust decision next to the URL it applies to.
   tls:
     caSecretRef:
       enabled: false

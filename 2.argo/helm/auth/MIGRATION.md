@@ -362,14 +362,20 @@ kubectl get authentikinstance main -o yaml | yq '.status.conditions'
 > `weebo.poc` bundle *does* cover this cert, so there are two ways to hand it
 > over: `foundation.tls.caSecretRef.enabled` (operator >= 0.10.0, reads the
 > `weebo.poc` Secret's `main-ca.crt` over the API and adds it on top of the
-> platform roots — pre-wired in `sub/values.yaml`, flip it in the same commit
-> that bumps `authentik.operator.version`), or `inject-certs: "enabled"` as a
-> podAnnotation on the operator chart, which mounts the same bundle over
-> `/etc/ssl/certs` the way the authentik and dex pods already do. The CR
-> field keeps the trust decision next to the URL it applies to; the
-> annotation works on any version. `spec.tls.insecureSkipVerify` is the third
-> option and is not one — it is a no-op before 0.10.0 and turns verification
-> off after it.
+> platform roots — **on** in `main/values.yaml`, which is why the pin there is
+> 0.10.0), or `inject-certs: "enabled"` as a podAnnotation on the operator
+> chart, which mounts the same bundle over `/etc/ssl/certs` the way the
+> authentik and dex pods already do — the only option on an older operator.
+> The CR field keeps the trust decision next to the URL it applies to.
+> `spec.tls.insecureSkipVerify` is the third option and is not one — it is a
+> no-op before 0.10.0 and turns verification off after it.
+>
+> Check the Secret exists before blaming the CR — a missing Secret or key is
+> a hard reconcile error, deliberately, not a fall-back to the public roots:
+>
+> ```bash
+> kubectl -n auth get secret weebo.poc -o jsonpath='{.data.main-ca\.crt}' | wc -c
+> ```
 
 > The allow-list is default-deny **once any policy exists**, so
 > `namespacePolicy` must already list every namespace that will hold an
