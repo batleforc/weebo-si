@@ -138,7 +138,14 @@ foundation:
 identity:
   groups:
     enabled: false
-    # Order matters only for readability; parentRef is resolved by name.
+    # Order matters only for readability. parentRef is resolved against the
+    # AUTHENTIK group name -- `name` below, not `crName`: the operator looks
+    # the parent up over the API (`resolve_group_by_name`, a
+    # /core/groups/?name= query), it never reads another CR. Writing the CR
+    # name here fails the reconcile with
+    #   GroupRefNotFound: group "weebo-user" not found
+    # even though that CR exists and is Ready. Same rule for a user's
+    # groupRefs and an access policy's group.
     items:
       - crName: weebo-user
         name: weebo_user
@@ -146,11 +153,11 @@ identity:
       - crName: weebo-moderator
         name: weebo_moderator
         isSuperuser: false
-        parentRef: weebo-user
+        parentRef: weebo_user
       - crName: weebo-admin
         name: weebo_admin
         isSuperuser: true
-        parentRef: weebo-moderator
+        parentRef: weebo_moderator
   users:
     enabled: false
     items:
@@ -159,8 +166,10 @@ identity:
         name: max
         email: max@weebo.poc
         isActive: true
+        # Authentik group names, like parentRef above -- NOT the crName of the
+        # AuthentikGroup CRs.
         groupRefs:
-          - weebo-admin
+          - weebo_admin
 
 # ---------------------------------------------------------------------------
 # Phase 2 -- brand. Mirrors the `authentik_brand.default` half of flow.tf.

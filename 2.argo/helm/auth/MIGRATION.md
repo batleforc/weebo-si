@@ -8,7 +8,7 @@ Two files hold the whole migration:
 
 - `2.argo/helm/auth/sub/values.yaml` — the CRs, one `enabled` flag each, all
   `false` today.
-- `2.terra/auth/migration/` — the one-shot jobs that make Terraform *forget*
+- `2.terra/auth/migration/` — the one-shot jobs that make Terraform _forget_
   what the operator has taken over.
 
 **Requires operator 0.8.0, plus the `spec.url` split that landed after it**
@@ -50,14 +50,14 @@ load-bearing here and none of them exists in 0.6.0:
   `authentik.operator.version` to the release carrying this before flipping
   `foundation.enabled`** — every other phase depends on it.
 
-0.7.0 also gives `oauth2.signingKey` a default of
-`"authentik Self-signed Certificate"` — the same certificate
-`data.authentik_certificate_key_pair.generated` resolves in `data.tf`, so
-every provider here is unaffected. Note the shift though: in 0.6.0 an omitted
-`signingKey` sent no key at all and adoption preserved whatever was live;
-in 0.7.0 an omitted `signingKey` *sets* the self-signed cert. Every CR in
-`sub/values.yaml` names it explicitly for that reason. An explicit `null`
-still means "no signing key".
+  0.7.0 also gives `oauth2.signingKey` a default of
+  `"authentik Self-signed Certificate"` — the same certificate
+  `data.authentik_certificate_key_pair.generated` resolves in `data.tf`, so
+  every provider here is unaffected. Note the shift though: in 0.6.0 an omitted
+  `signingKey` sent no key at all and adoption preserved whatever was live;
+  in 0.7.0 an omitted `signingKey` _sets_ the self-signed cert. Every CR in
+  `sub/values.yaml` names it explicitly for that reason. An explicit `null`
+  still means "no signing key".
 
 ---
 
@@ -80,15 +80,15 @@ field `skip_serializing_if = "Option::is_none"`. A field the CRD cannot
 express is therefore absent from the request body, and Authentik keeps what it
 has. Verified for the ones that matter here:
 
-| Live field | Set by | Survives adoption |
-| --- | --- | --- |
-| `client_secret` (all oauth2) | Authentik | yes — never rotated by the operator |
-| `mode = forward_single` | `clickstack.tf` | yes |
-| `sub_mode = user_username` | `che-cluster.tf` | yes |
-| `access_token_validity = hours=10` | `che-cluster.tf` | yes |
-| `meta_launch_url` | `che-cluster.tf`, `vault.tf` | yes |
-| `flow_device_code` on the brand | `flow.tf` | yes |
-| `default_application` on the brand | `flow.tf` | yes |
+| Live field                         | Set by                       | Survives adoption                   |
+| ---------------------------------- | ---------------------------- | ----------------------------------- |
+| `client_secret` (all oauth2)       | Authentik                    | yes — never rotated by the operator |
+| `mode = forward_single`            | `clickstack.tf`              | yes                                 |
+| `sub_mode = user_username`         | `che-cluster.tf`             | yes                                 |
+| `access_token_validity = hours=10` | `che-cluster.tf`             | yes                                 |
+| `meta_launch_url`                  | `che-cluster.tf`, `vault.tf` | yes                                 |
+| `flow_device_code` on the brand    | `flow.tf`                    | yes                                 |
+| `default_application` on the brand | `flow.tf`                    | yes                                 |
 
 The catch is that "preserved" also means "no longer described anywhere in
 git". Those values become invisible state on the live instance. Treat the
@@ -96,10 +96,10 @@ table above as a list of things to re-check after any operator upgrade that
 starts modeling one of them.
 
 0.7.0 is exactly such an upgrade, and it took one field off this table:
-`signing_key` is now modeled *and defaulted*, so an omitted `signingKey` no
+`signing_key` is now modeled _and defaulted_, so an omitted `signingKey` no
 longer means "leave it alone" — it means "set the self-signed cert". The value
 happens to match on every provider here, but the rule changed. `client_secret`
-is still never rotated; what 0.7.0 adds is that the operator now *writes* it
+is still never rotated; what 0.7.0 adds is that the operator now _writes_ it
 somewhere (section 3), where before it only read it back.
 
 ---
@@ -113,7 +113,7 @@ Leave these in Terraform. There is no CRD for them:
   application migrates last or never.
 - The `data` lookups in `data.tf` — flows, property mappings and the
   self-signed certificate are referenced by slug/name and never created by
-  either side. `AuthentikFlow` does not change this: adopting a *built-in* flow
+  either side. `AuthentikFlow` does not change this: adopting a _built-in_ flow
   buys nothing and hands the operator a finalizer on an object Authentik ships.
 
 Two entries left this list in 0.7.0:
@@ -132,14 +132,14 @@ Two entries left this list in 0.7.0:
 Five oauth2 applications feed a `vault_kv_secret_v2` with their
 `client_secret`:
 
-| App | Vault path | Who reads `AUTHENTIK_URL` from it |
-| --- | --- | --- |
-| harbor | `mv/registry/auth` | nobody in this repo (harbor's OIDC is configured in its own UI) |
-| s3 | `mv/s3/auth` | nobody in this repo (rustfs OIDC, same) |
-| argo | `mv/argocd/auth` | `main/templates/authentik/auth-secret.yaml` → argocd's OIDC issuer |
-| che-cluster | `mv/eclipse-che/auth` | `1.pulu-init/Taskfile.yaml` → `OIDC_ISSUER_URL` |
-| che-cluster | `mv/dex/auth` | `main/templates/dex/dex.yaml` → the weebo connector's `issuer` |
-| vault | *(none)* | `vault.tf` consumes client_id/secret directly, in Terraform |
+| App         | Vault path            | Who reads `AUTHENTIK_URL` from it                                  |
+| ----------- | --------------------- | ------------------------------------------------------------------ |
+| harbor      | `mv/registry/auth`    | nobody in this repo (harbor's OIDC is configured in its own UI)    |
+| s3          | `mv/s3/auth`          | nobody in this repo (rustfs OIDC, same)                            |
+| argo        | `mv/argocd/auth`      | `main/templates/authentik/auth-secret.yaml` → argocd's OIDC issuer |
+| che-cluster | `mv/eclipse-che/auth` | `1.pulu-init/Taskfile.yaml` → `OIDC_ISSUER_URL`                    |
+| che-cluster | `mv/dex/auth`         | `main/templates/dex/dex.yaml` → the weebo connector's `issuer`     |
+| vault       | _(none)_              | `vault.tf` consumes client_id/secret directly, in Terraform        |
 
 **Terraform cannot read a client secret back** once it stops managing the
 provider — the authentik provider ships no `authentik_provider_oauth2` data
@@ -159,7 +159,7 @@ under the instance's mount — which is exactly the shape needed here:
 ```yaml
 secretTargets:
   - backend: vault
-    path: eclipse-che/auth   # relative to the instance's mount (mv)
+    path: eclipse-che/auth # relative to the instance's mount (mv)
   - backend: vault
     path: dex/auth
 ```
@@ -176,7 +176,7 @@ path that holds anything else.)
 ### 3.2 Two prerequisites — one in this chart, one in Terraform
 
 The instance's default `backend` stays `kubernetes` — nothing should land at
-`mv/weebo-authentik/auth/<crName>`. But a Vault *target* reuses the instance's
+`mv/weebo-authentik/auth/<crName>`. But a Vault _target_ reuses the instance's
 `secretStore.vault` block for address/mount/auth, and the operator errors the
 reconcile if that block is missing. So `foundation.vault.enabled` must be on
 before the first phase-4 app, and two things must be true first:
@@ -207,7 +207,7 @@ before the first phase-4 app, and two things must be true first:
 2. **The operator must trust openbao's self-signed CA** — `caSecretRef`,
    already set in `sub/values.yaml`. Unlike ESO's `SecretStore`,
    `spec.secretStore.vault` has no `caProvider`, and `spec.tls.
-   insecureSkipVerify` covers the *Authentik* API, not Vault. 0.8.0 added the
+insecureSkipVerify` covers the _Authentik_ API, not Vault. 0.8.0 added the
    field that closes this:
 
    ```yaml
@@ -252,19 +252,19 @@ consumers had to be patched around it.
 value is byte-identical to Terraform's.
 
 **So the phase-4 KV diff must now be empty.** Not "empty except
-`AUTHENTIK_URL`" — empty. A diff on *any* of the three keys means something is
+`AUTHENTIK_URL`" — empty. A diff on _any_ of the three keys means something is
 wrong (a slug mismatch, a rotated secret, an instance `url` with a trailing
 path) and is a stop-and-investigate, not an expected shape change.
 
 The consumers therefore need no changes, and every one of them should read the
 key rather than keep its own copy of the issuer:
 
-| Consumer | Reads | State |
-| --- | --- | --- |
-| `main/templates/authentik/auth-secret.yaml` | `mv/argocd/auth#AUTHENTIK_URL` → argocd's OIDC issuer | already did |
-| `1.pulu-init/Taskfile.yaml` | `mv/eclipse-che/auth#AUTHENTIK_URL` → `OIDC_ISSUER_URL` | already did |
-| `main/templates/dex/dex.yaml` | `mv/dex/auth#AUTHENTIK_URL` → the weebo connector's `issuer` | switched to it; used to hardcode `dex.mainConnector.issuer` |
-| harbor, s3 | — | configured in their own UIs, out of this repo |
+| Consumer                                    | Reads                                                        | State                                                       |
+| ------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------- |
+| `main/templates/authentik/auth-secret.yaml` | `mv/argocd/auth#AUTHENTIK_URL` → argocd's OIDC issuer        | already did                                                 |
+| `1.pulu-init/Taskfile.yaml`                 | `mv/eclipse-che/auth#AUTHENTIK_URL` → `OIDC_ISSUER_URL`      | already did                                                 |
+| `main/templates/dex/dex.yaml`               | `mv/dex/auth#AUTHENTIK_URL` → the weebo connector's `issuer` | switched to it; used to hardcode `dex.mainConnector.issuer` |
+| harbor, s3                                  | —                                                            | configured in their own UIs, out of this repo               |
 
 `vault.tf` is the deliberate exception: it builds `oidc_discovery_url` from
 `authentik_application.vault.slug` in Terraform, and the `vault` application
@@ -359,7 +359,7 @@ kubectl get authentikinstance main -o yaml | yq '.status.conditions'
 > served by a `vault-issuer` cert-manager Certificate — the weebo PKI, a
 > private CA — and the operator image is `distroless/cc`, whose trust store
 > is the public roots and nothing else. Unlike the openbao case in 3.2 the
-> `weebo.poc` bundle *does* cover this cert, so there are two ways to hand it
+> `weebo.poc` bundle _does_ cover this cert, so there are two ways to hand it
 > over: `foundation.tls.caSecretRef.enabled` (operator >= 0.10.0, reads the
 > `weebo.poc` Secret's `main-ca.crt` over the API and adds it on top of the
 > platform roots — **on** in `main/values.yaml`, which is why the pin there is
@@ -404,6 +404,15 @@ Compare `import-output/authentikgroup-*.yaml` and `authentikuser-*.yaml`
 against `sub/values.yaml`'s `identity` block — the importer reads the live
 instance, so **its output wins over anything written here by hand**. Then:
 
+> `parentRef`, a user's `groupRefs` and an access policy's group are all
+> resolved against the **Authentik** group name (`spec.name`, `weebo_user`),
+> never the CR name (`metadata.name`, `weebo-user`): the operator issues a
+> `/core/groups/?name=` query, it never looks at another CR. Get it wrong and
+> the object adopts fine, then errors on every update with
+> `GroupRefNotFound: group "weebo-user" not found` while the CR it names sits
+> there Ready. The importer always writes the Authentik name, which is
+> another reason to diff against its output rather than hand-write these.
+
 ```bash
 # 2. Turn the CRs on in main/values.yaml and let ArgoCD sync:
 #      identity: { groups: {enabled: true}, users: {enabled: true} }
@@ -412,7 +421,7 @@ instance, so **its output wins over anything written here by hand**. Then:
 for f in import-output/authentikgroup-*.yaml import-output/authentikuser-*.yaml; do
   kind=$(yq '.kind' "$f"); name=$(yq '.metadata.name' "$f")
   aid=$(yq '.status.authentikId' "$f")
-  kubectl patch "$kind" "$name" --subresource=status --type merge \
+  task k -- patch "$kind" "$name" --subresource=status --type merge \
     -p "{\"status\":{\"authentikId\":\"$aid\"}}"
 done
 
@@ -447,7 +456,7 @@ output, not from reading `flow.tf` — that file copies them off the built-in
 `authentik-default` brand rather than naming them.
 
 After `PHASE=brand`, delete the `authentik_brand.default` block from `flow.tf`
-— but *only* that block. `authentik_flow.token-authentik-flow` and the
+— but _only_ that block. `authentik_flow.token-authentik-flow` and the
 `data.authentik_brand.authentik-default` lookup both stay until phase 2b.
 
 `flow_device_code` has no field on `AuthentikBrand` even in 0.7.0, so the live
@@ -532,7 +541,7 @@ Before the first one, once:
    anywhere — it only puts the connection block on the `AuthentikInstance`.
 2. Confirm the instance still reports Ready. A malformed vault block surfaces
    here, before any credential is at stake. Note that a wrong CA or an
-   unbound ServiceAccount does *not*: the instance carries the connection but
+   unbound ServiceAccount does _not_: the instance carries the connection but
    never dials it, so the first login happens on the first application
    reconcile. `harbor` being first in the order is what makes that a cheap
    failure.
@@ -579,7 +588,7 @@ Nothing in this migration deletes an Authentik object, so every phase is
 reversible while Terraform still holds the state:
 
 - **Before `state rm`** — set the phase's flag back to `false`. ArgoCD will not
-  prune the CRs (`prune: false`), so remove them by hand *and* strip their
+  prune the CRs (`prune: false`), so remove them by hand _and_ strip their
   finalizer, or deleting them deletes the real object:
 
   ```bash
@@ -595,12 +604,12 @@ reversible while Terraform still holds the state:
   from a shell on that volume, and revert the `.tf` edits.
 
 - **Phase 4 is still the one exception to "nothing is destroyed"** — less so
-  since 0.8.0, but not zero. Adopting an oauth2 app *writes* its Vault KV path
+  since 0.8.0, but not zero. Adopting an oauth2 app _writes_ its Vault KV path
   (a full KV v2 `set`, so a new version every reconcile) rather than reading
   it. The content should be identical now that `AUTHENTIK_URL` matches (3.3),
   which makes a rollback uneventful in the expected case; it is the
   unexpected case — the diff in phase 4 step 5 came back non-empty — where
   this matters. Restore the snapshot from step 3
-  (`bao kv put mv/<path> @before.json`) *after* the CR is gone, or the
+  (`bao kv put mv/<path> @before.json`) _after_ the CR is gone, or the
   operator's next reconcile writes its own version straight back. Disable the
   CR first, then restore.
