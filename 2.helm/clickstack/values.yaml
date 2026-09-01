@@ -343,7 +343,7 @@ clickhouse:
       containerTemplate:
         image:
           repository: clickhouse/clickhouse-server
-          tag: "25.8-alpine"
+          tag: "25.12-alpine"
       replicas: 1
       shards: 1
       podDisruptionBudget:
