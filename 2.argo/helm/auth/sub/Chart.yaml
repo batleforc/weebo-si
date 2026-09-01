@@ -1,0 +1,9 @@
+apiVersion: v2
+name: sub
+description: >-
+  weebo-authentik custom resources for the auth namespace. Holds the CRs that
+  progressively adopt the Authentik objects 2.terra/auth still manages -- see
+  MIGRATION.md. Every phase toggle in values.yaml ships disabled.
+type: application
+version: 0.1.0
+appVersion: "1.16.0"

@@ -1,0 +1,20 @@
+{{- if .Values.identity.users.enabled -}}
+{{- range .Values.identity.users.items }}
+---
+apiVersion: authentik.weebo.io/v1alpha1
+kind: AuthentikUser
+metadata:
+  name: {{ .crName }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  username: {{ .username | quote }}
+  name: {{ .name | quote }}
+  email: {{ .email | quote }}
+  isActive: {{ .isActive }}
+  groupRefs:
+{{- range .groupRefs }}
+    - {{ . }}
+{{- end }}
+{{- end }}
+{{- end -}}

@@ -1,0 +1,43 @@
+{{- if .Values.authentik.sub.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: auth-app
+  namespace: argocd
+  annotations:
+    # After the operator (and its CRDs) in wave 1, so the CRs below always have
+    # a schema to validate against and a controller to reconcile them.
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: {{ .Values.project }}
+  source:
+    repoURL: '{{ .Values.repo }}'
+    path: '2.argo/helm/auth/sub'
+    targetRevision: '{{ .Values.branch }}'
+    helm:
+      releaseName: auth-app
+      valuesObject:
+        {{- with .Values.authentik.sub }}
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'auth'
+  syncPolicy:
+    automated:
+      # prune is deliberately OFF. These CRs carry finalizers: deleting one
+      # deletes the real Authentik object behind it. Removing a CR from git
+      # should never be enough to destroy a group, an application or a provider
+      # -- do that by hand, once, on purpose.
+      prune: false
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

@@ -1,0 +1,22 @@
+{{- if and .Values.foundation.enabled .Values.foundation.namespacePolicy.enabled -}}
+apiVersion: authentik.weebo.io/v1alpha1
+kind: AuthentikNamespacePolicy
+metadata:
+  # Cluster-scoped. The allow-list is default-deny, but only once at least one
+  # policy exists anywhere in the cluster -- creating this object is what turns
+  # enforcement on, so it must already list every namespace that holds an
+  # AuthentikApplication or the next apply is rejected by the webhook.
+  name: weebo-allow
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  rules:
+    - namespaces:
+{{- range .Values.foundation.namespacePolicy.allowedNamespaces }}
+        - {{ . | quote }}
+{{- end }}
+      allowedKinds:
+        - AuthentikApplication
+        - AuthentikAccessPolicy
+      effect: Allow
+{{- end -}}

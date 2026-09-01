@@ -1,0 +1,405 @@
+# weebo-authentik CRs adopting what 2.terra/auth manages today.
+#
+# READ 2.argo/helm/auth/MIGRATION.md BEFORE FLIPPING ANY FLAG HERE.
+#
+# Every `enabled` below ships `false` on purpose. Enabling one is only the
+# second half of a step; the first half is running the importer and patching
+# `status.authentikId` onto the CR, which is what makes the operator *adopt*
+# the existing Authentik object instead of trying to create a second one.
+# A CR applied without that status is not destructive -- the operator's
+# attempt-create-first collides, reports AuthentikObjectAlreadyExists and
+# stops -- but it stays Errored until the id is supplied.
+
+# Name of the AuthentikInstance CR every namespaced kind points at.
+instanceRef: main
+
+# ---------------------------------------------------------------------------
+# Phase 0 -- foundation. Touches no Authentik object at all: AuthentikInstance
+# only describes how to reach the API, AuthentikNamespacePolicy only gates
+# which namespaces may hold Application/AccessPolicy CRs.
+# ---------------------------------------------------------------------------
+foundation:
+  enabled: false
+  url: "https://auth.weebo.poc"
+  token:
+    # The operator reads its API token from a plain Secret; this pulls it out
+    # of Vault with the SecretStore already used by the auth namespace.
+    secretName: authentik-api-token
+    vaultKey: mv/main-config
+    vaultProperty: AUTHENTIK_BOOTSTRAP_TOKEN
+    refreshInterval: 24h
+  # Vault SecretStore for the auth namespace. The `auth` Vault role is bound to
+  # the `default`/`authentik` service accounts in this namespace and carries
+  # mv_policy, so it can read mv/main-config (mv_reader_policy could not --
+  # it is templated on the caller's own namespace).
+  secretStore:
+    enabled: false
+    name: auth-vault
+    vaultRole: auth
+    serviceAccount: default
+  # Default-deny becomes active cluster-wide the moment the first
+  # AuthentikNamespacePolicy exists, so this must list every namespace that
+  # will ever hold an AuthentikApplication.
+  namespacePolicy:
+    enabled: false
+    allowedNamespaces:
+      - auth
+
+  # Vault CONNECTION for the AuthentikInstance. The instance's default backend
+  # stays `kubernetes` on purpose -- nothing should land at
+  # mv/<pathPrefix>/<ns>/<crName>. This block exists only so a phase-4
+  # application can pin an explicit `secretTargets` Vault path (operator
+  # >= 0.7.0); the operator errors out on a Vault target when the instance
+  # carries no vault block, so it has to be here before any of them is enabled.
+  #
+  # Two prerequisites, both outside this chart -- see MIGRATION.md 3.2:
+  #   1. the operator's ServiceAccount must be bound to the `auth` Vault role
+  #      (2.terra/vault/terra-map/auth-base.tf), and
+  #   2. the operator pod must trust openbao's self-signed CA (it has no
+  #      caProvider/insecureSkipVerify field for Vault, unlike ESO).
+  vault:
+    enabled: false
+    address: "https://openbao.vault:8200"
+    mount: mv
+    kubernetesAuthMount: kubernetes
+    kubernetesAuthRole: auth
+    # Only used by targets that DON'T pin a path. Every target below pins one,
+    # so this prefix should never actually appear in Vault.
+    pathPrefix: weebo-authentik
+
+# ---------------------------------------------------------------------------
+# Phase 1 -- identity. Cluster-scoped, nothing outside Authentik reads them,
+# no Vault secret depends on them. Lowest blast radius; migrate first.
+# Mirrors 2.terra/auth/terra-map/group.tf + user.tf.
+# ---------------------------------------------------------------------------
+identity:
+  groups:
+    enabled: false
+    # Order matters only for readability; parentRef is resolved by name.
+    items:
+      - crName: weebo-user
+        name: weebo_user
+        isSuperuser: false
+      - crName: weebo-moderator
+        name: weebo_moderator
+        isSuperuser: false
+        parentRef: weebo-user
+      - crName: weebo-admin
+        name: weebo_admin
+        isSuperuser: true
+        parentRef: weebo-moderator
+  users:
+    enabled: false
+    items:
+      - crName: batleforc
+        username: batleforc
+        name: max
+        email: max@weebo.poc
+        isActive: true
+        groupRefs:
+          - weebo-admin
+
+# ---------------------------------------------------------------------------
+# Phase 2 -- brand. Mirrors the `authentik_brand.default` half of flow.tf.
+#
+# NOT modeled by the CRD, and therefore left untouched on the live object
+# (the operator PATCHes, and every unmodeled field is omitted from the body):
+#   - flowDeviceCode  -> stays bound to the device-code-flow, by UUID, whoever
+#                        owns that flow. AuthentikBrand still has no
+#                        flowDeviceCode field in 0.7.0, so the binding is
+#                        invisible to git either way -- but the FLOW itself can
+#                        now move (see `flows` below).
+#   - defaultApplication -> importer leaves defaultApplicationRef unset by
+#                        design; the live value survives.
+# ---------------------------------------------------------------------------
+brand:
+  enabled: false
+  crName: weebo
+  domain: weebo
+  default: true
+  brandingTitle: "Weebo Authentik"
+  brandingLogo: "https://maxleriche.net/assets/web-app-manifest-192x192.png"
+  brandingFavicon: "https://maxleriche.net/assets/favicon.svg"
+  brandingDefaultFlowBackground: "https://maxleriche.net/assets/home_hero.png"
+  # Filled in from the live brand by the importer -- flow.tf copies these off
+  # the built-in `authentik-default` brand, so do not invent values here.
+  flowAuthentication: ""
+  flowInvalidation: ""
+  flowRecovery: ""
+  flowUnenrollment: ""
+  flowUserSettings: ""
+
+# ---------------------------------------------------------------------------
+# Phase 2b -- flows. Needs operator >= 0.7.0 (AuthentikFlow, cluster-scoped,
+# slug-keyed: status.authentikId holds the SLUG, not a UUID).
+#
+# Only ONE flow in 2.terra/auth is a `resource` -- everything else is a `data`
+# lookup of a built-in and must stay that way. The CRD models the flow object
+# only; stage bindings and policies are out of scope, and device-code-flow has
+# neither, so this is parity.
+#
+# The importer emits an AuthentikFlow CR for EVERY flow on the instance,
+# built-ins included. Keep exactly the one below and throw the rest away:
+# adopting a built-in buys nothing and hands the operator a finalizer on a flow
+# Authentik itself ships.
+# ---------------------------------------------------------------------------
+flows:
+  deviceCode:
+    enabled: false
+    crName: device-code-flow
+    slug: device-code-flow
+    name: device-code-authentik-flow
+    title: "Device Code Flow"
+    designation: stage_configuration
+    authentication: require_authenticated
+
+# ---------------------------------------------------------------------------
+# Phases 3 and 4 -- applications and their access policies.
+#
+# `accessGroup` renders the AuthentikAccessPolicy that mirrors each
+# `authentik_policy_binding` in 2.terra/auth (all of them are order 0).
+# Flows are referenced by SLUG, property mappings and signing keys by NAME --
+# that is how the operator resolves them against the API.
+#
+# `secretTargets` (operator >= 0.7.0) is the list of places an oauth2 app's
+# credentials are written. It replaces the instance-wide default destination
+# entirely: an app that lists targets writes to ALL of them and to nothing
+# else. Each entry pins the exact KV path 2.terra/auth writes today, so the
+# operator can take over `vault_kv_secret_v2` rather than shadow it. Requires
+# `foundation.vault.enabled`. Ignored for proxy providers -- they have no
+# client secret.
+#
+# CAVEAT, unchanged in 0.7.0: the operator writes AUTHENTIK_URL as the
+# instance BASE url (https://auth.weebo.poc), while 2.terra/auth writes the
+# per-application issuer (.../application/o/<slug>/). Only two consumers read
+# that key -- argocd's ExternalSecret and 1.pulu-init's Taskfile -- and both
+# must be fixed before argo/che migrate. harbor and s3 have no in-repo reader
+# of AUTHENTIK_URL at all, which is why they go first. See MIGRATION.md 3.3.
+# ---------------------------------------------------------------------------
+applications:
+
+  # --- Phase 3: proxy providers. No Vault secret involved, so these can move
+  # independently of the oauth2 blocker below. -----------------------------
+
+  longhorn:
+    enabled: false
+    slug: longhorn
+    name: longhorn
+    accessGroup: weebo-admin
+    provider:
+      kind: proxy
+      proxy:
+        internalHost: "http://longhorn-frontend.longhorn.svc.cluster.local"
+        externalHost: "https://longhorn.weebo.poc"
+        authorizationFlow: default-provider-authorization-implicit-consent
+        invalidationFlow: default-provider-invalidation-flow
+
+  # clickstack is the one proxy provider that depends on a field the CRD does
+  # not model. clickstack.tf sets `mode = "forward_single"` and deliberately
+  # omits internal_host; the ProxyProviderSpec has no `mode` and makes
+  # internalHost required. Adoption still preserves the mode -- the operator
+  # sends no `mode` key at all, so Authentik keeps the stored value -- and ""
+  # re-sends the internal_host it already has. Verify the provider after the
+  # first reconcile anyway: a regression here serves HyperDX's 404 body for
+  # every asset behind the route, which is exactly the failure clickstack.tf's
+  # comment block documents.
+  clickstack:
+    enabled: false
+    slug: clickstack
+    name: clickstack
+    accessGroup: weebo-admin
+    provider:
+      kind: proxy
+      proxy:
+        internalHost: ""
+        externalHost: "https://clickstack.weebo.poc"
+        authorizationFlow: default-provider-authorization-implicit-consent
+        invalidationFlow: default-provider-invalidation-flow
+
+  # --- Phase 4: oauth2 providers. Each of these has a `vault_kv_secret_v2` in
+  # 2.terra/auth wired to its `client_secret`, and Terraform cannot read that
+  # value back once it stops managing the provider (there is no
+  # `authentik_provider_oauth2` data source). Operator 0.7.0's `secretTargets`
+  # is what closes that gap: the operator writes the same KV paths Terraform
+  # writes today, so the credential never has to round-trip through Terraform.
+  # Still not a flip-a-flag operation -- read MIGRATION.md section 3 first.
+  #
+  # `signingKey` is spelled out below even though 0.7.0 defaults it to exactly
+  # this value: an omitted field is now DEFAULTED rather than left absent, so
+  # being explicit is what keeps the CR honest about what it sends. It matches
+  # `data.authentik_certificate_key_pair.generated` in data.tf. ------------
+
+  argo:
+    enabled: false
+    slug: argo
+    name: argo
+    metaIcon: "https://maxleriche.net/public/media/techno/argo.png"
+    accessGroup: weebo-moderator
+    # AUTHENTIK_URL here is read by main/templates/authentik/auth-secret.yaml
+    # and becomes argocd's OIDC issuer -- it must stay issuer-shaped. Fix that
+    # ExternalSecret before enabling this app.
+    secretTargets:
+      - backend: vault
+        path: argocd/auth
+    provider:
+      kind: oauth2
+      oauth2:
+        clientId: argo
+        authorizationFlow: default-provider-authorization-implicit-consent
+        invalidationFlow: default-provider-invalidation-flow
+        signingKey: "authentik Self-signed Certificate"
+        grantTypes: ["authorization_code"]
+        propertyMappings:
+          - "authentik default OAuth Mapping: OpenID 'email'"
+          - "authentik default OAuth Mapping: OpenID 'profile'"
+          - "authentik default OAuth Mapping: OpenID 'openid'"
+        allowedRedirectUris:
+          - matchingMode: strict
+            url: "https://argo.weebo.poc/api/dex/callback"
+          - matchingMode: strict
+            url: "https://localhost:8085/auth/callback"
+
+  # che-cluster carries TWO fields the CRD cannot express, both load-bearing:
+  #   - sub_mode = user_username        (Che maps users by username)
+  #   - access_token_validity = hours=10
+  # plus meta_launch_url. All three survive adoption untouched, but they become
+  # invisible to git the moment this CR owns the provider. Migrate it last.
+  che:
+    enabled: false
+    slug: che-cluster
+    name: che-cluster
+    metaIcon: "https://maxleriche.net/public/media/application/eclipse-che.png"
+    accessGroup: weebo-moderator
+    # che-cluster.tf writes the SAME credentials to two paths; the fan-out
+    # reproduces that in one CR. dex.yaml only reads CLIENT_ID/CLIENT_SECRET
+    # from mv/dex/auth, but 1.pulu-init's Taskfile reads AUTHENTIK_URL from
+    # mv/eclipse-che/auth as OIDC_ISSUER_URL -- fix that first.
+    secretTargets:
+      - backend: vault
+        path: eclipse-che/auth
+      - backend: vault
+        path: dex/auth
+    provider:
+      kind: oauth2
+      oauth2:
+        clientId: che-cluster
+        authorizationFlow: default-provider-authorization-implicit-consent
+        invalidationFlow: default-provider-invalidation-flow
+        signingKey: "authentik Self-signed Certificate"
+        grantTypes: ["authorization_code"]
+        propertyMappings:
+          - "authentik default OAuth Mapping: OpenID 'email'"
+          - "authentik default OAuth Mapping: OpenID 'profile'"
+          - "authentik default OAuth Mapping: OpenID 'openid'"
+          - "authentik default OAuth Mapping: OpenID 'offline_access'"
+        allowedRedirectUris:
+          - matchingMode: strict
+            url: "http://localhost:8000"
+          - matchingMode: strict
+            url: "https://dex.weebo.poc/callback"
+          - matchingMode: strict
+            url: "https://cde.weebo.poc/oauth/callback"
+          - matchingMode: regex
+            url: "https://.*.cde.weebo.poc/*."
+
+  harbor:
+    enabled: false
+    slug: harbor
+    name: harbor
+    metaIcon: "https://maxleriche.net/public/media/application/harbor.png"
+    accessGroup: weebo-moderator
+    # No in-repo consumer reads AUTHENTIK_URL from this path (harbor's OIDC is
+    # configured in its own UI), so harbor is the safe first oauth2 migration.
+    secretTargets:
+      - backend: vault
+        path: registry/auth
+    provider:
+      kind: oauth2
+      oauth2:
+        clientId: harbor
+        authorizationFlow: default-provider-authorization-implicit-consent
+        invalidationFlow: default-provider-invalidation-flow
+        signingKey: "authentik Self-signed Certificate"
+        grantTypes: ["authorization_code"]
+        propertyMappings:
+          - "authentik default OAuth Mapping: OpenID 'email'"
+          - "authentik default OAuth Mapping: OpenID 'profile'"
+          - "authentik default OAuth Mapping: OpenID 'openid'"
+          - "authentik default OAuth Mapping: OpenID 'offline_access'"
+        allowedRedirectUris:
+          - matchingMode: strict
+            url: "https://registry.weebo.poc/c/oidc/callback"
+
+  s3:
+    enabled: false
+    slug: s3
+    name: s3
+    metaIcon: "https://maxleriche.net/public/media/application/s3.png"
+    accessGroup: weebo-moderator
+    # Same as harbor: nothing in this repo reads AUTHENTIK_URL from mv/s3/auth.
+    secretTargets:
+      - backend: vault
+        path: s3/auth
+    provider:
+      kind: oauth2
+      oauth2:
+        clientId: s3
+        authorizationFlow: default-provider-authorization-implicit-consent
+        invalidationFlow: default-provider-invalidation-flow
+        signingKey: "authentik Self-signed Certificate"
+        grantTypes: ["authorization_code"]
+        propertyMappings:
+          - "authentik default OAuth Mapping: OpenID 'email'"
+          - "authentik default OAuth Mapping: OpenID 'profile'"
+          - "authentik default OAuth Mapping: OpenID 'openid'"
+          - "authentik default OAuth Mapping: OpenID 'offline_access'"
+        allowedRedirectUris:
+          - matchingMode: strict
+            url: "https://bucket.weebo.poc/rustfs/admin/v3/oidc/callback"
+          - matchingMode: strict
+            url: "https://bucket.weebo.poc/rustfs/admin/v3/oidc/callback/authentik"
+
+  # vault is the hardest one to migrate and should go last or never: beyond the
+  # provider itself, vault.tf derives a whole OIDC auth backend, two roles and
+  # two identity-group aliases from `authentik_provider_oauth2.vault`. Those are
+  # `vault_*` resources with no CRD equivalent -- they must stay in Terraform,
+  # and they need client_id/client_secret, which Terraform loses on state rm.
+  # meta_launch_url is also unmodeled (preserved, but no longer in git).
+  vault:
+    enabled: false
+    slug: vault
+    name: vault
+    metaIcon: "https://maxleriche.net/public/media/techno/vault.png"
+    accessGroup: weebo-moderator
+    # No vault_kv_secret_v2 for this one -- vault.tf consumes client_id/secret
+    # directly, in Terraform. An empty list falls back to the instance default
+    # (a Kubernetes Secret named `vault` in ns auth), which nothing reads.
+    secretTargets: []
+    provider:
+      kind: oauth2
+      oauth2:
+        clientId: vault
+        authorizationFlow: default-provider-authorization-implicit-consent
+        invalidationFlow: default-provider-invalidation-flow
+        signingKey: "authentik Self-signed Certificate"
+        grantTypes: ["authorization_code"]
+        propertyMappings:
+          - "authentik default OAuth Mapping: OpenID 'email'"
+          - "authentik default OAuth Mapping: OpenID 'profile'"
+          - "authentik default OAuth Mapping: OpenID 'openid'"
+          - "authentik default OAuth Mapping: OpenID 'offline_access'"
+        allowedRedirectUris:
+          - matchingMode: strict
+            url: "https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback"
+          - matchingMode: strict
+            url: "https://vault.weebo.poc/authentik/callback"
+          - matchingMode: strict
+            url: "http://localhost:8250/authentik/callback"
+          - matchingMode: strict
+            url: "http://localhost:8250/oidc/callback"
+
+# Passed down from the parent chart; unused here but present so the parent's
+# `toYaml .Values` handoff does not surprise anyone reading this file.
+project: ""
+repo: ""
+branch: ""

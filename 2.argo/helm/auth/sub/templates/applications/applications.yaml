@@ -1,0 +1,90 @@
+{{- range $key, $app := .Values.applications }}
+{{- if $app.enabled }}
+---
+apiVersion: authentik.weebo.io/v1alpha1
+kind: AuthentikApplication
+metadata:
+  name: {{ $key }}
+  namespace: auth
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  instanceRef: {{ $.Values.instanceRef }}
+  name: {{ $app.name | quote }}
+  slug: {{ $app.slug | quote }}
+{{- with $app.metaIcon }}
+  metaIcon: {{ . | quote }}
+{{- end }}
+  provider:
+    kind: {{ $app.provider.kind }}
+{{- if eq $app.provider.kind "oauth2" }}
+{{- with $app.provider.oauth2 }}
+    oauth2:
+      clientId: {{ .clientId | quote }}
+      # Flows resolve by SLUG; signingKey and propertyMappings by NAME.
+      authorizationFlow: {{ .authorizationFlow | quote }}
+      invalidationFlow: {{ .invalidationFlow | quote }}
+      signingKey: {{ .signingKey | quote }}
+      grantTypes:
+{{- range .grantTypes }}
+        - {{ . | quote }}
+{{- end }}
+      propertyMappings:
+{{- range .propertyMappings }}
+        - {{ . | quote }}
+{{- end }}
+      allowedRedirectUris:
+{{- range .allowedRedirectUris }}
+        - matchingMode: {{ .matchingMode }}
+          url: {{ .url | quote }}
+{{- end }}
+{{- end }}
+{{- with $app.secretTargets }}
+  # Every destination the client_id/secret are written to, replacing the
+  # instance's single default. Vault targets reuse the instance's
+  # secretStore.vault connection and pin only the path (relative to its mount),
+  # so these are the exact `vault_kv_secret_v2` names in 2.terra/auth.
+  secretTargets:
+{{- range . }}
+    - backend: {{ .backend }}
+{{- with .path }}
+      path: {{ . | quote }}
+{{- end }}
+{{- with .name }}
+      name: {{ . | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- else if eq $app.provider.kind "proxy" }}
+{{- with $app.provider.proxy }}
+    proxy:
+      # internalHost is required by the schema even when the live provider runs
+      # forward-auth and has none; "" re-sends what is already stored. `mode` is
+      # not modeled at all, so adoption leaves it as Terraform set it.
+      internalHost: {{ .internalHost | quote }}
+      externalHost: {{ .externalHost | quote }}
+      authorizationFlow: {{ .authorizationFlow | quote }}
+      invalidationFlow: {{ .invalidationFlow | quote }}
+      # outpostRef unset => Authentik's embedded outpost, which is what every
+      # `authentik_outpost_provider_attachment` in 2.terra/auth targets. The
+      # operator appends to the outpost's provider list, never replaces it.
+{{- end }}
+{{- end }}
+{{- with $app.accessGroup }}
+---
+apiVersion: authentik.weebo.io/v1alpha1
+kind: AuthentikAccessPolicy
+metadata:
+  name: {{ $key }}-access
+  # Must share the application's namespace: applicationRef has no namespace
+  # field and is resolved namespaced.
+  namespace: auth
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  applicationRef: {{ $key }}
+  groupRef: {{ . }}
+  order: 0
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,32 @@
+{{- if .Values.brand.enabled -}}
+apiVersion: authentik.weebo.io/v1alpha1
+kind: AuthentikBrand
+metadata:
+  name: {{ .Values.brand.crName }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  domain: {{ .Values.brand.domain | quote }}
+  default: {{ .Values.brand.default }}
+  brandingTitle: {{ .Values.brand.brandingTitle | quote }}
+  brandingLogo: {{ .Values.brand.brandingLogo | quote }}
+  brandingFavicon: {{ .Values.brand.brandingFavicon | quote }}
+  brandingDefaultFlowBackground: {{ .Values.brand.brandingDefaultFlowBackground | quote }}
+  # Flow SLUGS. flow.tf copies these off the built-in `authentik-default` brand
+  # rather than naming them, so take the values from the importer's output, not
+  # from reading flow.tf. An empty value is omitted, which leaves the live
+  # field untouched -- the operator PATCHes and skips absent keys.
+{{- range $field := list "flowAuthentication" "flowInvalidation" "flowRecovery" "flowUnenrollment" "flowUserSettings" }}
+{{- $v := index $.Values.brand $field }}
+{{- if $v }}
+  {{ $field }}: {{ $v | quote }}
+{{- end }}
+{{- end }}
+  # flowDeviceCode still has no field on this CRD in 0.7.0, so the live brand
+  # keeps its stored UUID pointing at device-code-flow no matter who owns that
+  # flow -- the operator omits the key and Authentik keeps the value. The flow
+  # object itself CAN now move to an AuthentikFlow CR (see `flows` in
+  # values.yaml); the binding between the two just stays out of git.
+  # defaultApplicationRef is likewise left unset -- the operator does not
+  # resolve it yet, and the live value survives adoption.
+{{- end -}}

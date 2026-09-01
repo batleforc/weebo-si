@@ -1,0 +1,29 @@
+{{- range $key, $flow := .Values.flows }}
+{{- if $flow.enabled }}
+---
+apiVersion: authentik.weebo.io/v1alpha1
+kind: AuthentikFlow
+metadata:
+  # Cluster-scoped -- no namespace, and no AuthentikNamespacePolicy governs it.
+  name: {{ $flow.crName }}
+  annotations:
+    # Before the brand (wave 4): the brand's flow_device_code points at this
+    # flow, so it must exist first on a from-scratch install. On adoption the
+    # ordering is moot -- both objects already exist.
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  # status.authentikId is the SLUG for this kind, not a UUID -- flows are
+  # slug-keyed in Authentik's API. Changing `slug` creates a second flow rather
+  # than renaming this one, so treat it as immutable.
+  slug: {{ $flow.slug | quote }}
+  name: {{ $flow.name | quote }}
+  title: {{ $flow.title | quote }}
+  designation: {{ $flow.designation | quote }}
+{{- with $flow.authentication }}
+  authentication: {{ . | quote }}
+{{- end }}
+  # Stage bindings and policies are out of scope for this CRD. device-code-flow
+  # has none (flow.tf declares five fields and stops), so this is parity -- do
+  # not add a flow here that carries bindings.
+{{- end }}
+{{- end }}

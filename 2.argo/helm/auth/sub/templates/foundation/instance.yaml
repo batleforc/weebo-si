@@ -1,0 +1,39 @@
+{{- if .Values.foundation.enabled -}}
+apiVersion: authentik.weebo.io/v1alpha1
+kind: AuthentikInstance
+metadata:
+  # Cluster-scoped. Only ONE may exist: AuthentikGroup/User/Brand/Flow/Outpost
+  # carry no instanceRef and resolve against "the" instance, erroring with
+  # AmbiguousDefaultInstance if there is more than one.
+  name: {{ .Values.instanceRef }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  url: {{ .Values.foundation.url | quote }}
+  tokenSecretRef:
+    name: {{ .Values.foundation.token.secretName }}
+    namespace: auth
+    key: token
+  secretStore:
+    # `backend` stays kubernetes on purpose. It is the DEFAULT destination, used
+    # only by an application that lists no `secretTargets` -- switching it to
+    # vault would start writing mv/<pathPrefix>/auth/<crName>, a path layout
+    # nothing consumes. Applications that must feed a real Vault path pin it
+    # per-target instead; see values.yaml `applications.*.secretTargets`.
+    backend: kubernetes
+{{- if .Values.foundation.vault.enabled }}
+    # Connection only. A `secretTargets` entry with backend `vault` reuses this
+    # block for address/mount/auth and supplies just the path -- and the
+    # operator hard-errors on such a target if this block is absent, so it has
+    # to exist before the first phase-4 application is enabled.
+    vault:
+      address: {{ .Values.foundation.vault.address | quote }}
+      mount: {{ .Values.foundation.vault.mount | quote }}
+      kubernetesAuthMount: {{ .Values.foundation.vault.kubernetesAuthMount | quote }}
+      # mv_policy, via 2.terra/vault/terra-map/auth-base.tf's `auth` role. The
+      # operator's OWN ServiceAccount must be in that role's
+      # bound_service_account_names -- it is not, today. MIGRATION.md 3.2.
+      kubernetesAuthRole: {{ .Values.foundation.vault.kubernetesAuthRole | quote }}
+      pathPrefix: {{ .Values.foundation.vault.pathPrefix | quote }}
+{{- end }}
+{{- end -}}

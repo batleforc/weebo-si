@@ -1,0 +1,19 @@
+{{- if .Values.identity.groups.enabled -}}
+{{- range .Values.identity.groups.items }}
+---
+apiVersion: authentik.weebo.io/v1alpha1
+kind: AuthentikGroup
+metadata:
+  name: {{ .crName }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  name: {{ .name | quote }}
+  isSuperuser: {{ .isSuperuser }}
+{{- with .parentRef }}
+  # group.tf models this as `parents = [...]`; every group here has exactly one
+  # parent, so the CRD's single parentRef is a faithful mapping.
+  parentRef: {{ . }}
+{{- end }}
+{{- end }}
+{{- end -}}

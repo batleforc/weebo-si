@@ -15,8 +15,56 @@ authentik:
     enabled: true
   operator:
     enabled: true
-    version: 0.6.0
+    # 0.7.0 adds the AuthentikFlow CRD (phase 2b) and per-application
+    # `secretTargets` (the fan-out that unblocks phase 4). See MIGRATION.md.
+    version: 0.8.0
     replicaCount: 1
+  # Phase toggles for the adoption of the Terraform-managed Authentik objects
+  # by the operator. Only the flags live here; every spec they switch on is in
+  # 2.argo/helm/auth/sub/values.yaml, which this merges over.
+  #
+  # DO NOT flip one of these on its own -- each is the second half of a step
+  # whose first half is importing the object's authentikId. Runbook:
+  # 2.argo/helm/auth/MIGRATION.md
+  sub:
+    enabled: false
+    foundation: # phase 0 -- AuthentikInstance + allow-list
+      enabled: false
+      secretStore:
+        enabled: false
+      namespacePolicy:
+        enabled: false
+      # Vault CONNECTION on the AuthentikInstance. The instance's default
+      # backend stays `kubernetes`; this block only exists so that a phase-4
+      # application may name an explicit `secretTargets` Vault path. Turning it
+      # on alone writes nothing anywhere. Prerequisites in MIGRATION.md 3.2.
+      vault:
+        enabled: false
+    identity: # phase 1 -- groups then users
+      groups:
+        enabled: false
+      users:
+        enabled: false
+    brand: # phase 2a
+      enabled: false
+    flows: # phase 2b -- needs operator >= 0.7.0
+      deviceCode:
+        enabled: false
+    applications:
+      longhorn: # phase 3 -- proxy, safe
+        enabled: false
+      clickstack: # phase 3 -- proxy, verify forward_single after sync
+        enabled: false
+      harbor: # phase 4 -- oauth2. Order: harbor, s3, argo, che, vault
+        enabled: false
+      s3:
+        enabled: false
+      argo: # needs the AUTHENTIK_URL consumer fix (MIGRATION.md 3.3)
+        enabled: false
+      che:
+        enabled: false
+      vault:
+        enabled: false
 
 dns:
   domain: auth.weebo.poc

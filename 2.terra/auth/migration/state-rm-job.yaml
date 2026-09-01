@@ -1,0 +1,164 @@
+# One-shot: make Terraform FORGET the Authentik objects the operator has just
+# adopted, without touching the objects themselves.
+#
+# Deliberately NOT listed in ../kustomization.yaml -- ArgoCD must never apply
+# this on its own. Run it by hand, once per phase:
+#
+#   kubectl -n auth delete job terra-state-rm --ignore-not-found
+#   sed 's/PHASE_PLACEHOLDER/identity/' migration/state-rm-job.yaml | kubectl apply -f -
+#   kubectl -n auth logs -f job/terra-state-rm
+#
+# BEFORE running it, suspend the Terraform apply loop, or the PostSync hook
+# will race this job on the same state file:
+#
+#   kubectl -n argocd patch app terra-authentik --type merge \
+#     -p '{"spec":{"syncPolicy":{"automated":null}}}'
+#
+# `terraform state rm` only edits the state file. It never calls the Authentik
+# API and never deletes anything -- that is the whole point. `terraform
+# destroy` would; never run it against this module during the migration.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: terra-state-rm
+  namespace: auth
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: "authentik"
+      restartPolicy: Never
+      containers:
+        - name: terraform
+          image: hashicorp/terraform:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PHASE
+              value: "PHASE_PLACEHOLDER"
+          command:
+            - /bin/sh
+            - "-c"
+            - |
+              set -eu
+              cd /terraform
+
+              case "$PHASE" in
+                identity)
+                  ADDRS="authentik_group.weebo_user
+              authentik_group.weebo_moderator
+              authentik_group.weebo_admin
+              authentik_user.batleforc"
+                  ;;
+                brand)
+                  # Phase 2a only. The device-code flow leaves in phase 2b
+                  # below -- and it MUST be after this one: the brand block
+                  # references authentik_flow.token-authentik-flow.uuid.
+                  ADDRS="authentik_brand.default"
+                  ;;
+                flow)
+                  # Phase 2b. Needs operator >= 0.7.0 (AuthentikFlow CRD).
+                  # Only this one flow: everything else in data.tf is a `data`
+                  # lookup of an Authentik built-in and was never in state.
+                  ADDRS="authentik_flow.token-authentik-flow"
+                  ;;
+                longhorn)
+                  ADDRS="authentik_provider_proxy.longhorn
+              authentik_application.longhorn
+              authentik_outpost_provider_attachment.longhorn
+              authentik_policy_binding.longhorn-access"
+                  ;;
+                clickstack)
+                  ADDRS="authentik_provider_proxy.clickstack
+              authentik_application.clickstack
+              authentik_outpost_provider_attachment.clickstack
+              authentik_policy_binding.clickstack-access"
+                  ;;
+                # Phase 4. Each of these drops the vault_kv_secret_v2 in the
+                # SAME step as the provider: once the CR's secretTargets own
+                # that KV path, leaving the Terraform resource in state means
+                # both sides rewrite it on every apply. Requires operator
+                # >= 0.7.0 -- on 0.6.0 the operator cannot write these paths at
+                # all and removing them here strands the consumers.
+                harbor)
+                  ADDRS="authentik_provider_oauth2.harbor
+              authentik_application.harbor
+              authentik_policy_binding.harbor-access
+              vault_kv_secret_v2.harbor"
+                  ;;
+                s3)
+                  ADDRS="authentik_provider_oauth2.s3
+              authentik_application.s3
+              authentik_policy_binding.s3-access
+              vault_kv_secret_v2.s3"
+                  ;;
+                argo)
+                  ADDRS="authentik_provider_oauth2.argo
+              authentik_application.argo
+              authentik_policy_binding.argo-access
+              vault_kv_secret_v2.argo"
+                  ;;
+                che)
+                  # Two KV paths, one provider -- the CR's secretTargets fans
+                  # out to both, so both leave state together.
+                  ADDRS="authentik_provider_oauth2.che
+              authentik_application.che
+              authentik_policy_binding.che-access
+              vault_kv_secret_v2.che-app
+              vault_kv_secret_v2.che-app-2"
+                  ;;
+                vault)
+                  # NOT the vault_* resources below the provider in vault.tf:
+                  # the jwt auth backend, its two roles, the two identity
+                  # groups and their aliases have no CRD equivalent and must
+                  # stay in Terraform. They read client_id/client_secret off
+                  # authentik_provider_oauth2.vault, which this removes -- so
+                  # do not run this phase until they are fed from elsewhere.
+                  echo "PHASE=vault is deliberately not implemented." >&2
+                  echo "See MIGRATION.md section 3 and phase 4." >&2
+                  exit 1
+                  ;;
+                *)
+                  echo "unknown PHASE '$PHASE'" >&2
+                  echo "known phases: identity brand flow longhorn clickstack" >&2
+                  echo "               harbor s3 argo che" >&2
+                  exit 1
+                  ;;
+              esac
+
+              # The state lives on the PVC the apply job writes to. Snapshot it
+              # before editing: `state rm` has no undo, and the only other copy
+              # of these resource ids is the live Authentik instance.
+              BACKUP="/terraform/state-backup-${PHASE}-$(date +%Y%m%d-%H%M%S).tfstate"
+              terraform state pull > "$BACKUP"
+              echo "state backed up to $BACKUP"
+
+              IN_STATE=$(terraform state list)
+              for addr in $ADDRS; do
+                if echo "$IN_STATE" | grep -qxF "$addr"; then
+                  echo "removing $addr"
+                  terraform state rm "$addr"
+                else
+                  echo "skipping $addr (not in state -- already removed?)"
+                fi
+              done
+
+              echo
+              echo "remaining in state:"
+              terraform state list
+          volumeMounts:
+            - mountPath: /terraform
+              name: terra-job
+            - mountPath: /etc/ssl/vault
+              name: openbao-tls
+            - mountPath: /etc/ssl/certs
+              name: etc-ssl-certs
+      volumes:
+        - name: terra-job
+          persistentVolumeClaim:
+            claimName: "terra-job-authentik"
+        - name: openbao-tls
+          secret:
+            secretName: "openbao-tls"
+        - name: etc-ssl-certs
+          secret:
+            secretName: "weebo.poc"
