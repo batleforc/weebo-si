@@ -91,6 +91,10 @@ project:
         kind: "ClusterPolicy"
       - group: "scheduling.k8s.io"
         kind: "PriorityClass"
+      - group: "authentik.weebo.io"
+        kind: "AuthentikInstance"
+      - group: "authentik.weebo.io"
+        kind: "AuthentikNamespacePolicy"
   - name: monitoring
     sourceRepo:
       - https://open-telemetry.github.io/opentelemetry-helm-charts
