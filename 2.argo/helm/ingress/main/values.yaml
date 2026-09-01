@@ -1,7 +1,7 @@
 certManager:
   enabled: true
   # renovate: datasource=docker depName=quay.io/jetstack/charts/cert-manager
-  version: 1.20.2
+  version: v1.21.1
   installCRDs: true
   certIssuer:
     enabled: true
