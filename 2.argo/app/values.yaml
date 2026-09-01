@@ -95,6 +95,10 @@ project:
         kind: "AuthentikInstance"
       - group: "authentik.weebo.io"
         kind: "AuthentikNamespacePolicy"
+      - group: "authentik.weebo.io"
+        kind: "AuthentikUser"
+      - group: "authentik.weebo.io"
+        kind: "AuthentikGroup"
   - name: monitoring
     sourceRepo:
       - https://open-telemetry.github.io/opentelemetry-helm-charts

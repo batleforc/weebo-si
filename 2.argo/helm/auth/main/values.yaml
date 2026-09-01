@@ -47,9 +47,9 @@ authentik:
         enabled: false
     identity: # phase 1 -- groups then users
       groups:
-        enabled: false
+        enabled: true
       users:
-        enabled: false
+        enabled: true
     brand: # phase 2a
       enabled: false
     flows: # phase 2b -- needs operator >= 0.7.0
