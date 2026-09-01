@@ -99,6 +99,8 @@ project:
         kind: "AuthentikUser"
       - group: "authentik.weebo.io"
         kind: "AuthentikGroup"
+      - group: "authentik.weebo.io"
+        kind: "AuthentikBrand"
   - name: monitoring
     sourceRepo:
       - https://open-telemetry.github.io/opentelemetry-helm-charts
