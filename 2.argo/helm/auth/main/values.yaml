@@ -22,7 +22,7 @@ authentik:
     # `secretStore.vault.caSecretRef`, without which the operator cannot
     # verify openbao's self-signed TLS and every Vault target fails its
     # reconcile. See MIGRATION.md 3.2.
-    version: 0.8.0
+    version: 0.9.0
     replicaCount: 1
   # Phase toggles for the adoption of the Terraform-managed Authentik objects
   # by the operator. Only the flags live here; every spec they switch on is in

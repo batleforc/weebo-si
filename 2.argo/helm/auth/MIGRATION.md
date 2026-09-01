@@ -11,9 +11,9 @@ Two files hold the whole migration:
 - `2.terra/auth/migration/` — the one-shot jobs that make Terraform *forget*
   what the operator has taken over.
 
-**Requires operator 0.8.0** (`authentik.operator.version` in
-`main/values.yaml`). Four changes are load-bearing here and none of them
-exists in 0.6.0:
+**Requires operator 0.8.0, plus the `spec.url` split that landed after it**
+(`authentik.operator.version` in `main/values.yaml`). Five changes are
+load-bearing here and none of them exists in 0.6.0:
 
 - **`AuthentikFlow`**, cluster-scoped and slug-keyed. `flow.tf`'s
   `token-authentik-flow` was the one Terraform `resource` with no CRD; it now
@@ -36,6 +36,19 @@ exists in 0.6.0:
   `harbor.tf`/`s3.tf`/`argo.tf`/`che-cluster.tf` interpolate today. Section
   3.3 used to be a list of consumers to patch around this; it is now a
   no-op.
+
+- **`spec.url` is split into a REST base and a web base** (after 0.8.0). The
+  bullet above only holds if the operator can reach the API at all, and in
+  0.8.0 it cannot: `gateway_factory.rs` handed `spec.url` to the generated
+  client verbatim, while that client appends every path to a base that has to
+  end in `/api/v3` (its own default `base_path` is literally `/api/v3`). So
+  `url: https://auth.weebo.poc` 404s on every call, and "fixing" it by writing
+  `https://auth.weebo.poc/api/v3` feeds the same string to the issuer above
+  and writes `.../api/v3/application/o/<slug>/` into all five Vault paths.
+  `api::instance::split_urls` now derives both from the web base (and trims a
+  stray `/api/v3` rather than honouring it). **Bump
+  `authentik.operator.version` to the release carrying this before flipping
+  `foundation.enabled`** — every other phase depends on it.
 
 0.7.0 also gives `oauth2.signingKey` a default of
 `"authentik Self-signed Certificate"` — the same certificate
@@ -356,6 +369,9 @@ outside Authentik reads them.
 ```bash
 # 1. Import ids from the live instance (needs network access to Authentik and
 #    a read token — mv/main-config#AUTHENTIK_BOOTSTRAP_TOKEN works).
+#    --authentik-url is the WEB base, like spec.url: the importer appends
+#    /api/v3 itself. On a 0.8.0 checkout it did not, and every call 404s --
+#    check out a revision carrying api::instance::split_urls.
 git clone https://github.com/batleforc/weebo-authentik && cd weebo-authentik
 AUTHENTIK_TOKEN=<token> cargo run -p importer -- \
   --authentik-url https://auth.weebo.poc \

@@ -20,6 +20,17 @@ instanceRef: main
 # ---------------------------------------------------------------------------
 foundation:
   enabled: false
+  # The WEB base URL, not the REST endpoint: the operator appends `/api/v3`
+  # itself for API calls, and uses this bare value as the root of the
+  # per-application OIDC issuer it writes into an oauth2 app's AUTHENTIK_URL
+  # (`<url>/application/o/<slug>/`). Writing `/api/v3` here would poison every
+  # issuer in phase 4.
+  #
+  # Needs an operator NEWER than 0.8.0: 0.8.0 hands `spec.url` to the REST
+  # client verbatim (gateway_factory.rs), so with the value below every API
+  # call lands on `https://auth.weebo.poc/core/...` and 404s. The split lives
+  # in `api::instance::split_urls` -- ship a release containing it before
+  # enabling this block.
   url: "https://auth.weebo.poc"
   token:
     # The operator reads its API token from a plain Secret; this pulls it out
@@ -197,7 +208,6 @@ flows:
 # points every consumer at a non-existent issuer. See MIGRATION.md 3.3.
 # ---------------------------------------------------------------------------
 applications:
-
   # --- Phase 3: proxy providers. No Vault secret involved, so these can move
   # independently of the oauth2 blocker below. -----------------------------
 
