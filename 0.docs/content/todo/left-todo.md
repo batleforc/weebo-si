@@ -4,22 +4,29 @@
 
 - [ ] Remplacer le setup actuel d'Authentik avec l'opérateur [Weebo-Authentik](https://github.com/batleforc/weebo-authentik)
   - [ ] Migrer Authentik vers CNPG
-  - [ ] Migrer les utilisateurs et groupes existants vers l'opérateur
-  - [ ] Migrer les applications existantes vers l'opérateur
-- [ ] [ProxyAuthK8S](https://github.com/batleforc/ProxyAuthK8S)
+  - [x] Migrer les utilisateurs et groupes existants vers l'opérateur
+  - [x] Migrer les applications existantes vers l'opérateur
+- [ ] [ProxyAuthK8S](https://github.com/batleforc/ProxyAuthK8S) - Will wait for 0.2.0 - Ouroboros
   - [ ] Point d'accés externe au cluster Kubernetes pour l'authentification OIDC
   - [ ] Rejeter toutes requêtes qui ne viendrais pas de ProxyAuthK8S ?
+  - [ ] Expo : kube.weebo.poc
 - [ ] Setup RustFS
   - [ ] [OIDC](https://docs.rustfs.com/fr/security-compliance/oidc/keycloak)
   - [ ] Terraform ? New Operator ?
+  - [ ] Expo : s3.weebo.poc
 - [ ] [Angos](https://angos.dev/docs/how-to/deploy-kubernetes#prerequisites)
   - [ ] [OIDC user](https://angos.dev/docs/how-to/configure-generic-oidc) : Allow users to login with OIDC
   - [ ] [OIDC Kube](https://angos.dev/docs/how-to/configure-kubernetes-oidc) : Allow Kubernetes to authenticate with OIDC (e.g. Create a Dockerconfigjson from service account that can be used to pull images from a private registry)
   - [ ] [OIDC CI](https://angos.dev/docs/how-to/configure-github-actions-oidc) : Directly push images to angos registry from GitHub Actions using OIDC
+  - [ ] Expo : registry.pkg.weebo.poc
 - [ ] [Batlehub](https://batleforc.git.batleforc.fr/batlehub/)
   - [ ] [OIDC](https://batleforc.git.batleforc.fr/batlehub/guide/admin-config.html#auth) : Allow users to login with OIDC
   - [ ] [OIDC Kube](https://batleforc.git.batleforc.fr/batlehub/guide/admin-config.html#kubernetes-service-accounts) : Allow Kubernetes to authenticate with OIDC (e.g. Create a configuration in pod from service account that can be used to pull artifacts from a private registry)
   - [ ] [OIDC CI](https://batleforc.git.batleforc.fr/batlehub/guide/admin-config.html#github-actions) : Directly push artifacts to batlehub registry from GitHub Actions using OIDC (Like VsCode Extension or other)
+  - [ ] Expo :
+    - hub.pkg.weebo.poc
+    - npm.pkg.weebo.poc
+    - \*.pkg.weebo.poc
 - [ ] [Kuberarmor](https://kubearmor.com/)
 - [ ] [Kloak](https://une-tasse-de.cafe/blog/kloak/)
 - [ ] [Weebo Si Hardening](https://github.com/batleforc/weebo-si-hardening)
@@ -29,6 +36,7 @@
   - [ ] Image Registry
   - [ ] Package Registry
 - [ ] [Eclipse Che](https://www.eclipse.org/che/)
+  - [ ] Expo : cde.dev.weebo.poc && \*.cde.dev.weebo.poc
 
 ## Documentation
 

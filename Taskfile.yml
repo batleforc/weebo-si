@@ -30,19 +30,21 @@ tasks:
     aliases: [k]
     cmds:
       - kubectl {{ .CLI_ARGS }}
-  k-oidc:
+  kubectl-oidc:
     silent: true
     env:
       KUBECONFIG: 0.config/kubeconfig.oidc.yaml
+    aliases: [k-oidc, k-o]
     cmds:
       - kubectl {{ .CLI_ARGS }}
   docs:run:
     dir: 0.docs
     cmds:
       - npm run dev
-  t:
+  talosctl:
     env:
       TALOSCONFIG: "0.config/talosconfig2.yaml"
+    aliases: [t]
     cmds:
       - talosctl {{ .CLI_ARGS }}
   k9s:
@@ -55,9 +57,10 @@ tasks:
       KUBECONFIG: 0.config/kubeconfig.oidc.yaml
     cmds:
       - lfk {{ .CLI_ARGS }}
-  c:
+  cilium:
     env:
       KUBECONFIG: 0.config/kubeconfig.yaml
+    aliases: [c]
     cmds:
       - cilium {{ .CLI_ARGS }}
   create-kubeconfig-oidc:
