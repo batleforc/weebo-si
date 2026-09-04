@@ -59,7 +59,7 @@ authentik:
       # application may name an explicit `secretTargets` Vault path. Turning it
       # on alone writes nothing anywhere. Prerequisites in MIGRATION.md 3.2.
       vault:
-        enabled: false
+        enabled: true
     identity: # phase 1 -- groups then users
       groups:
         enabled: true
@@ -76,13 +76,13 @@ authentik:
       clickstack: # phase 3 -- proxy, verify forward_single after sync
         enabled: true
       harbor: # phase 4 -- oauth2. Order: harbor, s3, argo, che, vault
-        enabled: false
+        enabled: true
       s3:
-        enabled: false
+        enabled: true
       argo: # 0.8.0 writes the same issuer TF did, so no consumer fix (3.3)
-        enabled: false
+        enabled: true
       che:
-        enabled: false
+        enabled: true
       vault:
         enabled: false
 

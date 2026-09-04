@@ -1159,7 +1159,7 @@ then have nothing left, so both come out of `kustomization.yaml` — but check
 first: both files' policy bindings read `data.authentik_group.weebo_admin.id`,
 and that data source is defined in `group.tf`, not in them.
 
-### Phase 4 — the oauth2 applications — not started
+### Phase 4 — the oauth2 applications — ✅ harbor/s3/argo/che done 2026-09-04, vault stays
 
 Read section 3 first. Order: **`harbor` → `s3` → `argo` → `che` → `vault`**.
 
@@ -1223,6 +1223,56 @@ reports Ready. All five carry `9c470150-b16e-4d75-be74-0e2f3dceeec9`, the
 self-signed certificate — which is what 0.7.0's `signingKey` default resolves
 to, so the explicit `signingKey` in `sub/values.yaml` is a no-op here and a
 guard against a future default change.
+
+**Outcome, 2026-09-04.** All four ran clean, in order, with an empty KV diff
+every time:
+
+| App    | KV path(s)                          | data diff | KV version |
+| ------ | ----------------------------------- | --------- | ---------- |
+| harbor | `mv/registry/auth`                  | empty     | 1 → 3      |
+| s3     | `mv/s3/auth`                        | empty     | 1 → 3      |
+| argo   | `mv/argocd/auth`                    | empty     | 1 → 3      |
+| che    | `mv/eclipse-che/auth`, `mv/dex/auth`| empty     | 1 → 4, 2 → 5 |
+
+All seven oauth2 providers came back unchanged on `client_id`,
+`client_secret`, `client_type`, `sub_mode`, `access_token_validity`,
+`signing_key`, `grant_types`, `redirect_uris` and `property_mappings` —
+including `che-cluster`'s `sub_mode = user_username` and
+`access_token_validity = hours=10`, the two values from section 1's table that
+adoption had to preserve. Application count stayed 7, binding count 19.
+
+**The version bump is not a diff.** Each reconcile is a full KV v2 `set`, so
+the version increments even when the content is identical — that is why the
+check is on `.data.data`, never on the version. Expect it to keep climbing for
+as long as the CRs exist.
+
+**Two fields are sent unconditionally on PATCH, and this is the real risk in
+phase 4.** `client_secret`, `sub_mode` and `access_token_validity` are `None`
+and therefore preserved, but `redirect_uris` and `property_mappings` are built
+from the CR spec and **always** sent:
+
+```rust
+redirect_uris: Some(redirect_uris),          // Self::redirect_uris(spec)
+property_mappings: Some(property_mappings),  // resolved by NAME
+```
+
+An empty or wrong list in `sub/values.yaml` therefore **wipes** the live
+values — which for `redirect_uris` breaks OIDC login for that application
+outright. This is the same shape as the clickstack `internal_host` trap, and
+the reason the pre-flight below is not optional:
+
+```bash
+# diff every CR's allowedRedirectUris / propertyMappings / clientId / grantTypes
+# against the live provider BEFORE enabling anything
+helm template auth-app 2.argo/helm/auth/sub --set applications.<app>.enabled=true
+ak.sh /providers/oauth2/
+ak.sh '/propertymappings/all/?page_size=200'   # to resolve pks to names
+```
+
+Run on 2026-09-04, harbor/s3/argo/che-cluster matched the live providers
+exactly on all four fields. **`vault` did not** — its live `redirect_uris`
+carry duplicates the CR does not, which is the same duplication visible in the
+`terraform plan` churn. One more reason it stays in Terraform.
 
 Any diff at all in step 5 is a stop. A changed `AUTHENTIK_CLIENT_SECRET` means
 something rotated the credential; a changed `AUTHENTIK_URL` means the CR's slug
