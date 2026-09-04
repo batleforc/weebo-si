@@ -1004,7 +1004,7 @@ nothing else.
 > before the commit, so the object was live and Ready throughout. The whitelist
 > only governs whether ArgoCD may *manage* it.
 
-### Phase 3 — the two proxy applications — not started
+### Phase 3 — the two proxy applications — longhorn ✅ done 2026-09-04, clickstack pending
 
 > **Fixed on 2026-09-04, before you get here.** All seven `accessGroup` values
 > in `sub/values.yaml` named the **CR** (`weebo-admin`, hyphen) where the
@@ -1026,6 +1026,26 @@ Two applications, four Terraform resources each
 `authentik_outpost_provider_attachment`, `authentik_policy_binding`), and no
 Vault secret anywhere — which is what makes this phase independent of the 3.2
 plumbing and safe to do before phase 4.
+
+**Adopt with the CRs pre-created and their status patched before the commit
+lands**, exactly as phase 2b did — `kubectl apply` leaves the status
+subresource alone, so ArgoCD then adopts an object that is already Ready and
+the create-first collision never happens. An application needs two ids:
+
+```bash
+task k -- apply -f <rendered CRs>
+task k -- -n auth patch authentikapplication longhorn --subresource=status \
+  --type merge -p '{"status":{"authentikId":"longhorn"}}'          # the SLUG
+task k -- -n auth patch authentikaccesspolicy longhorn-access --subresource=status \
+  --type merge -p '{"status":{"authentikId":"<binding pk from the table above>"}}'
+```
+
+Result for longhorn: both CRs `Reconciled`/Ready, and the proxy providers
+**byte-identical** before and after on all of
+`mode`/`internal_host`/`external_host`/`authorization_flow`/`invalidation_flow`/
+`intercept_header_auth`/`basic_auth_enabled`/`cookie_domain`/`skip_path_regex`.
+Application count stayed 7 and binding count stayed 19 — the check that proves
+adoption rather than creation, and the one worth repeating for clickstack.
 
 `longhorn` first; it is the ordinary case (`mode=proxy`,
 `internal_host=http://longhorn-frontend.longhorn.svc.cluster.local`,
