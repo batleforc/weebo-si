@@ -978,6 +978,32 @@ the same reason: by then neither of its two resources is in state.
 referenced by slug from `data.tf`; a CR over one of them adds a finalizer and
 nothing else.
 
+> **The AppProject whitelist blocks this phase until it is fixed.** `auth-app`
+> runs in project `infra`, whose `clusterResourceWhitelist`
+> (`2.argo/app/values.yaml`) is an allow-list. It named `AuthentikInstance`,
+> `AuthentikNamespacePolicy`, `AuthentikUser`, `AuthentikGroup` and
+> `AuthentikBrand` — every cluster-scoped kind that existed when it was
+> written — but not `AuthentikFlow`, which the operator only gained in 0.7.0.
+> The sync fails with:
+>
+> ```
+> resource authentik.weebo.io:AuthentikFlow is not permitted in project infra
+> ```
+>
+> and ArgoCD retries with backoff rather than erroring out, so it shows as a
+> sync stuck `Running`, not as a failure. Fixed by adding the kind to
+> `2.argo/app/values.yaml` (managed by the `main` Application).
+>
+> Note what this does **not** affect: phases 3 and 4. `AuthentikApplication`
+> and `AuthentikAccessPolicy` are Namespaced, and `namespaceResourceWhitelist`
+> is null, which ArgoCD reads as allow-all. Of the six cluster-scoped kinds
+> the operator ships, `AuthentikOutpost` is now the only one still absent —
+> deliberately, since no phase here creates one.
+>
+> The CR itself is unaffected either way: it was created and adopted by hand
+> before the commit, so the object was live and Ready throughout. The whitelist
+> only governs whether ArgoCD may *manage* it.
+
 ### Phase 3 — the two proxy applications — not started
 
 > **Fixed on 2026-09-04, before you get here.** All seven `accessGroup` values
