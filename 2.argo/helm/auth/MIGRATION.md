@@ -6,58 +6,244 @@ after every step. Nothing here ever recreates an Authentik object.
 
 Two files hold the whole migration:
 
-- `2.argo/helm/auth/sub/values.yaml` — the CRs, one `enabled` flag each, all
-  `false` today.
+- `2.argo/helm/auth/sub/values.yaml` — the CRs, one `enabled` flag each.
 - `2.terra/auth/migration/` — the one-shot jobs that make Terraform _forget_
   what the operator has taken over.
 
-**Requires operator 0.8.0, plus the `spec.url` split that landed after it**
-(`authentik.operator.version` in `main/values.yaml`). Five changes are
-load-bearing here and none of them exists in 0.6.0:
+Everything below assumes the repo's kubectl wrapper, `task k -- <args>`
+(`Taskfile.yml`, `KUBECONFIG=0.config/kubeconfig.yaml`). Plain `kubectl` works
+too if your KUBECONFIG is already pointed at the cluster. `auth.weebo.poc`,
+`vault.weebo.poc` and friends resolve only over the VPN (`task vpn:`), which is
+why every live check below is written to run **from inside the cluster** —
+those work from anywhere.
 
-- **`AuthentikFlow`**, cluster-scoped and slug-keyed. `flow.tf`'s
+**Requires operator 0.10.0.** Six changes are load-bearing and none of them
+exists in 0.6.0:
+
+- **`AuthentikFlow`**, cluster-scoped and slug-keyed (0.7.0). `flow.tf`'s
   `token-authentik-flow` was the one Terraform `resource` with no CRD; it now
   has one. New phase 2b.
-- **`AuthentikApplication.spec.secretTargets`** — a per-application list of
-  Vault paths / Kubernetes Secrets the oauth2 credentials are fanned out to,
-  each Vault entry pinning an exact path. This is what turns phase 4 from
-  "pick one of three bad options" into a normal phase; section 3 is rewritten
-  around it.
+- **`AuthentikApplication.spec.secretTargets`** (0.7.0) — a per-application
+  list of Vault paths / Kubernetes Secrets the oauth2 credentials are fanned
+  out to, each Vault entry pinning an exact path. This is what turns phase 4
+  from "pick one of three bad options" into a normal phase; section 3 is
+  written around it.
 - **`AuthentikInstance.spec.secretStore.vault.caSecretRef`** (0.8.0) — the CA
-  the operator verifies Vault's TLS with, read from a Kubernetes Secret over
-  the API rather than from a mounted file. This is the whole of prerequisite 2
-  in 3.2; without it there is no supported way to make the operator trust
-  openbao.
+  the operator verifies **Vault's** TLS with, read from a Kubernetes Secret
+  over the API rather than from a mounted file. This is the whole of
+  prerequisite 2 in 3.2; without it there is no supported way to make the
+  operator trust openbao.
 - **`AUTHENTIK_URL` is the per-application issuer** (0.8.0). It used to be
   the gateway's REST `base_path`. `upsert_oauth2_provider` now takes the
   application's slug and the gateway carries a `web_base_url` separate from
   the API base, so the credential written out is
   `<spec.url>/application/o/<slug>/` — character for character what
   `harbor.tf`/`s3.tf`/`argo.tf`/`che-cluster.tf` interpolate today. Section
-  3.3 used to be a list of consumers to patch around this; it is now a
-  no-op.
-
-- **`spec.url` is split into a REST base and a web base** (after 0.8.0). The
-  bullet above only holds if the operator can reach the API at all, and in
-  0.8.0 it cannot: `gateway_factory.rs` handed `spec.url` to the generated
-  client verbatim, while that client appends every path to a base that has to
-  end in `/api/v3` (its own default `base_path` is literally `/api/v3`). So
+  3.3 used to be a list of consumers to patch around this; it is now a no-op.
+- **`spec.url` is split into a REST base and a web base** (0.9.0). The bullet
+  above only holds if the operator can reach the API at all, and in 0.8.0 it
+  cannot: `gateway_factory.rs` handed `spec.url` to the generated client
+  verbatim, while that client appends every path to a base that has to end in
+  `/api/v3` (its own default `base_path` is literally `/api/v3`). So
   `url: https://auth.weebo.poc` 404s on every call, and "fixing" it by writing
   `https://auth.weebo.poc/api/v3` feeds the same string to the issuer above
   and writes `.../api/v3/application/o/<slug>/` into all five Vault paths.
   `api::instance::split_urls` now derives both from the web base (and trims a
-  stray `/api/v3` rather than honouring it). **Bump
-  `authentik.operator.version` to the release carrying this before flipping
-  `foundation.enabled`** — every other phase depends on it.
+  stray `/api/v3` rather than honouring it). The same function backs the
+  importer's `--authentik-url`.
+- **`AuthentikInstance.spec.tls.caSecretRef`** (0.10.0) — the same trick as
+  `secretStore.vault.caSecretRef`, but for the **Authentik** API. Not optional
+  here: `auth.weebo.poc` is signed by the weebo private PKI and the operator
+  image is `distroless/cc`, which ships the public roots only. See phase 0.
 
   0.7.0 also gives `oauth2.signingKey` a default of
   `"authentik Self-signed Certificate"` — the same certificate
   `data.authentik_certificate_key_pair.generated` resolves in `data.tf`, so
   every provider here is unaffected. Note the shift though: in 0.6.0 an omitted
   `signingKey` sent no key at all and adoption preserved whatever was live;
-  in 0.7.0 an omitted `signingKey` _sets_ the self-signed cert. Every CR in
+  since 0.7.0 an omitted `signingKey` _sets_ the self-signed cert. Every CR in
   `sub/values.yaml` names it explicitly for that reason. An explicit `null`
   still means "no signing key".
+
+---
+
+## 0. Where this migration stands
+
+Verified against the live cluster on **2026-09-04**. Re-run the commands in
+"how it was checked" before trusting this table — it is a snapshot, not state.
+
+| Phase                      | Operator side                                                                                           | Terraform side                                                                                                                   | Verdict                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **0** foundation           | `AuthentikInstance/main` Ready, `AuthentikNamespacePolicy/weebo-allow` accepted, `tls.caSecretRef` live | nothing to do                                                                                                                    | **done**                                                           |
+| **1** identity             | 3 `AuthentikGroup` + 1 `AuthentikUser`, all Ready with `authentikId`                                    | `state rm` ran 2026-09-01 22:55; `group.tf` downgraded to `data`; `user.tf` gone from disk and from `kustomization.yaml`         | **done**                                                           |
+| **2a** brand               | `AuthentikBrand/weebo` Ready, id `e16f5533-…`, `flow_device_code` preserved                             | **not done** — `authentik_brand.default` is still in state, and the block is _already deleted_ from the working tree's `flow.tf` | **half — hazard, see below**                                       |
+| **2b** device-code flow    | no CR; `flows.deviceCode.enabled: true` is set in the working tree only                                 | `authentik_flow.token-authentik-flow` still in state and still in `flow.tf`                                                      | not started                                                        |
+| **3** longhorn, clickstack | flags `false`                                                                                           | in state                                                                                                                         | not started                                                        |
+| **4** harbor…vault         | flags `false`; `foundation.vault.enabled: false`                                                        | in state                                                                                                                         | not started — but **both 3.2 prerequisites are already satisfied** |
+
+Supporting facts, all verified:
+
+- Operator image is `ghcr.io/batleforc/weebo-authentik-operator:v0.10.0`, 9
+  CRDs present, `caSecretRef` and `secretTargets` both in the served schemas.
+- The `authentik-operator` ArgoCD Application reports **OutOfSync on all 9
+  CRDs** while `operationState` says `Succeeded`. This is the usual ArgoCD
+  large-CRD diff, not a failed rollout — the fields the migration needs are
+  live (checked directly, see phase 0). Do not "fix" it by re-syncing mid-phase.
+- The `terra-authentik` Application has auto-sync **suspended** — but by a live
+  patch (`spec.syncPolicy.automated.enabled: false`), and that field is **not
+  in git**: `main/templates/authentik/terra-config.yaml` renders
+  `automated: {prune: true, selfHeal: true}` with no `enabled`. It survives
+  today only because ArgoCD does not currently diff it. Treat the suspension as
+  a sticky note, not as a lock.
+- Live Authentik holds 7 applications (`argo`, `che-cluster`, `clickstack`,
+  `harbor`, `longhorn`, `s3`, `vault`), 7 oauth2 providers and 2 proxy
+  providers. `clickstack` is still `mode=forward_single`.
+
+### The one thing to fix before anything else
+
+`flow.tf` in the working tree has already lost its `authentik_brand.default`
+block, but `terraform state` still holds `authentik_brand.default`. The
+PostSync job does `rm -rf *.tf; cp /scripts/*.tf .; terraform apply`. So the
+moment that edit is committed **and** pushed **and** `terra-authentik` syncs,
+Terraform plans a **real delete** of the live brand — the exact failure the
+first standing rule in section 4 exists to prevent.
+
+Three things are holding it back right now, and all three are soft: the edit is
+uncommitted, the PVC still carries the 1429-byte `flow.tf` with the block, and
+auto-sync is off by a live-only patch.
+
+**Fix the order, do not lean on the brakes:** run phase 2a's `state rm`
+(`PHASE=brand`) first, then commit. Step-by-step in phase 2a below.
+
+### How the table was checked
+
+```bash
+# operator version + CRDs + the two schema fields the migration needs
+task k -- -n auth get deploy -o custom-columns=NAME:.metadata.name,IMAGE:.spec.template.spec.containers[*].image
+task k -- get crd | grep authentik.weebo.io | wc -l                      # 9
+task k -- get crd authentikinstances.authentik.weebo.io -o yaml | grep -c caSecretRef
+task k -- get crd authentikapplications.authentik.weebo.io -o yaml | grep -c secretTargets
+
+# every CR the operator owns, with its adopted id and readiness
+task k -- get authentikgroups,authentikusers,authentikbrands,authentikflows,\
+authentikapplications,authentikaccesspolicies,authentikoutposts,\
+authentikinstances,authentiknamespacepolicies -A \
+  -o custom-columns='KIND:.kind,NAME:.metadata.name,ID:.status.authentikId,READY:.status.conditions[?(@.type=="Ready")].status'
+
+# what Terraform still believes it owns, and which phases have already run
+task k -- -n auth logs job/terra-state-rm | tail -60
+task k -- -n auth get app 2>/dev/null; task k -- -n argocd get app \
+  -o custom-columns='NAME:.metadata.name,SYNC:.status.sync.status,HEALTH:.status.health.status,AUTO:.spec.syncPolicy.automated'
+```
+
+The authoritative answer to "has phase X's `state rm` run" is on the PVC: each
+run drops a `state-backup-<phase>-<timestamp>.tfstate` next to
+`terraform.tfstate` and never removes it. List them (read-only, no mutation):
+
+```bash
+task k -- -n auth run tfstate-peek --rm -i --restart=Never --image=busybox \
+  --overrides='{"spec":{"containers":[{"name":"p","image":"busybox","command":["ls","-la","/terraform"],"volumeMounts":[{"mountPath":"/terraform","name":"v"}]}],"volumes":[{"name":"v","persistentVolumeClaim":{"claimName":"terra-job-authentik"}}]}}'
+```
+
+Today that lists exactly one: `state-backup-identity-20260901-225507.tfstate`.
+Phase 1 is the only `state rm` that has ever run.
+
+### The plan baseline — "no changes" is not achievable
+
+Every phase below ends with "the plan must be clean". It cannot be, and never
+was. On an untouched module the plan is:
+
+```
+Plan: 0 to add, 6 to change, 0 to destroy.
+```
+
+Those six are a permanent round-trip failure in the `goauthentik/authentik`
+provider (2026.5.0), not migration drift:
+
+- **the five oauth2 providers** (`argo`, `che`, `harbor`, `s3`, `vault`) —
+  the provider writes `redirect_uri_type` into every `allowed_redirect_uris`
+  entry in state, the API never returns it, so every plan proposes rewriting
+  the whole list. `vault` additionally shows its four URIs as six, because the
+  list is rebuilt from two overlapping `dynamic` blocks.
+- **`authentik_provider_proxy.clickstack`** — `clickstack.tf` deliberately
+  omits `internal_host`, so Terraform wants `null`; Authentik ignores the null
+  and keeps the stored `http://clickstack-preauth.monitoring.svc.cluster.local:8080`.
+  The apply "succeeds" and the next plan proposes it again.
+
+So the real acceptance criterion for every phase is:
+
+> **`0 to destroy`, and nothing in the plan beyond those six known churners.**
+
+A destroy, or a seventh resource, is a stop.
+
+### Running a plan without applying anything
+
+There is no `terraform plan` step in the PostSync job, so run one by hand. This
+is read-only — it reads the PVC's state and the live APIs and writes nothing:
+
+```bash
+cat > /tmp/plan-job.yaml <<'EOF'
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: terra-plan-check
+  namespace: auth
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      annotations:
+        vault.security.banzaicloud.io/vault-addr: "https://openbao.vault:8200"
+        vault.security.banzaicloud.io/vault-role: "auth"
+        vault.security.banzaicloud.io/vault-path: "kubernetes"
+        vault.security.banzaicloud.io/vault-tls-secret: "openbao-tls"
+    spec:
+      serviceAccountName: "authentik"
+      restartPolicy: Never
+      containers:
+        - name: terraform
+          image: hashicorp/terraform:latest
+          command:
+            - /bin/sh
+            - "-c"
+            - |
+              set -eu
+              cd /terraform
+              terraform init -input=false >/dev/null
+              terraform plan -input=false -lock=false -no-color
+          env:
+            - name: TF_VAR_authentik_url
+              value: "https://auth.weebo.poc"
+            - name: TF_VAR_authentik_token
+              value: "vault:mv/data/main-config#AUTHENTIK_BOOTSTRAP_TOKEN"
+            - name: TF_VAR_vault_addr
+              value: "https://openbao.vault:8200"
+          volumeMounts:
+            - { mountPath: /terraform, name: terra-job }
+            - { mountPath: /etc/ssl/vault, name: openbao-tls }
+            - { mountPath: /etc/ssl/certs, name: etc-ssl-certs }
+      volumes:
+        - name: terra-job
+          persistentVolumeClaim: { claimName: "terra-job-authentik" }
+        - name: openbao-tls
+          secret: { secretName: "openbao-tls" }
+        - name: etc-ssl-certs
+          secret: { secretName: "weebo.poc" }
+EOF
+task k -- -n auth delete job terra-plan-check --ignore-not-found
+task k -- apply -f /tmp/plan-job.yaml
+task k -- -n auth wait --for=condition=complete job/terra-plan-check --timeout=180s
+task k -- -n auth logs job/terra-plan-check | grep -E '^  # |^Plan:'
+task k -- -n auth delete job terra-plan-check
+```
+
+Two things this plan does **not** tell you, both because the PVC's `.tf` files
+are whatever ArgoCD last wrote from git:
+
+- it plans against the **committed** `.tf`, not your working tree;
+- it will not show the brand destroy described above until that edit is pushed.
+
+That is the point of running `state rm` before committing, not after.
 
 ---
 
@@ -80,27 +266,29 @@ field `skip_serializing_if = "Option::is_none"`. A field the CRD cannot
 express is therefore absent from the request body, and Authentik keeps what it
 has. Verified for the ones that matter here:
 
-| Live field                         | Set by                       | Survives adoption                   |
-| ---------------------------------- | ---------------------------- | ----------------------------------- |
-| `client_secret` (all oauth2)       | Authentik                    | yes — never rotated by the operator |
-| `mode = forward_single`            | `clickstack.tf`              | yes                                 |
-| `sub_mode = user_username`         | `che-cluster.tf`             | yes                                 |
-| `access_token_validity = hours=10` | `che-cluster.tf`             | yes                                 |
-| `meta_launch_url`                  | `che-cluster.tf`, `vault.tf` | yes                                 |
-| `flow_device_code` on the brand    | `flow.tf`                    | yes                                 |
-| `default_application` on the brand | `flow.tf`                    | yes                                 |
+| Live field                         | Set by                       | Survives adoption                     |
+| ---------------------------------- | ---------------------------- | ------------------------------------- |
+| `client_secret` (all oauth2)       | Authentik                    | yes — never rotated by the operator   |
+| `mode = forward_single`            | `clickstack.tf`              | yes                                   |
+| `sub_mode = user_username`         | `che-cluster.tf`             | yes                                   |
+| `access_token_validity = hours=10` | `che-cluster.tf`             | yes                                   |
+| `meta_launch_url`                  | `che-cluster.tf`, `vault.tf` | yes                                   |
+| `flow_device_code` on the brand    | `flow.tf`                    | yes — **confirmed live in 2a**        |
+| `default_application` on the brand | `flow.tf`                    | yes (currently `null` on both brands) |
 
 The catch is that "preserved" also means "no longer described anywhere in
 git". Those values become invisible state on the live instance. Treat the
 table above as a list of things to re-check after any operator upgrade that
 starts modeling one of them.
 
-0.7.0 is exactly such an upgrade, and it took one field off this table:
+0.7.0 was exactly such an upgrade, and it took one field off this table:
 `signing_key` is now modeled _and defaulted_, so an omitted `signingKey` no
 longer means "leave it alone" — it means "set the self-signed cert". The value
-happens to match on every provider here, but the rule changed. `client_secret`
-is still never rotated; what 0.7.0 adds is that the operator now _writes_ it
-somewhere (section 3), where before it only read it back.
+happens to match on every provider here
+(`9c470150-b16e-4d75-be74-0e2f3dceeec9`, the self-signed cert, on all five
+oauth2 providers; `null` on the two proxy ones), but the rule changed.
+`client_secret` is still never rotated; what 0.7.0 adds is that the operator
+now _writes_ it somewhere (section 3), where before it only read it back.
 
 ---
 
@@ -120,10 +308,18 @@ Two entries left this list in 0.7.0:
 
 - `authentik_flow.token-authentik-flow` (`flow.tf`) now has an `AuthentikFlow`
   CRD — see phase 2b. The CRD models the flow object only, not its stage
-  bindings or policies, but that flow has neither, so it is parity.
+  bindings or policies; the live flow has `stages: []` and `policies: []`
+  (verified), so it is parity.
 - `vault_kv_secret_v2` for the five oauth2 apps is no longer stuck in
   Terraform: `secretTargets` lets the operator write those exact paths. See
   section 3.
+
+**`group.tf` is the third case, and it is neither.** The three groups moved to
+CRs in phase 1, but the file did not disappear — it was _downgraded_ from
+`resource` to `data`, because eleven references across seven `.tf` files read
+`authentik_group.*.id` / `.name`, `vault.tf` among them. That downgrade is
+already in place. Any future phase that removes a resource other code
+references takes the same shape: swap to `data`, never delete.
 
 ---
 
@@ -173,19 +369,20 @@ entries hold today, so nothing is dropped. (A Vault write is a full KV v2
 those three keys are the whole document; check before adding a target to a
 path that holds anything else.)
 
-### 3.2 Two prerequisites — one in this chart, one in Terraform
+### 3.2 Two prerequisites — both already satisfied
 
 The instance's default `backend` stays `kubernetes` — nothing should land at
 `mv/weebo-authentik/auth/<crName>`. But a Vault _target_ reuses the instance's
 `secretStore.vault` block for address/mount/auth, and the operator errors the
 reconcile if that block is missing. So `foundation.vault.enabled` must be on
-before the first phase-4 app, and two things must be true first:
+before the first phase-4 app, and two things must be true first. **Both were
+verified on 2026-09-04** — re-check, do not assume.
 
 1. **The operator's ServiceAccount must be bound to the `auth` Vault role.**
    That role (`mv_policy`, full CRUD on `mv/*`) bound
    `bound_service_account_names = ["authentik", "default"]` in namespace `auth`
    — and the operator runs as `authentik-weebo-authentik`, which was in
-   neither. Done in `2.terra/vault/terra-map/auth-base.tf`:
+   neither. Fixed in `2.terra/vault/terra-map/auth-base.tf`:
 
    ```hcl
    resource "vault_kubernetes_auth_backend_role" "auth-write" {
@@ -195,20 +392,27 @@ before the first phase-4 app, and two things must be true first:
    ```
 
    Do not instead point the operator chart at the existing `authentik` SA: the
-   authentik server chart already owns that name in this namespace. This one
-   still has to be applied by the `terra-vault` job before phase 4 — check
-   the live role, not just the `.tf`:
+   authentik server chart already owns that name in this namespace. The
+   `terra-vault` job has applied this — check the **live** role, not the `.tf`
+   (this reads the root token out of the cluster; no VPN needed):
 
    ```bash
-   bao read auth/kubernetes/role/auth   # bound_service_account_names must
-                                        # list authentik-weebo-authentik
+   TOKEN=$(task k -- -n vault get secret openbao-unseal-keys \
+     -o jsonpath='{.data.vault-root}' | base64 -d)
+   task k -- -n vault exec openbao-0 -c vault -- sh -c \
+     "VAULT_TOKEN=$TOKEN VAULT_ADDR=https://127.0.0.1:8200 VAULT_SKIP_VERIFY=true \
+      bao read auth/kubernetes/role/auth"
    ```
+
+   ✅ Live today: `bound_service_account_names [default authentik-weebo-authentik authentik]`,
+   `bound_service_account_namespaces [auth]`, `token_policies [mv_policy]`.
+   Note the container is `-c vault`, not `-c bao`.
 
 2. **The operator must trust openbao's self-signed CA** — `caSecretRef`,
    already set in `sub/values.yaml`. Unlike ESO's `SecretStore`,
-   `spec.secretStore.vault` has no `caProvider`, and `spec.tls.
-insecureSkipVerify` covers the _Authentik_ API, not Vault. 0.8.0 added the
-   field that closes this:
+   `spec.secretStore.vault` has no `caProvider`, and `spec.tls.insecureSkipVerify`
+   covers the _Authentik_ API, not Vault. 0.8.0 added the field that closes
+   this:
 
    ```yaml
    caSecretRef:
@@ -216,6 +420,9 @@ insecureSkipVerify` covers the _Authentik_ API, not Vault. 0.8.0 added the
      namespace: auth
      key: ca.crt
    ```
+
+   ✅ Live today: `task k -- -n auth get secret openbao-tls -o jsonpath='{.data.ca\.crt}' | wc -c`
+   returns 1668.
 
    The operator `GET`s that Secret through the Kubernetes API and hands the
    PEM to its Vault client — no volume, which matters because the operator
@@ -246,15 +453,22 @@ instance's **base** URL where Terraform writes the **per-application issuer**,
 so every adoption rewrote the key into a different shape and two in-repo
 consumers had to be patched around it.
 
-0.8.0 writes `<spec.url>/application/o/<slug>/`. With `spec.url` =
-`https://auth.weebo.poc` and the CR slugs in `sub/values.yaml` matching the
-`.tf` ones (they do — `harbor`, `s3`, `argo`, `che-cluster`, `vault`), the
-value is byte-identical to Terraform's.
+0.8.0 writes `<spec.url>/application/o/<slug>/`. With the live instance's
+`spec.url` = `https://auth.weebo.poc` (verified) and the CR slugs in
+`sub/values.yaml` matching the live applications — `harbor`, `s3`, `argo`,
+`che-cluster`, `vault`, all confirmed against
+`/api/v3/core/applications/?superuser_full_list=true` — the value is
+byte-identical to Terraform's.
 
-**So the phase-4 KV diff must now be empty.** Not "empty except
-`AUTHENTIK_URL`" — empty. A diff on _any_ of the three keys means something is
-wrong (a slug mismatch, a rotated secret, an instance `url` with a trailing
-path) and is a stop-and-investigate, not an expected shape change.
+> Note the asymmetry that makes this worth re-checking per app: the CR key is
+> `che`, the slug is `che-cluster`. The **slug** is what the issuer is built
+> from. A CR named after the app but slugged wrong points every consumer at an
+> issuer that does not exist, and nothing errors.
+
+**So the phase-4 KV diff must be empty.** Not "empty except `AUTHENTIK_URL`" —
+empty. A diff on _any_ of the three keys means something is wrong (a slug
+mismatch, a rotated secret, an instance `url` with a trailing path) and is a
+stop-and-investigate, not an expected shape change.
 
 The consumers therefore need no changes, and every one of them should read the
 key rather than keep its own copy of the issuer:
@@ -288,54 +502,126 @@ and secret, and none of those have a CRD equivalent. Its CR ships
 - **Never `terraform destroy`** against this module while the migration is in
   flight, and never delete a resource block whose object is still in state:
   the PostSync job does `rm -rf *.tf; cp /scripts/*.tf .; terraform apply`, so
-  a resource dropped from `kustomization.yaml` before its `state rm` is a
-  resource Terraform plans to **delete for real**. `state rm` always comes
-  first.
+  a resource dropped from `kustomization.yaml` — or from a `.tf` file — before
+  its `state rm` is a resource Terraform plans to **delete for real**.
+  `state rm` always comes first. **This is currently violated for the brand;
+  see section 0.**
 - **Never `kubectl delete` an adopted CR** unless you mean it. They carry
   finalizers: deleting the CR deletes the Authentik object behind it. This is
   also why `auth-app`'s sync policy sets `prune: false` — removing a CR from
   git must not be enough to destroy a provider.
 - **Suspend the Terraform apply loop** for the duration of each phase, so the
-  PostSync hook cannot race the state edit:
+  PostSync hook cannot race the state edit. On ArgoCD 3.x (this cluster runs
+  v3.4.3) use the `enabled` flag rather than nulling the block — it is what the
+  UI's "Disable Auto-Sync" writes, and it survives a parent-app self-heal that
+  nulling does not:
 
   ```bash
-  kubectl -n argocd patch app terra-authentik --type merge \
-    -p '{"spec":{"syncPolicy":{"automated":null}}}'
+  # suspend
+  task k -- -n argocd patch app terra-authentik --type merge \
+    -p '{"spec":{"syncPolicy":{"automated":{"enabled":false}}}}'
+  # confirm
+  task k -- -n argocd get app terra-authentik \
+    -o jsonpath='{.spec.syncPolicy.automated}{"\n"}'
+  # resume, once the phase's plan meets the section-0 baseline
+  task k -- -n argocd patch app terra-authentik --type merge \
+    -p '{"spec":{"syncPolicy":{"automated":{"enabled":true,"prune":true,"selfHeal":true}}}}'
   ```
 
-  Re-enable it (`"automated":{"prune":true,"selfHeal":true}`) once the phase's
-  `terraform plan` is clean.
+  It is **already suspended** today. Neither form is in git, so both are
+  patches that a `kubectl apply` of the rendered Application would drop. Check
+  the live value at the start of every phase.
+
+- **Nothing takes effect until it is pushed.** `auth`, `auth-app` and
+  `terra-authentik` all track the `develop` branch on the remote, not the
+  working tree. Flipping a flag in `main/values.yaml` and syncing does nothing
+  until the commit is pushed — and conversely, a `.tf` edit becomes live the
+  moment it is pushed _and_ the loop is resumed.
 
 ---
 
 ## 5. The phases
 
-Each phase is the same five moves. Only the objects change.
+Each phase is the same six moves:
 
-### Phase 0 — foundation (touches no Authentik object)
+1. **Suspend** the Terraform loop and confirm it is suspended.
+2. **Import** the live object's id with the importer.
+3. **Diff** the importer's output against `sub/values.yaml` and fix
+   `sub/values.yaml` — the importer wins.
+4. **Enable** the flag in `main/values.yaml`, commit, push, sync `auth-app`.
+5. **Patch** `status.authentikId` onto each CR (apply drops status) and verify
+   the CR reports Ready.
+6. **Hand over**: run `state rm` for the phase, edit the `.tf`, push, run a
+   plan, resume the loop.
+
+Only the objects change.
+
+### Running the importer
+
+The importer lives in the operator repo, checked out at
+`/var/mnt/data/git/weebo-authentik` on this machine. It reads only.
+
+```bash
+cd /var/mnt/data/git/weebo-authentik
+
+# The API token. mv/main-config#AUTHENTIK_BOOTSTRAP_TOKEN is the same value ESO
+# already syncs into the `authentik-api-token` Secret, which is easier to read:
+AUTHENTIK_TOKEN=$(cd /var/mnt/data/git/weebo-si && \
+  task k -- -n auth get secret authentik-api-token -o jsonpath='{.data.token}' | base64 -d)
+
+# auth.weebo.poc is signed by the weebo private PKI. Either trust it once,
+# system-wide -- `task vault:trust-intermediate` from the weebo-si repo -- or
+# scope it to this run with --ca-cert / AUTHENTIK_CA_CERT.
+AUTHENTIK_TOKEN=$AUTHENTIK_TOKEN cargo run -p importer -- \
+  --authentik-url https://auth.weebo.poc \
+  --instance-ref main --namespace auth --out import-output
+```
+
+Details that bite:
+
+- `--authentik-url` is the **web** base, exactly like `spec.url`. The importer
+  appends `/api/v3` itself via `api::instance::split_urls`. Passing
+  `https://auth.weebo.poc/api/v3` is accepted (it is trimmed), but on a 0.8.0
+  checkout the split did not exist and every call 404s — build from a revision
+  at or after 0.9.0.
+- Requires the VPN: this one runs from your machine, not from the cluster.
+- `--applications <slug,slug>` limits the run to named applications. The
+  cluster-scoped kinds (Group / User / Brand / Flow / Outpost) are regenerated
+  every run regardless.
+- `cargo run -p importer` needs nothing special. Only cargo commands that touch
+  _test_ targets need `LIBCLANG_PATH=/usr/lib64` on this machine.
+- The output is one YAML file per CR, each already carrying
+  `status.authentikId`. **That is the only reason to run it** — the spec it
+  writes is a convenience, the id is the payload.
+
+### Phase 0 — foundation (touches no Authentik object) — ✅ done
 
 `AuthentikInstance` only describes how to reach the API;
 `AuthentikNamespacePolicy` only gates who may create CRs. Neither has a
 counterpart on the Authentik side, so there is nothing to import or adopt.
 
-The operator itself is already deployed by
-`main/templates/authentik/operator.yaml` (chart 0.8.0, namespace `auth`, its
-own self-signed webhook issuer). Confirm it is healthy and actually on 0.8.0
-first — the CRDs ship in the chart, so an unsynced operator Application means
-phase 2b and phase 4 CRs get rejected by the apiserver (0.6.0 has neither
-`AuthentikFlow` nor `secretTargets`; 0.7.0 has no `caSecretRef`):
+The operator itself is deployed by `main/templates/authentik/operator.yaml`
+(chart 0.10.0, namespace `auth`, its own self-signed webhook issuer). Confirm
+it is healthy and actually on 0.10.0 — the CRDs ship in the chart, so an
+unsynced operator Application means phase 2b and phase 4 CRs get rejected by
+the apiserver (0.6.0 has neither `AuthentikFlow` nor `secretTargets`; 0.7.0 has
+no `secretStore.vault.caSecretRef`; 0.9.0 has no `tls.caSecretRef`):
 
 ```bash
-kubectl -n auth get deploy -l app.kubernetes.io/name=weebo-authentik \
-  -o jsonpath='{.items[*].spec.template.spec.containers[*].image}'   # expect :v0.8.0
-kubectl get crd | grep authentik.weebo.io   # expect 9 (8 + authentikflows)
-kubectl get crd authentikapplications.authentik.weebo.io -o yaml \
+task k -- -n auth get deploy -l app.kubernetes.io/name=weebo-authentik \
+  -o jsonpath='{.items[*].spec.template.spec.containers[*].image}'   # expect :v0.10.0
+task k -- get crd | grep -c authentik.weebo.io                       # expect 9
+task k -- get crd authentikapplications.authentik.weebo.io -o yaml \
   | grep -c secretTargets                                            # expect >0
-kubectl get crd authentikinstances.authentik.weebo.io -o yaml \
-  | grep -c caSecretRef                                              # expect >0
+task k -- get crd authentikinstances.authentik.weebo.io -o yaml \
+  | grep -c caSecretRef                                              # expect 4 (tls + vault)
 ```
 
-Then, in `main/values.yaml`, set:
+✅ All four pass today. The `authentik-operator` Application reports OutOfSync
+on the 9 CRDs — that is ArgoCD's large-CRD diff, and the checks above are the
+answer to whether it matters. It does not.
+
+Then, in `main/values.yaml`:
 
 ```yaml
 authentik:
@@ -345,15 +631,21 @@ authentik:
       enabled: true
       secretStore: { enabled: true }
       namespacePolicy: { enabled: true }
+      tls: { caSecretRef: { enabled: true } }
       # vault: { enabled: true }  -- leave OFF until phase 4; see section 3.2
 ```
 
 Sync, then check the API token landed and the instance connected:
 
 ```bash
-kubectl -n auth get externalsecret authentik-api-token
-kubectl get authentikinstance main -o yaml | yq '.status.conditions'
+task k -- -n auth get externalsecret authentik-api-token
+task k -- get authentikinstance main -o json | jq '.status.conditions'
+task k -- get authentikinstance main -o yaml | sed -n '/^spec:/,/^status:/p'
 ```
+
+✅ Live today: `Ready=True`, `"instance accepted"`, `url: https://auth.weebo.poc`,
+`tls.caSecretRef` → `weebo.poc` / `main-ca.crt` / `auth`,
+`secretStore.backend: kubernetes` (no `vault` block yet — correct for pre-phase-4).
 
 > **If the conditions show a TLS error, this is why.** `auth.weebo.poc` is
 > served by a `vault-issuer` cert-manager Certificate — the weebo PKI, a
@@ -374,149 +666,298 @@ kubectl get authentikinstance main -o yaml | yq '.status.conditions'
 > a hard reconcile error, deliberately, not a fall-back to the public roots:
 >
 > ```bash
-> kubectl -n auth get secret weebo.poc -o jsonpath='{.data.main-ca\.crt}' | wc -c
+> task k -- -n auth get secret weebo.poc -o jsonpath='{.data.main-ca\.crt}' | wc -c
 > ```
+>
+> ✅ 303284 bytes today.
 
 > The allow-list is default-deny **once any policy exists**, so
 > `namespacePolicy` must already list every namespace that will hold an
 > `AuthentikApplication`. It lists `auth` today; extend
 > `foundation.namespacePolicy.allowedNamespaces` before putting a CR anywhere
-> else.
+> else. Phases 3 and 4 both put `AuthentikApplication` CRs in `auth`, so
+> nothing needs adding for them.
 
-### Phase 1 — groups and the user
+### Phase 1 — groups and the user — ✅ done
 
 Lowest blast radius: cluster-scoped, no Vault secret depends on them, nothing
-outside Authentik reads them.
+outside Authentik reads them. Recorded here as the worked example the later
+phases refer back to.
 
-```bash
-# 1. Import ids from the live instance (needs network access to Authentik and
-#    a read token — mv/main-config#AUTHENTIK_BOOTSTRAP_TOKEN works).
-#    --authentik-url is the WEB base, like spec.url: the importer appends
-#    /api/v3 itself. On a 0.8.0 checkout it did not, and every call 404s --
-#    check out a revision carrying api::instance::split_urls.
-git clone https://github.com/batleforc/weebo-authentik && cd weebo-authentik
-AUTHENTIK_TOKEN=<token> cargo run -p importer -- \
-  --authentik-url https://auth.weebo.poc \
-  --instance-ref main --namespace auth --out import-output
-```
+1. **Import** (see "Running the importer" above), then compare
+   `import-output/authentikgroup-*.yaml` and `authentikuser-*.yaml` against
+   `sub/values.yaml`'s `identity` block.
 
-Compare `import-output/authentikgroup-*.yaml` and `authentikuser-*.yaml`
-against `sub/values.yaml`'s `identity` block — the importer reads the live
-instance, so **its output wins over anything written here by hand**. Then:
+   > `parentRef`, a user's `groupRefs` and an access policy's group are all
+   > resolved against the **Authentik** group name (`spec.name`, `weebo_user`),
+   > never the CR name (`metadata.name`, `weebo-user`): the operator issues a
+   > `/core/groups/?name=` query, it never looks at another CR. Get it wrong and
+   > the object adopts fine, then errors on every update with
+   > `GroupRefNotFound: group "weebo-user" not found` while the CR it names sits
+   > there Ready. The importer always writes the Authentik name, which is
+   > another reason to diff against its output rather than hand-write these.
+   >
+   > `sub/values.yaml` gets this right in the `identity` block: `crName:
+weebo-user` / `name: weebo_user`, and `parentRef: weebo_user`,
+   > `groupRefs: [weebo_admin]` — underscores throughout on the ref side. It
+   > got it **wrong** in every `applications[].accessGroup`, which is the same
+   > rule on a different field; see the note at the top of phase 3.
 
-> `parentRef`, a user's `groupRefs` and an access policy's group are all
-> resolved against the **Authentik** group name (`spec.name`, `weebo_user`),
-> never the CR name (`metadata.name`, `weebo-user`): the operator issues a
-> `/core/groups/?name=` query, it never looks at another CR. Get it wrong and
-> the object adopts fine, then errors on every update with
-> `GroupRefNotFound: group "weebo-user" not found` while the CR it names sits
-> there Ready. The importer always writes the Authentik name, which is
-> another reason to diff against its output rather than hand-write these.
+2. **Enable** in `main/values.yaml`, commit, push, sync:
 
-```bash
-# 2. Turn the CRs on in main/values.yaml and let ArgoCD sync:
-#      identity: { groups: {enabled: true}, users: {enabled: true} }
+   ```yaml
+   identity:
+     groups: { enabled: true }
+     users: { enabled: true }
+   ```
 
-# 3. Patch the ids on (apply dropped them).
-for f in import-output/authentikgroup-*.yaml import-output/authentikuser-*.yaml; do
-  kind=$(yq '.kind' "$f"); name=$(yq '.metadata.name' "$f")
-  aid=$(yq '.status.authentikId' "$f")
-  task k -- patch "$kind" "$name" --subresource=status --type merge \
-    -p "{\"status\":{\"authentikId\":\"$aid\"}}"
-done
+3. **Patch the ids on** (apply dropped them):
 
-# 4. Verify — every object Ready, no duplicates in the Authentik admin UI.
-kubectl get authentikgroups,authentikusers \
-  -o custom-columns=KIND:.kind,NAME:.metadata.name,ID:.status.authentikId,READY:.status.conditions[0].status
-```
+   ```bash
+   for f in import-output/authentikgroup-*.yaml import-output/authentikuser-*.yaml; do
+     kind=$(yq '.kind' "$f"); name=$(yq '.metadata.name' "$f")
+     aid=$(yq '.status.authentikId' "$f")
+     task k -- patch "$kind" "$name" --subresource=status --type merge \
+       -p "{\"status\":{\"authentikId\":\"$aid\"}}"
+   done
+   ```
 
-Only once that is green, hand over from Terraform:
+4. **Verify** — every object Ready, no duplicates in the Authentik admin UI:
 
-```bash
-cd 2.terra/auth
-task k -- -n auth delete job terra-state-rm --ignore-not-found
-sed 's/PHASE_PLACEHOLDER/identity/' migration/state-rm-job.yaml | task k -- apply -f -
-task k -- -n auth logs -f job/terra-state-rm
+   ```bash
+   task k -- get authentikgroups,authentikusers \
+     -o custom-columns='KIND:.kind,NAME:.metadata.name,ID:.status.authentikId,READY:.status.conditions[0].status'
+   ```
 
-# then downgrade group.tf to data sources and delete user.tf
-sh migration/rewrite-group-refs.sh
-# drop ./terra-map/user.tf from kustomization.yaml's configMapGenerator
-```
+   ✅ Live today:
+
+   | Kind  | Name              | authentikId                            | Ready |
+   | ----- | ----------------- | -------------------------------------- | ----- |
+   | Group | `weebo-admin`     | `19c70fcb-1d14-4087-b36b-33af9bae3e7c` | True  |
+   | Group | `weebo-moderator` | `f5a7df9b-727a-439e-aaf2-5f4b9e1663b1` | True  |
+   | Group | `weebo-user`      | `45178a25-380a-4a91-8fa1-0378a93a82c0` | True  |
+   | User  | `batleforc`       | `5`                                    | True  |
+
+   Note the user's id is the integer primary key, not a UUID.
+
+5. **Hand over from Terraform:**
+
+   ```bash
+   cd 2.terra/auth
+   task k -- -n auth delete job terra-state-rm --ignore-not-found
+   sed 's/PHASE_PLACEHOLDER/identity/' migration/state-rm-job.yaml | task k -- apply -f -
+   task k -- -n auth logs -f job/terra-state-rm
+
+   # then downgrade group.tf to data sources and delete user.tf
+   sh migration/rewrite-group-refs.sh
+   # drop ./terra-map/user.tf from kustomization.yaml's configMapGenerator
+   ```
+
+   ✅ Ran 2026-09-01 22:55, four addresses removed, backup at
+   `/terraform/state-backup-identity-20260901-225507.tfstate`. `group.tf` is now
+   the `data`-only version, `user.tf` is gone from disk and from
+   `kustomization.yaml`.
 
 `group.tf` becomes `data` rather than disappearing, because `vault.tf` builds
-`vault_identity_group_alias` off `authentik_group.*.name` and will keep doing
-so forever. Re-enable the apply loop; `terraform plan` must report **no
-changes**.
+`vault_identity_group_alias` off `authentik_group.*.name` and ten other
+references read `.id`/`.name`. See the end of section 2.
 
-### Phase 2a — brand
+6. Resume the loop; the plan must meet the section-0 baseline.
 
-Same five moves with `brand: { enabled: true }` and
-`PHASE=brand`. Take `flowAuthentication` and friends from the importer's
-output, not from reading `flow.tf` — that file copies them off the built-in
-`authentik-default` brand rather than naming them.
+### Phase 2a — brand — ⚠️ half done, finish this first
 
-After `PHASE=brand`, delete the `authentik_brand.default` block from `flow.tf`
-— but _only_ that block. `authentik_flow.token-authentik-flow` and the
-`data.authentik_brand.authentik-default` lookup both stay until phase 2b.
+The CR half is done: `AuthentikBrand/weebo` is Ready with
+`authentikId: `, and the live brand kept
+everything the CRD does not model —
+`flow_device_code: d8ef5c2a-7abd-4661-a7bb-aed4dd786d98` (the device-code flow,
+still correct) and `default_application: null`.
 
-`flow_device_code` has no field on `AuthentikBrand` even in 0.7.0, so the live
-brand keeps its stored UUID whoever owns the flow behind it. Adopt the brand
-before the flow: that ordering never leaves the brand pointing at nothing, and
-it is also what frees `flow.tf` of the `authentik_flow...uuid` reference that
-would otherwise block 2b.
+The Terraform half has **not** run, and the `.tf` edit has already been made in
+the working tree. Do these in order, starting from where you are:
 
-### Phase 2b — the device-code flow (0.7.0)
+```bash
+cd /var/mnt/data/git/weebo-si
+
+# 1. Confirm the loop is suspended. It is today -- but check, it is a live-only
+#    patch (section 4).
+task k -- -n argocd get app terra-authentik -o jsonpath='{.spec.syncPolicy.automated}{"\n"}'
+#    expect: {"enabled":false,"prune":true,"selfHeal":true}
+
+# 2. Do NOT commit flow.tf yet. Run the state rm first -- the block is already
+#    gone from your working tree, so committing before this plans a real
+#    delete of the live brand.
+task k -- -n auth delete job terra-state-rm --ignore-not-found
+sed 's/PHASE_PLACEHOLDER/brand/' 2.terra/auth/migration/state-rm-job.yaml | task k -- apply -f -
+task k -- -n auth logs -f job/terra-state-rm
+#    expect: "removing authentik_brand.default" and a
+#    state-backup-brand-<ts>.tfstate line
+
+# 3. Confirm it left state, and that the flow did not.
+task k -- -n auth logs job/terra-state-rm | sed -n '/remaining in state:/,$p' \
+  | grep -E 'authentik_brand|authentik_flow'
+#    expect: only `data.authentik_brand.authentik-default` and
+#    `authentik_flow.token-authentik-flow`
+
+# 4. NOW commit and push the flow.tf edit (brand block removed).
+git add 2.terra/auth/terra-map/flow.tf && git commit && git push
+
+# 5. Plan against the section-0 baseline before resuming the loop.
+#    (the plan job from section 0; expect 0 add / 6 change / 0 destroy)
+```
+
+Delete **only** the `authentik_brand.default` block from `flow.tf` — which is
+what the working tree already does. `authentik_flow.token-authentik-flow` and
+the `data.authentik_brand.authentik-default` lookup both stay until phase 2b.
+
+Two ordering notes, both already satisfied:
+
+- `flowAuthentication` and friends came from the importer's output, not from
+  reading `flow.tf` — that file copies them off the built-in `authentik-default`
+  brand rather than naming them. `sub/values.yaml` carries
+  `flowAuthentication: default-authentication-flow`,
+  `flowInvalidation: default-invalidation-flow`, and empty strings for
+  recovery / unenrollment / user-settings, which is what the live brand has.
+- `flow_device_code` has no field on `AuthentikBrand` even in 0.10.0, so the
+  live brand keeps its stored UUID whoever owns the flow behind it. Adopting
+  the brand **before** the flow never leaves the brand pointing at nothing, and
+  it is also what frees `flow.tf` of the `authentik_flow...uuid` reference that
+  would otherwise block 2b.
+
+### Phase 2b — the device-code flow — not started
 
 The one flow in `2.terra/auth` that is a `resource` rather than a `data`
 lookup. Cluster-scoped, slug-keyed — `status.authentikId` holds the **slug**
 (`device-code-flow`), not a UUID.
 
+**Do not start this until phase 2a's `state rm` has run and its `flow.tf` edit
+is pushed.** `authentik_brand.default` references
+`authentik_flow.token-authentik-flow.uuid`; removing the flow while the brand
+block is still in the config is a config error, and removing it from state
+while the brand still references it is worse.
+
 ```bash
 # 1. Import. This writes an AuthentikFlow CR for EVERY flow on the instance,
 #    built-ins included. Keep exactly one.
-AUTHENTIK_TOKEN=<token> cargo run -p importer -- \
+cd /var/mnt/data/git/weebo-authentik
+AUTHENTIK_TOKEN=... cargo run -p importer -- \
   --authentik-url https://auth.weebo.poc \
   --instance-ref main --namespace auth --out import-output
 ls import-output/authentikflow-*.yaml
 diff <(yq '.spec' import-output/authentikflow-device-code-flow.yaml) \
-     <(helm template auth-app 2.argo/helm/auth/sub \
+     <(helm template auth-app /var/mnt/data/git/weebo-si/2.argo/helm/auth/sub \
          --set flows.deviceCode.enabled=true \
        | yq 'select(.kind=="AuthentikFlow") | .spec')
 
-# 2. flows: { deviceCode: { enabled: true } } in main/values.yaml, sync.
+# 2. flows: { deviceCode: { enabled: true } } in main/values.yaml.
+#    ALREADY SET in the working tree -- commit and push it, then sync auth-app.
 
 # 3. Patch the slug onto the status.
-kubectl patch authentikflow device-code-flow --subresource=status --type merge \
+task k -- patch authentikflow device-code-flow --subresource=status --type merge \
   -p '{"status":{"authentikId":"device-code-flow"}}'
+task k -- get authentikflow device-code-flow \
+  -o custom-columns='NAME:.metadata.name,ID:.status.authentikId,READY:.status.conditions[0].status'
 
-# 4. Verify the brand still points at the same flow.
-curl -sH "Authorization: Bearer $TOKEN" https://auth.weebo.poc/api/v3/core/brands/ \
-  | jq '.results[] | select(.domain=="weebo") | .flow_device_code'
+# 4. Verify the brand still points at the same flow (from inside the cluster,
+#    so no VPN needed).
+TOKEN=$(task k -- -n auth get secret authentik-api-token -o jsonpath='{.data.token}' | base64 -d)
+task k -- -n auth run authq --rm -i --restart=Never --image=curlimages/curl:latest --quiet -- \
+  curl -sk -H "Authorization: Bearer $TOKEN" \
+  http://authentik-server.auth.svc.cluster.local/api/v3/core/brands/
+#    the `weebo` brand's flow_device_code must still read
+#    d8ef5c2a-7abd-4661-a7bb-aed4dd786d98
 ```
 
-Then `PHASE=flow` for the `state rm` job, and delete the
-`authentik_flow.token-authentik-flow` block from `flow.tf`. `flow.tf`'s
-`authentik_brand.default` references it as `.uuid`, so phase 2a must already
-have removed that block — do not run 2b before 2a.
+Parity is already confirmed. The live flow reads:
+
+```
+name=device-code-authentik-flow  slug=device-code-flow  title="Device Code Flow"
+designation=stage_configuration  authentication=require_authenticated
+stages=[]  policies=[]
+```
+
+— identical to `sub/values.yaml`'s `flows.deviceCode` block, and the empty
+`stages`/`policies` are what make the CRD's inability to model them a non-issue
+for this one flow.
+
+Then hand over:
+
+```bash
+task k -- -n auth delete job terra-state-rm --ignore-not-found
+sed 's/PHASE_PLACEHOLDER/flow/' 2.terra/auth/migration/state-rm-job.yaml | task k -- apply -f -
+task k -- -n auth logs -f job/terra-state-rm
+```
+
+…and only then delete the `authentik_flow.token-authentik-flow` block from
+`flow.tf`.
+
+**That empties `flow.tf`.** The only thing left in it would be
+`data "authentik_brand" "authentik-default"`, and nothing reads it — it existed
+solely to feed the brand resource that phase 2a removed (grep confirms: one
+definition, zero references). So phase 2b's `.tf` edit is _delete
+`terra-map/flow.tf` and drop its line from `kustomization.yaml`'s
+`configMapGenerator`_ — the same shape as `user.tf` in phase 1, and safe for
+the same reason: by then neither of its two resources is in state.
 
 **Do not** adopt any of the other imported flows. They are Authentik built-ins
 referenced by slug from `data.tf`; a CR over one of them adds a finalizer and
 nothing else.
 
-### Phase 3 — the two proxy applications
+### Phase 3 — the two proxy applications — not started
 
-`longhorn` first; it is the ordinary case. Then `clickstack`, which is the one
-object whose live configuration the CRD cannot express: `clickstack.tf` sets
-`mode = "forward_single"` and deliberately omits `internal_host`. Adoption
-preserves both, but confirm it rather than assuming:
+> **Fixed on 2026-09-04, before you get here.** All seven `accessGroup` values
+> in `sub/values.yaml` named the **CR** (`weebo-admin`, hyphen) where the
+> operator resolves the **Authentik** name (`weebo_admin`, underscore) — the
+> same trap the phase-1 note calls out, on the one field that had not been
+> checked because no phase had reached it yet. `accessGroup` renders straight
+> into `AuthentikAccessPolicy.spec.groupRef`, and
+> `crates/domain/src/error.rs` is explicit that a `groupRef` resolves to "an
+> `AuthentikGroup`'s Authentik-side name". Every one of the seven now reads
+> `weebo_admin` / `weebo_moderator`, matching what `longhorn.tf`,
+> `clickstack.tf`, `argo.tf`, `che-cluster.tf`, `harbor.tf`, `s3.tf` and
+> `vault.tf` bind today. Had it shipped, every application in phases 3 and 4
+> would have adopted cleanly and then left its access policy erroring — an
+> application with no bound policy is open to any authenticated user, which the
+> operator only reports as advisory (`Ready` stays `True`).
+
+Two applications, four Terraform resources each
+(`authentik_provider_proxy`, `authentik_application`,
+`authentik_outpost_provider_attachment`, `authentik_policy_binding`), and no
+Vault secret anywhere — which is what makes this phase independent of the 3.2
+plumbing and safe to do before phase 4.
+
+`longhorn` first; it is the ordinary case (`mode=proxy`,
+`internal_host=http://longhorn-frontend.longhorn.svc.cluster.local`,
+`external_host=https://longhorn.weebo.poc`, provider pk 6, app slug `longhorn`,
+access group `weebo_admin`).
+
+Then `clickstack`, which is the one object whose live configuration the CRD
+cannot express: `clickstack.tf` sets `mode = "forward_single"` and deliberately
+omits `internal_host`. Adoption preserves both, but confirm it rather than
+assuming:
 
 ```bash
 # after the clickstack CR reports Ready
-curl -sH "Authorization: Bearer $TOKEN" \
-  https://auth.weebo.poc/api/v3/providers/proxy/ \
-  | jq '.results[] | select(.name=="clickstack") | {mode, internal_host, external_host}'
-# expect: mode "forward_single", internal_host ""
+TOKEN=$(task k -- -n auth get secret authentik-api-token -o jsonpath='{.data.token}' | base64 -d)
+task k -- -n auth run authq --rm -i --restart=Never --image=curlimages/curl:latest --quiet -- \
+  sh -c "curl -sk -H 'Authorization: Bearer $TOKEN' \
+    http://authentik-server.auth.svc.cluster.local/api/v3/providers/proxy/" \
+  | python3 -c 'import sys,json; s=sys.stdin.read(); d=json.loads(s[s.find("{\"pagination"):]);
+[print(r["name"], r["mode"], repr(r["internal_host"]), r["external_host"]) for r in d["results"]]'
+# expect: clickstack forward_single ... https://clickstack.weebo.poc
 ```
+
+Baseline as of 2026-09-04, before any adoption:
+
+```
+clickstack  mode=forward_single  internal_host=http://clickstack-preauth.monitoring.svc.cluster.local:8080  external_host=https://clickstack.weebo.poc
+longhorn    mode=proxy           internal_host=http://longhorn-frontend.longhorn.svc.cluster.local          external_host=https://longhorn.weebo.poc
+```
+
+Note that `internal_host` on clickstack is **still set** even though
+`clickstack.tf` omits it and the last apply proposed `-> null`: Authentik
+ignores the null and keeps the stored value. That is one of the six permanent
+plan churners from section 0, and it is also why `sub/values.yaml` sets
+`internalHost: ""` — re-sending the empty string is the same no-op.
 
 If `mode` ever comes back as `proxy`, revert it in the Authentik UI
 immediately and disable the CR — that regression serves HyperDX's 404 body for
@@ -526,35 +967,51 @@ comment block documents.
 Outpost attachment needs nothing: `outpostRef` unset means Authentik's
 embedded outpost, which is what both
 `authentik_outpost_provider_attachment` resources already target, and the
-operator appends to the outpost's provider list rather than replacing it.
+operator appends to the outpost's provider list rather than replacing it. This
+is also why the `state rm` for these phases includes the attachment: nothing
+replaces it, because nothing needs to.
 
-### Phase 4 — the oauth2 applications
+`PHASE=longhorn` and `PHASE=clickstack` each remove all four addresses; delete
+all four blocks from the `.tf` afterwards. `longhorn.tf` and `clickstack.tf`
+then have nothing left, so both come out of `kustomization.yaml` — but check
+first: both files' policy bindings read `data.authentik_group.weebo_admin.id`,
+and that data source is defined in `group.tf`, not in them.
+
+### Phase 4 — the oauth2 applications — not started
 
 Read section 3 first. Order: **`harbor` → `s3` → `argo` → `che` → `vault`**.
 
 Before the first one, once:
 
-1. Confirm both prerequisites in 3.2 — the `auth` role really lists
-   `authentik-weebo-authentik` on the live Vault, and `caSecretRef` is on the
-   rendered instance — then turn on
-   `foundation: { vault: { enabled: true } }`. On its own this writes nothing
-   anywhere — it only puts the connection block on the `AuthentikInstance`.
-2. Confirm the instance still reports Ready. A malformed vault block surfaces
-   here, before any credential is at stake. Note that a wrong CA or an
-   unbound ServiceAccount does _not_: the instance carries the connection but
-   never dials it, so the first login happens on the first application
-   reconcile. `harbor` being first in the order is what makes that a cheap
-   failure.
+1. Both prerequisites in 3.2 are **already confirmed live** (the `auth` Vault
+   role lists `authentik-weebo-authentik`; `openbao-tls` carries `ca.crt` in
+   `auth`). Re-run those two checks anyway, then turn on
+   `foundation: { vault: { enabled: true } }` in `main/values.yaml`, commit,
+   push, sync. On its own this writes nothing anywhere — it only puts the
+   connection block on the `AuthentikInstance`.
+2. Confirm the instance still reports Ready and now carries the block:
 
-Then, per app, the same five moves plus one:
+   ```bash
+   task k -- get authentikinstance main -o yaml | sed -n '/^spec:/,/^status:/p'
+   task k -- get authentikinstance main -o json | jq '.status.conditions'
+   ```
+
+   A malformed vault block surfaces here, before any credential is at stake.
+   Note that a wrong CA or an unbound ServiceAccount does _not_: the instance
+   carries the connection but never dials it, so the first login happens on the
+   first application reconcile. `harbor` being first in the order is what makes
+   that a cheap failure.
+
+Then, per app, the same moves plus one:
 
 ```bash
-# 3. Snapshot the KV entry BEFORE enabling the CR — this is the one step that
+# 3. Snapshot the KV entry BEFORE enabling the CR -- this is the one step that
 #    overwrites live data rather than just adopting an object.
 bao kv get -format=json mv/registry/auth > /tmp/registry-auth-before.json
 
-# 4. applications.harbor.enabled = true, sync, patch status.authentikId from
-#    the importer's authentikapplication-harbor.yaml.
+# 4. applications.harbor.enabled = true in main/values.yaml, commit, push,
+#    sync, then patch status.authentikId from the importer's
+#    authentikapplication-harbor.yaml.
 
 # 5. Diff the KV entry. All three keys must be byte-identical -- since 0.8.0
 #    AUTHENTIK_URL is the same per-application issuer Terraform wrote (3.3),
@@ -563,11 +1020,33 @@ diff <(jq -S .data.data /tmp/registry-auth-before.json) \
      <(bao kv get -format=json mv/registry/auth | jq -S .data.data)
 ```
 
-Any diff at all is a stop. A changed `AUTHENTIK_CLIENT_SECRET` means something
-rotated the credential; a changed `AUTHENTIK_URL` means the CR's slug does not
-match the live application's, which would also point every consumer at an
-issuer that does not exist. Restore from the snapshot before touching the next
-app.
+`bao` here means the Vault CLI against `https://vault.weebo.poc`, which needs
+the VPN — `task vault -- kv get -format=json -mount=mv registry/auth` from the
+weebo-si repo does the token plumbing. Without the VPN, run the same read from
+inside the openbao pod the way 3.2's role check does.
+
+Live oauth2 provider baseline, for the "is anything already drifting" question:
+
+| pk  | name          | client_id     | sub_mode         | access_token_validity | signing_key |
+| --- | ------------- | ------------- | ---------------- | --------------------- | ----------- |
+| 1   | `harbor`      | `harbor`      | `hashed_user_id` | `minutes=10`          | self-signed |
+| 5   | `s3`          | `s3`          | `hashed_user_id` | `minutes=10`          | self-signed |
+| 2   | `argo`        | `argo`        | `hashed_user_id` | `minutes=10`          | self-signed |
+| 3   | `che-cluster` | `che-cluster` | `user_username`  | `hours=10`            | self-signed |
+| 4   | `vault`       | `vault`       | `hashed_user_id` | `minutes=10`          | self-signed |
+
+`che-cluster`'s `user_username` and `hours=10` are the two values from the
+section-1 table that adoption must preserve; check them again after its CR
+reports Ready. All five carry `9c470150-b16e-4d75-be74-0e2f3dceeec9`, the
+self-signed certificate — which is what 0.7.0's `signingKey` default resolves
+to, so the explicit `signingKey` in `sub/values.yaml` is a no-op here and a
+guard against a future default change.
+
+Any diff at all in step 5 is a stop. A changed `AUTHENTIK_CLIENT_SECRET` means
+something rotated the credential; a changed `AUTHENTIK_URL` means the CR's slug
+does not match the live application's, which would also point every consumer at
+an issuer that does not exist. Restore from the snapshot before touching the
+next app.
 
 Only then `state rm` the provider, the application, the policy binding **and**
 the `vault_kv_secret_v2`, and delete all four blocks from the `.tf` file. The
@@ -575,9 +1054,17 @@ KV path is now reconciled by the operator instead of Terraform, which is the
 point — leaving the `vault_kv_secret_v2` in place would have Terraform and the
 operator fight over the same path on every apply.
 
+Two files do not empty out at the end of their phase:
+
+- `che-cluster.tf` has **two** `vault_kv_secret_v2` resources (`che-app` →
+  `mv/eclipse-che/auth`, `che-app-2` → `mv/dex/auth`); `PHASE=che` removes both,
+  and the CR's two `secretTargets` entries take both over.
+- `vault.tf` keeps everything below the provider.
+
 `vault` last or never: `vault.tf` derives an entire OIDC auth backend, two
 roles and two identity-group aliases from the provider's client id and secret,
-none of which have a CRD equivalent. Migrating it means feeding those from
+none of which have a CRD equivalent. `PHASE=vault` in the `state rm` job
+deliberately exits 1 for that reason. Migrating it means feeding those from
 somewhere else first.
 
 ---
@@ -592,16 +1079,17 @@ reversible while Terraform still holds the state:
   finalizer, or deleting them deletes the real object:
 
   ```bash
-  kubectl patch authentikgroup weebo-admin --type merge \
+  task k -- patch authentikgroup weebo-admin --type merge \
     -p '{"metadata":{"finalizers":null}}'
-  kubectl delete authentikgroup weebo-admin
+  task k -- delete authentikgroup weebo-admin
   ```
 
   Terraform still owns the object and the next apply is a no-op.
 
 - **After `state rm`** — the job wrote `/terraform/state-backup-<phase>-<ts>.tfstate`
   to the PVC before touching anything. Restore with `terraform state push`
-  from a shell on that volume, and revert the `.tf` edits.
+  from a shell on that volume (the read-only peek job in section 0 shows the
+  shape; swap `ls` for the push), and revert the `.tf` edits.
 
 - **Phase 4 is still the one exception to "nothing is destroyed"** — less so
   since 0.8.0, but not zero. Adopting an oauth2 app _writes_ its Vault KV path

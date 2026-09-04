@@ -229,7 +229,16 @@ flows:
 # Phases 3 and 4 -- applications and their access policies.
 #
 # `accessGroup` renders the AuthentikAccessPolicy that mirrors each
-# `authentik_policy_binding` in 2.terra/auth (all of them are order 0).
+# `authentik_policy_binding` in 2.terra/auth (all of them are order 0). It goes
+# straight into `spec.groupRef`, which the operator resolves against the
+# AUTHENTIK-side group name (`weebo_admin`, underscore) via
+# `/core/groups/?name=` -- never against the CR name (`weebo-admin`, hyphen).
+# Same rule as `identity.groups[].parentRef` and `identity.users[].groupRefs`
+# above, and getting it wrong is quiet: the application adopts fine and the
+# policy then fails every reconcile with
+#   GroupRefNotFound: group "weebo-admin" not found
+# while the AuthentikGroup CR it names sits there Ready. See MIGRATION.md
+# phase 1.
 # Flows are referenced by SLUG, property mappings and signing keys by NAME --
 # that is how the operator resolves them against the API.
 #
@@ -257,7 +266,7 @@ applications:
     enabled: false
     slug: longhorn
     name: longhorn
-    accessGroup: weebo-admin
+    accessGroup: weebo_admin
     provider:
       kind: proxy
       proxy:
@@ -279,7 +288,7 @@ applications:
     enabled: false
     slug: clickstack
     name: clickstack
-    accessGroup: weebo-admin
+    accessGroup: weebo_admin
     provider:
       kind: proxy
       proxy:
@@ -306,7 +315,7 @@ applications:
     slug: argo
     name: argo
     metaIcon: "https://maxleriche.net/public/media/techno/argo.png"
-    accessGroup: weebo-moderator
+    accessGroup: weebo_moderator
     # AUTHENTIK_URL here is read by main/templates/authentik/auth-secret.yaml
     # and becomes argocd's OIDC issuer, so the `slug` above is what argocd
     # ends up trusting.
@@ -341,7 +350,7 @@ applications:
     slug: che-cluster
     name: che-cluster
     metaIcon: "https://maxleriche.net/public/media/application/eclipse-che.png"
-    accessGroup: weebo-moderator
+    accessGroup: weebo_moderator
     # che-cluster.tf writes the SAME credentials to two paths; the fan-out
     # reproduces that in one CR. Both destinations feed a consumer that reads
     # AUTHENTIK_URL as an issuer -- 1.pulu-init's Taskfile (OIDC_ISSUER_URL,
@@ -380,7 +389,7 @@ applications:
     slug: harbor
     name: harbor
     metaIcon: "https://maxleriche.net/public/media/application/harbor.png"
-    accessGroup: weebo-moderator
+    accessGroup: weebo_moderator
     # No in-repo consumer reads AUTHENTIK_URL from this path (harbor's OIDC is
     # configured in its own UI), so harbor is the safe first oauth2 migration.
     secretTargets:
@@ -408,7 +417,7 @@ applications:
     slug: s3
     name: s3
     metaIcon: "https://maxleriche.net/public/media/application/s3.png"
-    accessGroup: weebo-moderator
+    accessGroup: weebo_moderator
     # Same as harbor: nothing in this repo reads AUTHENTIK_URL from mv/s3/auth.
     secretTargets:
       - backend: vault
@@ -443,7 +452,7 @@ applications:
     slug: vault
     name: vault
     metaIcon: "https://maxleriche.net/public/media/techno/vault.png"
-    accessGroup: weebo-moderator
+    accessGroup: weebo_moderator
     # No vault_kv_secret_v2 for this one -- vault.tf consumes client_id/secret
     # directly, in Terraform. An empty list falls back to the instance default
     # (a Kubernetes Secret named `vault` in ns auth), which nothing reads.
