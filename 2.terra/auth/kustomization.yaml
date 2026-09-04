@@ -19,7 +19,6 @@ configMapGenerator:
       - ./terra-map/data.tf
       - ./terra-map/group.tf
       - ./terra-map/argo.tf
-      - ./terra-map/flow.tf
       - ./terra-map/harbor.tf
       - ./terra-map/vault.tf
       - ./terra-map/che-cluster.tf

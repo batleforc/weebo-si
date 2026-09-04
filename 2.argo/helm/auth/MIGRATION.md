@@ -99,21 +99,22 @@ Supporting facts, all verified:
   `harbor`, `longhorn`, `s3`, `vault`), 7 oauth2 providers and 2 proxy
   providers. `clickstack` is still `mode=forward_single`.
 
-### The one thing to fix before anything else
+### The hazard that was here — resolved 2026-09-04
 
-`flow.tf` in the working tree has already lost its `authentik_brand.default`
-block, but `terraform state` still holds `authentik_brand.default`. The
-PostSync job does `rm -rf *.tf; cp /scripts/*.tf .; terraform apply`. So the
-moment that edit is committed **and** pushed **and** `terra-authentik` syncs,
-Terraform plans a **real delete** of the live brand — the exact failure the
-first standing rule in section 4 exists to prevent.
+`flow.tf` had already lost its `authentik_brand.default` block while
+`terraform state` still held the resource. The PostSync job does
+`rm -rf *.tf; cp /scripts/*.tf .; terraform apply`, so committing that edit
+would have planned a **real delete** of the live brand.
 
-Three things are holding it back right now, and all three are soft: the edit is
-uncommitted, the PVC still carries the 1429-byte `flow.tf` with the block, and
-auto-sync is off by a live-only patch.
+Resolved by running `PHASE=brand` *before* the commit, then pushing, then
+syncing: the apply came back `0 added, 6 changed, 0 destroyed` and the brand
+count stayed at 2. The general rule it illustrates is worth keeping:
 
-**Fix the order, do not lean on the brakes:** run phase 2a's `state rm`
-(`PHASE=brand`) first, then commit. Step-by-step in phase 2a below.
+> Between a `state rm` and the matching `.tf` edit reaching the PVC, config and
+> state disagree in the *opposite* direction — config declares a resource state
+> no longer has, so a plan in that window wants to **create a duplicate**. The
+> suspension in section 4 is what protects that window, and it is the reason
+> not to resume the loop until the push has landed and synced.
 
 ### How the table was checked
 
@@ -556,7 +557,70 @@ Each phase is the same six moves:
 
 Only the objects change.
 
+### The ids each kind adopts — and why the importer is optional
+
+`status.authentikId` is a string, and which string depends on the kind. Read
+straight out of the importer's source (`crates/importer/src/*.rs`), which is
+the same value the operator's gateway looks the object up by:
+
+| Kind                     | `status.authentikId` is          | Source                        |
+| ------------------------ | -------------------------------- | ----------------------------- |
+| `AuthentikGroup`         | the group's pk (uuid)            | `groups.rs`                   |
+| `AuthentikUser`          | the user's pk (**integer**)      | `users.rs`                    |
+| `AuthentikBrand`         | `brand_uuid`                     | `brands.rs`                   |
+| `AuthentikFlow`          | the **slug**                     | `flows.rs`                    |
+| `AuthentikApplication`   | the application's **slug**       | `applications.rs`             |
+| `AuthentikAccessPolicy`  | the policy binding's pk (uuid)   | `applications.rs`             |
+| `AuthentikOutpost`       | the outpost's pk (uuid)          | `outposts.rs`                 |
+
+**`AuthentikApplication` stores only the application's id, never the
+provider's.** `reconcile_application` reads the current provider FK back off
+the live application (`get_application` → `RemoteApplication.provider_id`) and
+PATCHes that provider in place. So adopting an application adopts its provider
+too, with nothing extra to patch — and a `spec.provider.kind` that disagrees
+with the live provider is *refused* rather than attempted, unless the CR
+carries `authentik.weebo.io/allow-disruptive-update: "true"`.
+
+That makes the importer **optional for the rest of this migration**: every id
+still needed is a slug you already know, or one query away. The importer needs
+the VPN (it runs from your machine against `auth.weebo.poc`); the API queries
+below do not, because they go to the ClusterIP service. Helper:
+
+```bash
+# ak.sh <api-path> -- query the Authentik API from inside the cluster.
+P="${1:?}"; POD="akq-$RANDOM"
+TOKEN=$(task k -- -n auth get secret authentik-api-token -o jsonpath='{.data.token}' | base64 -d)
+task k -- -n auth run "$POD" --restart=Never --image=curlimages/curl:latest --command -- \
+  curl -sk -H "Authorization: Bearer $TOKEN" \
+  "http://authentik-server.auth.svc.cluster.local/api/v3${P}" >/dev/null 2>&1
+for i in $(seq 1 30); do
+  ph=$(task k -- -n auth get pod "$POD" -o jsonpath='{.status.phase}' 2>/dev/null || true)
+  case "$ph" in Succeeded|Failed) break;; esac; sleep 2
+done
+task k -- -n auth logs "$POD"; task k -- -n auth delete pod "$POD" --ignore-not-found
+```
+
+Ids captured 2026-09-04, for phases 3 and 4. The application id to patch is the
+**slug** (left column); the app pk is shown only because it is what a policy
+binding's `target` points at, which is how the two were joined:
+
+| App slug      | `AuthentikApplication` id | binding pk → `AuthentikAccessPolicy` id | group             |
+| ------------- | ------------------------- | --------------------------------------- | ----------------- |
+| `longhorn`    | `longhorn`                | `1832be5b-5cc5-48fd-a698-3b78e8d912e7`  | `weebo_admin`     |
+| `clickstack`  | `clickstack`              | `459afd98-7e50-4d6f-a743-8f8804661f58`  | `weebo_admin`     |
+| `harbor`      | `harbor`                  | `6e3be218-4e35-42b8-bc50-66f3f8536840`  | `weebo_moderator` |
+| `s3`          | `s3`                      | `bb5935e8-1563-41cf-b022-5c46e8f50e08`  | `weebo_moderator` |
+| `argo`        | `argo`                    | `03a8af6b-2cc2-4f97-928f-8ad4863a2400`  | `weebo_moderator` |
+| `che-cluster` | `che-cluster`             | `fb28fcc6-d63f-4e57-b093-73cecf6f6c84`  | `weebo_moderator` |
+| `vault`       | `vault`                   | `d9187d75-454a-405f-8d62-41a9679a73ab`  | `weebo_moderator` |
+
+Re-derive with `ak.sh /policies/bindings/` joined to
+`ak.sh '/core/applications/?superuser_full_list=true'` on
+`binding.target == application.pk`. The `group` column is the live binding's
+group, and it is what confirmed the `accessGroup` fix in `sub/values.yaml`.
+
 ### Running the importer
+
 
 The importer lives in the operator repo, checked out at
 `/var/mnt/data/git/weebo-authentik` on this machine. It reads only.
@@ -764,7 +828,7 @@ references read `.id`/`.name`. See the end of section 2.
 
 6. Resume the loop; the plan must meet the section-0 baseline.
 
-### Phase 2a — brand — ⚠️ half done, finish this first
+### Phase 2a — brand — ✅ done 2026-09-04
 
 The CR half is done: `AuthentikBrand/weebo` is Ready with
 `authentikId: `, and the live brand kept
@@ -772,8 +836,9 @@ everything the CRD does not model —
 `flow_device_code: d8ef5c2a-7abd-4661-a7bb-aed4dd786d98` (the device-code flow,
 still correct) and `default_application: null`.
 
-The Terraform half has **not** run, and the `.tf` edit has already been made in
-the working tree. Do these in order, starting from where you are:
+The Terraform half ran on 2026-09-04, in this order — which is the order to
+reuse for every later phase, because it is the one that never lets config and
+state disagree in the destructive direction:
 
 ```bash
 cd /var/mnt/data/git/weebo-si
@@ -823,7 +888,7 @@ Two ordering notes, both already satisfied:
   it is also what frees `flow.tf` of the `authentik_flow...uuid` reference that
   would otherwise block 2b.
 
-### Phase 2b — the device-code flow — not started
+### Phase 2b — the device-code flow — ✅ done 2026-09-04
 
 The one flow in `2.terra/auth` that is a `resource` rather than a `data`
 lookup. Cluster-scoped, slug-keyed — `status.authentikId` holds the **slug**
@@ -848,8 +913,17 @@ diff <(yq '.spec' import-output/authentikflow-device-code-flow.yaml) \
          --set flows.deviceCode.enabled=true \
        | yq 'select(.kind=="AuthentikFlow") | .spec')
 
-# 2. flows: { deviceCode: { enabled: true } } in main/values.yaml.
-#    ALREADY SET in the working tree -- commit and push it, then sync auth-app.
+# 2. flows: { deviceCode: { enabled: true } } in main/values.yaml, then commit,
+#    push and let `auth` -> `auth-app` sync.
+#
+#    BETTER, and what was actually done: create the CR by hand and patch its
+#    status BEFORE the commit lands. ArgoCD then adopts an object that is
+#    already Ready, and the create-first collision never happens at all --
+#    `kubectl apply` updates spec and leaves the status subresource alone.
+#      helm template auth-app 2.argo/helm/auth/sub --set flows.deviceCode.enabled=true \
+#        | yq 'select(.kind=="AuthentikFlow")' | task k -- apply -f -
+#    followed immediately by step 3. The window is small enough in practice
+#    that the operator's first reconcile already sees the id.
 
 # 3. Patch the slug onto the status.
 task k -- patch authentikflow device-code-flow --subresource=status --type merge \
@@ -888,7 +962,9 @@ task k -- -n auth logs -f job/terra-state-rm
 ```
 
 …and only then delete the `authentik_flow.token-authentik-flow` block from
-`flow.tf`.
+`flow.tf`. Ran 2026-09-04 16:42, backup
+`state-backup-flow-20260904-164256.tfstate`; afterwards the only brand/flow
+entries left in state are the three `data.` lookups.
 
 **That empties `flow.tf`.** The only thing left in it would be
 `data "authentik_brand" "authentik-default"`, and nothing reads it — it existed
@@ -955,9 +1031,24 @@ longhorn    mode=proxy           internal_host=http://longhorn-frontend.longhorn
 
 Note that `internal_host` on clickstack is **still set** even though
 `clickstack.tf` omits it and the last apply proposed `-> null`: Authentik
-ignores the null and keeps the stored value. That is one of the six permanent
-plan churners from section 0, and it is also why `sub/values.yaml` sets
-`internalHost: ""` — re-sending the empty string is the same no-op.
+ignores Terraform's null and keeps the stored value. That is one of the six
+permanent plan churners from section 0.
+
+**The operator does not ignore it.** `upsert_proxy_provider_impl` sends
+`internal_host: Some(spec.internal_host.clone())` on both create and PATCH — it
+is not one of the `None` fields — so `internalHost: ""` **clears** the live
+value rather than re-sending it. That is the intended end state (in
+`forward_single` the outpost never proxies, which is the whole point of
+`clickstack.tf` omitting the field), but it is a real one-way mutation, not a
+no-op. Record the pre-value before enabling the CR:
+
+```
+clickstack.internal_host = http://clickstack-preauth.monitoring.svc.cluster.local:8080
+```
+
+`mode` **is** in the `None` list on both create and PATCH, so `forward_single`
+is genuinely preserved — that is the property this phase actually depends on,
+and it is verified in the source, not just observed.
 
 If `mode` ever comes back as `proxy`, revert it in the Authentik UI
 immediately and disable the CR — that regression serves HyperDX's 404 body for

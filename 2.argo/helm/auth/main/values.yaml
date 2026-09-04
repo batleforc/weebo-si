@@ -69,7 +69,7 @@ authentik:
       enabled: true
     flows: # phase 2b -- needs operator >= 0.7.0
       deviceCode:
-        enabled: false
+        enabled: true
     applications:
       longhorn: # phase 3 -- proxy, safe
         enabled: false
