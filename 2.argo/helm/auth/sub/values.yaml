@@ -278,12 +278,30 @@ applications:
   # clickstack is the one proxy provider that depends on a field the CRD does
   # not model. clickstack.tf sets `mode = "forward_single"` and deliberately
   # omits internal_host; the ProxyProviderSpec has no `mode` and makes
-  # internalHost required. Adoption still preserves the mode -- the operator
-  # sends no `mode` key at all, so Authentik keeps the stored value -- and ""
-  # re-sends the internal_host it already has. Verify the provider after the
-  # first reconcile anyway: a regression here serves HyperDX's 404 body for
-  # every asset behind the route, which is exactly the failure clickstack.tf's
-  # comment block documents.
+  # internalHost required.
+  #
+  # The mode IS preserved: `upsert_proxy_provider_impl` passes `mode: None` on
+  # both create and PATCH, so the key never reaches Authentik and the stored
+  # `forward_single` survives. Verified live on 2026-09-04 -- the provider came
+  # back byte-identical after adoption.
+  #
+  # internalHost, however, must NOT be "". The operator does send that field
+  # (`internal_host: Some(spec.internal_host.clone())`), and Authentik's proxy
+  # serializer validates a PATCH that omits `mode` as if mode were the default
+  # `proxy` -- which makes an empty internal_host invalid:
+  #   AuthentikApplication/clickstack ... error in response: status code 400 Bad Request
+  # The two halves of the operator's own strategy collide here: omitting `mode`
+  # to preserve it is exactly what makes Authentik apply the wrong validator.
+  #
+  # So this mirrors the live value instead. It is inert -- in forward_single the
+  # outpost never proxies, which is the whole point of clickstack.tf omitting
+  # it -- but it has to be non-empty for the PATCH to be accepted at all. If
+  # the preauth service is ever renamed, change it here too; it is no longer
+  # described in Terraform.
+  #
+  # A `mode` regression to `proxy` would serve HyperDX's 404 body for every
+  # asset behind the route -- exactly the failure clickstack.tf documents -- so
+  # verify the provider after the first reconcile regardless.
   clickstack:
     enabled: false
     slug: clickstack
@@ -292,7 +310,7 @@ applications:
     provider:
       kind: proxy
       proxy:
-        internalHost: ""
+        internalHost: "http://clickstack-preauth.monitoring.svc.cluster.local:8080"
         externalHost: "https://clickstack.weebo.poc"
         authorizationFlow: default-provider-authorization-implicit-consent
         invalidationFlow: default-provider-invalidation-flow

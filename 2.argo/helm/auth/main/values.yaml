@@ -74,7 +74,7 @@ authentik:
       longhorn: # phase 3 -- proxy, safe
         enabled: true
       clickstack: # phase 3 -- proxy, verify forward_single after sync
-        enabled: false
+        enabled: true
       harbor: # phase 4 -- oauth2. Order: harbor, s3, argo, che, vault
         enabled: false
       s3:

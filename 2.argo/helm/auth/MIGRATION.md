@@ -152,13 +152,18 @@ Phase 1 is the only `state rm` that has ever run.
 ### The plan baseline — "no changes" is not achievable
 
 Every phase below ends with "the plan must be clean". It cannot be, and never
-was. On an untouched module the plan is:
+was. Before phase 3 the plan on an untouched module was:
 
 ```
 Plan: 0 to add, 6 to change, 0 to destroy.
 ```
 
-Those six are a permanent round-trip failure in the `goauthentik/authentik`
+**Since phase 3 removed `authentik_provider_proxy.clickstack` from state, the
+baseline is 5, not 6.** It drops again with each phase-4 app, and reaches 0
+only when `vault` is the last oauth2 provider left. Always compare against the
+count for where you are, not against 6.
+
+Those churners are a permanent round-trip failure in the `goauthentik/authentik`
 provider (2026.5.0), not migration drift:
 
 - **the five oauth2 providers** (`argo`, `che`, `harbor`, `s3`, `vault`) —
@@ -173,9 +178,10 @@ provider (2026.5.0), not migration drift:
 
 So the real acceptance criterion for every phase is:
 
-> **`0 to destroy`, and nothing in the plan beyond those six known churners.**
+> **`0 to destroy`, and nothing in the plan beyond the known churners still in
+> state.**
 
-A destroy, or a seventh resource, is a stop.
+A destroy, or an unexpected resource, is a stop.
 
 ### Running a plan without applying anything
 
@@ -1004,7 +1010,7 @@ nothing else.
 > before the commit, so the object was live and Ready throughout. The whitelist
 > only governs whether ArgoCD may *manage* it.
 
-### Phase 3 — the two proxy applications — longhorn ✅ done 2026-09-04, clickstack pending
+### Phase 3 — the two proxy applications — ✅ done 2026-09-04
 
 > **Fixed on 2026-09-04, before you get here.** All seven `accessGroup` values
 > in `sub/values.yaml` named the **CR** (`weebo-admin`, hyphen) where the
@@ -1095,6 +1101,45 @@ clickstack.internal_host = http://clickstack-preauth.monitoring.svc.cluster.loca
 `mode` **is** in the `None` list on both create and PATCH, so `forward_single`
 is genuinely preserved — that is the property this phase actually depends on,
 and it is verified in the source, not just observed.
+
+> **`internalHost: ""` is rejected — this bit on the first attempt.** The
+> original plan was that an empty `internalHost` would be a harmless no-op.
+> It is not, and not for the reason the earlier draft of this file gave
+> either. Three claims, in order of discovery:
+>
+> 1. "`""` re-sends the internal_host it already has" — false.
+>    `upsert_proxy_provider_impl` passes `internal_host: Some(...)` on both
+>    create and PATCH, so the empty string is genuinely sent.
+> 2. "so it clears the value" — also false, because it never gets that far.
+> 3. What actually happens: Authentik's proxy serializer validates a PATCH
+>    that omits `mode` **as if `mode` were the default `proxy`**, and an empty
+>    `internal_host` is invalid in proxy mode. The reconcile fails with
+>
+>    ```
+>    AuthentikApplication/clickstack   READY=False
+>    error in response: status code 400 Bad Request
+>    ```
+>
+> The two halves of the operator's own strategy collide: omitting `mode` is
+> what preserves `forward_single`, and it is also what makes Authentik reach
+> for the wrong validator. There is no CR that both preserves the mode and
+> sends an empty internal host.
+>
+> **The fix is to mirror the live value** —
+> `internalHost: "http://clickstack-preauth.monitoring.svc.cluster.local:8080"`,
+> now in `sub/values.yaml`. It is inert at runtime (in `forward_single` the
+> outpost never proxies) but has to be non-empty for the PATCH to be accepted.
+> The cost is that the value is no longer described in Terraform *or*
+> meaningfully in the chart — if the preauth service is renamed, this string
+> has to be changed by hand.
+>
+> Note the failure was completely safe: a 400 means Authentik wrote nothing,
+> so the provider stayed byte-identical throughout and `forward_single` was
+> never at risk. The CR simply sat `Ready=False` until the spec was corrected.
+> Note also that the operator logs nothing at info level, so the 400 is
+> visible only in the CR's own status message — not in
+> `logs deploy/authentik-weebo-authentik`, whose most recent lines were three
+> days stale.
 
 If `mode` ever comes back as `proxy`, revert it in the Authentik UI
 immediately and disable the CR — that regression serves HyperDX's 404 body for
