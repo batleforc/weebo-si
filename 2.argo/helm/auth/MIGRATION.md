@@ -502,6 +502,14 @@ backend, two roles and two identity-group aliases from the provider's client id
 and secret, and none of those have a CRD equivalent. Its CR ships
 `secretTargets: []` — there is no `vault_kv_secret_v2` to take over.
 
+As of 2026-09-04 it is the **only** Authentik object left in Terraform:
+`authentik_provider_oauth2.vault`, `authentik_application.vault` and
+`authentik_policy_binding.vault-access`, plus the seven `vault_*` resources
+below them and the `data` lookups. `terra-map/` is down to `main.tf`,
+`data.tf`, `group.tf` and `vault.tf`, and the plan baseline is `0/1/0` — the
+single churner being `authentik_provider_oauth2.vault`'s duplicated redirect
+URIs.
+
 ---
 
 ## 4. Standing rules
@@ -1243,8 +1251,21 @@ adoption had to preserve. Application count stayed 7, binding count 19.
 
 **The version bump is not a diff.** Each reconcile is a full KV v2 `set`, so
 the version increments even when the content is identical — that is why the
-check is on `.data.data`, never on the version. Expect it to keep climbing for
-as long as the CRs exist.
+check is on `.data.data`, never on the version.
+
+It also does not stop. `requeue_after` returns
+`Action::requeue(Duration::from_secs(300))` on a `Synced` outcome, so every
+adopted application rewrites its KV path(s) **every 5 minutes, forever** —
+roughly 288 writes per path per day, measured steady (no new version across a
+90 s window). The `mv` mount has `max_versions: 0` at both mount and key level,
+which means Vault's built-in default of 10 applies; `mv/dex/auth` sat at
+`current_version: 10` with all 10 retained, i.e. right at the cap and about to
+start rolling. Two consequences worth knowing:
+
+- KV version history on these five paths is a rolling ~50-minute window. It is
+  useless for "what changed and when" — use the CR and git instead.
+- It is a permanent low-rate write load on openbao. Harmless at this size, but
+  it is new: Terraform only wrote these paths on an apply.
 
 **Two fields are sent unconditionally on PATCH, and this is the real risk in
 phase 4.** `client_secret`, `sub_mode` and `access_token_validity` are `None`
