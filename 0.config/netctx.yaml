@@ -1,6 +1,6 @@
 schemaVersion: 1
-name: poc
-description: The weebo poc mesh
+name: wsi
+description: The weebo si mesh
 
 transport:
   kind: netbird

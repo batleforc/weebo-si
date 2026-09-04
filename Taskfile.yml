@@ -14,11 +14,20 @@ tasks:
     desc: "Init project"
     cmds:
       - cog install-hook -a -o
-  k:
+  sofka:
+    desc: Run Sofka on cluster
+    silent: true
+    env:
+      KUBECONFIG: 0.config/kubeconfig.yaml
+    aliases: [s]
+    cmds:
+      - sofka {{ .CLI_ARGS }}
+  kubectl:
     desc: "Run kubectl commands on the cluster"
     silent: true
     env:
       KUBECONFIG: 0.config/kubeconfig.yaml
+    aliases: [k]
     cmds:
       - kubectl {{ .CLI_ARGS }}
   k-oidc:
