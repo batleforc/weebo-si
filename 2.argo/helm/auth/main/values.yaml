@@ -24,7 +24,7 @@ authentik:
     # reconcile. See MIGRATION.md 3.2. 0.10.0 adds the same thing for the
     # Authentik API itself (`spec.tls.caSecretRef`) and is what
     # sub.foundation.tls waits on -- bump this and that flag together.
-    version: 0.10.0
+    version: 0.11.0
     replicaCount: 1
   # Phase toggles for the adoption of the Terraform-managed Authentik objects
   # by the operator. Only the flags live here; every spec they switch on is in
