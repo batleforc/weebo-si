@@ -17,6 +17,101 @@ spec:
       releaseName: vault-webhook
       valuesObject:
         replicaCount: 1
+        # The chart defaults both webhooks to failurePolicy: Ignore, which on a
+        # cold boot is silent corruption rather than a failure. A pod carrying
+        # `value: "vault:mv/data/main-config#AUTHENTIK_POSTGRES_USER_PASSWORD"`
+        # that is admitted while this webhook is down starts with that literal
+        # string as its password -- no mutation, no error, no event. Postgres
+        # comes up with the wrong credentials and the failure surfaces three
+        # layers away. Affected today: authentik server/worker/postgresql, dex
+        # (4 refs), netbird's exit-node, and both terraform PostSync Jobs.
+        #
+        # Fail turns that into "the pod is not created yet", which the kubelet
+        # and the owning controller simply retry until the webhook is ready.
+        #
+        # This is only safe because the webhook cannot lock itself out, and the
+        # pieces that guarantee that are worth stating:
+        #   - namespaceSelector excludes kube-system, vault-infra and (since the
+        #     cert-manager change below) cert-manager, so the control plane,
+        #     Cilium, CoreDNS, this webhook's own pod and its certificate issuer
+        #     are never gated on it.
+        #   - its serving cert is issued by a self-signed CA local to vault-infra,
+        #     never by the openbao-backed vault-issuer -- so the cert does not
+        #     depend on the Vault this webhook exists to read.
+        #   - its readiness probe is /healthz on itself and its env is only TLS
+        #     paths plus the vault-env image, so it reaches Ready without openbao
+        #     being up.
+        # Recovery from "webhook down" is therefore always available: vault-infra
+        # is exempt, so the Deployment can be rescheduled, and everything else
+        # unblocks behind it.
+        #
+        # Both mutations are load-bearing here -- pods for the env refs above,
+        # secrets for authentik's `secret_key`, which the chart renders into a
+        # Secret and this webhook resolves.
+        podsFailurePolicy: Fail
+        secretsFailurePolicy: Fail
+        # Hand the serving cert to cert-manager so it renews itself. The chart's
+        # own `certificate.generate` path mints a 1-year self-signed cert once at
+        # install and never touches it again -- and ArgoCD's ignoreDifferences on
+        # this Secret's /data deliberately stopped it being reconciled, so nothing
+        # would have rotated it. Under the old failurePolicy: Ignore an expired
+        # cert degraded quietly; under Fail it would stop pod creation
+        # cluster-wide on 2027-06-16.
+        #
+        # ONE-TIME MIGRATION, and it is not optional. cert-manager reuses the same
+        # secretName, but the existing Secret is type Opaque and a Certificate
+        # produces kubernetes.io/tls. Secret.type is immutable, so cert-manager
+        # cannot adopt it -- the Certificate just sits NotReady. Delete it once,
+        # after this syncs, and cert-manager recreates it correctly:
+        #   kubectl -n vault-infra delete secret \
+        #     vault-webhook-vault-secrets-webhook-webhook-tls
+        # Do this promptly: with failurePolicy: Fail the gap between the old
+        # Secret going away and cert-manager writing the new one is a cluster-wide
+        # pod-creation stall (kube-system, cert-manager and vault-infra excepted).
+        # If sequencing it tightly matters, sync this with podsFailurePolicy still
+        # at Ignore, complete the swap, then flip to Fail.
+        #
+        # useCertManager builds a self-signed Issuer, a 5y CA and a 1y serving
+        # Certificate, all inside vault-infra, with privateKey.rotationPolicy:
+        # Always -- cert-manager renews at 2/3 of lifetime without anyone
+        # remembering. The MutatingWebhookConfiguration gets
+        # cert-manager.io/inject-ca-from and cainjector keeps caBundle in step.
+        #
+        # Note it deliberately does NOT use the cluster's vault-issuer
+        # ClusterIssuer: that one is backed by openbao's PKI, which would make
+        # the webhook's cert depend on the very Vault the webhook exists to read.
+        # A local self-signed CA keeps the dependency graph acyclic.
+        certificate:
+          useCertManager: true
+          # Mutually exclusive with useCertManager -- the chart refuses to render
+          # with both on ("It is not allowed to both set certificate.generate=true
+          # and certificate.useCertManager=true"). This is the switch that stops
+          # the chart minting the un-renewed self-signed cert.
+          generate: false
+        # cert-manager must be exempt for the above to be safe. It now issues the
+        # webhook's cert, so if its own pods were gated on the webhook being up,
+        # failurePolicy: Fail would close the loop into a bootstrap deadlock:
+        # cert-manager cannot start without the webhook, the webhook cannot get a
+        # cert without cert-manager. Exempting it costs nothing -- no cert-manager
+        # pod carries a vault: reference or a vault.security.banzaicloud.io
+        # annotation; it reads Vault through external-secrets and the ClusterIssuer,
+        # neither of which goes through this webhook.
+        #
+        # kube-system stays exempt for the control plane, Cilium and CoreDNS. The
+        # release namespace (vault-infra) is appended by the chart itself via
+        # ignoreReleaseNamespace, so it does not need repeating here -- but this
+        # block REPLACES the chart default, so kube-system does.
+        namespaceSelector:
+          matchExpressions:
+            - key: kubernetes.io/metadata.name
+              operator: NotIn
+              values:
+                - kube-system
+                - cert-manager
+        # Left at Ignore deliberately: configMapMutation is off (the chart
+        # default), so this governs nothing today and flipping it would only add
+        # an admission dependency for no benefit.
+        configMapFailurePolicy: Ignore
         # The chart defaults this on with minAvailable: 1, which against
         # replicaCount 1 means disruptionsAllowed is permanently 0 -- a PDB that
         # can never be satisfied rather than one protecting anything. It blocks
@@ -29,11 +124,10 @@ spec:
     server: "https://kubernetes.default.svc"
     namespace: vault-infra
   ignoreDifferences:
-    - group: ""
-      kind: "Secret"
-      name: "vault-webhook-vault-secrets-webhook-webhook-tls"
-      jsonPointers:
-        - /data
+    # The Secret entry that used to live here is gone: with
+    # certificate.useCertManager the chart no longer renders that Secret at all,
+    # so ArgoCD has nothing to compare and the exclusion was dead config. It is
+    # cert-manager's object now, reconciled by cert-manager.
     - group: "admissionregistration.k8s.io"
       kind: "MutatingWebhookConfiguration"
       name: "vault-webhook-vault-secrets-webhook"

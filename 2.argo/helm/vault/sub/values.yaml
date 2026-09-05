@@ -27,3 +27,32 @@ vaultInstance:
 repo: ""
 project: ""
 branch: ""
+
+# First CiliumNetworkPolicy in the cluster -- see
+# templates/vaultInstance/network-policy.yaml. Ingress-only on openbao.
+networkPolicy:
+  enabled: true
+  # Every namespace that opens a connection to openbao:8200, derived from the
+  # repo and the live cluster rather than from a Hubble capture alone:
+  allowedNamespaces:
+    # The ESO controller pod is what actually dials Vault, whichever namespace
+    # the store object lives in. Covers ClusterSecretStore/otel-ingest-store and
+    # the SecretStores in argocd, auth, cert-manager and monitoring -- which is
+    # why those four namespaces are NOT listed here.
+    - external-secrets
+    # cert-manager connects directly for the vault-issuer ClusterIssuer (Vault
+    # PKI). This is the rare flow that a short Hubble capture misses: a renewal
+    # fires every 30-90 days, and 11 Certificates depend on it.
+    - cert-manager
+    # vault-env, injected by vault-secrets-webhook, runs inside the consuming
+    # pod and dials openbao from that pod's namespace -- not from vault-infra.
+    # authentik server/worker/postgresql, dex, and terra-job-authentik.
+    - auth
+    # netbird's exit-node carries the same vault-env injection.
+    - netbird
+    # The bank-vaults operator reconciling the Vault CR.
+    - vault-operator
+    # The webhook's own health/readiness path to Vault.
+    - vault-infra
+    # Traefik terminates vault.weebo.poc and proxies to the openbao Service.
+    - traefik

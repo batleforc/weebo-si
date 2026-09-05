@@ -1,0 +1,54 @@
+{{- if .Values.networkPolicy.enabled -}}
+# First CiliumNetworkPolicy in the cluster. openbao is the right place to start:
+# it holds every secret the rest of the platform reads, and until now anything
+# in any namespace could open a connection to :8200.
+#
+# INGRESS ONLY, on purpose. In Cilium a rule makes an endpoint default-deny only
+# for the directions it actually specifies, so leaving egress out keeps openbao's
+# outbound path (DNS, the apiserver for Kubernetes auth, raft on :8201) exactly
+# as it is today. Ingress is where the exposure is; egress can follow once this
+# has proven itself.
+#
+# The allowlist below is not guesswork. It is every consumer found by reading
+# the repo for `openbao.vault:8200` / `vault.vault:8200` and cross-checking the
+# live ClusterSecretStore, SecretStore and ClusterIssuer objects, then confirmed
+# against `hubble observe --to-namespace vault`. Hubble alone was not enough --
+# its ring buffer had already dropped events, and the flows that matter most
+# here are the rare ones (a cert-manager renewal every 30-90 days, a terraform
+# PostSync Job) that a short capture will never show.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: openbao-ingress
+  namespace: vault
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  endpointSelector:
+    matchLabels:
+      vault_cr: openbao
+  ingress:
+    # The node itself: kubelet liveness/readiness probes and the apiserver.
+    # Both arrive as the `host` identity on this single-node cluster -- verified
+    # in Hubble, where host->vault was the single largest source of flows.
+    # Losing this does not just break probes, it makes the kubelet restart
+    # openbao in a loop.
+    - fromEntities:
+        - host
+        - remote-node
+    # Same namespace: the bank-vaults sidecar that unseals and configures
+    # openbao, the openbao-configurer Deployment, and the terraform PostSync Job
+    # in 2.terra/vault. Also covers raft on :8201 talking to itself.
+    - fromEndpoints:
+        - {}
+    - fromEndpoints:
+        {{- range $ns := .Values.networkPolicy.allowedNamespaces }}
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: {{ $ns | quote }}
+        {{- end }}
+      toPorts:
+        - ports:
+            - port: "8200"
+              protocol: TCP
+{{- end -}}

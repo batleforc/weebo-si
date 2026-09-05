@@ -277,6 +277,32 @@ func main() {
 							dnsName,
 							dnsAltName,
 						},
+						// A soft cap on the Go heap, not a container limit. At the
+						// default GOGC=100 the apiserver lets its heap roughly double
+						// before collecting, and nothing here pushed back: the static
+						// pod carries requests.memory 512Mi, no limit, no GOMEMLIMIT
+						// and no GOGC. Measured 2026-09-05 at 2492 MiB RSS against
+						// 1116 MiB of live heap (go_memstats_heap_alloc) -- so roughly
+						// 1.4 GiB was GC headroom and idle spans rather than data,
+						// including 231 MiB of buck_hash_sys allocation-profiling
+						// metadata.
+						//
+						// GOMEMLIMIT makes Go collect harder as it approaches the
+						// number instead of exceeding it. It cannot OOMKill the
+						// control plane the way resources.limits.memory could, which
+						// is why it is the knob to reach for on a single-node cluster
+						// where the apiserver dying takes everything with it. Trading
+						// a little more GC CPU (median cycle was 0.14 ms, and this
+						// node runs at 15% of 12 cores) for ~700 MiB of RSS.
+						//
+						// Raise it if apiserver CPU climbs noticeably or
+						// go_gc_duration_seconds worsens -- the value is a ceiling to
+						// tune, not a fact. Talos has --profiling=false, so pprof
+						// cannot attribute the heap; the Go memstats in
+						// `kubectl get --raw /metrics` are the only handle.
+						"env": map[string]interface{}{
+							"GOMEMLIMIT": "1750MiB",
+						},
 						"extraArgs": map[string]interface{}{
 							"feature-gates": "UserNamespacesSupport=true",
 						},

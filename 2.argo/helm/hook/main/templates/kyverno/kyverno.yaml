@@ -30,5 +30,79 @@ spec:
       valuesObject:
         webhookLabels:
           app.kubernetes.io/managed-by: argocd
+        # Two of the four controllers had nothing to do. Measured 2026-09-05:
+        # admission 176Mi, background 77Mi, cleanup 115Mi, reports 75Mi.
+        #
+        # cleanup ran against zero CleanupPolicies, and reports produced 81
+        # PolicyReports that were all a single "skip" or "pass" from a
+        # mutate-only policy -- 81 etcd objects and a watch cache carrying no
+        # signal. Dropping both frees ~190Mi, 43% of Kyverno's footprint.
+        #
+        # admission and background both stay: admission runs the mutate policy
+        # and the Namespace generate webhook, and background is what makes
+        # default-limits.yaml's generateExisting/synchronize work at all.
+        #
+        # Turn reportsController back on the moment a *validate* policy is
+        # added (the securityContext work in the audit's §3.7) -- reports are
+        # the only place validation results surface, and without it a failing
+        # policy is invisible.
+        cleanupController:
+          enabled: false
+        reportsController:
+          enabled: false
+        # Reporting off end-to-end. The admission controller ships
+        # --admissionReports=true and RBAC to write ephemeralreports, so
+        # disabling reportsController alone would leave it writing reports that
+        # nothing aggregates -- and writing them into CRDs removed below, which
+        # would be a steady stream of errors rather than a saving. These flags
+        # are what actually stop it at the source.
+        features:
+          admissionReports:
+            enabled: false
+          aggregateReports:
+            enabled: false
+          policyReports:
+            enabled: false
+          validatingAdmissionPolicyReports:
+            enabled: false
+          reporting:
+            validate: false
+            mutate: false
+            mutateExisting: false
+            imageVerify: false
+            generate: false
+        crds:
+          groups:
+            # Storage for what reportsController wrote. Safe to drop only
+            # because the features block above stops anything writing them.
+            reports:
+              clusterephemeralreports: false
+              ephemeralreports: false
+            wgpolicyk8s:
+              clusterpolicyreports: false
+              policyreports: false
+            kyverno:
+              # Paired with cleanupController above.
+              cleanuppolicies: false
+              clustercleanuppolicies: false
+              # Everything below stays. clusterpolicies holds the two live
+              # policies; updaterequests is the queue the background controller
+              # drives generate through, so losing it breaks the LimitRanges.
+              clusterpolicies: true
+              policies: true
+              updaterequests: true
+              globalcontextentries: true
+              policyexceptions: true
 
+        # NOT attempted: dropping the policies.kyverno.io group (11 CRDs,
+        # 1308 KiB, 17.1% of every CRD schema in this cluster, zero objects --
+        # it is the newer CEL policy API and everything here uses the classic
+        # kyverno.io/ClusterPolicy). The chart cannot express it at 3.8.1: those
+        # CRDs come from the `kyverno-api` subchart, whose Chart.yaml condition
+        # is `crds.install` -- the very same condition as the `crds` subchart
+        # that provides ClusterPolicy and UpdateRequest. Turning it off takes
+        # Kyverno's own API with it. The `crds.groups.policies.*` keys in
+        # values.yaml look like the answer and are vestigial: the crds subchart
+        # only has templates for kyverno.io, reports.kyverno.io and
+        # wgpolicyk8s.io, and nothing reads them. Re-check on a chart bump.
 {{- end -}}

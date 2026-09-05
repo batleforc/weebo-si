@@ -24,7 +24,7 @@ The cluster is **not resource-constrained** — it runs at 15% CPU and 27% memor
 | 4 | 18 of 24 namespaces have **zero network policy** — flat east-west network | 🟠 High |
 | 5 | ~~Kyverno runs 4 controllers (**428 MiB / 22m**) to enforce **one Audit-only policy**~~ — ✅ **SETTLED: keep it.** It now generates the LimitRanges of finding 2, so the background-controller is load-bearing. Open work is extending it to finding 8 rather than editing 40 charts | 🟠 → Decided |
 | 6 | ~~KubeBlocks / MongoDB-Enterprise leftovers~~ — ✅ **RESOLVED**: 52 ConfigMaps (not 29), 21 orphan Helm release records, 1 orphan Service and the `zitadel` namespace deleted. Dead images remain (cosmetic) | 🟡 → Done |
-| 7 | `kube-apiserver` at **2.35 GiB** against a 512 Mi request (460%) with no limit | 🟡 Medium |
+| 7 | ~~`kube-apiserver` at **2.35 GiB** against a 512 Mi request~~ — `GOMEMLIMIT=1750MiB` set in the Talos config (needs `pulumi up`); ~1.4 GiB of the RSS was GC headroom, not data | 🟡 → In repo |
 | 8 | ~~11 workloads pinned to `:latest`~~ ✅ **pinned + under Renovate**; 10 pods on the `default` ServiceAccount still open | 🟡 Partial |
 
 ---
@@ -167,6 +167,14 @@ Workloads with **no requests and no limits at all**: all of `argocd`, all of `au
 
    > This makes Kyverno's background-controller load-bearing, which settles §3.5 in favour of *keeping* Kyverno and using it, rather than stripping three controllers.
 3. Bump `kube-apiserver` request to `2Gi` in the Talos machine config (`cluster.apiServer.resources`) — 512 Mi against a steady 2.35 GiB makes the scheduler's arithmetic meaningless. Its size is expected for 161 CRDs and 36 ArgoCD apps; it is not a leak.
+
+   > ✅ **`GOMEMLIMIT=1750MiB` added to `cluster.apiServer.env`** in `1.pulu-init/main.go` 2026-09-05 (uncommitted; **needs a `pulumi up` to reach the node** — unlike the ArgoCD changes it does not self-apply). Measured 2026-09-05: RSS **2492 MiB** against `go_memstats_heap_alloc` of **1116 MiB**, with `heap_inuse` 1529, `next_gc` 1733 and 231 MiB of `buck_hash_sys` profiling metadata — so roughly **1.4 GiB was GC headroom and idle spans, not data**. At the default `GOGC=100` the heap nearly doubles before collecting and nothing pushed back: no container limit, no `GOMEMLIMIT`, no `GOGC`.
+   >
+   > `GOMEMLIMIT` is a **soft** limit — Go collects harder as it approaches the number rather than exceeding it — so unlike `resources.limits.memory` it cannot OOMKill the control plane, which matters on a single node where the apiserver dying takes everything with it. Expect roughly 2.5 GiB → 1.7–1.8 GiB for a little more GC CPU (median cycle 0.14 ms, node at 15% of 12 cores). Tune upward if apiserver CPU or `go_gc_duration_seconds` worsens.
+   >
+   > ⚠️ **Reducing CRD surface turned out to be a much smaller lever than it looked.** Weighing CRDs by schema bytes rather than count, Kyverno owns **37.6%** of all CRD schema here — but the big half, `policies.kyverno.io` (11 CRDs, 1308 KiB, **17.1%**, zero objects, the newer CEL policy API this repo does not use), **cannot be disabled at chart 3.8.1**: those CRDs come from the `kyverno-api` subchart, whose `Chart.yaml` condition is `crds.install` — the same condition as the `crds` subchart that provides `ClusterPolicy` and `UpdateRequest`. Turning it off removes Kyverno's own API. The `crds.groups.policies.*` values keys look like the answer and are vestigial; nothing reads them. Re-check on a chart bump.
+   >
+   > What *was* achievable: 6 CRDs (161 → 155) for **209 KiB, 2.7% of CRD schema**, plus 81 `PolicyReport` objects leaving etcd. Real but modest — `GOMEMLIMIT` is where the apiserver saving actually comes from.
 4. Popeye **POP-505** already flags two: `longhorn-manager` (759 Mi vs 256 Mi requested, 296%) and `coredns` (208 Mi vs 10 Mi, 2080%).
 
 ### 3.3 🟠 Monitoring stack — the largest tunable consumer (2.68 GiB, 457m)
@@ -202,6 +210,50 @@ Workloads with **no requests and no limits at all**: all of `argocd`, all of `au
 
 > 🟡 `clickstack-otel-collector` has restarted 4× in 10 days. Its bootstrap ConfigMap ships a `debug` exporter; the effective pipeline comes from OpAMP (data does reach ClickHouse), but the restarts deserve a look at `memory_limiter` sizing — it has no container limit today.
 
+### 3.4b 🔴 Vault webhook admission ordering — silent secret corruption on cold boot
+
+*Not found by either scanner; raised 2026-09-05 and fixed in the repo (uncommitted).*
+
+`vault-secrets-webhook` rewrites `value: "vault:mv/data/..."` placeholders into real secrets at pod admission. Both its webhooks shipped **`failurePolicy: Ignore`**. A pod created while the webhook is down is therefore admitted **unmutated** — it starts with the literal string `vault:mv/data/main-config#AUTHENTIK_POSTGRES_USER_PASSWORD` as its password. No mutation, no error, no event; Postgres simply comes up with the wrong credentials and the failure surfaces three layers away.
+
+Affected today: `authentik` server/worker/postgresql, `dex` (4 refs), `netbird/exit-node`, and both terraform PostSync Jobs. Authentik's `secret_key` goes through the *secrets* webhook, so both mutations are load-bearing.
+
+**Fixed to `podsFailurePolicy: Fail` / `secretsFailurePolicy: Fail`** — "the pod is not created yet" is a state the kubelet and owning controller retry out of; a wrong password is not.
+
+This is only safe because the webhook cannot lock itself out, which rests on three properties worth stating because a future change could break any of them:
+
+| Property | Why it matters |
+|---|---|
+| `namespaceSelector` already excludes `kube-system` and `vault-infra` | The control plane, Cilium, CoreDNS and the webhook's own pod are never gated on it |
+| Its serving cert is a **self-signed Secret from the chart**, tracked by ArgoCD — not a cert-manager `Certificate` | No cert-manager → webhook → cert-manager cycle |
+| Readiness is `/healthz` on itself; env is only TLS paths + the `vault-env` image | It reaches Ready without openbao being up |
+
+Recovery from "webhook down" is therefore always available: `vault-infra` is exempt, so the Deployment can be rescheduled and everything else unblocks behind it. On a cold boot the window between the `MutatingWebhookConfiguration` existing and the pod being Ready is a transient stall, not a deadlock.
+
+> ✅ **Cert handed to cert-manager, cycle pre-empted** (same change). The serving cert was valid `2026-06-16 → 2027-06-16` and **not auto-renewed** — chart-generated once, with ArgoCD's `ignoreDifferences` on `/data` deliberately leaving it alone. Under `Ignore` an expired cert degraded silently; under `Fail` it would have stopped pod creation cluster-wide on **2027-06-16**.
+>
+> `certificate.useCertManager: true` (plus `generate: false` — the chart refuses to render with both) replaces it with a self-signed `Issuer`, a 5-year CA and a 1-year serving `Certificate`, all inside `vault-infra`, with `privateKey.rotationPolicy: Always`. cert-manager renews at 2/3 of lifetime, and `cert-manager.io/inject-ca-from` + cainjector keep the webhook's `caBundle` in step. Verified in the rendered output: the chart no longer emits a Secret of its own, and `caBundle` is injected rather than inlined.
+>
+> It deliberately does **not** use the cluster's `vault-issuer` ClusterIssuer — that one is backed by openbao's PKI, which would make the webhook's cert depend on the very Vault the webhook exists to read. A local self-signed CA keeps the graph acyclic.
+>
+> **`cert-manager` added to the `namespaceSelector` exclusions**, which is what makes the above safe: it now issues the webhook's cert, so gating its pods on the webhook would close the loop into a bootstrap deadlock. Exempting it costs nothing — no cert-manager pod carries a `vault:` reference or a `vault.security.banzaicloud.io` annotation. (`vault-infra` is still appended by the chart's own `ignoreReleaseNamespace`, so only `kube-system` had to be restated when overriding the default.)
+>
+> ⚠️ **One-time migration, not optional.** cert-manager reuses the same `secretName`, but the existing Secret is type `Opaque` and a `Certificate` produces `kubernetes.io/tls`. **`Secret.type` is immutable**, so cert-manager cannot adopt it — the Certificate simply sits `NotReady`. After this syncs: `kubectl -n vault-infra delete secret vault-webhook-vault-secrets-webhook-webhook-tls`. Do it promptly — under `Fail`, the gap between the old Secret going away and cert-manager writing the new one is a cluster-wide pod-creation stall. To avoid the window entirely, sync with `podsFailurePolicy` still at `Ignore`, complete the swap, then flip to `Fail`.
+
+> **"Everything else that needs managing" — mostly already is, by its own operator.** Auditing every TLS Secret in the cluster: the ~20 copies of `openbao-tls` / `vault-tls` scattered across namespaces are distributed **CA bundles**, not serving certs. The remaining webhook certs are self-rotated by the controller that owns them, and moving those to cert-manager would fight the operator rather than help:
+>
+> | Secret | Expires | Rotated by |
+> |---|---|---|
+> | `vault-infra/vault-webhook-…-webhook-tls` | 2027-06-16 | **nobody → now cert-manager** |
+> | `external-secrets/external-secrets-webhook` | 2036-06-13 | ESO `cert-controller` |
+> | `hook/kyverno-svc.hook.svc.kyverno-tls-pair` | 2026-11-26 | Kyverno |
+> | `database/cnpg-webhook-cert` | 2026-11-23 | CNPG operator |
+> | `longhorn/longhorn-webhook-tls` | 2027-07-04 | longhorn-manager |
+> | `kube-system/hubble-server-certs` | 2027-06-13 | Cilium |
+> | `s3/sts-tls` | 2027-09-05 | rustfs operator |
+>
+> One genuine orphan found: **`vault/vault-4-weebo-fr-tls`**, a Let's Encrypt cert for `vault.4.weebo.fr` whose `Certificate` object no longer exists, so nothing renews it. It expires **2026-09-14** but is **not in use** — nothing references the Secret, and `vault.4.weebo.fr` survives only as a SAN in the Vault CR's `tlsAdditionalHosts`, where bank-vaults generates openbao's actual cert itself (`Banzai Cloud Generated Root CA`, valid to 2027-06-17). Dead cruft, safe to delete, no urgency.
+
 ### 3.4 🟠 Network segmentation
 
 Popeye **POP-1204**: 62 pods with unsecured ingress, 51 with unsecured egress.
@@ -213,10 +265,33 @@ Namespaces with **no policy at all**: `kube-system`(22 pods), `monitoring`(18), 
 
 **Actions** — highest value first, since you already pay for Cilium:
 1. Start with **`vault` and `monitoring`**: a default-deny `CiliumNetworkPolicy` in `vault` is the single highest-value policy in the cluster (OpenBao + the raft store + the configurer).
+
+   > ✅ **First CNP written 2026-09-05** (uncommitted): `openbao-ingress` in `2.argo/helm/vault/sub/templates/vaultInstance/network-policy.yaml`, selecting `vault_cr: openbao`. Validated with a server-side dry-run through Cilium's own admission webhook. Cilium is v1.18.10 with `enable-policy: default`, so openbao is default-allow until this selects it.
+   >
+   > **Ingress-only, deliberately.** In Cilium a rule makes an endpoint default-deny *only for the directions it specifies*, so omitting `egress` leaves openbao's outbound path (DNS, the apiserver for Kubernetes auth, raft on :8201) exactly as it is. Ingress is where the exposure is; egress can follow once this has proven itself.
+   >
+   > **The allowlist is not guesswork, and Hubble alone was not enough** — its ring buffer had already dropped events during capture, and the flows that matter most here are the rare ones a short capture never shows: a cert-manager renewal fires every 30–90 days and 11 Certificates depend on it. The list was built by reading the repo for `openbao.vault:8200` / `vault.vault:8200`, cross-checking the live `ClusterSecretStore` / `SecretStore` / `ClusterIssuer` objects, then confirming against `hubble observe --to-namespace vault`.
+   >
+   > | Allowed source | Why |
+   > |---|---|
+   > | `host`, `remote-node` | kubelet probes **and** the apiserver — the largest single source in Hubble. Losing this doesn't just break probes, it makes the kubelet restart openbao in a loop |
+   > | same namespace (`fromEndpoints: [{}]`) | the bank-vaults unseal sidecar, `openbao-configurer`, `terra-job-vault`, and raft to itself |
+   > | `external-secrets` | the ESO **controller pod** dials Vault whichever namespace the store lives in — which is why `argocd`, `auth`, `cert-manager` and `monitoring` SecretStores do *not* each need their namespace listed |
+   > | `cert-manager` | direct connection for the `vault-issuer` ClusterIssuer (Vault PKI) |
+   > | `auth`, `netbird` | `vault-env` is injected **into the consuming pod**, so it dials from that pod's namespace, not from `vault-infra` |
+   > | `vault-operator`, `vault-infra`, `traefik` | Vault CR reconcile, webhook health path, and the `vault.weebo.poc` ingress |
+   >
+   > **Validate before extending the pattern.** `bpf-events-policy-verdict-enabled` and `hubble-network-policy-correlation-enabled` are both already on, so `hubble observe --to-namespace vault --verdict DROPPED` will name anything this list gets wrong.
 2. Add a default-deny + explicit-allow baseline per namespace; put it in `2.argo/app/templates/` so it lands with every new namespace.
 3. Popeye **POP-1208**: 5 stale Longhorn NetworkPolicies select pods that never exist here (`backing-image-manager`, `backing-image-data-source`, `share-manager`) — harmless, chart-supplied.
 
-### 3.5 🟠 Kyverno — 428 MiB for one Audit policy *(resolved 2026-09-05: now generates the LimitRanges, see §3.2)*
+### 3.5 🟠 Kyverno — 428 MiB for one Audit policy *(resolved 2026-09-05: now generates the LimitRanges, see §3.2, and trimmed to 2 controllers)*
+
+> ✅ **Trimmed 2026-09-05** (uncommitted). Two of the four controllers were doing nothing measurable and are now disabled: **cleanup (115 Mi)** ran against zero `CleanupPolicies`, and **reports (75 Mi)** produced 81 `PolicyReports` that were each a single *skip* or *pass* from a mutate-only policy. **443 Mi → ~253 Mi, a 43% cut.** `admission` (176 Mi) and `background` (77 Mi) stay — the first runs the mutate policy and the Namespace generate webhook, the second is what makes §3.2's `generateExisting`/`synchronize` work at all.
+>
+> ⚠️ **`reportsController.enabled: false` alone would have been a bug.** The admission controller ships `--admissionReports=true` plus RBAC to write `ephemeralreports`, so it would have kept writing reports that nothing aggregates — into CRDs removed alongside. The `features.{admissionReports,aggregateReports,policyReports,validatingAdmissionPolicyReports}` and `features.reporting.*` flags are what actually stop it; verified in the rendered output as `--admissionReports=false` and an empty `--enableReporting=`.
+>
+> **Turn reporting back on the moment a *validate* policy is added** (the §3.7 securityContext work). Reports are the only place validation results surface; without them a failing policy is invisible.
 
 `hook` namespace runs **4 controllers** (admission 171 Mi, cleanup 115 Mi, reports 74 Mi, background 68 Mi) plus 56 `PolicyReport` objects in etcd, to enforce exactly **one `ClusterPolicy`** — `add-certificates-volume`, in `validationFailureAction: Audit`, `background: false`.
 
@@ -289,6 +364,10 @@ Privileged / host-namespace workloads (all legitimate infrastructure, but worth 
    The keeper had **no `containerTemplate.image` at all**, so the operator fell back to `:latest` while the server directly beside it was pinned to `25.8-alpine` — half the ClickHouse quorum silently floating. It now pins to the server's major.minor, and the two are grouped in Renovate so a bump can never be half-applied again.
 
    The terraform Jobs are raw manifests applied as ArgoCD PostSync hooks, so neither the `# renovate:` customManager (it only reads `version:` keys in `values.yaml`) nor `helm-values` could see them. Renovate's built-in **`kubernetes` manager ships with no file pattern at all** — plain Kubernetes YAML is too ambiguous to match blind — so it finds nothing until pointed somewhere. Now pointed at `2.terra/**/*.yaml`. `2.terra/**` also joins the majors-need-dashboard-approval rule, since those Jobs run `terraform apply` against live Vault and Authentik state.
+
+   > ⚠️ **Pinning the image surfaced a latent GitOps bug.** The first sync failed with `Job.batch "terra-job-vault-empty" is invalid: spec.template: ... field is immutable`. `Job.spec.template` cannot be patched, and unlike their `PostSync` siblings the two `terra-job-*-empty` Jobs are plain tracked resources, so ArgoCD reached for a patch. Nothing had ever edited those pod templates before, so the fragility had never shown — the image pin was simply the first change to try. Fixed with `argocd.argoproj.io/sync-options: Force=true,Replace=true`, which makes ArgoCD delete and recreate them; free here, since the container only runs `echo "WIP"`. The `PostSync` hooks need nothing: ArgoCD's default `hook-delete-policy: BeforeHookCreation` already recreates them each sync.
+   >
+   > Those stub Jobs are not dead weight, despite the script. The `terra-job-*` PVCs use the `local-path` StorageClass, which is `WaitForFirstConsumer`, so the claim stays `Pending` until a pod mounts it — hence `argocd.argoproj.io/ignore-healthcheck` on the PVC. The stub is that first consumer, binding the volume before the real PostSync hook needs it.
 
    > **Verified by extraction, not by reading the config.** `renovate --platform=local --dry-run=extract` reports `hashicorp/terraform@1.16.1` from both `2.terra/auth/job.yaml` and `2.terra/vault/job.yaml` (2 deps each), and `clickhouse/clickhouse-keeper@25.8-alpine` alongside `clickhouse/clickhouse-server@25.8-alpine` from `2.helm/clickstack/values.yaml`. Zero `:latest` remain anywhere in the repo.
 5. **RBAC**: 3 subjects hold wildcard + admin + delete-events rights — `argocd-application-controller` (expected), `longhorn-support-bundle` (**should be scoped or removed — it is a debug SA**), and the `labsso:weebo_admin` group (expected, this is your admin group). `C-0037 CoreDNS poisoning`: 19 subjects can modify CoreDNS.

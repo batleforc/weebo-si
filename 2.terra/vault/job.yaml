@@ -61,6 +61,23 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: "terra-job-vault-empty"
+  annotations:
+    # Job.spec.template is immutable, and unlike its PostSync sibling above this
+    # one is a plain tracked resource -- so ArgoCD reaches for a patch and the
+    # API server rejects it:
+    #   Job.batch "terra-job-vault-empty" is invalid:
+    #   spec.template: ... field is immutable
+    # It stayed hidden only because nothing had ever edited the pod template;
+    # pinning the terraform image off :latest was the first change to try.
+    # Force+Replace makes ArgoCD delete and recreate instead of patching, which
+    # is free here -- the container only echoes WIP.
+    #
+    # The Job itself is not pointless: terra-job-* PVCs use the local-path
+    # StorageClass, which is WaitForFirstConsumer, so the claim stays Pending
+    # until some pod mounts it (hence ignore-healthcheck on the PVC). This stub
+    # is that first consumer, binding the volume before the real PostSync hook
+    # needs it.
+    argocd.argoproj.io/sync-options: Force=true,Replace=true
 spec:
   backoffLimit: 10
   template:
