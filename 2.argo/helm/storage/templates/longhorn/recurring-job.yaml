@@ -1,0 +1,34 @@
+{{- if .Values.longhorn.enabled -}}
+# Reclaims blocks that Longhorn still has allocated but the filesystem no
+# longer uses. Nothing issues a trim on its own, so without this a volume only
+# ever grows: ClickHouse TTL-drops ~350 MiB/day of parts, and every block it
+# ever touched stayed allocated in the replica until the volume was full at the
+# block layer while 61% of the filesystem sat free.
+#
+# Pairs with defaultSettings.removeSnapshotsDuringFilesystemTrim in
+# longhorn.yaml -- the trim can only release a block that no snapshot in the
+# chain still pins, so this job is close to a no-op without that setting.
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: filesystem-trim-weekly
+  namespace: longhorn
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    # The CRD ships with the longhorn Application (sync-wave -5). On a fresh
+    # bootstrap it does not exist yet at dry-run time.
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  # Longhorn labels every volume it provisions with
+  # recurring-job-group.longhorn.io/default=enabled, so targeting the group
+  # picks up new PVCs automatically instead of needing a per-volume label.
+  groups:
+    - default
+  task: filesystem-trim
+  cron: "0 3 * * 0"
+  # Single node: trim one volume at a time so the instance-manager isn't
+  # servicing four concurrent unmap walks alongside live traffic.
+  concurrency: 1
+  # Only meaningful for snapshot/backup tasks; a trim produces nothing to keep.
+  retain: 0
+{{- end -}}

@@ -71,6 +71,18 @@ spec:
           nodeDrainPolicy: block-for-eviction
           # Guaranteed instance manager CPU
           guaranteedInstanceManagerCPU: 4
+          # Let a filesystem trim actually free blocks. Longhorn volumes are
+          # thin-provisioned, but a trim can only release a block if no snapshot
+          # in the chain still references it -- with this off, the trim walks the
+          # filesystem and frees almost nothing. The ClickHouse volume reached
+          # 21.43 GB allocated against 7.6 GB of live data because of this.
+          #
+          # Longhorn only marks the *latest* snapshot and its parents as removed,
+          # and never one with multiple children, so this cannot eat a branch
+          # point. Volumes keep unmapMarkSnapChainRemoved=ignored (the
+          # persistence.unmapMarkSnapChainRemoved StorageClass default), which
+          # means they inherit this global value rather than pinning their own.
+          removeSnapshotsDuringFilesystemTrim: true
 
         persistence:
           # Default storage class

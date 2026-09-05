@@ -103,6 +103,8 @@ project:
         kind: "AuthentikBrand"
       - group: "authentik.weebo.io"
         kind: "AuthentikFlow"
+      - group: "longhorn.io"
+        kind: "RecurringJob"
   - name: monitoring
     sourceRepo:
       - https://open-telemetry.github.io/opentelemetry-helm-charts
