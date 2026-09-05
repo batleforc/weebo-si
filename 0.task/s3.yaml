@@ -12,4 +12,4 @@ tasks:
     env:
       KUBECONFIG: 0.config/kubeconfig.yaml
     cmds:
-      - kubectl -n s3 create token s3-rustfs-operator --duration=24h
+      - kubectl -n s3 create token s3-rustfs-operator-console --duration=24h

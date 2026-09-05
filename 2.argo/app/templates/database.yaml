@@ -11,7 +11,7 @@ spec:
   project: {{ .Values.database.project }}
   source:
     repoURL: '{{ .Values.repo }}'
-    path: '2.argo/helm/database'
+    path: '2.argo/helm/database/main'
     targetRevision: '{{ .Values.branch }}'
     helm:
       releaseName: ingress
