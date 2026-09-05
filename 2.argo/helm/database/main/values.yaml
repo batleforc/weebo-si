@@ -14,7 +14,7 @@ mongodbOperator:
   repoURL: https://mongodb.github.io/helm-charts
   chart: mongodb-kubernetes
   # renovate: datasource=helm depName=mongodb-kubernetes registryUrl=https://mongodb.github.io/helm-charts
-  version: 1.9.1
+  version: 1.11.0
 
 cnpgOperator:
   enabled: true
