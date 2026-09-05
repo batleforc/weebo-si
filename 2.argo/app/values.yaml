@@ -101,15 +101,6 @@ project:
         kind: "AuthentikGroup"
       - group: "authentik.weebo.io"
         kind: "AuthentikBrand"
-      # Cluster-scoped like the four above, and added to the operator in 0.7.0
-      # -- after this list was first written, which is why it was missing.
-      # Without it `auth-app` fails its sync with
-      #   resource authentik.weebo.io:AuthentikFlow is not permitted in project infra
-      # and the CR never reaches the cluster. See MIGRATION.md phase 2b.
-      # NB: AuthentikOutpost is the one remaining cluster-scoped kind still
-      # absent here. No phase of the migration creates one (an unset
-      # `outpostRef` means Authentik's embedded outpost), so it is left out
-      # rather than granted unused -- add it here first if that ever changes.
       - group: "authentik.weebo.io"
         kind: "AuthentikFlow"
   - name: monitoring
@@ -140,6 +131,7 @@ project:
       - oci://ghcr.io/clickhouse/clickhouse-operator-helm
       - https://mongodb.github.io/helm-charts
       - https://cloudnative-pg.github.io/charts
+      - https://operator.rustfs.com
     includeBaseRepo: true
     dest:
       - server: "https://kubernetes.default.svc"
@@ -148,6 +140,8 @@ project:
         namespace: "database"
       - server: "https://kubernetes.default.svc"
         namespace: "monitoring"
+      - server: "https://kubernetes.default.svc"
+        namespace: "s3"
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"
@@ -161,3 +155,5 @@ project:
         kind: "ValidatingWebhookConfiguration"
       - group: "rbac.authorization.k8s.io"
         kind: "ClusterRoleBinding"
+      - group: "rustfs.com"
+        kind: "Tenant"

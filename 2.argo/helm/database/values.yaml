@@ -21,3 +21,11 @@ cnpgOperator:
   repoURL: https://cloudnative-pg.github.io/charts
   # renovate: datasource=helm depName=cloudnative-pg registryUrl=https://cloudnative-pg.github.io/charts
   version: 0.29.0
+
+s3Operator:
+  enabled: true
+  repoUrl: https://operator.rustfs.com
+  chart: rustfs-operator
+  # renovate: datasource=helm depName=s3-operator registryUrl=https://operator.rustfs.com
+  version: 0.0.6
+  namespace: s3

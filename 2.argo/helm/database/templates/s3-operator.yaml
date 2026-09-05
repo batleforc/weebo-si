@@ -1,0 +1,27 @@
+{{- if .Values.s3Operator.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: s3-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true
+  source:
+    chart: {{ .Values.s3Operator.chart }}
+    repoURL: {{ .Values.s3Operator.repoURL }}
+    targetRevision: {{ .Values.s3Operator.version }}
+    helm:
+      releaseName: s3
+  destination:
+    namespace: {{ .Values.s3Operator.namespace }}
+    name: "in-cluster"
+{{- end }}
