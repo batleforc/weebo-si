@@ -24,7 +24,7 @@ cnpgOperator:
 
 s3Operator:
   enabled: true
-  repoUrl: https://operator.rustfs.com
+  repoURL: https://operator.rustfs.com
   chart: rustfs-operator
   # renovate: datasource=helm depName=s3-operator registryUrl=https://operator.rustfs.com
   version: 0.0.6
