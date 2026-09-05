@@ -31,9 +31,10 @@ spec:
             enabled: true
             className: {{ .Values.s3Operator.console.className }}
             hosts:
-              {{ range .Values.s3Operator.console.hosts }}
-              - host: {{ . }}
-              {{ end }}
+              - host: {{ .Values.s3Operator.console.hosts.host }}
+            tls:
+              - host: {{ .Values.s3Operator.console.hosts.host }}
+                secretName: {{ .Values.s3Operator.console.hosts.secretName }}
   destination:
     namespace: {{ .Values.s3Operator.namespace }}
     name: "in-cluster"

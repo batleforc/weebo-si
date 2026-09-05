@@ -1,0 +1,27 @@
+{{- if .Values.s3Operator.console.enabled -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: s3-operator-tls
+  namespace: {{ .Values.s3Operator.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  secretName: {{ .Values.s3Operator.console.hosts.secretName }}
+  commonName: {{ .Values.s3Operator.console.hosts.host }}
+  dnsNames:
+    - {{ .Values.s3Operator.console.hosts.host }}
+  issuerRef:
+    name: vault-issuer
+    kind: ClusterIssuer
+  privateKey:
+    size: 4096
+  subject:
+    organizationalUnits:
+      - Infra
+    organizations:
+      - WeeboSI
+  usages:
+    - digital signature
+    - key encipherment
+{{- end -}}

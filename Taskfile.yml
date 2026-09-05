@@ -8,6 +8,7 @@ includes:
   argo: 0.task/argo.yaml
   vpn: 0.task/vpn.yaml
   vault: 0.task/vault.yaml
+  s3: 0.task/s3.yaml
 
 tasks:
   init:

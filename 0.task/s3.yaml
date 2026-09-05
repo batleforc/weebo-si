@@ -1,0 +1,15 @@
+version: "3"
+
+tasks:
+  default:
+    desc: "Default task to access argoCD CLI"
+    env:
+      KUBECONFIG: 0.config/kubeconfig.yaml
+    cmds:
+      - argocd {{ .CLI_ARGS }}
+  pwd:
+    desc: "Create a S3 Token"
+    env:
+      KUBECONFIG: 0.config/kubeconfig.yaml
+    cmds:
+      - kubectl -n s3 create token s3-rustfs-operator --duration=24h

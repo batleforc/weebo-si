@@ -33,4 +33,5 @@ s3Operator:
     enabled: true
     className: traefik
     hosts:
-      - s3-ope.weebo.poc
+      host: s3-ope.weebo.poc
+      secretName: s3-ope-weebo-poc
