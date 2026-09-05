@@ -132,6 +132,7 @@ project:
       - https://mongodb.github.io/helm-charts
       - https://cloudnative-pg.github.io/charts
       - https://operator.rustfs.com
+      - https://github.com/rustfs/operator
     includeBaseRepo: true
     dest:
       - server: "https://kubernetes.default.svc"

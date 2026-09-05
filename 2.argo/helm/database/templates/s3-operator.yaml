@@ -16,8 +16,8 @@ spec:
     - CreateNamespace=true
     - ServerSideApply=true
   source:
-    chart: {{ .Values.s3Operator.chart }}
     repoURL: {{ .Values.s3Operator.repoURL }}
+    path: {{ .Values.s3Operator.path }}
     targetRevision: {{ .Values.s3Operator.version }}
     helm:
       releaseName: s3
