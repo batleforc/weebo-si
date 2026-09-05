@@ -17,6 +17,14 @@ spec:
       releaseName: vault-webhook
       valuesObject:
         replicaCount: 1
+        # The chart defaults this on with minAvailable: 1, which against
+        # replicaCount 1 means disruptionsAllowed is permanently 0 -- a PDB that
+        # can never be satisfied rather than one protecting anything. It blocks
+        # node drains (verified: the webhook pod refused eviction) and buys no
+        # availability, since there is one replica on one node either way.
+        # Re-enable it together with replicaCount > 1 on a multi-node cluster.
+        podDisruptionBudget:
+          enabled: false
   destination:
     server: "https://kubernetes.default.svc"
     namespace: vault-infra

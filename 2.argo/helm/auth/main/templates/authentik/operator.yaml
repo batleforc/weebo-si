@@ -31,6 +31,13 @@ spec:
         replicaCount: {{ .Values.authentik.operator.replicaCount }}
         image:
           tag: v{{ .Values.authentik.operator.version }}
+        # Same story as vault-webhook: the chart defaults this on with
+        # minAvailable: 1, which against a single replica pins
+        # disruptionsAllowed at 0 -- verified by the operator pod refusing
+        # eviction. It blocks node drains without protecting availability.
+        # Re-enable alongside replicaCount > 1.
+        podDisruptionBudget:
+          enabled: false
 
 
 {{- end -}}

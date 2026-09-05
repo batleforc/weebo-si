@@ -12,16 +12,18 @@
 
 ## 1. Executive summary
 
+> **Progress — 2026-09-05.** Findings 1, 2, 3, 5 and 6 are resolved (commits `7b28c7e3`, `74365b3e`, plus live cleanup); action-plan items 7 and 12 are settled or were already done. **3 of the 8 headline findings remain open** — 4 (network policy), 7 (apiserver request) and 8 (`:latest` tags / default ServiceAccounts). Corrections made while implementing are marked inline — two of the original findings did not survive measurement.
+
 The cluster is **not resource-constrained** — it runs at 15% CPU and 27% memory of a 12-core / 61 GiB node. The real problems are **governance and storage**, not capacity:
 
 | # | Finding | Severity |
 |---|---|---|
 | 1 | ~~Longhorn ClickHouse volume at **21.4 GB of 21.5 GB** allocated, no filesystem trim~~ — ✅ **RESOLVED**, 13.25 GB reclaimed | 🔴 → Done |
-| 2 | **49/77 workloads have no memory limit, 57/77 no CPU limit** — a single leak can take the whole (single-node) cluster down | 🔴 Critical |
-| 3 | ClickHouse `mark_cache_size` + `index_mark_cache_size` both at the 5 GiB default, inside a 4.5 GiB budget — *downgraded from High after measuring: total marks are 12.75 MiB, so it cannot fill* | 🟡 Medium |
+| 2 | ~~**49/77 workloads have no memory limit, 57/77 no CPU limit**~~ — ✅ **RESOLVED** by a Kyverno-generated LimitRange in every namespace (`74365b3e`) | 🔴 → Done |
+| 3 | ~~ClickHouse `mark_cache_size` + `index_mark_cache_size` at the 5 GiB default inside a 4.5 GiB budget~~ — ✅ **RESOLVED**, capped at 512 MiB (`74365b3e`). *Downgraded from High after measuring: total marks are 12.75 MiB, so it could never fill* | 🟡 → Done |
 | 4 | 18 of 24 namespaces have **zero network policy** — flat east-west network | 🟠 High |
-| 5 | Kyverno runs 4 controllers (**428 MiB / 22m**) to enforce **one Audit-only policy** | 🟠 High (waste) |
-| 6 | KubeBlocks / MongoDB-Enterprise leftovers: **29 orphan ConfigMaps**, 1 orphan Service, ~2.5 GB of dead images | 🟡 Medium |
+| 5 | ~~Kyverno runs 4 controllers (**428 MiB / 22m**) to enforce **one Audit-only policy**~~ — ✅ **SETTLED: keep it.** It now generates the LimitRanges of finding 2, so the background-controller is load-bearing. Open work is extending it to finding 8 rather than editing 40 charts | 🟠 → Decided |
+| 6 | ~~KubeBlocks / MongoDB-Enterprise leftovers~~ — ✅ **RESOLVED**: 52 ConfigMaps (not 29), 21 orphan Helm release records, 1 orphan Service and the `zitadel` namespace deleted. Dead images remain (cosmetic) | 🟡 → Done |
 | 7 | `kube-apiserver` at **2.35 GiB** against a 512 Mi request (460%) with no limit | 🟡 Medium |
 | 8 | 11 workloads pinned to `:latest`, 10 pods on the `default` ServiceAccount | 🟡 Medium |
 
@@ -157,7 +159,11 @@ Workloads with **no requests and no limits at all**: all of `argocd`, all of `au
    - **`kube-*`** — Talos' static control-plane pods take their cgroups from the on-disk manifests, not the mirror Pod the API server sees. A default here would display a limit that nothing enforces, which reads as solved while `kube-apiserver` stays unbounded. Its 2.5 GiB belongs in the Talos machine config. The glob also covers `kube-public` and `kube-node-lease`.
    - **`longhorn`** — upstream ships `instance-manager` without a memory limit deliberately: hitting one detaches every volume on the node, taking ClickHouse and MongoDB storage with it. Its memory also scales with volume count and size, so any number picked today expires quietly.
 
-   Coverage: **26 of the 51 unlimited containers** today, plus every namespace created from here on. Also moves **22 pods off `BestEffort`** (35 cluster-wide), so they are no longer first in line for eviction.
+   > ✅ **Applied 2026-09-05** (`74365b3e`). 19 LimitRanges generated — `argocd, auth, cert-manager, cilium-secrets, database, default, dex, external-secrets, kubelet-serving-cert-approver, local-path-storage, monitoring, netbird, obi, s3, traefik, vault, vault-infra, vault-operator` (plus `zitadel`, since deleted with its namespace — now 18). `kube-*` and `longhorn` correctly skipped, webhook confirmed on `validate.kyverno.svc-ignore`, no OOMKills. First evidence it works: the ClickHouse pod, recreated minutes later, came back carrying the `cpu: 10m` request it had never had.
+
+   Coverage: **26 of the 51 unlimited containers**, plus every namespace created from here on.
+
+   > ⚠️ The **BestEffort → Burstable** improvement is not retroactive. A LimitRange applies only at pod admission, so the QoS spread is still 35 BestEffort / 33 Burstable and will only shift as pods are recreated. Nothing to do — it converges on its own — but do not read the unchanged count as a failure.
 
    > This makes Kyverno's background-controller load-bearing, which settles §3.5 in favour of *keeping* Kyverno and using it, rather than stripping three controllers.
 3. Bump `kube-apiserver` request to `2Gi` in the Talos machine config (`cluster.apiServer.resources`) — 512 Mi against a steady 2.35 GiB makes the scheduler's arithmetic meaningless. Its size is expected for 161 CRDs and 36 ArgoCD apps; it is not a leak.
@@ -169,7 +175,11 @@ Workloads with **no requests and no limits at all**: all of `argocd`, all of `au
 
 > 🟡 **`mark_cache_size` and `index_mark_cache_size` are both at the 5 GiB upstream default** while `max_server_memory_usage` is 4.5 GiB (0.9 × the 5 Gi container limit) — 10 GiB of nominal cache inside a 4.5 GiB budget, never scaled to the container.
 >
-> **Corrected 2026-09-05 — this was first written as High severity ("an OOMKill waiting for a heavy scan"). Measurement does not support that.** The marks for every active part in the database total **12.75 MiB**, and the two caches sit at **107 KiB and 101 KiB**. Neither can approach 5 GiB without roughly 400× the current data, so the oversized default costs nothing today. It is worth fixing because it leaves a cache able to crowd out queries and merges if this ever grows into a real dataset, and because a memory budget that advertises more cache than total RAM cannot be reasoned about — not because anything is at risk now. Both are `changeable_without_restart`, so the fix reloads in place.
+> **Corrected 2026-09-05 — this was first written as High severity ("an OOMKill waiting for a heavy scan"). Measurement does not support that.** The marks for every active part in the database total **12.75 MiB**, and the two caches sit at **107 KiB and 101 KiB**. Neither can approach 5 GiB without roughly 400× the current data, so the oversized default costs nothing today. It is worth fixing because it leaves a cache able to crowd out queries and merges if this ever grows into a real dataset, and because a memory budget that advertises more cache than total RAM cannot be reasoned about — not because anything is at risk now.
+
+> ✅ **Applied 2026-09-05** (`74365b3e`). Both caches now read 512 MiB against the unchanged 4.50 GiB budget. Data intact across the change: 312 active parts, 3.37 GiB, 470M rows, ingest lag ~10s.
+>
+> **Correction:** this was written as "changeable_without_restart, so the fix reloads in place." That is true of ClickHouse itself but not of the deployment — the clickhouse-operator rolls the StatefulSet whenever the `ClickHouseCluster` spec changes, so applying it cost a pod restart and a short ingest gap. Assume a roll for any future `extraConfig` edit, `changeable_without_restart` notwithstanding.
 >
 > Do not read the mark cache hit rate (**89.5k hits against 8.1M misses**) as a symptom of the size: parts here are created by ingest and destroyed by TTL merges faster than they are ever re-read, so almost every mark read is for a part never seen before. A larger cache cannot fix that and a smaller one does not cause it.
 
@@ -204,7 +214,7 @@ Namespaces with **no policy at all**: `kube-system`(22 pods), `monitoring`(18), 
 2. Add a default-deny + explicit-allow baseline per namespace; put it in `2.argo/app/templates/` so it lands with every new namespace.
 3. Popeye **POP-1208**: 5 stale Longhorn NetworkPolicies select pods that never exist here (`backing-image-manager`, `backing-image-data-source`, `share-manager`) — harmless, chart-supplied.
 
-### 3.5 🟠 Kyverno — 428 MiB for one Audit policy
+### 3.5 🟠 Kyverno — 428 MiB for one Audit policy *(resolved 2026-09-05: now generates the LimitRanges, see §3.2)*
 
 `hook` namespace runs **4 controllers** (admission 171 Mi, cleanup 115 Mi, reports 74 Mi, background 68 Mi) plus 56 `PolicyReport` objects in etcd, to enforce exactly **one `ClusterPolicy`** — `add-certificates-volume`, in `validationFailureAction: Audit`, `background: false`.
 
@@ -226,6 +236,18 @@ Related: **C-0039 "mutating admission controller" 0% (8/8)** and **C-0036 "valid
 **Actions**
 1. `kubectl -n argocd delete cm` for the 29 orphans; `kubectl -n argocd delete svc operator-webhook`; `kubectl -n zitadel delete job zitadel-cleanup` and drop the `zitadel` namespace if the migration to `authentik` is complete (it is, per the operator migration).
 2. Talos garbage-collects unused images on disk pressure only; at 11% usage that will never fire. Prune manually via `talosctl -n <node> image ls` / `image rm` if you want the 3.5 GB back — low priority given 423 GB free.
+
+> ✅ **DONE 2026-09-05.** Deleted **52 ConfigMaps** (the audit said 29 — the original grep matched only mysql/mongo/postgres/apecloud and missed the `kafka`, `etcd` and `redis` addons), **21 Helm release records** across 7 orphaned `kb-addon-*` releases, and the orphan `argocd/operator-webhook` Service. `argocd` ConfigMaps: 64 → 12. Zero `kb-addon-*` resources remain cluster-wide; ArgoCD healthy with no new restarts. Backup of everything deleted is in the session scratchpad (`kb-backup/`), restorable with `kubectl apply -f`.
+>
+> ⚠️ **`helm uninstall` cannot remove these** — worth knowing for the next orphaned operator. The release manifests reference `ActionSet`, `BackupPolicyTemplate`, `ComponentDefinition` and `ComponentVersion`, whose CRDs are already gone, so Helm fails to build the delete manifest and aborts — leaving the release stuck in `uninstalling`. The fix is to delete the `sh.helm.release.v1.*` Secrets directly, after confirming which real resources the release still owns (here: only ConfigMaps, all held by `helm.sh/resource-policy: keep`, which is why they outlived the uninstall in the first place).
+>
+> ✅ **`zitadel` namespace deleted 2026-09-05**, with both stale repo references cleaned up. Namespaces 24 → 23. It held only the failed `zitadel-cleanup` Job, an `openbao-tls` Secret and the trust-manager-distributed `weebo.poc` bundle; no pods, and no ArgoCD Application targeted it, so nothing recreates it. Verified before deleting that cluster OIDC runs through **dex** (`--authentication-config` names issuer `https://dex.weebo.poc`, audience `weebo-kube`), so authentication was never involved. Namespace contents backed up to `kb-backup/zitadel-namespace.yaml`.
+>
+> **Repo references removed:**
+> - `https://charts.zitadel.com` from the `infra` AppProject `sourceRepo` list (`2.argo/app/values.yaml`) — 13 → 12 entries, no Application used it.
+> - `task create-kubeconfig-oidc` (`Taskfile.yml`) read a client id from `zitadel/cluster-auth` and wrote it over `args[3]`. **That Secret no longer existed, so the whole task aborted before running a single command** — it had been broken since the move to dex, not by this cleanup. `weebo-kube` is a dex `staticClient` and the template already carries the correct `--oidc-client-id`, so the lookup and its `yq` line are simply gone. Re-ran the task after the change: it now regenerates `kubeconfig.oidc.yaml` correctly with the client id, server and CA intact.
+>
+> Popeye's POP-307 finding about a Job referencing a non-existent `zitadel` ServiceAccount is resolved by the same deletion.
 
 ### 3.7 🟡 Workload security posture
 
@@ -262,8 +284,20 @@ Privileged / host-namespace workloads (all legitimate infrastructure, but worth 
 
 **Single points of failure** — every workload runs 1 replica on 1 node, so this section is about *restart behaviour*, not HA:
 
-- **No `HorizontalPodAutoscaler` anywhere**; only 7 PDBs exist, 5 of which report **`ALLOWED DISRUPTIONS: 0`** (`authentik-weebo-authentik`, `csi-attacher`, `csi-provisioner`, `instance-manager` ×2, `vault-webhook`). Those PDBs will **block node drains and Talos upgrades**. Either raise the replica count or drop the PDBs — as written they guarantee a stuck upgrade.
-- **`clickstack-mongodb-arb` StatefulSet is scaled to 0** (Popeye POP-500). Dead resource, delete it.
+- **No `HorizontalPodAutoscaler` anywhere**; only 7 PDBs exist, 5 of which report **`ALLOWED DISRUPTIONS: 0`** (`authentik-weebo-authentik`, `csi-attacher`, `csi-provisioner`, `instance-manager` ×2, `vault-webhook`).
+
+  > **Confirmed, not theoretical.** Each of the five was tested against the eviction API with `dryRun=All`; all five returned `Cannot evict pod as it would violate the pod's disruption budget`. Any drain — including the one a Talos upgrade performs — hangs today.
+
+  > ✅ **Fixed in the repo 2026-09-05** (uncommitted). The five split into two unrelated causes:
+  >
+  > **Two are chart defaults** with `minAvailable: 1` against `replicaCount: 1`, which pins `disruptionsAllowed` at 0 forever — a PDB that protects nothing and blocks everything. Both charts expose `podDisruptionBudget.enabled`, now set to `false`:
+  > - `vault-infra/vault-webhook-vault-secrets-webhook` → `2.argo/helm/vault/main/templates/hook/hook.yaml`
+  > - `auth/authentik-weebo-authentik` → `2.argo/helm/auth/main/templates/authentik/operator.yaml`
+  >
+  > **Four are Longhorn's**, created by longhorn-manager at runtime — no owner references, no Helm or ArgoCD labels — so deleting them live just brings them back. The lever is `nodeDrainPolicy`, which this repo had at `block-for-eviction`. On a single node with `defaultReplicaCount: 1` that can never be satisfied: there is no other node to evict replicas to, and this node always holds the last replica, so the three `*last-replica` variants deadlock too. Changed to **`allow-if-replica-is-stopped`**, which keeps the protection worth keeping — Longhorn still refuses to let instance-manager be evicted while a replica is running, so a drain cannot pull the data path out from under an attached volume — while letting the drain finish once workloads are evicted and volumes detach. (`always-allow` also unblocks it but drops that protection for nothing gained.) Valid options, from the setting's own validating webhook: `block-for-eviction`, `block-for-eviction-if-contains-last-replica`, `block-if-contains-last-replica`, `allow-if-replica-is-stopped`, `always-allow`.
+  >
+  > ⚠️ **One thing to confirm after this syncs.** The two `instance-manager` PDBs are unambiguously governed by `nodeDrainPolicy`. The `csi-attacher` and `csi-provisioner` PDBs are strongly *implied* to be — they carry no labels or owner refs and were created 2026-08-16, six weeks after their Deployments (2026-07-05) and exactly when Longhorn volumes came into use, which is the signature of drain-protection rather than deployment-time creation — but that was inferred, not proven. Re-run the eviction dry-run on all four after the sync; if the two CSI ones still refuse, they need a separate answer (drain with `--disable-eviction`, which issues DELETE instead of eviction and bypasses PDBs entirely).
+- **`clickstack-mongodb-arb` StatefulSet is scaled to 0** (Popeye POP-500). ~~Dead resource, delete it.~~ **Correction 2026-09-05: do not delete.** It carries a controller `ownerReference` to the `MongoDBCommunity/clickstack-mongodb` CR — it is the operator's arbiter StatefulSet, held at 0 because the replica set is configured with `members: 1` and no arbiters. Deleting it just makes the operator recreate it. Popeye's POP-500 is a false positive here.
 - **Popeye POP-102/103/104: 29 pods with no probes at all**, including `argocd-{applicationset,dex,notifications,redis}`, `external-secrets`, `mongodb-kubernetes-operator`, `longhorn/csi-*` ×4, `longhorn-ui`, `netbird/exit-node-ingress`, `obi`, `clickstack-mongodb`, and every `openbao-configurer` pod. Kubernetes cannot tell a hung process from a healthy one for any of these.
 - **Restarts**: `cilium-envoy` 8×, `metrics-server`/`coredns` ×2/`cilium-operator`/`kubelet-serving-cert-approver` 4× (all 63d — consistent with node reboots, not crash loops). `clickstack-otel-collector` **4× in 10 days** is the only one worth investigating.
 - **6 completed Job pods retained for up to 71 days** (`openbao-configurer` ×4, `terra-job-*`, `kyverno-migrate-resources`). Set `ttlSecondsAfterFinished: 86400` on the Jobs in `2.argo/helm/vault/sub/` and `2.argo/helm/auth/sub/`.
@@ -288,17 +322,17 @@ Privileged / host-namespace workloads (all legitimate infrastructure, but worth 
 | # | Action | Effort | Closes |
 |---|---|---|---|
 | 1 | ~~Filesystem-trim + `remove-snapshots-during-filesystem-trim` + weekly RecurringJob~~ | ✅ **DONE** | 🔴 §3.1 — **13.25 GB reclaimed**, write-stall risk gone |
-| 2 | **Cap `mark_cache_size` + `index_mark_cache_size` at 512 MiB** on ClickHouse | 10 min | 🟡 §3.3 — config hygiene, reloads in place |
-| 3 | **Kyverno-generated `LimitRange`** (2Gi limit / 64Mi request, all namespaces bar `kube-*` and `longhorn`) | 1 h | 🔴 §3.2 — 26 containers bounded, 22 pods off BestEffort, order-independent |
-| 4 | **Drop the 5 zero-disruption PDBs** or raise replicas | 20 min | 🟡 §3.8 — unblocks the next Talos upgrade |
-| 5 | **Delete the KubeBlocks leftovers** (29 CMs, `operator-webhook` svc, `zitadel-cleanup` job, `zitadel` ns, `clickstack-mongodb-arb`) | 20 min | 🟡 §3.6 — 21 C-0012 findings |
+| 2 | ~~Cap `mark_cache_size` + `index_mark_cache_size` at 512 MiB~~ | ✅ **LIVE** `74365b3e` | 🟡 §3.3 — both now 512 MiB; cost one operator-driven pod roll |
+| 3 | ~~Kyverno-generated `LimitRange`~~ (2Gi limit / 64Mi request) | ✅ **LIVE** `74365b3e` | 🔴 §3.2 — 19 namespaces generated, `kube-*`/`longhorn` skipped, order-independent |
+| 4 | ~~Drop the 5 zero-disruption PDBs~~ — 2 chart PDBs disabled, Longhorn `nodeDrainPolicy` → `allow-if-replica-is-stopped` | ✅ **IN REPO** (uncommitted) | 🟡 §3.8 — unblocks the next Talos upgrade; verify CSI PDBs after sync |
+| 5 | ~~Delete the KubeBlocks leftovers~~ (52 CMs, 21 Helm releases, `operator-webhook` svc, `zitadel` ns) | ✅ **DONE** | 🟡 §3.6 — 21 C-0012 findings + POP-307 |
 
 ### Do this month
 
 | # | Action | Effort | Closes |
 |---|---|---|---|
 | 6 | **Decide on `obi`** — remove it, or scope its discovery and accept its `hostPID`/privileged posture in writing | 1 h | 🟠 674 MiB + C-0038/C-0057/C-0041/C-0045/C-0046 |
-| 7 | **Decide on Kyverno** — either enforce (mutate limits + SA tokens + PSA) or strip 3 controllers | 2 h | 🟠 §3.5 — either 257 MiB back, or §3.2/§3.7 solved globally |
+| 7 | ~~Decide on Kyverno~~ — **settled: keep it.** Item 3 makes the background-controller load-bearing. Remaining work is to extend it to §3.7 (`automountServiceAccountToken`, `securityContext`) rather than 40 chart edits | 2 h | 🟠 §3.5 — Kyverno now earns its 428 MiB |
 | 8 | **Explicit requests/limits** on the 12 top consumers (table in §3.2) + apiserver request → 2Gi in Talos config | 3 h | 🔴 §3.2 |
 | 9 | **Default-deny `CiliumNetworkPolicy`** starting with `vault`, then `monitoring`, then the rest | 1 day | 🟠 §3.4 — C-0030/C-0054/C-0260 |
 | 10 | **`automountServiceAccountToken: false`** on the 35 pods that never call the API | 2 h | 🟡 §3.7 — ~70 findings |

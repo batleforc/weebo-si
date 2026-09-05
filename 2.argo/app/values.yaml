@@ -48,7 +48,6 @@ project:
       - oci://quay.io/jetstack/charts/trust-manager
       - https://ghcr.io/external-secrets/charts
       - https://ghcr.io/bank-vaults/helm-charts
-      - https://charts.zitadel.com
       - https://charts.dexidp.io
       - https://kyverno.github.io/kyverno/
       - https://charts.longhorn.io

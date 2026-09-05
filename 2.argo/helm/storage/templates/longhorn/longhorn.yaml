@@ -67,8 +67,29 @@ spec:
           # annotation-driven two-disk layout win over defaultDataPath. A node
           # provisioned without that label gets no disk at all.
           createDefaultDiskLabeledNodes: true
-          # Node drain policy
-          nodeDrainPolicy: block-for-eviction
+          # Every "block*" option deadlocks a single-node cluster, so this has
+          # to be one of the two permissive ones. block-for-eviction waits for
+          # replicas to be evicted to another node, and the three
+          # last-replica variants block whenever this node holds the last
+          # replica -- with one node and defaultReplicaCount 1, both conditions
+          # are permanently true. Measured on the live cluster: evicting either
+          # instance-manager, csi-attacher or csi-provisioner returned
+          # "Cannot evict pod as it would violate the pod's disruption budget",
+          # so any drain -- including the one a Talos upgrade performs -- hung
+          # rather than progressed.
+          #
+          # allow-if-replica-is-stopped keeps the part worth keeping: Longhorn
+          # still refuses to let instance-manager be evicted while a replica is
+          # running, so the drain cannot kill the data path underneath an
+          # attached volume. Once the workloads are evicted the volumes detach,
+          # the replicas stop, and the drain finishes. always-allow would also
+          # unblock it but drops that protection for nothing gained here.
+          #
+          # Full option list, from the setting's own validating webhook:
+          # block-for-eviction, block-for-eviction-if-contains-last-replica,
+          # block-if-contains-last-replica, allow-if-replica-is-stopped,
+          # always-allow.
+          nodeDrainPolicy: allow-if-replica-is-stopped
           # Guaranteed instance manager CPU
           guaranteedInstanceManagerCPU: 4
           # Let a filesystem trim actually free blocks. Longhorn volumes are
