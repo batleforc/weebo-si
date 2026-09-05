@@ -3,7 +3,7 @@ module kubernetes-ovh-go
 go 1.25.8
 
 require (
-	github.com/ovh/pulumi-ovh/sdk v1.1.0
+	github.com/ovh/pulumi-ovh/sdk/v2 v2.19.1
 	github.com/pulumi/pulumi/sdk/v3 v3.236.0
 )
 
@@ -92,7 +92,6 @@ require (
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/opentracing/basictracer-go v1.1.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/ovh/pulumi-ovh/sdk/v2 v2.13.0
 	github.com/pgavlin/fx v0.1.6 // indirect
 	github.com/pjbgf/sha1cd v0.6.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -127,7 +126,6 @@ require (
 	google.golang.org/grpc v1.81.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	lukechampine.com/frand v1.5.1 // indirect
 )
