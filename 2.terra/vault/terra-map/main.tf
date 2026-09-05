@@ -4,6 +4,14 @@ terraform {
       source  = "hashicorp/vault"
       version = "5.8.0"
     }
+    # Drives the PKI intermediate rotation clock in pki.tf. Vault does not
+    # rotate issuers on its own -- it only refuses to issue leaves that would
+    # outlive one -- so the schedule has to come from somewhere, and this is
+    # the piece that gives terraform a reason to re-sign.
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.13"
+    }
   }
 }
 
