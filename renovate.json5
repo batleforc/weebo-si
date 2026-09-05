@@ -46,6 +46,17 @@
   prConcurrentLimit: 10,
   prHourlyLimit: 4,
 
+  // The built-in kubernetes manager ships with no file pattern at all -- plain
+  // Kubernetes YAML is too ambiguous to match blind -- so it finds nothing
+  // until pointed somewhere. 2.terra holds ArgoCD PostSync hook Jobs applied as
+  // raw manifests rather than through a chart, which is why their images were
+  // invisible to both the customManager below (it only reads `version:` keys in
+  // values.yaml) and helm-values. They ran `hashicorp/terraform:latest` against
+  // real Vault and Authentik state until 2026-09-05.
+  kubernetes: {
+    managerFilePatterns: ['2.terra/**/*.yaml'],
+  },
+
   ignorePaths: [
     '**/node_modules/**',
     '.tmp/**',
@@ -72,14 +83,19 @@
 
   packageRules: [
     {
-      description: 'Chart majors are a decision, not a chore: open them from the dashboard checkbox',
-      matchFileNames: ['2.argo/**', '2.helm/**'],
+      description: 'Chart and image majors are a decision, not a chore: open them from the dashboard checkbox. 2.terra is here because those Jobs run `terraform apply` against live Vault and Authentik state -- a major terraform bump is a state-format decision, not a chore.',
+      matchFileNames: ['2.argo/**', '2.helm/**', '2.terra/**'],
       matchUpdateTypes: ['major'],
       dependencyDashboardApproval: true,
     },
     {
-      description: 'ClickHouse server version is load-bearing for the ClickStack dashboard SQL -- tiles are validated against 25.8 and silently fail on other majors',
-      matchDepNames: ['clickhouse/clickhouse-server'],
+      description: 'ClickHouse server and keeper speak the same inter-node protocol and are meant to move together. Group them so a bump is never half-applied -- the keeper floated on :latest until 2026-09-05 precisely because only the server was pinned.',
+      matchDepNames: ['clickhouse/clickhouse-server', 'clickhouse/clickhouse-keeper'],
+      groupName: 'clickhouse',
+    },
+    {
+      description: 'ClickHouse version is load-bearing for the ClickStack dashboard SQL -- tiles are validated against 25.8 and silently fail on other majors',
+      matchDepNames: ['clickhouse/clickhouse-server', 'clickhouse/clickhouse-keeper'],
       matchUpdateTypes: ['major', 'minor'],
       dependencyDashboardApproval: true,
       addLabels: ['revalidate-dashboards'],

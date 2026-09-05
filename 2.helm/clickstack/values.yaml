@@ -326,6 +326,16 @@ clickhouse:
   # See https://clickhouse.com/docs/clickhouse-operator/guides/introduction
   keeper:
     spec:
+      # Without this the operator falls back to clickhouse-keeper:latest, which
+      # is how the keeper ended up floating while the server beside it was
+      # pinned -- a silent upgrade of one half of the ClickHouse quorum.
+      # Track the server's major.minor: keeper and server speak the same
+      # inter-node protocol and are meant to move together, so bumping one
+      # without the other is the thing to avoid.
+      containerTemplate:
+        image:
+          repository: clickhouse/clickhouse-keeper
+          tag: "25.8-alpine"
       replicas: 1
       podDisruptionBudget:
         policy: Disabled

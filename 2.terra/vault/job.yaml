@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: terraform
-          image: hashicorp/terraform:latest
+          image: hashicorp/terraform:1.16.1
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
@@ -67,7 +67,7 @@ spec:
     spec:
       containers:
         - name: create-in-vault
-          image: hashicorp/terraform:latest
+          image: hashicorp/terraform:1.16.1
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh

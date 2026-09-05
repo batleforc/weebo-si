@@ -25,7 +25,7 @@ The cluster is **not resource-constrained** — it runs at 15% CPU and 27% memor
 | 5 | ~~Kyverno runs 4 controllers (**428 MiB / 22m**) to enforce **one Audit-only policy**~~ — ✅ **SETTLED: keep it.** It now generates the LimitRanges of finding 2, so the background-controller is load-bearing. Open work is extending it to finding 8 rather than editing 40 charts | 🟠 → Decided |
 | 6 | ~~KubeBlocks / MongoDB-Enterprise leftovers~~ — ✅ **RESOLVED**: 52 ConfigMaps (not 29), 21 orphan Helm release records, 1 orphan Service and the `zitadel` namespace deleted. Dead images remain (cosmetic) | 🟡 → Done |
 | 7 | `kube-apiserver` at **2.35 GiB** against a 512 Mi request (460%) with no limit | 🟡 Medium |
-| 8 | 11 workloads pinned to `:latest`, 10 pods on the `default` ServiceAccount | 🟡 Medium |
+| 8 | ~~11 workloads pinned to `:latest`~~ ✅ **pinned + under Renovate**; 10 pods on the `default` ServiceAccount still open | 🟡 Partial |
 
 ---
 
@@ -196,7 +196,9 @@ Workloads with **no requests and no limits at all**: all of `argocd`, all of `au
 | `clickstack-otel-collector` | `otlp`, `jaeger`, `zipkin`, `prometheus` | 22m / 132 Mi | app OTLP gateway (OpAMP-driven) |
 | `obi` (eBPF, DS) | eBPF uprobes | **137m / 674 Mi** | auto-instrumented RED metrics |
 
-> 🟠 **`obi` is the second-most expensive workload in the cluster** (674 MiB, 137m CPU sustained) and is the *only* pod requiring `hostPID` (Kubescape C-0038, the sole cluster-wide failure of that control) on top of `privileged` + `hostNetwork` + writable `hostPath`. If auto-instrumented RED metrics are not actively being consumed in HyperDX dashboards, **removing `obi` reclaims 674 MiB and closes the cluster's most privileged workload in one move.** If it is needed, scope `OTEL_EBPF_DISCOVERY` to specific namespaces rather than the whole node.
+> 🟠 **`obi` is the second-most expensive workload in the cluster** (674 MiB, 137m CPU sustained) and is the *only* pod requiring `hostPID` (Kubescape C-0038, the sole cluster-wide failure of that control) on top of `privileged` + `hostNetwork` + writable `hostPath`.
+>
+> ✅ **Decision 2026-09-05: keep it, risk accepted.** The auto-instrumented RED metrics are wanted, so the privileged posture is an accepted cost rather than an open finding. This closes C-0038 and `obi`'s share of C-0057 / C-0041 / C-0045 / C-0046 as *accepted*, not as fixed — they will keep appearing in every Kubescape run, and that is expected. Its 674 MiB is likewise a deliberate spend. Nothing to action; revisit only if the metrics stop being used.
 
 > 🟡 `clickstack-otel-collector` has restarted 4× in 10 days. Its bootstrap ConfigMap ships a `debug` exporter; the effective pipeline comes from OpAMP (data does reach ClickHouse), but the restarts deserve a look at `memory_limiter` sizing — it has no container limit today.
 
@@ -277,7 +279,18 @@ Privileged / host-namespace workloads (all legitimate infrastructure, but worth 
    - `securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}` on every non-infra workload → closes C-0013/C-0016/C-0055 for ~34 workloads at once. A Kyverno `mutate` rule does this globally (see §3.5).
 2. **10 pods on the `default` ServiceAccount** (POP-300) — `argocd-redis`, `authentik-server`, `clickstack`, `clickstack-clickhouse-0-0-0`, `clickstack-keeper-0-0`, `clickstack-preauth`, `netbird/exit-node-ingress`, and 3 terraform jobs. Give each a dedicated SA (or at minimum set `automountServiceAccountToken: false`).
 3. **`netbird/exit-node-ingress` is privileged with insecure capabilities and no probes** — it is an ingress path from outside the cluster. Narrow to `NET_ADMIN` + `NET_RAW` instead of `privileged: true` if the image allows it.
-4. **11 workloads on `:latest`** (POP-101) — `clickstack-keeper` (`clickhouse-keeper:latest`), and all 6 terraform jobs (`terra-job-{vault,authentik}`, `terra-state-rm`, `create-in-vault`). Pin them; `clickhouse-keeper:latest` in particular is a silent-upgrade risk for the ClickHouse quorum. Renovate already manages the rest of the pins.
+4. **11 workloads on `:latest`** (POP-101). ✅ **Fixed in the repo 2026-09-05** (uncommitted). The 11 findings were only **two distinct images**, and each was invisible to Renovate for a different reason:
+
+   | Image | Where | Was | Now |
+   |---|---|---|---|
+   | `hashicorp/terraform` | `2.terra/{auth,vault}/job.yaml`, 4 occurrences | `:latest` | `1.16.1` |
+   | `clickhouse/clickhouse-keeper` | `2.helm/clickstack/values.yaml` | operator default `:latest` | `25.8-alpine` |
+
+   The keeper had **no `containerTemplate.image` at all**, so the operator fell back to `:latest` while the server directly beside it was pinned to `25.8-alpine` — half the ClickHouse quorum silently floating. It now pins to the server's major.minor, and the two are grouped in Renovate so a bump can never be half-applied again.
+
+   The terraform Jobs are raw manifests applied as ArgoCD PostSync hooks, so neither the `# renovate:` customManager (it only reads `version:` keys in `values.yaml`) nor `helm-values` could see them. Renovate's built-in **`kubernetes` manager ships with no file pattern at all** — plain Kubernetes YAML is too ambiguous to match blind — so it finds nothing until pointed somewhere. Now pointed at `2.terra/**/*.yaml`. `2.terra/**` also joins the majors-need-dashboard-approval rule, since those Jobs run `terraform apply` against live Vault and Authentik state.
+
+   > **Verified by extraction, not by reading the config.** `renovate --platform=local --dry-run=extract` reports `hashicorp/terraform@1.16.1` from both `2.terra/auth/job.yaml` and `2.terra/vault/job.yaml` (2 deps each), and `clickhouse/clickhouse-keeper@25.8-alpine` alongside `clickhouse/clickhouse-server@25.8-alpine` from `2.helm/clickstack/values.yaml`. Zero `:latest` remain anywhere in the repo.
 5. **RBAC**: 3 subjects hold wildcard + admin + delete-events rights — `argocd-application-controller` (expected), `longhorn-support-bundle` (**should be scoped or removed — it is a debug SA**), and the `labsso:weebo_admin` group (expected, this is your admin group). `C-0037 CoreDNS poisoning`: 19 subjects can modify CoreDNS.
 
 ### 3.8 🟡 Availability & health
@@ -331,12 +344,12 @@ Privileged / host-namespace workloads (all legitimate infrastructure, but worth 
 
 | # | Action | Effort | Closes |
 |---|---|---|---|
-| 6 | **Decide on `obi`** — remove it, or scope its discovery and accept its `hostPID`/privileged posture in writing | 1 h | 🟠 674 MiB + C-0038/C-0057/C-0041/C-0045/C-0046 |
+| 6 | ~~Decide on `obi`~~ — **settled: keep it, risk accepted in writing** (§3.3). 674 MiB and the privileged/hostPID posture are a deliberate spend | ✅ **DECIDED** | 🟠 C-0038/C-0057/C-0041/C-0045/C-0046 accepted, not fixed |
 | 7 | ~~Decide on Kyverno~~ — **settled: keep it.** Item 3 makes the background-controller load-bearing. Remaining work is to extend it to §3.7 (`automountServiceAccountToken`, `securityContext`) rather than 40 chart edits | 2 h | 🟠 §3.5 — Kyverno now earns its 428 MiB |
 | 8 | **Explicit requests/limits** on the 12 top consumers (table in §3.2) + apiserver request → 2Gi in Talos config | 3 h | 🔴 §3.2 |
 | 9 | **Default-deny `CiliumNetworkPolicy`** starting with `vault`, then `monitoring`, then the rest | 1 day | 🟠 §3.4 — C-0030/C-0054/C-0260 |
 | 10 | **`automountServiceAccountToken: false`** on the 35 pods that never call the API | 2 h | 🟡 §3.7 — ~70 findings |
-| 11 | **Pin the 11 `:latest` tags**, starting with `clickhouse-keeper` | 1 h | 🟡 §3.7 |
+| 11 | ~~Pin the 11 `:latest` tags~~ + put both images under Renovate | ✅ **IN REPO** (uncommitted) | 🟡 §3.7 — zero `:latest` left in the repo |
 | 12 | ~~Add TTLs to `system.query_log`/`part_log`/`asynchronous_metric_log`~~ — **already done, audit was wrong (see §3.3)**; add `ttlSecondsAfterFinished` to the terraform Jobs | 20 min | 🟡 §3.8 |
 
 ### Backlog
