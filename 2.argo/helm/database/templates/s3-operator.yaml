@@ -21,7 +21,18 @@ spec:
     targetRevision: {{ .Values.s3Operator.version }}
     helm:
       releaseName: s3
+      valuesObject:
+        sts:
+          tls:
+            auto: true
   destination:
     namespace: {{ .Values.s3Operator.namespace }}
     name: "in-cluster"
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: s3-rustfs-operator-console-secret
+      namespace: s3
+      jsonPointers:
+        - /data/jwt-secret
 {{- end }}
