@@ -53,6 +53,13 @@ spec:
                 # keys override it. Merged with the chart's extraConfig defaults
                 # (max_connections and friends) rather than replacing them.
                 extraConfig:
+                  # Both default to 5 GiB each, which is upstream sizing for a
+                  # dedicated host and was never scaled to this 5Gi container:
+                  # 10 GiB of nominal cache against the 4.5 GiB the server
+                  # derives as max_server_memory_usage. See markCacheSize in
+                  # values.yaml for why that is untidy rather than urgent.
+                  mark_cache_size: {{ .Values.clickstack.markCacheSize | int64 }}
+                  index_mark_cache_size: {{ .Values.clickstack.markCacheSize | int64 }}
                   {{- $ttl := printf "event_date + INTERVAL %s DELETE" .Values.clickstack.systemLogs.ttl }}
                   {{- range $table := list "text_log" "query_log" "part_log" "asynchronous_metric_log" }}
                   {{ $table }}:

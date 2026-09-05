@@ -28,6 +28,29 @@ clickstack:
   # and put it back afterwards. Accepted values are the server's own:
   # test, trace, debug, information, notice, warning, error, critical, fatal.
   clickhouseLogLevel: information
+  # Ceiling for mark_cache_size and index_mark_cache_size, in bytes (512 MiB).
+  # ClickHouse defaults both to 5 GiB apiece -- sizing for a dedicated host,
+  # left untouched here -- so the server advertises 10 GiB of cache inside a
+  # container whose whole budget is the 4.5 GiB it derives from the 5Gi limit.
+  #
+  # This is a consistency fix, not an incident waiting to happen, and the
+  # measurement is worth keeping because it is counter-intuitive: the marks for
+  # every active part in the database total 12.75 MiB, and the two caches sit at
+  # 107 KiB and 101 KiB. Neither can approach 5 GiB without roughly 400x the
+  # current data, so the oversized default costs nothing today. What it does is
+  # leave a cache able to crowd out queries and merges if this ever grows into
+  # a real dataset, and make the memory budget impossible to reason about.
+  #
+  # 512 MiB is ~40x the marks that exist and ~10% of the memory budget each, so
+  # the caches can no longer dominate while still never evicting anything real.
+  # Both are changeable_without_restart, so this reloads in place.
+  #
+  # Do not read the mark cache hit rate (89.5k hits against 8.1M misses) as a
+  # symptom of the size: parts here are created by ingest and destroyed by TTL
+  # merges faster than they are ever re-read, so almost every mark read is for a
+  # part that has never been seen before. A larger cache cannot fix that, and a
+  # smaller one does not cause it.
+  markCacheSize: 536870912
   # ClickHouse's own system log tables. The operator switches all five on in
   # config.d/00-logs-tables.yaml with nothing but their names, so they inherit
   # the upstream defaults -- and upstream ships them with no retention at all.

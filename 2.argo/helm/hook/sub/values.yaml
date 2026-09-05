@@ -1,3 +1,49 @@
 repo: ""
 project: ""
 branch: ""
+
+# Default container resources, generated into every namespace by Kyverno.
+# A backstop against a workload shipping with no memory limit at all -- not an
+# attempt to right-size anything, which is a per-workload job.
+defaultLimits:
+  enabled: true
+  defaultLimit:
+    # Deliberately generous. The largest container running without a limit when
+    # this was written was authentik-server at 761 Mi, with argocd's
+    # application-controller at 736 Mi and obi at 680 Mi behind it, so 2Gi
+    # leaves every one of them roughly 2.7x headroom.
+    #
+    # An earlier draft of the audit proposed 512Mi. That would have OOMKilled
+    # authentik-server, the ArgoCD application-controller, obi and the HyperDX
+    # app -- and not at rollout: a LimitRange applies only at pod admission, so
+    # each would have died silently at its next restart, whenever that fell.
+    # Before lowering this, check it against reality:
+    #   kubectl top pods -A --containers
+    # A limit costs nothing until it is reached, so erring high is close to free
+    # and erring low is an outage with a delayed fuse.
+    memory: 2Gi
+  defaultRequest:
+    # Only a floor, so a container that declares nothing stops being BestEffort
+    # and first in line for eviction. Not meant to be accurate.
+    memory: 64Mi
+    # Request only -- there is deliberately no default CPU *limit*. Throttling a
+    # controller that is briefly busy (ArgoCD reconciling, cert-manager on a
+    # renewal sweep) costs latency for no memory-safety benefit, and CPU is the
+    # resource this node has most of: 15% used of 12 cores.
+    cpu: 10m
+  # Matched against the namespace name; everything not listed is covered,
+  # including namespaces that do not exist yet.
+  excludeNamespaces:
+    # Talos' static control-plane pods live here. Kubelet builds their cgroups
+    # from the on-disk manifests, not from the mirror Pod the API server sees,
+    # so a default would show a limit in `kubectl get pod` that nothing actually
+    # enforces -- worse than none, because it reads as solved. kube-apiserver's
+    # 2.5 GiB belongs in the Talos machine config instead. The glob also covers
+    # kube-public and kube-node-lease, which hold no workloads.
+    - "kube-*"
+    # The storage data path. Upstream ships instance-manager without a memory
+    # limit deliberately: hitting one detaches every volume on the node, which
+    # here means ClickHouse and MongoDB lose their storage at once. Its memory
+    # also scales with volume count and size, so any number chosen today expires
+    # quietly. Left unbounded as the lesser risk, not as an oversight.
+    - "longhorn"
