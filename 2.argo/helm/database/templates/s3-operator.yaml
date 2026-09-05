@@ -25,6 +25,15 @@ spec:
         sts:
           tls:
             auto: true
+        console:
+          enabled: {{ .Values.s3Operator.console.enabled }}
+          ingress:
+            enabled: true
+            className: {{ .Values.s3Operator.console.className }}
+            hosts:
+              {{ range .Values.s3Operator.console.hosts }}
+              - host: {{ . }}
+              {{ end }}
   destination:
     namespace: {{ .Values.s3Operator.namespace }}
     name: "in-cluster"

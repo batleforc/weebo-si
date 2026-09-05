@@ -29,3 +29,8 @@ s3Operator:
   # renovate: datasource=helm depName=s3-operator registryUrl=https://operator.rustfs.com
   version: 0.0.6
   namespace: s3
+  console:
+    enabled: true
+    className: traefik
+    hosts:
+      - s3-ope.weebo.poc
