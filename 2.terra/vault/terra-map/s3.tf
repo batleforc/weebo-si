@@ -5,7 +5,7 @@ resource "vault_policy" "s3_policy" {
 path "${vault_mount.main-vault.path}/data/{{identity.entity.aliases.${data.vault_auth_backend.kubernetes.accessor}.metadata.service_account_namespace}}/*" {
   capabilities = ["read","list"]
 }
-path "${vault_mount.main-vault.path}/data/*/s3" {
+path "${vault_mount.main-vault.path}/data/+/s3" {
   capabilities = ["read", "list"]
 }
 EOT
