@@ -17,22 +17,8 @@ authentik:
     enabled: true
   operator:
     enabled: true
-    # 0.7.0 adds the AuthentikFlow CRD (phase 2b) and per-application
-    # `secretTargets` (the fan-out that unblocks phase 4); 0.8.0 adds
-    # `secretStore.vault.caSecretRef`, without which the operator cannot
-    # verify openbao's self-signed TLS and every Vault target fails its
-    # reconcile. See MIGRATION.md 3.2. 0.10.0 adds the same thing for the
-    # Authentik API itself (`spec.tls.caSecretRef`) and is what
-    # sub.foundation.tls waits on -- bump this and that flag together.
-    version: 0.12.0
+    version: 0.13.0
     replicaCount: 1
-  # Phase toggles for the adoption of the Terraform-managed Authentik objects
-  # by the operator. Only the flags live here; every spec they switch on is in
-  # 2.argo/helm/auth/sub/values.yaml, which this merges over.
-  #
-  # DO NOT flip one of these on its own -- each is the second half of a step
-  # whose first half is importing the object's authentikId. Runbook:
-  # 2.argo/helm/auth/MIGRATION.md
   sub:
     enabled: true
     foundation: # phase 0 -- AuthentikInstance + allow-list
@@ -41,23 +27,9 @@ authentik:
         enabled: true
       namespacePolicy:
         enabled: true
-      # Verify the Authentik API cert against the weebo.poc bundle instead of
-      # the operator image's public roots. NOT optional in practice:
-      # auth.weebo.poc is signed by the private PKI (dns.certificate ->
-      # vault-issuer -> pki_int) and the operator image is distroless/cc,
-      # which carries the public roots only -- with this off, every reconcile
-      # dies with
-      #   failed to verify TLS certificate: invalid peer certificate: UnknownIssuer
-      # Needs operator >= 0.10.0 (pinned above); on 0.9.0 the apiserver would
-      # prune the block and nothing would change. sub/values.yaml
-      # `foundation.tls` carries the Secret coordinates.
       tls:
         caSecretRef:
           enabled: true
-      # Vault CONNECTION on the AuthentikInstance. The instance's default
-      # backend stays `kubernetes`; this block only exists so that a phase-4
-      # application may name an explicit `secretTargets` Vault path. Turning it
-      # on alone writes nothing anywhere. Prerequisites in MIGRATION.md 3.2.
       vault:
         enabled: true
     identity: # phase 1 -- groups then users
