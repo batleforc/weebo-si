@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ingress-app
+  name: database-app
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "2"
@@ -14,7 +14,7 @@ spec:
     path: '2.argo/helm/database/sub'
     targetRevision: '{{ .Values.branch }}'
     helm:
-      releaseName: ingress-app
+      releaseName: database-app
       valuesObject:
         {{- with .Values }}
         {{- toYaml . | nindent 10 }}
