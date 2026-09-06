@@ -1,0 +1,19 @@
+{{- if .Values.angos.enabled -}}
+apiVersion: valkey.io/v1alpha1
+kind: ValkeyCluster
+metadata:
+  name: angos-valkey
+  namespace: {{ .Release.Namespace }}
+spec:
+  shards: 1
+  replicas: 1
+  persistence:
+    size: 5Gi
+    storageClassName: longhorn
+  users:
+    - name: angos
+      passwordSecret:
+        name: angos-valkey-cred
+        keys: [pwd]
+      permissions: "+@all ~* &*"
+{{- end -}}

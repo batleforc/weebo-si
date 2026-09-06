@@ -1,0 +1,24 @@
+{{- if .Values.angos.enabled -}}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: angos-valkey-cred
+  namespace: {{ .Release.Namespace }}
+spec:
+  refreshPolicy: Periodic
+  refreshInterval: 24h
+  secretStoreRef:
+    name: cred-store
+  target:
+    name: angos-valkey-cred
+  data:
+  - secretKey: pwd
+    remoteRef:
+      key: mv/angos/config
+      property: pwd
+  - secretKey: url
+    remoteRef:
+      key: mv/angos/config
+      property: url
+{{ end }}

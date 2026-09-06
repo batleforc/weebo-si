@@ -164,5 +164,13 @@ project:
         kind: "ClusterRoleBinding"
       - group: "rustfs.com"
         kind: "Tenant"
+  - name: dev-base
+    includeBaseRepo: true
+    dest:
+      - server: https://kubernetes.default.svc
+        namespace: "angos"
+      - server: https://kubernetes.default.svc
+        namespace: "batlehub"
+    clusterResourceWhitelist:
       - group: "valkey.io"
         kind: "ValkeyCluster"

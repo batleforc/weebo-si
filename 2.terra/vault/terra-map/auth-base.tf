@@ -103,7 +103,7 @@ resource "vault_kubernetes_auth_backend_role" "auth-write" {
 resource "vault_kubernetes_auth_backend_role" "auth-read" {
   role_name                        = "auth-read"
   bound_service_account_names      = ["authentik", "default", "vaultwarden-svc", "dex", "obi-opentelemetry-ebpf-instrumentation"]
-  bound_service_account_namespaces = ["auth", "argocd", "dex", "netbird", "cert-manager", "monitoring", "obi"]
+  bound_service_account_namespaces = ["auth", "argocd", "dex", "netbird", "cert-manager", "monitoring", "obi", "angos", "batlehub"]
   token_ttl                        = 3600
   token_policies                   = [vault_policy.mv_reader_policy.name]
 }
