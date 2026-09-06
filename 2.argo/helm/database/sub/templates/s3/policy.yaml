@@ -1,5 +1,5 @@
-{{- if .Values.s3.enabled -}}
-{{- range .Values.s3.mainInstance.creds -}}
+{{ if .Values.s3.enabled }}
+{{ range .Values.s3.mainInstance.creds }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -26,5 +26,5 @@ data:
         }
       ]
     }
-{{- end -}}
-{{- end -}}
+{{ end }}
+{{ end }}
