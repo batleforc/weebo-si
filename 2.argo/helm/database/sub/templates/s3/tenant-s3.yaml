@@ -72,7 +72,7 @@ spec:
     - name: RUSTFS_BROWSER_REDIRECT_URL
       value: "https://{{ .Values.s3.mainInstance.dns}}"
     - name: RUSTFS_IDENTITY_OPENID_ENABLE
-      value: "on"
+      value: "true"
     - name: RUSTFS_IDENTITY_OPENID_CONFIG_URL
       valueFrom:
         secretKeyRef:
@@ -89,13 +89,13 @@ spec:
           name: main-oidc
           key: AUTHENTIK_CLIENT_SECRET
     - name: RUSTFS_IDENTITY_OPENID_SCOPES
-      value: "openid,profile,email"
+      value: "openid,profile,email,groups"
     - name: RUSTFS_IDENTITY_OPENID_REDIRECT_URI
       value: "https://{{ .Values.s3.mainInstance.dns}}/rustfs/admin/v3/oidc/callback/default"
     - name: RUSTFS_IDENTITY_OPENID_REDIRECT_URI_DYNAMIC
       value: "off"
     - name: RUSTFS_IDENTITY_OPENID_DISPLAY_NAME
-      value: "Weebo Auth"
+      value: "Weebo SSO"
     - name: RUSTFS_IDENTITY_OPENID_GROUPS_CLAIM
       value: "groups"
     - name: RUSTFS_IDENTITY_OPENID_ROLES_CLAIM
