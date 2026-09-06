@@ -26,28 +26,28 @@ spec:
             requests:
               storage: 50Gi
   policies:
-    {{- range .Values.s3.mainInstance.creds -}}
+    {{ range .Values.s3.mainInstance.creds }}
     - name: {{ .name }}-readwrite
       document:
         configMapKeyRef:
           name: {{ .name }}-policy
           key: policy.json
-    {{- end -}}
+    {{ end }}
 
   users:
-    {{- range .Values.s3.mainInstance.creds -}}
+    {{ range .Values.s3.mainInstance.creds }}
     - name: {{ .name }}
       credsSecret:
         name: {{ .name }}-cred
       policies:
         - {{ .name }}-readwrite
-    {{- end -}}
+    {{ end }}
 
   buckets:
-    {{- range .Values.s3.mainInstance.creds -}}
+    {{ range .Values.s3.mainInstance.creds }}
     - name: {{ .name }}
       anonymous: Private
-    {{- end -}}
+    {{ end }}
 
   tls:
     mode: certManager
