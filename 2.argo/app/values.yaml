@@ -176,5 +176,7 @@ project:
       - server: https://kubernetes.default.svc
         namespace: "batlehub"
     clusterResourceWhitelist:
+      - group: ""
+        kind: "Namespace"
       - group: "valkey.io"
         kind: "ValkeyCluster"
