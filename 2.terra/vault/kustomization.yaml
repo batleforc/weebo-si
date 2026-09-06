@@ -22,3 +22,4 @@ configMapGenerator:
       - ./terra-map/pki.tf
       - ./terra-map/auth-policy.tf
       - ./terra-map/monitoring.tf
+      - ./terra-map/s3.tf

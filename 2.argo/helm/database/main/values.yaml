@@ -35,3 +35,6 @@ s3Operator:
     hosts:
       host: s3-ope.weebo.poc
       secretName: s3-ope-weebo-poc
+
+subApp:
+  enabled: true

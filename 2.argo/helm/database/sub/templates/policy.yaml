@@ -1,0 +1,30 @@
+{{- if .Values.s3.enabled -}}
+{{- range .Values.s3.mainInstance.creds -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .name }}-policy
+  namespace: {{ $.Values.s3.namespace }}
+data:
+  policy.json: |
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:ListBucket",
+            "s3:GetObject",
+            "s3:PutObject",
+            "s3:DeleteObject"
+          ],
+          "Resource": [
+            "arn:aws:s3:::{{.name}}",
+            "arn:aws:s3:::{{.name}}/*"
+          ]
+        }
+      ]
+    }
+{{- end -}}
+{{- end -}}

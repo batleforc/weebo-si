@@ -1,0 +1,67 @@
+{{- if .Values.s3.enabled -}}
+---
+apiVersion: rustfs.com/v1alpha1
+kind: Tenant
+metadata:
+  name: main
+  namespace: {{ .Values.s3.namespace }}
+  labels:
+    environment: prod
+spec:
+  # Container image (optional - uses operator default if not specified)
+  image: rustfs/rustfs:1.0.0-rc.5
+
+  credsSecret:
+    name: main-cred
+
+  pools:
+    - name: main
+      servers: 1
+      persistence:
+        volumesPerServer: 1
+        volumeClaimTemplate:
+          accessModes: ["ReadWriteOnce"]
+          storageClassName: longhorn
+          resources:
+            requests:
+              storage: 50Gi
+  policies:
+    {{- range .Values.s3.mainInstance.creds -}}
+    - name: {{ .name }}-readwrite
+      document:
+        configMapKeyRef:
+          name: {{ .name }}-policy
+          key: policy.json
+    {{- end -}}
+
+  users:
+    {{- range .Values.s3.mainInstance.creds -}}
+    - name: {{ .name }}
+      credsSecret:
+        name: {{ .name }}-cred
+      policies:
+        - {{ .name }}-readwrite
+    {{- end -}}
+
+  buckets:
+    {{- range .Values.s3.mainInstance.creds -}}
+    - name: {{ .name }}
+      anonymous: Private
+    {{- end -}}
+
+  tls:
+    mode: certManager
+    rotationStrategy: Rollout
+    enableInternodeHttps: true
+    certManager:
+      manageCertificate: false
+      secretName: s3-main-tls
+
+  # Optional: Enable debug logging for development
+  # Note: Operator automatically sets RUSTFS_VOLUMES, RUSTFS_ADDRESS,
+  # RUSTFS_CONSOLE_ADDRESS, and RUSTFS_CONSOLE_ENABLE
+  env:
+    # Standard Rust logging (not RustFS-specific)
+    - name: RUST_LOG
+      value: "debug"
+{{- end -}}

@@ -37,6 +37,7 @@
   - [ ] Package Registry
 - [ ] [Eclipse Che](https://www.eclipse.org/che/)
   - [ ] Expo : cde.dev.weebo.poc && \*.cde.dev.weebo.poc
+- [ ] Properly apply a CiliumNetworkPolicy with default deny for all
 
 ## Documentation
 

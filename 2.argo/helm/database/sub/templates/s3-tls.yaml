@@ -1,0 +1,27 @@
+{{- if .Values.s3.enabled -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: s3-main-tls
+  namespace: {{ $.Values.s3.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  secretName: s3-main-tls
+  commonName: {{ .Values.s3.mainInstance.dns}}
+  dnsNames:
+    - {{ .Values.s3.mainInstance.dns}}
+  issuerRef:
+    name: vault-issuer
+    kind: ClusterIssuer
+  privateKey:
+    size: 4096
+  subject:
+    organizationalUnits:
+      - Infra
+    organizations:
+      - WeeboSI
+  usages:
+    - digital signature
+    - key encipherment
+{{- end -}}
