@@ -226,6 +226,71 @@ flows:
     authentication: require_authenticated
 
 # ---------------------------------------------------------------------------
+# Phase 2c -- OIDC scope mappings. Cluster-scoped, like flows above, and
+# referenced BY NAME from an application's provider.oauth2.propertyMappings.
+#
+# Needs an operator carrying the AuthentikScopeMapping CRD -- added after
+# 0.11.0, so bump 2.argo/helm/auth/main/values.yaml's
+# authentik.operator.version to the release that ships it before enabling
+# anything here. Without the CRD the manifests below are rejected outright by
+# the apiserver, which fails the whole Argo CD sync, not just this object.
+#
+# Nothing in 2.terra/auth ever created a property mapping, so there is no
+# import step for this phase: these objects are new, and the operator creates
+# them. The usual "patch status.authentikId first" rule does NOT apply.
+# ---------------------------------------------------------------------------
+scopeMappings:
+  # Emits a `rustfs_policy` claim holding RustFS POLICY names, for the S3
+  # application only.
+  #
+  # RustFS reads its groups claim as a list of policy names and refuses the
+  # login unless ALL of them resolve to a policy it has -- not one of them, all
+  # of them. Pointed at authentik's real group names it answers
+  #   OIDC policy mapping did not resolve to current policies
+  # on an otherwise successful authentication. This mapping is what produces
+  # `consoleAdmin` and `bucketHealth` instead, which the tenant in
+  # 2.argo/helm/database/sub does define.
+  #
+  # A SEPARATE claim, not a replacement of `groups`: authentik's built-in
+  # "OpenID 'profile'" mapping already emits `groups`, the s3 provider keeps
+  # that mapping for preferred_username, and two mappings writing the same
+  # claim key leaves the winner up to evaluation order. RustFS is pointed at
+  # this claim instead, through RUSTFS_IDENTITY_OPENID_GROUPS_CLAIM *and*
+  # _CLAIM_NAME -- both, or the second one keeps reading `groups` and the
+  # login fails exactly as before. See tenant-s3.yaml.
+  #
+  # `scopeName: groups` is what makes it run: it gates the mapping on the
+  # client asking for the `groups` scope, which RustFS does. It does not have
+  # to match the claim key the expression returns.
+  rustfsPolicies:
+    enabled: false
+    crName: rustfs-policies
+    name: "rustfs policies"
+    scopeName: groups
+    description: "S3 access level"
+    # ak_is_group_member is used rather than user.ak_groups / user.groups: it is
+    # the documented helper, it follows the parent chain (a weebo_admin member
+    # is a weebo_moderator member too, hence the ordering below), and it is the
+    # one spelling that survived authentik's ak_groups -> groups rename.
+    #
+    # Ordered most-privileged first, and it returns on the first match: a
+    # weebo_admin member gets consoleAdmin ALONE, never consoleAdmin plus the
+    # inherited bucketHealth. RustFS would union the two anyway, but a single
+    # value keeps the token honest about what was granted.
+    #
+    # An empty list for anyone else is deliberate: RustFS rejects a session
+    # whose policy list is empty, so a user in neither group cannot get in even
+    # if the access policy on the application is ever loosened.
+    expression: |
+      for group_name, policy in (
+          ("weebo_admin", "consoleAdmin"),
+          ("weebo_moderator", "bucketHealth"),
+      ):
+          if ak_is_group_member(request.user, name=group_name):
+              return {"rustfs_policy": [policy]}
+      return {"rustfs_policy": []}
+
+# ---------------------------------------------------------------------------
 # Phases 3 and 4 -- applications and their access policies.
 #
 # `accessGroup` renders the AuthentikAccessPolicy that mirrors each
@@ -453,6 +518,13 @@ applications:
           - "authentik default OAuth Mapping: OpenID 'profile'"
           - "authentik default OAuth Mapping: OpenID 'openid'"
           - "authentik default OAuth Mapping: OpenID 'offline_access'"
+          # scopeMappings.rustfsPolicies above, by its AUTHENTIK name. Without
+          # this entry the provider never emits `rustfs_policy` and RustFS
+          # rejects every login for an empty policy list. It is resolved by
+          # name against the API, so the AuthentikScopeMapping CR has to exist
+          # first or this application's own reconcile fails with
+          #   property mapping "rustfs policies" not found
+          - "rustfs policies"
         allowedRedirectUris:
           - matchingMode: strict
             url: "https://s3-main.weebo.poc/rustfs/admin/v3/oidc/callback/default"

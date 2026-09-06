@@ -19,6 +19,38 @@ s3:
     # to authentik leave the pod at all. The full URL, with its path, stays in
     # Vault and arrives as AUTHENTIK_URL.
     oidcOrigin: https://auth.weebo.poc
+    # The claim RustFS reads policy names out of, wired into BOTH
+    # RUSTFS_IDENTITY_OPENID_GROUPS_CLAIM and _CLAIM_NAME -- see the long
+    # comment on those in templates/s3/tenant-s3.yaml. It is produced by the
+    # `rustfs policies` scope mapping in 2.argo/helm/auth/sub, and the two
+    # sides have to name the same claim: point this at a claim that mapping
+    # does not emit and every SSO login fails for an empty policy list.
+    oidcPolicyClaim: rustfs_policy
+    # The non-canned policy that claim can name. weebo_admin maps to
+    # `consoleAdmin`, which ships with RustFS and needs nothing here;
+    # weebo_moderator maps to the policy below, which does not exist until
+    # this tenant creates it -- and a claim naming a policy the tenant does
+    # not have is rejected exactly like the raw group names were.
+    #
+    # Read-only, and split into three statements on purpose: RustFS refuses a
+    # statement that mixes action families (`MixedActionFamilies`), so the s3,
+    # admin and sts actions cannot share one. The sts:AssumeRole grant is what
+    # every canned policy carries so an STS session may assume it -- dropping
+    # it is the kind of thing that only fails at login.
+    oidcPolicy:
+      name: bucketHealth
+      s3Actions:
+        - "s3:ListAllMyBuckets"
+        - "s3:ListBucket"
+        - "s3:GetBucketLocation"
+        - "s3:GetBucketQuota"
+      adminActions:
+        - "admin:ServerInfo"
+        - "admin:StorageInfo"
+        - "admin:DataUsageInfo"
+        - "admin:OBDInfo"
+        - "admin:Prometheus"
+        - "admin:BandwidthMonitor"
     creds:
       - name: batlehub
       - name: angos

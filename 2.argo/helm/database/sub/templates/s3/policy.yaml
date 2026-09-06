@@ -28,3 +28,36 @@ data:
     }
 {{ end }}
 {{ end }}
+{{ if and .Values.s3.enabled .Values.s3.mainInstance.oidc }}
+---
+# The policy an SSO session lands on when the `rustfs policies` scope mapping
+# in 2.argo/helm/auth/sub resolves the caller to weebo_moderator. Read-only:
+# it can see which buckets exist and how the cluster is doing, and nothing in
+# them. weebo_admin gets `consoleAdmin` instead, which is canned and needs no
+# ConfigMap.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.s3.mainInstance.oidcPolicy.name | kebabcase }}-policy
+  namespace: {{ .Values.s3.namespace }}
+data:
+  policy.json: |
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": {{ .Values.s3.mainInstance.oidcPolicy.s3Actions | toJson }},
+          "Resource": ["arn:aws:s3:::*"]
+        },
+        {
+          "Effect": "Allow",
+          "Action": {{ .Values.s3.mainInstance.oidcPolicy.adminActions | toJson }}
+        },
+        {
+          "Effect": "Allow",
+          "Action": ["sts:AssumeRole"]
+        }
+      ]
+    }
+{{ end }}

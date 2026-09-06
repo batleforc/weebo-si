@@ -1,0 +1,31 @@
+{{- range $key, $mapping := .Values.scopeMappings }}
+{{- if $mapping.enabled }}
+---
+apiVersion: authentik.weebo.io/v1alpha1
+kind: AuthentikScopeMapping
+metadata:
+  # Cluster-scoped -- no namespace, and no AuthentikNamespacePolicy governs it.
+  name: {{ $mapping.crName }}
+  annotations:
+    # Before the applications (wave 5): an application listing this mapping in
+    # propertyMappings resolves it BY NAME against the Authentik API, and fails
+    # its own reconcile with
+    #   AuthentikApiError: property mapping "..." not found
+    # until this object exists. It recovers on the application's 30s error
+    # requeue, so the wave only matters on a from-scratch install.
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  # The AUTHENTIK-side name, and the string an application repeats verbatim in
+  # provider.oauth2.propertyMappings. Not the CR name above.
+  name: {{ $mapping.name | quote }}
+  scopeName: {{ $mapping.scopeName | quote }}
+{{- with $mapping.description }}
+  description: {{ . | quote }}
+{{- end }}
+  # Sent to Authentik verbatim. Nothing validates it here or at reconcile time:
+  # a broken expression still reports Ready, and only shows up as a failed
+  # login. Test a change against the real instance before trusting it.
+  expression: |
+{{ $mapping.expression | indent 4 }}
+{{- end }}
+{{- end }}

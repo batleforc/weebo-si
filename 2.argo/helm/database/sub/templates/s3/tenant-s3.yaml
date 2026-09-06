@@ -35,6 +35,16 @@ spec:
           name: {{ .name }}-policy
           key: policy.json
     {{ end }}
+    {{ if .Values.s3.mainInstance.oidc }}
+    # The SSO read-only policy. Its NAME is what the authentik scope mapping
+    # emits for a weebo_moderator, so the two have to stay identical -- a
+    # rename on either side is a login failure, not a permission change.
+    - name: {{ .Values.s3.mainInstance.oidcPolicy.name }}
+      document:
+        configMapKeyRef:
+          name: {{ .Values.s3.mainInstance.oidcPolicy.name | kebabcase }}-policy
+          key: policy.json
+    {{ end }}
 
   users:
     {{ range .Values.s3.mainInstance.creds }}
@@ -120,10 +130,29 @@ spec:
       value: "off"
     - name: RUSTFS_IDENTITY_OPENID_DISPLAY_NAME
       value: "Weebo SSO"
+    # THESE TWO ARE WHY SSO WORKS AT ALL. Both, not one.
+    #
+    # RustFS turns every value of its groups claim into a *policy name* and
+    # then requires ALL of them to name a policy it has -- not one, all of
+    # them (`all_oidc_policies_resolved`). Left on the default `groups` claim
+    # it reads authentik's real group names, none of which is a policy, and
+    # answers every otherwise-successful login with
+    #   OIDC policy mapping did not resolve to current policies
+    #
+    # So it is pointed at `rustfs_policy` instead, the claim the `rustfs
+    # policies` scope mapping in 2.argo/helm/auth/sub fills with real policy
+    # names. _CLAIM_NAME has to move with it: RustFS reads a SECOND source of
+    # policy names from that claim whenever it differs from the groups claim
+    # (`claim_name != groups_claim` in `map_claims_to_policies`), so leaving
+    # it at its `groups` default would pull the group names straight back in
+    # and fail the login again, with the mapping working perfectly.
     - name: RUSTFS_IDENTITY_OPENID_GROUPS_CLAIM
-      value: "groups"
-    - name: RUSTFS_IDENTITY_OPENID_ROLES_CLAIM
-      value: "roles"
+      value: {{ .Values.s3.mainInstance.oidcPolicyClaim | quote }}
+    - name: RUSTFS_IDENTITY_OPENID_CLAIM_NAME
+      value: {{ .Values.s3.mainInstance.oidcPolicyClaim | quote }}
+    # No RUSTFS_IDENTITY_OPENID_ROLES_CLAIM on purpose: upstream defaults it to
+    # empty, authentik emits no `roles` claim, and setting it is what the
+    # beta.12 reports blame for a second, invisible source of policy names.
     - name: RUSTFS_IDENTITY_OPENID_EMAIL_CLAIM
       value: "email"
     - name: RUSTFS_IDENTITY_OPENID_USERNAME_CLAIM
