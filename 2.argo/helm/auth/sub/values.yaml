@@ -263,7 +263,7 @@ scopeMappings:
   # client asking for the `groups` scope, which RustFS does. It does not have
   # to match the claim key the expression returns.
   rustfsPolicies:
-    enabled: false
+    enabled: true
     crName: rustfs-policies
     name: "rustfs policies"
     scopeName: groups

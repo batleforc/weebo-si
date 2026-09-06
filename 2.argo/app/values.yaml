@@ -102,6 +102,8 @@ project:
         kind: "AuthentikBrand"
       - group: "authentik.weebo.io"
         kind: "AuthentikFlow"
+      - group: "authentik.weebo.io"
+        kind: "AuthentikScopeMapping"
       - group: "longhorn.io"
         kind: "RecurringJob"
   - name: monitoring
