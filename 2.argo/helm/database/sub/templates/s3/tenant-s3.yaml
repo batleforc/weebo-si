@@ -46,7 +46,6 @@ spec:
   buckets:
     {{ range .Values.s3.mainInstance.creds }}
     - name: {{ .name }}
-      anonymous: Private
     {{ end }}
 
   tls:
