@@ -329,6 +329,61 @@ from HyperDX 2.32.
   unresolved connection completes no protocol exchange and so produces no span.
   `action = 'dropped'` is the denial (Hubble lowercases the flow verdict).
 
+- `rustfs.json` — the object store: is the tenant up, is it answering S3, is it
+  filling up. A verdict row, the pods, the S3 request traffic broken down by
+  method, operation and bucket, both views of the disk, and the tenant's own
+  logs.
+
+  **Nothing scrapes RustFS, so there is no `rustfs_*` metric anywhere.** The
+  Tenant CRD has no annotations field, and the operator copies none onto the
+  pod template it builds — the same gap that forced the CA bundle into a
+  Kyverno mutation (`2.argo/helm/hook/sub`). Every figure here is therefore
+  measured from outside: kubeletstats and `k8s_cluster` for the pods, kubelet
+  and Longhorn for the disks, OBI for the requests, filelog for the logs. That
+  answers "is it up, is it answering, is it filling up" and cannot answer "is a
+  drive offline" or "how many objects are there". Closing that gap means
+  RustFS's OTLP export (`RUSTFS_OBS_*`, settable through the Tenant's `env`)
+  pointed at the gateway collector with the ingestion key — a change to the
+  Tenant, not to this file.
+
+  **The filter is the container name, not the namespace.** The operator's
+  Deployment and its console share the `s3` namespace with the tenant, so every
+  tile that means *the store* narrows on `k8s.container.name = 'rustfs'` as well
+  as the namespace. Only the storage and log-rate tiles widen to the namespace,
+  and the section headers say so. Both names are hardcoded, like the mountpoints
+  in `storage.json`: renaming the namespace or running a second tenant means
+  editing these queries.
+
+  The S3 half reads OBI **server** spans on that container, so it sees what
+  actually reached the process — anything the ingress or Cilium refused is
+  invisible here. Operation and bucket are parsed out of the request path
+  (path-style S3 puts the bucket first and the key in the rest), falling back to
+  the span name when OBI reports no `url.path`; `/rustfs/…` is labelled admin
+  traffic rather than mistaken for a bucket. `Failed` is `StatusCode = 'Error'`,
+  which counts the `404` a client gets probing for an object it has not
+  uploaded — read the status-code chart before believing the failure rate, the
+  same caveat `egress.json` carries about `ghcr.io`.
+
+  Two tiles are pointed at known failure modes rather than at load. **What the
+  tenant calls** is the outbound client-span table, and it is where a broken
+  OIDC login shows up: the discovery fetch to `auth.weebo.poc` failing is the
+  exact shape of both traps documented on the Tenant (a missing CA bundle, and
+  an origin absent from `RUSTFS_OUTBOUND_ALLOW_ORIGINS`). **Telemetry age** is
+  seconds since the last kubeletstats sample — read it first, because if
+  otel-node stopped, every green number above is stale.
+
+  **Log severity is mostly empty**, and the error tiles work around it. The
+  Tenant runs `RUST_LOG=debug` and RustFS prints plain text, so the CRI parser
+  fills `SeverityText` for almost nothing. A record counts as an error when its
+  severity says so *or*, where severity is empty, when the body matches
+  `error|panic|fatal`. That is a heuristic in both directions, so the rate chart
+  splits by severity to keep the size of the unset bucket visible. `Log lines`
+  sums `log_count` back up the way `consumers.json` does, so it exceeds the row
+  count wherever otel-node's `logdedup` collapsed repeats.
+
+  Blank `% lim` is the normal state here, not a gap: the Tenant declares no
+  resources, so the containers are unbounded.
+
 ## Round trip: build it in the UI, then commit it
 
 There is no export button. Get the JSON from the API with the same credentials

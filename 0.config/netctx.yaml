@@ -26,3 +26,5 @@ tools:
       - { title: Auth, url: "https://auth.weebo.poc/" }
       - { title: Monitoring, url: "https://clickstack.weebo.poc/" }
       - { title: Longhorn, url: "https://longhorn.weebo.poc/" }
+      - { title: S3 Admin, url: "https://s3-main.weebo.poc/" }
+      - { title: S3 Operator, url: "https://s3-ope.weebo.poc/" }

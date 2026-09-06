@@ -1,0 +1,763 @@
+{
+  "name": "RustFS health",
+  "tags": [],
+  "tiles": [
+    {
+      "id": "legend",
+      "config": {
+        "name": "How to read this",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "**Is the object store healthy?** Everything here is the RustFS tenant in the `s3` namespace — the pods the operator builds from the `main` Tenant, whose container is named `rustfs`. The operator's own Deployment and its console live in the same namespace with containers named `operator` and `console`, so **container name, not namespace, is what separates the store from the thing that manages it**. Only the storage and log-rate tiles widen to the whole namespace, and they say so.\n\n**Nothing scrapes RustFS.** It exposes no endpoint this cluster collects, and the Tenant CRD has no annotations field to opt one in, so there is no `rustfs_*` metric anywhere — not bucket counts, not erasure-set state, not scanner progress. Every figure below is measured *from outside*: kubeletstats and `k8s_cluster` for the pods, kubelet and Longhorn for the disks, **OBI** for the S3 requests, and filelog for what the process prints. That is enough to answer \"is it up, is it answering, is it filling up\"; it cannot answer \"is a drive offline\".\n\n**The S3 tiles are OBI server spans**, so they see the traffic that actually reached the container — a request refused by the ingress or by Cilium appears nowhere here. `Failed` is `StatusCode = 'Error'`, OTel's own verdict: an S3 client probing for an object it has not uploaded yet gets a `404` and counts as failed, which is normal traffic rather than an outage. Read the status-code chart before believing the failure rate.\n\n**Blank is not zero.** A blank `% lim` means the container declares no limit — the Tenant CR sets no resources, so this is the expected state, and it means unbounded rather than idle. A blank `Ready` means `k8s.container.ready` was never seen. **Restarts** counts restarts inside the selected range; `Lifetime` is the figure `kubectl` shows."
+      },
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 6
+    },
+    {
+      "id": "replicas-missing",
+      "config": {
+        "name": "Replicas missing",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(greatest(0, sum(desired) - sum(ready))) AS \"Replicas missing\"\nFROM (\n  SELECT\n    ResourceAttributes['k8s.statefulset.name'] AS sts,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.statefulset.desired_pods') AS desired,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.statefulset.ready_pods')   AS ready\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.statefulset.desired_pods', 'k8s.statefulset.ready_pods')\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND $__timeFilter(TimeUnix)\n  GROUP BY sts\n)\nWHERE sts != ''",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 0,
+      "y": 6,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "ctr-not-ready",
+      "config": {
+        "name": "Containers not ready",
+        "configType": "sql",
+        "sqlTemplate": "SELECT countIf(seen > 0 AND ready != 1) AS \"Containers not ready\"\nFROM (\n  SELECT\n    ResourceAttributes['k8s.pod.name'] AS pod,\n    argMax(Value, TimeUnix) AS ready,\n    count() AS seen\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'k8s.container.ready'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n    AND $__timeFilter(TimeUnix)\n  GROUP BY pod\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 4,
+      "y": 6,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "restarts",
+      "config": {
+        "name": "Restarts in range",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(sum(d)) AS \"Restarts in range\"\nFROM (\n  SELECT\n    ResourceAttributes['k8s.pod.name'] AS pod,\n    greatest(0, max(Value) - min(Value)) AS d\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'k8s.container.restarts'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n    AND $__timeFilter(TimeUnix)\n  GROUP BY pod\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 2,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 8,
+      "y": 6,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "telemetry-age",
+      "config": {
+        "name": "Telemetry age",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(greatest(0, dateDiff('second', max(TimeUnix), now())))\n  AS \"Seconds since last sample\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'container.cpu.usage'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n  AND $__timeFilter(TimeUnix)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "unit": " s"
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 120,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 300,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 12,
+      "y": 6,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "requests",
+      "config": {
+        "name": "S3 requests",
+        "configType": "sql",
+        "sqlTemplate": "SELECT count() AS \"S3 requests\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n  AND $__timeFilter(Timestamp)",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 16,
+      "y": 6,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "error-rate",
+      "config": {
+        "name": "S3 error rate",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(100 * countIf(StatusCode = 'Error') / nullIf(count(), 0), 1)\n  AS \"Error rate\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n  AND $__timeFilter(Timestamp)",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 1
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 5,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 20,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 20,
+      "y": 6,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "p95",
+      "config": {
+        "name": "S3 latency p95",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(quantile(0.95)(Duration) / 1e6) AS \"p95\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n  AND $__timeFilter(Timestamp)",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "unit": " ms",
+          "mantissa": 0
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 500,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 2000,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 0,
+      "y": 9,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "data-on-disk",
+      "config": {
+        "name": "Data on disk",
+        "configType": "sql",
+        "sqlTemplate": "SELECT sum(v) AS \"Data on disk\"\nFROM (\n  SELECT Attributes['pvc'] AS pvc, argMax(Value, TimeUnix) AS v\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'longhorn_volume_actual_size_bytes'\n    AND Attributes['pvc_namespace'] = 's3'\n    AND $__timeFilter(TimeUnix)\n  GROUP BY pvc\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "byte",
+          "mantissa": 1,
+          "thousandSeparated": true
+        }
+      },
+      "x": 4,
+      "y": 9,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "claim-used",
+      "config": {
+        "name": "Fullest claim",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(max(100 * (cap - avail) / nullIf(cap, 0)), 1) AS \"Fullest claim\"\nFROM (\n  SELECT\n    if(ResourceAttributes['k8s.persistentvolumeclaim.name'] != '',\n       ResourceAttributes['k8s.persistentvolumeclaim.name'],\n       ResourceAttributes['k8s.volume.name']) AS pvc,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.volume.capacity')  AS cap,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.volume.available') AS avail\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.volume.capacity', 'k8s.volume.available')\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND $__timeFilter(TimeUnix)\n  GROUP BY pvc\n)\nWHERE cap > 0",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 1
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 75,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 90,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 8,
+      "y": 9,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "mem-vs-limit",
+      "config": {
+        "name": "Peak memory vs limit",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(max(100 * mem / nullIf(lim, 0)), 1) AS \"Peak memory vs limit\"\nFROM (\n  SELECT\n    ResourceAttributes['k8s.pod.name'] AS pod,\n    maxIf(Value, MetricName = 'container.memory.working_set') AS mem,\n    maxIf(Value, MetricName = 'k8s.container.memory_limit')   AS lim\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('container.memory.working_set', 'k8s.container.memory_limit')\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n    AND $__timeFilter(TimeUnix)\n  GROUP BY pod\n)\nWHERE lim > 0",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 1
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 80,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 90,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 12,
+      "y": 9,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "log-errors",
+      "config": {
+        "name": "Error log lines",
+        "configType": "sql",
+        "sqlTemplate": "SELECT sum(greatest(toUInt64OrZero(LogAttributes['log_count']), 1)) AS \"Error log lines\"\nFROM default.otel_logs\nWHERE $__timeFilter(Timestamp)\n  AND `__hdx_materialized_k8s.namespace.name` = 's3'\n  AND `__hdx_materialized_k8s.container.name` = 'rustfs'\n  AND (lower(SeverityText) IN ('error', 'fatal', 'critical')\n     OR (SeverityText = '' AND match(Body, '(?i)\\\\b(error|panic|fatal)\\\\b')))",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      },
+      "x": 16,
+      "y": 9,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "callers",
+      "config": {
+        "name": "Clients calling S3",
+        "configType": "sql",
+        "sqlTemplate": "SELECT uniq(ServiceName) AS \"Clients calling S3\"\nFROM (\n  SELECT ServiceName, if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\\\[([^\\\\]]+)\\\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n)\nWHERE (host = 's3-main.weebo.poc'\n     OR host LIKE 'main-hl%'\n     OR host LIKE 'main.s3%'\n     OR host LIKE '%.s3'\n     OR host LIKE '%.s3.svc%')",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 20,
+      "y": 9,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "h-tenant",
+      "config": {
+        "name": "The tenant",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "**The pods themselves.** Replicas and readiness come from `k8s_cluster`, CPU/memory/writable-layer from kubeletstats, the log counts from filelog and the request counts from OBI — four collectors, joined on the pod name, which is the only key all four carry. Click a row to open that pod's logs over the same time range."
+      },
+      "x": 0,
+      "y": 12,
+      "w": 24,
+      "h": 2
+    },
+    {
+      "id": "pods",
+      "config": {
+        "name": "Tenant pods",
+        "configType": "sql",
+        "sqlTemplate": "WITH\nres AS (\n  SELECT\n    ResourceAttributes['k8s.pod.name'] AS pod,\n    argMax(ResourceAttributes['k8s.node.name'], TimeUnix) AS node,\n    avgIf(Value, MetricName = 'container.cpu.usage')          AS cpu_avg,\n    maxIf(Value, MetricName = 'container.memory.working_set') AS mem_peak,\n    maxIf(Value, MetricName = 'container.filesystem.usage')   AS fs_use\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('container.cpu.usage', 'container.memory.working_set',\n                       'container.filesystem.usage')\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n    AND $__timeFilter(TimeUnix)\n  GROUP BY pod\n),\nalloc AS (\n  SELECT\n    ResourceAttributes['k8s.pod.name'] AS pod,\n    maxIf(Value, MetricName = 'k8s.container.cpu_limit')    AS cpu_lim,\n    maxIf(Value, MetricName = 'k8s.container.memory_limit') AS mem_lim,\n    maxIf(Value, MetricName = 'k8s.container.restarts')     AS restarts_total,\n    greatest(0, maxIf(Value, MetricName = 'k8s.container.restarts')\n              - minIf(Value, MetricName = 'k8s.container.restarts')) AS restarts_here,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.container.ready') AS ready,\n    countIf(MetricName = 'k8s.container.ready') AS ready_seen\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.container.cpu_limit', 'k8s.container.memory_limit',\n                       'k8s.container.restarts', 'k8s.container.ready')\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n    AND $__timeFilter(TimeUnix)\n  GROUP BY pod\n),\nlogs AS (\n  SELECT\n    `__hdx_materialized_k8s.pod.name` AS pod,\n    sum(greatest(toUInt64OrZero(LogAttributes['log_count']), 1)) AS lines,\n    sumIf(greatest(toUInt64OrZero(LogAttributes['log_count']), 1), (lower(SeverityText) IN ('error', 'fatal', 'critical')\n     OR (SeverityText = '' AND match(Body, '(?i)\\\\b(error|panic|fatal)\\\\b')))) AS errs\n  FROM default.otel_logs\n  WHERE $__timeFilter(Timestamp)\n    AND `__hdx_materialized_k8s.namespace.name` = 's3'\n    AND `__hdx_materialized_k8s.container.name` = 'rustfs'\n  GROUP BY pod\n),\nspans AS (\n  SELECT\n    ResourceAttributes['k8s.pod.name'] AS pod,\n    countIf(SpanKind = 'Server')                          AS reqs,\n    countIf(SpanKind = 'Server' AND StatusCode = 'Error') AS failed,\n    quantileIf(0.95)(Duration, SpanKind = 'Server')       AS p95\n  FROM default.otel_traces\n  WHERE $__timeFilter(Timestamp)\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n  GROUP BY pod\n)\nSELECT\n  r.pod  AS \"Pod\",\n  r.node AS \"Node\",\n  multiIf(a.ready_seen = 0, '', a.ready = 1, 'ready', 'NOT READY') AS \"Ready\",\n  toUInt32(a.restarts_here)  AS \"Restarts\",\n  toUInt32(a.restarts_total) AS \"Lifetime\",\n  round(r.cpu_avg, 3) AS \"CPU\",\n  if(a.cpu_lim > 0, round(100 * r.cpu_avg / a.cpu_lim), NULL) AS \"CPU % lim\",\n  round(r.mem_peak / 1048576) AS \"Mem MiB\",\n  if(a.mem_lim > 0, round(100 * r.mem_peak / a.mem_lim), NULL) AS \"Mem % lim\",\n  round(r.fs_use / 1048576) AS \"Writable MiB\",\n  l.lines AS \"Log lines\",\n  l.errs  AS \"Log errors\",\n  s.reqs   AS \"Requests\",\n  s.failed AS \"Failed\",\n  if(s.reqs > 0, round(s.p95 / 1e6), NULL) AS \"p95 ms\"\nFROM res AS r\nLEFT JOIN alloc AS a ON r.pod = a.pod\nLEFT JOIN logs  AS l ON r.pod = l.pod\nLEFT JOIN spans AS s ON r.pod = s.pod\nORDER BY \"Restarts\" DESC, \"Log errors\" DESC, \"Pod\"",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Logs"
+          },
+          "whereTemplate": "ResourceAttributes['k8s.pod.name'] = '{{Pod}}'",
+          "whereLanguage": "sql"
+        }
+      },
+      "x": 0,
+      "y": 14,
+      "w": 24,
+      "h": 8
+    },
+    {
+      "id": "cpu-line",
+      "config": {
+        "name": "CPU, by pod",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  ResourceAttributes['k8s.pod.name'] AS \"Pod\",\n  avg(Value) AS \"CPU cores\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'container.cpu.usage'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Pod\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 3
+        }
+      },
+      "x": 0,
+      "y": 22,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "mem-line",
+      "config": {
+        "name": "Memory working set, by pod",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  ResourceAttributes['k8s.pod.name'] AS \"Pod\",\n  max(Value) AS \"Working set\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'container.memory.working_set'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Pod\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "byte",
+          "mantissa": 1,
+          "thousandSeparated": true
+        }
+      },
+      "x": 12,
+      "y": 22,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "h-s3",
+      "config": {
+        "name": "S3 API traffic",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "**What the store was asked to do**, from OBI's server spans on the `rustfs` container. The operation and bucket are parsed out of the request path: path-style S3 puts the bucket in the first segment and the key in the rest, so `/batlehub/covers/1.png` is a `GetObject` on `batlehub`. Paths under `/rustfs/` are the admin and OIDC API, not object traffic, and are labelled as such rather than mistaken for a bucket. When OBI reports no `url.path`, the span name is parsed instead."
+      },
+      "x": 0,
+      "y": 28,
+      "w": 24,
+      "h": 2
+    },
+    {
+      "id": "req-rate",
+      "config": {
+        "name": "Requests/s, by method",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(Timestamp) AS ts,\n  upper(if(SpanAttributes['http.request.method'] != '',\n            SpanAttributes['http.request.method'],\n            splitByChar(' ', SpanName)[1])) AS \"Method\",\n  count() / $__interval_s AS \"Requests/s\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n  AND $__timeFilter(Timestamp)\nGROUP BY ts, \"Method\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      },
+      "x": 0,
+      "y": 30,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "status",
+      "config": {
+        "name": "Responses by status code",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(Timestamp) AS ts,\n  if(SpanAttributes['http.response.status_code'] != '',\n     SpanAttributes['http.response.status_code'], 'none') AS \"Status\",\n  count() AS \"Responses\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n  AND $__timeFilter(Timestamp)\nGROUP BY ts, \"Status\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 12,
+      "y": 30,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "latency",
+      "config": {
+        "name": "Latency p95, by method",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(Timestamp) AS ts,\n  upper(if(SpanAttributes['http.request.method'] != '',\n            SpanAttributes['http.request.method'],\n            splitByChar(' ', SpanName)[1])) AS \"Method\",\n  quantile(0.95)(Duration) / 1e6 AS \"p95 ms\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n  AND $__timeFilter(Timestamp)\nGROUP BY ts, \"Method\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0
+        }
+      },
+      "x": 0,
+      "y": 36,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "operations",
+      "config": {
+        "name": "Operations, by kind",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  multiIf(\n    startsWith(path, '/rustfs/'), concat('admin ', method),\n    path IN ('/health', '/health/ready'), 'health probe',\n    method = 'GET'    AND objkey != '', 'GetObject',\n    method = 'GET'    AND bucket != '', 'ListObjects',\n    method = 'GET',                     'ListBuckets',\n    method = 'HEAD'   AND objkey != '', 'HeadObject',\n    method = 'HEAD',                    'HeadBucket',\n    method = 'PUT'    AND objkey != '', 'PutObject',\n    method = 'PUT',                     'CreateBucket',\n    method = 'DELETE' AND objkey != '', 'DeleteObject',\n    method = 'DELETE',                  'DeleteBucket',\n    method = 'POST',                    'POST (multipart / batch)',\n    method) AS \"Operation\",\n  count() AS \"Calls\",\n  countIf(StatusCode = 'Error') AS \"Failed\",\n  countIf(status LIKE '4%') AS \"4xx\",\n  countIf(status LIKE '5%') AS \"5xx\",\n  round(quantile(0.5)(Duration) / 1e6)  AS \"p50 ms\",\n  round(quantile(0.95)(Duration) / 1e6) AS \"p95 ms\"\nFROM (\n  SELECT\n    Duration, StatusCode, status, method, path,\n    splitByChar('/', path)[2] AS bucket,\n    arrayStringConcat(arraySlice(splitByChar('/', path), 3), '/') AS objkey\n  FROM (\n  SELECT\n    Duration,\n    StatusCode,\n    SpanAttributes['http.response.status_code'] AS status,\n    upper(if(SpanAttributes['http.request.method'] != '',\n            SpanAttributes['http.request.method'],\n            splitByChar(' ', SpanName)[1])) AS method,\n    if(SpanAttributes['url.path'] != '',\n         SpanAttributes['url.path'],\n         if(position(SpanName, ' ') > 0, splitByChar(' ', SpanName)[2], SpanName)) AS path\n  FROM default.otel_traces\n  WHERE SpanKind = 'Server'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n    AND $__timeFilter(Timestamp)\n  )\n)\nGROUP BY \"Operation\"\nORDER BY \"Calls\" DESC",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true
+      },
+      "x": 12,
+      "y": 36,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "clients",
+      "config": {
+        "name": "Who calls the S3 API",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ServiceName AS \"Caller\",\n  ns   AS \"Namespace\",\n  host AS \"Endpoint\",\n  count() AS \"Calls\",\n  countIf(StatusCode = 'Error') AS \"Failed\",\n  round(quantile(0.95)(Duration) / 1e6) AS \"p95 ms\"\nFROM (\n  SELECT\n    Timestamp, Duration, StatusCode, ServiceName,\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    ResourceAttributes['k8s.pod.name']       AS pod,\n    SpanAttributes['http.response.status_code'] AS status,\n    if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\\\[([^\\\\]]+)\\\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client' AND $__timeFilter(Timestamp)\n)\nWHERE (host = 's3-main.weebo.poc'\n     OR host LIKE 'main-hl%'\n     OR host LIKE 'main.s3%'\n     OR host LIKE '%.s3'\n     OR host LIKE '%.s3.svc%')\nGROUP BY \"Caller\", \"Namespace\", \"Endpoint\"\nORDER BY \"Calls\" DESC\nLIMIT 25",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Traces"
+          },
+          "whereTemplate": "ServiceName = '{{Caller}}'",
+          "whereLanguage": "sql"
+        }
+      },
+      "x": 0,
+      "y": 42,
+      "w": 12,
+      "h": 7
+    },
+    {
+      "id": "outbound",
+      "config": {
+        "name": "What the tenant calls",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  host AS \"Peer\",\n  count() AS \"Calls\",\n  countIf(StatusCode = 'Error') AS \"Failed\",\n  round(100 * countIf(StatusCode = 'Error') / nullIf(count(), 0), 1) AS \"Fail %\",\n  round(quantile(0.95)(Duration) / 1e6) AS \"p95 ms\"\nFROM (\n  SELECT Duration, StatusCode, if(startsWith(SpanAttributes['server.address'], '['),\n       extract(SpanAttributes['server.address'], '^\\\\[([^\\\\]]+)\\\\]'),\n       splitByChar(':', SpanAttributes['server.address'])[1]) AS host\n  FROM default.otel_traces\n  WHERE SpanKind = 'Client'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n    AND $__timeFilter(Timestamp)\n)\nWHERE host != ''\nGROUP BY \"Peer\"\nORDER BY \"Calls\" DESC\nLIMIT 25",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true
+      },
+      "x": 12,
+      "y": 42,
+      "w": 12,
+      "h": 7
+    },
+    {
+      "id": "slowest",
+      "config": {
+        "name": "Slowest S3 requests",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  Timestamp AS \"When\",\n  upper(if(SpanAttributes['http.request.method'] != '',\n            SpanAttributes['http.request.method'],\n            splitByChar(' ', SpanName)[1])) AS \"Method\",\n  if(SpanAttributes['url.path'] != '',\n         SpanAttributes['url.path'],\n         if(position(SpanName, ' ') > 0, splitByChar(' ', SpanName)[2], SpanName)) AS \"Path\",\n  SpanAttributes['http.response.status_code'] AS \"Status\",\n  round(Duration / 1e6) AS \"ms\",\n  ResourceAttributes['k8s.pod.name'] AS \"Pod\",\n  TraceId AS \"TraceId\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n  AND $__timeFilter(Timestamp)\nORDER BY Duration DESC\nLIMIT 20",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Traces"
+          },
+          "whereTemplate": "TraceId = '{{TraceId}}'",
+          "whereLanguage": "sql"
+        }
+      },
+      "x": 0,
+      "y": 49,
+      "w": 12,
+      "h": 7
+    },
+    {
+      "id": "buckets",
+      "config": {
+        "name": "Buckets, by traffic",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  bucket AS \"Bucket\",\n  count() AS \"Requests\",\n  countIf(method IN ('PUT', 'POST')) AS \"Writes\",\n  countIf(method IN ('GET', 'HEAD')) AS \"Reads\",\n  countIf(method = 'DELETE') AS \"Deletes\",\n  countIf(StatusCode = 'Error') AS \"Failed\",\n  round(quantile(0.95)(Duration) / 1e6) AS \"p95 ms\"\nFROM (\n  SELECT\n    Duration, StatusCode, status, method, path,\n    splitByChar('/', path)[2] AS bucket,\n    arrayStringConcat(arraySlice(splitByChar('/', path), 3), '/') AS objkey\n  FROM (\n  SELECT\n    Duration,\n    StatusCode,\n    SpanAttributes['http.response.status_code'] AS status,\n    upper(if(SpanAttributes['http.request.method'] != '',\n            SpanAttributes['http.request.method'],\n            splitByChar(' ', SpanName)[1])) AS method,\n    if(SpanAttributes['url.path'] != '',\n         SpanAttributes['url.path'],\n         if(position(SpanName, ' ') > 0, splitByChar(' ', SpanName)[2], SpanName)) AS path\n  FROM default.otel_traces\n  WHERE SpanKind = 'Server'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND ResourceAttributes['k8s.container.name'] = 'rustfs'\n    AND $__timeFilter(Timestamp)\n  )\n)\nWHERE bucket != ''\n  AND NOT startsWith(path, '/rustfs/')\n  AND bucket NOT IN ('health')\nGROUP BY \"Bucket\"\nORDER BY \"Requests\" DESC\nLIMIT 20",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Traces"
+          },
+          "whereTemplate": "SpanAttributes['url.path'] LIKE '/{{Bucket}}%'",
+          "whereLanguage": "sql"
+        }
+      },
+      "x": 12,
+      "y": 49,
+      "w": 12,
+      "h": 7
+    },
+    {
+      "id": "h-storage",
+      "config": {
+        "name": "Storage",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "**Where the bytes are.** The claim is a 50 GiB `longhorn` volume, so both views work: kubelet reports what the filesystem inside the claim says, Longhorn reports what the thin-provisioned volume actually costs on disk including snapshots and replicas. The two disagreeing is normal — read the first for \"will it fill up\" and the second for \"what does it cost\". These tiles cover the whole `s3` namespace, the operator's claims included; there is only one that matters and it belongs to the tenant."
+      },
+      "x": 0,
+      "y": 56,
+      "w": 24,
+      "h": 2
+    },
+    {
+      "id": "pvc",
+      "config": {
+        "name": "Claims, as the filesystem sees them",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  pvc AS \"Claim\",\n  pod AS \"Pod\",\n  formatReadableSize(cap - avail) AS \"Used\",\n  formatReadableSize(cap) AS \"Capacity\",\n  round(100 * (cap - avail) / nullIf(cap, 0), 1) AS \"Used %\",\n  round(cap - avail) AS \"Bytes\"\nFROM (\n  SELECT\n    if(ResourceAttributes['k8s.persistentvolumeclaim.name'] != '',\n       ResourceAttributes['k8s.persistentvolumeclaim.name'],\n       ResourceAttributes['k8s.volume.name']) AS pvc,\n    ResourceAttributes['k8s.pod.name'] AS pod,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.volume.capacity')  AS cap,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.volume.available') AS avail\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.volume.capacity', 'k8s.volume.available')\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n    AND $__timeFilter(TimeUnix)\n  GROUP BY pvc, pod\n)\nWHERE cap > 0\nORDER BY \"Bytes\" DESC",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Logs"
+          },
+          "whereTemplate": "ResourceAttributes['k8s.pod.name'] = '{{Pod}}'",
+          "whereLanguage": "sql"
+        }
+      },
+      "x": 0,
+      "y": 58,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "longhorn",
+      "config": {
+        "name": "The same volumes, as Longhorn stores them",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  Attributes['pvc'] AS \"Claim\",\n  formatReadableSize(argMaxIf(Value, TimeUnix,\n    MetricName = 'longhorn_volume_actual_size_bytes')) AS \"On disk\",\n  formatReadableSize(argMaxIf(Value, TimeUnix,\n    MetricName = 'longhorn_volume_capacity_bytes')) AS \"Claimed\",\n  round(100 * argMaxIf(Value, TimeUnix,\n    MetricName = 'longhorn_volume_actual_size_bytes')\n    / nullIf(argMaxIf(Value, TimeUnix,\n      MetricName = 'longhorn_volume_capacity_bytes'), 0), 1) AS \"Of claim %\",\n  round(argMaxIf(Value, TimeUnix,\n    MetricName = 'longhorn_volume_actual_size_bytes')) AS \"Bytes\"\nFROM default.otel_metrics_gauge\nWHERE MetricName IN ('longhorn_volume_actual_size_bytes',\n                     'longhorn_volume_capacity_bytes')\n  AND Attributes['pvc_namespace'] = 's3'\n  AND $__timeFilter(TimeUnix)\nGROUP BY \"Claim\"\nORDER BY \"Bytes\" DESC",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true
+      },
+      "x": 12,
+      "y": 58,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "growth",
+      "config": {
+        "name": "Volume growth",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  Attributes['pvc'] AS \"Claim\",\n  argMax(Value, TimeUnix) AS \"On disk\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'longhorn_volume_actual_size_bytes'\n  AND Attributes['pvc_namespace'] = 's3'\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Claim\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "byte",
+          "mantissa": 1,
+          "thousandSeparated": true
+        }
+      },
+      "x": 0,
+      "y": 64,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "net-line",
+      "config": {
+        "name": "Network throughput, by pod",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  series AS \"Pod / direction\",\n  d / $__interval_s AS \"Bytes/s\"\nFROM (\n  SELECT\n    ts,\n    series,\n    v - lagInFrame(v) OVER (PARTITION BY series ORDER BY ts) AS d,\n    row_number() OVER (PARTITION BY series ORDER BY ts) AS rn\n  FROM (\n    SELECT\n      $__timeInterval(TimeUnix) AS ts,\n      concat(ResourceAttributes['k8s.pod.name'], ' ', Attributes['direction'],\n             ' ', Attributes['interface']) AS series,\n      argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'k8s.pod.network.io'\n    AND ResourceAttributes['k8s.namespace.name'] = 's3'\n      AND $__timeFilter(TimeUnix)\n    GROUP BY ts, series\n  )\n)\nWHERE rn > 1 AND d >= 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "data_rate",
+          "mantissa": 1
+        }
+      },
+      "x": 12,
+      "y": 64,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "h-logs",
+      "config": {
+        "name": "What it says",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "**The process's own account of itself.** The Tenant runs with `RUST_LOG=debug`, so volume is high and most records arrive with no severity at all — the CRI parser only fills `SeverityText` when the runtime hands it a level, and RustFS prints plain text. Every error tile on this dashboard therefore counts a record as an error when its severity says so **or**, where severity is empty, when the body matches `error|panic|fatal`. That is a heuristic: it over-counts a line that merely discusses an error, and it misses one phrased differently. The rate chart splits by severity so the size of the unset bucket is visible rather than implied."
+      },
+      "x": 0,
+      "y": 70,
+      "w": 24,
+      "h": 2
+    },
+    {
+      "id": "log-rate",
+      "config": {
+        "name": "Lines/min, by severity",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(Timestamp) AS ts,\n  if(SeverityText = '', 'unset', lower(SeverityText)) AS \"Severity\",\n  sum(greatest(toUInt64OrZero(LogAttributes['log_count']), 1)) / nullIf($__interval_s / 60, 0) AS \"Lines/min\"\nFROM default.otel_logs\nWHERE $__timeFilter(Timestamp)\n  AND `__hdx_materialized_k8s.namespace.name` = 's3'\n  AND `__hdx_materialized_k8s.container.name` = 'rustfs'\nGROUP BY ts, \"Severity\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1
+        }
+      },
+      "x": 0,
+      "y": 72,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "recent-errors",
+      "config": {
+        "name": "Recent errors from the tenant",
+        "source": "Logs",
+        "displayType": "search",
+        "select": "Timestamp, ResourceAttributes['k8s.pod.name'] AS pod, ResourceAttributes['k8s.container.name'] AS container, SeverityText, Body",
+        "where": "ResourceAttributes['k8s.namespace.name'] = 's3'\n  AND (lower(SeverityText) IN ('error', 'fatal', 'critical')\n     OR (SeverityText = '' AND match(Body, '(?i)\\\\b(error|panic|fatal)\\\\b')))",
+        "whereLanguage": "sql",
+        "orderBy": "Timestamp DESC"
+      },
+      "x": 12,
+      "y": 72,
+      "w": 12,
+      "h": 6
+    }
+  ]
+}
