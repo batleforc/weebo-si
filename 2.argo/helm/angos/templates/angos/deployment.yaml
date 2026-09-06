@@ -21,8 +21,10 @@ spec:
           args: ["-c", "/config/config.toml", "-c", "/secrets/secrets.toml", "server"]
           ports:
             - containerPort: 8000
-          {{- if .Values.angos.caTrust.enabled }}
           env:
+            - name: RUST_LOG
+            value: info
+          {{- if .Values.angos.caTrust.enabled }}
             - name: SSL_CERT_FILE
               value: {{ printf "%s/%s" .Values.angos.caTrust.mountPath .Values.angos.caTrust.bundleKey | quote }}
           {{- end }}
@@ -38,25 +40,40 @@ spec:
               mountPath: {{ .Values.angos.caTrust.mountPath | quote }}
               readOnly: true
           {{- end }}
+          startupProbe:
+            tcpSocket:
+              port: 8000
+            periodSeconds: 1
+            failureThreshold: 3
+            successThreshold: 1
           livenessProbe:
-            httpGet:
-              path: /healthz
+            tcpSocket:
               port: 8000
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /readyz
-              port: 8000
-            initialDelaySeconds: 5
-            periodSeconds: 5
+            initialDelaySeconds: 1
+            periodSeconds: 2
+            failureThreshold: 3
+            successThreshold: 1
           resources:
             requests:
-              cpu: 100m
-              memory: 128Mi
+              memory: "150Mi"
+              cpu: "100m"
             limits:
-              cpu: 1000m
-              memory: 512Mi
+              memory: "500Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
       volumes:
         - name: config
           secret:
