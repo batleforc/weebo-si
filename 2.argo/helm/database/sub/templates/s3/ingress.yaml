@@ -1,0 +1,21 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: s3-main
+  namespace: {{ .Values.s3.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.s3.namespace }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.s3.mainInstance.dns}}`)
+      priority: 10
+      services:
+        - name: main-console
+          namespace: {{ .Values.s3.namespace }}
+          port: 9001
+          passHostHeader: true
+  tls:
+    secretName: s3-main-tls
