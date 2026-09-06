@@ -40,7 +40,7 @@ valkeyOperator:
   enabled: true
   repoUrl: https://valkey.io/valkey-helm
   chart: valkey-operator
-  namespace: valkey-operator
+  namespace: valkey
   # renovate: datasource=helm depName=valkey-operator registryUrl=https://valkey.io/valkey-helm
   version: v0.6.0
 

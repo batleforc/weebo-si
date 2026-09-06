@@ -53,7 +53,6 @@ project:
       - https://charts.longhorn.io
       - https://charts.goauthentik.io
       - oci://ghcr.io/batleforc/charts/weebo-authentik
-      - https://valkey.io/valkey-helmà
     includeBaseRepo: true
     dest:
       - server: "https://kubernetes.default.svc"
@@ -107,8 +106,6 @@ project:
         kind: "AuthentikScopeMapping"
       - group: "longhorn.io"
         kind: "RecurringJob"
-      - group: "valkey.io"
-        kind: "ValkeyCluster"
   - name: monitoring
     sourceRepo:
       - https://open-telemetry.github.io/opentelemetry-helm-charts
@@ -139,6 +136,7 @@ project:
       - https://cloudnative-pg.github.io/charts
       - https://operator.rustfs.com
       - https://github.com/rustfs/operator
+      - https://valkey.io/valkey-helm
     includeBaseRepo: true
     dest:
       - server: "https://kubernetes.default.svc"
@@ -149,6 +147,8 @@ project:
         namespace: "monitoring"
       - server: "https://kubernetes.default.svc"
         namespace: "s3"
+      - server: "https://kubernetes.default.svc"
+        namespace: "valkey"
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"
@@ -164,3 +164,5 @@ project:
         kind: "ClusterRoleBinding"
       - group: "rustfs.com"
         kind: "Tenant"
+      - group: "valkey.io"
+        kind: "ValkeyCluster"
