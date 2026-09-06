@@ -9,6 +9,10 @@ angos:
     registry: ghcr.io/project-angos/angos
     tag: 1.7.1
   dns: registry.pkg.weebo.poc
+  # `[auth.token_service]`, whose secret_key comes from Vault and whose realm
+  # is built from `dns` above. The ceiling angos enforces is 86400.
+  tokenService:
+    ttlSecs: 3600
   # The internal CA, mounted beside the system store rather than over
   # /etc/ssl/certs the way the `inject-certs` Kyverno policy does: angos has to
   # reach s3-main.weebo.poc (signed by the internal CA) as well as

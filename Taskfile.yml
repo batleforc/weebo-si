@@ -9,6 +9,7 @@ includes:
   vpn: 0.task/vpn.yaml
   vault: 0.task/vault.yaml
   s3: 0.task/s3.yaml
+  angos: 0.task/angos.yaml
 
 tasks:
   init:

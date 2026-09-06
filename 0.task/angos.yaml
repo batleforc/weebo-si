@@ -1,0 +1,55 @@
+version: "3"
+
+tasks:
+  # angos n'a pas de flow de connexion a lui: il valide un JWT bearer, et le lit
+  # aussi en Basic auth avec le nom du provider comme username. Le grant device
+  # code est la facon d'obtenir ce JWT sans callback navigateur.
+  #
+  # L'endpoint device ne demande aucune authentification cliente, l'endpoint
+  # token si: le provider que cree l'operateur est confidentiel. D'ou le passage
+  # par Vault. Le code device expire en 60s, donc il faut valider tout de suite.
+  token:
+    desc: "Recupere un jeton Authentik pour angos (device code)"
+    silent: true
+    env:
+      # En env et pas en var interpolee, pour que le secret ne se retrouve pas
+      # dans la ligne de commande que task affiche.
+      CLIENT_SECRET:
+        sh: task vault -- kv get -tls-skip-verify -mount=mv -field=AUTHENTIK_CLIENT_SECRET angos/auth
+      ISSUER: "https://auth.weebo.poc"
+      CLIENT_ID: "angos"
+    cmds:
+      - |
+        set -eu
+        resp=$(curl -sSf -X POST "$ISSUER/application/o/device/" \
+          -d "client_id=$CLIENT_ID" -d "scope=openid email profile")
+        device_code=$(printf '%s' "$resp" | jq -r .device_code)
+        interval=$(printf '%s' "$resp" | jq -r .interval)
+        # Sur stderr, pour que `task angos:token` reste pipeable.
+        printf 'Ouvre et valide : %s\n' \
+          "$(printf '%s' "$resp" | jq -r .verification_uri_complete)" >&2
+        while :; do
+          sleep "$interval"
+          tok=$(curl -s -X POST "$ISSUER/application/o/token/" \
+            --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:device_code" \
+            --data-urlencode "client_id=$CLIENT_ID" \
+            --data-urlencode "client_secret=$CLIENT_SECRET" \
+            --data-urlencode "device_code=$device_code")
+          case "$(printf '%s' "$tok" | jq -r '.error // "ok"')" in
+            authorization_pending|slow_down) ;;
+            ok) break ;;
+            *) printf '%s\n' "$(printf '%s' "$tok" | jq -r '.error_description // .error')" >&2
+               exit 1 ;;
+          esac
+        done
+        # L'ID token, pas l'access token: son `aud` vaut le client id, ce que
+        # angos epingle via required_audience.
+        printf '%s' "$tok" | jq -r .id_token
+
+  # `weebo` est le nom du provider dans `[auth.oidc.weebo]`: angos lit le mot de
+  # passe comme un JWT quand le username nomme un de ses providers.
+  login:
+    desc: "docker login sur angos avec un jeton frais"
+    silent: true
+    cmds:
+      - task angos:token | docker login registry.pkg.weebo.poc -u weebo --password-stdin
