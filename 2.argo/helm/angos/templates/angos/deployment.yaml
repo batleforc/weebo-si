@@ -21,6 +21,11 @@ spec:
           args: ["-c", "/config/config.toml", "-c", "/secrets/secrets.toml", "server"]
           ports:
             - containerPort: 8000
+          {{- if .Values.angos.caTrust.enabled }}
+          env:
+            - name: SSL_CERT_FILE
+              value: {{ printf "%s/%s" .Values.angos.caTrust.mountPath .Values.angos.caTrust.bundleKey | quote }}
+          {{- end }}
           volumeMounts:
             - name: config
               mountPath: /config
@@ -28,6 +33,11 @@ spec:
             - name: config-secret
               mountPath: /secrets
               readOnly: true
+            {{- if .Values.angos.caTrust.enabled }}
+            - name: weebo-ca
+              mountPath: {{ .Values.angos.caTrust.mountPath | quote }}
+              readOnly: true
+          {{- end }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -54,4 +64,12 @@ spec:
         - name: config-secret
           secret:
             secretName: registry-credentials
+        {{- if .Values.angos.caTrust.enabled }}
+        - name: weebo-ca
+          configMap:
+            name: {{ .Values.angos.caTrust.bundleConfigMap | quote }}
+            items:
+              - key: {{ .Values.angos.caTrust.bundleKey | quote }}
+                path: {{ .Values.angos.caTrust.bundleKey | quote }}
+        {{- end }}
 {{- end -}}

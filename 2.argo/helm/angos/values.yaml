@@ -9,3 +9,14 @@ angos:
     registry: ghcr.io/project-angos/angos
     tag: 1.7.1
   dns: registry.pkg.weebo.poc
+  # The internal CA, mounted beside the system store rather than over
+  # /etc/ssl/certs the way the `inject-certs` Kyverno policy does: angos has to
+  # reach s3-main.weebo.poc (signed by the internal CA) as well as
+  # registry-1.docker.io / ghcr.io (public roots), and the Bundle carries both.
+  caTrust:
+    enabled: true
+    # The trust-manager Bundle's ConfigMap target, replicated into every
+    # namespace. The file lands at <mountPath>/<bundleKey>.
+    bundleConfigMap: weebo.poc
+    bundleKey: main-ca.crt
+    mountPath: /etc/ssl/weebo
