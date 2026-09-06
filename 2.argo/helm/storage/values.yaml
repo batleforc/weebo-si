@@ -3,6 +3,9 @@ longhorn:
   # renovate: datasource=helm depName=longhorn registryUrl=https://charts.longhorn.io
   version: 1.12.1
   domain: longhorn.weebo.poc
+  # Namespace of the otel DaemonSet allowed through longhorn 1.12's
+  # manager NetworkPolicy -- see templates/longhorn/network-policy.yaml.
+  metricsScraperNamespace: monitoring
 
 # https://oneuptime.com/blog/post/2026-03-03-set-up-longhorn-storage-on-talos-linux/view
 

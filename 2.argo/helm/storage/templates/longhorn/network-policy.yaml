@@ -1,0 +1,53 @@
+{{- if .Values.longhorn.enabled -}}
+# Re-opens longhorn-manager:9500 to the otel agent.
+#
+# Longhorn 1.12.0 started shipping six NetworkPolicies of its own
+# (templates/network-policies/*). Five of them, longhorn-manager's included,
+# are gated on `networkPolicies.restrictInternalTraffic`, which defaults to
+# TRUE -- not on `networkPolicies.enabled`, which defaults to false and is the
+# only knob the chart documents. So the 1.11 -> 1.12.1 bump turned the manager
+# into a default-deny endpoint on ingress with nobody asking for it, and its
+# allowlist is longhorn's own components only (manager, ui, csi-plugin,
+# driver-deployer, recurring jobs).
+#
+# What that broke is the annotation-driven scrape of :9500 set up in
+# longhorn.yaml: 60s apart, every scrape ended in "context deadline exceeded"
+# and one dropped policy verdict, and the longhorn half of the Storage
+# dashboard went flat.
+#
+# A plain NetworkPolicy, not a CiliumNetworkPolicy, on purpose: policies of
+# both kinds are additive per direction, so this rule is unioned with the
+# chart's instead of replacing it, and staying in the same API keeps the two
+# readable side by side. Nothing else is widened -- the manager's ingress is
+# still closed to everything but longhorn itself and this one scraper on this
+# one port.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: longhorn-manager-metrics
+  namespace: longhorn
+  labels:
+    app.kubernetes.io/name: longhorn
+spec:
+  podSelector:
+    matchLabels:
+      app: longhorn-manager
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        # The DaemonSet agent, which scrapes the manager running on its own
+        # node. `component: agent-collector` is what separates it from the
+        # gateway and the cluster collector, all three sharing the chart's
+        # app.kubernetes.io/name.
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.longhorn.metricsScraperNamespace }}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: opentelemetry-collector
+              component: agent-collector
+      ports:
+        - port: 9500
+          protocol: TCP
+{{- end -}}
