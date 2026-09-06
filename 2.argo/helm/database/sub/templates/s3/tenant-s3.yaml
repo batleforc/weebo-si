@@ -56,6 +56,17 @@ spec:
       manageCertificate: false
       secretName: s3-main-tls
 
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    # Not enabled by default because RustFS may need writable runtime paths.
+    readOnlyRootFilesystem: false
+
   # Optional: Enable debug logging for development
   # Note: Operator automatically sets RUSTFS_VOLUMES, RUSTFS_ADDRESS,
   # RUSTFS_CONSOLE_ADDRESS, and RUSTFS_CONSOLE_ENABLE
