@@ -502,9 +502,15 @@ applications:
         authorizationFlow: default-provider-authorization-implicit-consent
         invalidationFlow: default-provider-invalidation-flow
         signingKey: "authentik Self-signed Certificate"
+        # Device code belongs here -- it is how a human gets a token to hand
+        # `docker login` -- but the operator refuses it: `grant_types` in
+        # adapters-outbound/src/authentik_http/providers.rs maps six literals
+        # and errors on the two URN ones, so the CR stops at AuthentikApiError
+        # with no status.authentikId, which is what leaves angos-access on
+        # ApplicationRefNotFound. authentik-client already has the variant, so
+        # the fix is one match arm plus an operator bump in main/values.yaml.
         grantTypes:
           - "authorization_code"
-          - "urn:ietf:params:oauth:grant-type:device_code"
           - "refresh_token"
         propertyMappings:
           - "authentik default OAuth Mapping: OpenID 'email'"
