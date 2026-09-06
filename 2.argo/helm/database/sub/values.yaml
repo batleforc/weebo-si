@@ -6,6 +6,7 @@ s3:
   enabled: true
   namespace: s3
   mainInstance:
+    image: rustfs/rustfs:1.0.0-rc.5
     dns: s3-main.weebo.poc
     creds:
       - name: batlehub

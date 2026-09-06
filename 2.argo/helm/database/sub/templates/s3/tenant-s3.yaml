@@ -7,9 +7,11 @@ metadata:
   namespace: {{ .Values.s3.namespace }}
   labels:
     environment: prod
+  annotations:
+    operator.rustfs.com/runtime-default-image-ack: {{ .Values.s3.mainInstance.image }}
 spec:
   # Container image (optional - uses operator default if not specified)
-  image: rustfs/rustfs:1.0.0-rc.5
+  image: {{ .Values.s3.mainInstance.image }}
 
   credsSecret:
     name: main-cred
