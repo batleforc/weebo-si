@@ -23,7 +23,7 @@ spec:
             - containerPort: 8000
           env:
             - name: RUST_LOG
-            value: info
+              value: info
           {{- if .Values.angos.caTrust.enabled }}
             - name: SSL_CERT_FILE
               value: {{ printf "%s/%s" .Values.angos.caTrust.mountPath .Values.angos.caTrust.bundleKey | quote }}
