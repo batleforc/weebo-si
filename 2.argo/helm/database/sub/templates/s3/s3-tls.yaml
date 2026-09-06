@@ -11,6 +11,7 @@ spec:
   commonName: {{ .Values.s3.mainInstance.dns}}
   dnsNames:
     - {{ .Values.s3.mainInstance.dns}}
+    - main-hl.{{ $.Values.s3.namespace }}.svc.cluster.local
   issuerRef:
     name: vault-issuer
     kind: ClusterIssuer
