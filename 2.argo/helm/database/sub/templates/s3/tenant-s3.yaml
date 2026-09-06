@@ -55,7 +55,7 @@ spec:
     mountPath: /var/run/rustfs/tls
     rotationStrategy: Rollout
     enableInternodeHttps: true
-    requireSanMatch: true
+    requireSanMatch: false
     caTrust:
       source: CertificateSecretCa
       trustSystemCa: false
