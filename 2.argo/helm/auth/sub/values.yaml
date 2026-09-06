@@ -455,9 +455,7 @@ applications:
           - "authentik default OAuth Mapping: OpenID 'offline_access'"
         allowedRedirectUris:
           - matchingMode: strict
-            url: "https://s3-main.weebo.poc/rustfs/admin/v3/oidc/callback"
-          - matchingMode: strict
-            url: "https://s3-main.weebo.poc/rustfs/admin/v3/oidc/callback/authentik"
+            url: "https://s3-main.weebo.poc/rustfs/admin/v3/oidc/callback/default"
 
   # vault is the hardest one to migrate and should go last or never: beyond the
   # provider itself, vault.tf derives a whole OIDC auth backend, two roles and
