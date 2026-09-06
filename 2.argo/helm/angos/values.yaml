@@ -4,3 +4,8 @@ branch: ""
 
 angos:
   enabled: true
+  s3Url: "https://s3-main.weebo.poc"
+  image:
+    registry: ghcr.io/project-angos/angos
+    tag: 1.7.1
+  dns: registry.pkg.weebo.poc

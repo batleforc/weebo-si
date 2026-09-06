@@ -1,0 +1,57 @@
+{{- if .Values.angos.enabled -}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: angos
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: angos
+  template:
+    metadata:
+      labels:
+        app: angos
+    spec:
+      containers:
+        - name: angos
+          image: {{ .Values.angos.image.registry }}:{{ .Values.angos.image.tag }}
+          args: ["-c", "/config/config.toml", "-c", "/secrets/secrets.toml", "server"]
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: config-secret
+              mountPath: /secrets
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+      volumes:
+        - name: config
+          secret:
+            secretName: registry-config
+        - name: config-secret
+          secret:
+            secretName: registry-credentials
+{{- end -}}
