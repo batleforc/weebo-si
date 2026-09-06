@@ -50,29 +50,6 @@ spec:
     - name: {{ .name }}
     {{ end }}
 
-  tls:
-    mode: certManager
-    mountPath: /var/run/rustfs/tls
-    rotationStrategy: Rollout
-    enableInternodeHttps: true
-    requireSanMatch: false
-    caTrust:
-      source: CertificateSecretCa
-      trustSystemCa: false
-      trustLeafCertificateAsCa: false
-    certificates:
-      - name: public
-        default: true
-        hosts:
-          - {{ .Values.s3.mainInstance.dns}}
-        certManager:
-          manageCertificate: false
-          secretName: s3-main-tls
-          certificateName: s3-main-tls
-          includeGeneratedDnsNames: false
-          usages:
-            - server auth
-
   securityContext:
     runAsNonRoot: true
     seccompProfile:
