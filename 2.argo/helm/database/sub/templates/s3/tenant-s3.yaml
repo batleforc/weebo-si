@@ -62,6 +62,7 @@ spec:
       trustLeafCertificateAsCa: false
     certificates:
       - name: public
+        default: true
         hosts:
           - {{ .Values.s3.mainInstance.dns}}
         certManager:
