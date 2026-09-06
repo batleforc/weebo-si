@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   shards: 1
-  replicas: 1
+  replicas: 0
   persistence:
     size: 5Gi
     storageClassName: longhorn
