@@ -36,5 +36,13 @@ s3Operator:
       host: s3-ope.weebo.poc
       secretName: s3-ope-weebo-poc
 
+valkeyOperator:
+  enabled: true
+  repoUrl: https://valkey.io/valkey-helm
+  chart: valkey-operator
+  namespace: valkey-operator
+  # renovate: datasource=helm depName=valkey-operator registryUrl=https://valkey.io/valkey-helm
+  version: v0.6.0
+
 subApp:
   enabled: true

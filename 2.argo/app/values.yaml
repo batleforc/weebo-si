@@ -53,6 +53,7 @@ project:
       - https://charts.longhorn.io
       - https://charts.goauthentik.io
       - oci://ghcr.io/batleforc/charts/weebo-authentik
+      - https://valkey.io/valkey-helmà
     includeBaseRepo: true
     dest:
       - server: "https://kubernetes.default.svc"
@@ -106,6 +107,8 @@ project:
         kind: "AuthentikScopeMapping"
       - group: "longhorn.io"
         kind: "RecurringJob"
+      - group: "valkey.io"
+        kind: "ValkeyCluster"
   - name: monitoring
     sourceRepo:
       - https://open-telemetry.github.io/opentelemetry-helm-charts

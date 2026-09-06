@@ -1,0 +1,27 @@
+{{- if .Values.valkeyOperator.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: valkey-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true
+  source:
+    chart: {{ .Values.valkeyOperator.chart }}
+    repoURL: {{ .Values.valkeyOperator.repoURL }}
+    targetRevision: {{ .Values.valkeyOperator.version }}
+    helm:
+      releaseName: {{ .Values.valkeyOperator.namespace }}
+  destination:
+    namespace: {{ .Release.Namespace }}
+    name: "in-cluster"
+{{- end }}
