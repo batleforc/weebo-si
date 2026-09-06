@@ -8,6 +8,7 @@ s3:
   mainInstance:
     image: rustfs/rustfs:1.0.0-rc.5
     dns: s3-main.weebo.poc
+    oidc: true
     creds:
       - name: batlehub
       - name: angos
