@@ -38,7 +38,7 @@ s3Operator:
 
 valkeyOperator:
   enabled: true
-  repoUrl: https://valkey.io/valkey-helm
+  repoURL: https://valkey.io/valkey-helm
   chart: valkey-operator
   namespace: valkey
   # renovate: datasource=helm depName=valkey-operator registryUrl=https://valkey.io/valkey-helm
