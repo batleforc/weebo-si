@@ -33,6 +33,10 @@ database:
   enabled: true
   project: database
 
+angos:
+  enabled: true
+  project: dev-base
+
 repo: ""
 branch: ""
 

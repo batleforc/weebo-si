@@ -1,2 +1,6 @@
+repo: ""
+project: ""
+branch: ""
+
 angos:
   enabled: true
