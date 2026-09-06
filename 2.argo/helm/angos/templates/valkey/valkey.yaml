@@ -7,6 +7,8 @@ metadata:
 spec:
   shards: 1
   replicas: 0
+  podDisruptionBudget:
+    mode: Disabled
   persistence:
     size: 5Gi
     storageClassName: longhorn
