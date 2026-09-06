@@ -10,10 +10,10 @@
   - [ ] Point d'accés externe au cluster Kubernetes pour l'authentification OIDC
   - [ ] Rejeter toutes requêtes qui ne viendrais pas de ProxyAuthK8S ?
   - [ ] Expo : kube.weebo.poc
-- [ ] Setup RustFS
-  - [ ] [OIDC](https://docs.rustfs.com/fr/security-compliance/oidc/keycloak)
-  - [ ] Terraform ? New Operator ?
-  - [ ] Expo : s3.weebo.poc
+- [x] Setup RustFS
+  - [x] [OIDC](https://docs.rustfs.com/fr/security-compliance/oidc/keycloak)
+  - [x] Operator officielle
+  - [x] Expo : s3.weebo.poc
 - [ ] [Angos](https://angos.dev/docs/how-to/deploy-kubernetes#prerequisites)
   - [ ] [OIDC user](https://angos.dev/docs/how-to/configure-generic-oidc) : Allow users to login with OIDC
   - [ ] [OIDC Kube](https://angos.dev/docs/how-to/configure-kubernetes-oidc) : Allow Kubernetes to authenticate with OIDC (e.g. Create a Dockerconfigjson from service account that can be used to pull images from a private registry)
