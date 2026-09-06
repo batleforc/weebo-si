@@ -50,7 +50,7 @@ spec:
       volumes:
         - name: config
           secret:
-            secretName: registry-config
+            secretName: angos-config
         - name: config-secret
           secret:
             secretName: registry-credentials
