@@ -467,25 +467,45 @@ applications:
           - matchingMode: regex
             url: "https://.*.cde.weebo.poc/*."
 
-  harbor:
+  # Replaces the `harbor` entry: harbor is gone from this repo and angos
+  # (2.argo/helm/angos) is the registry now. Renaming the key is not a rename
+  # in Authentik -- the CR name is the map key, so ArgoCD deletes the `harbor`
+  # AuthentikApplication and its finalizer takes the harbor application AND its
+  # oauth2 provider with it, then this one is created fresh. There is nothing
+  # to import and no `status.authentikId` to patch, unlike every other entry in
+  # this file; the file header's adoption rule does not apply here.
+  #
+  # angos is first a resource server: it validates bearer JWTs through
+  # `[auth.oidc.<name>]` in its config.toml, and `docker login
+  # registry.pkg.weebo.poc` reaches it with the token as Basic auth, provider
+  # name as username -- its documented Docker-compat path. That leg needs no
+  # redirect URI at all, only a matching issuer and audience.
+  angos:
     enabled: false
-    slug: harbor
-    name: harbor
-    metaIcon: "https://maxleriche.net/public/media/application/harbor.png"
+    slug: angos
+    name: angos
+    # Not uploaded yet -- every other icon here is a real file under
+    # /public/media/application/ and this one 404s until one is put there.
+    metaIcon: "https://maxleriche.net/public/media/application/angos.png"
     accessGroup: weebo_moderator
-    # No in-repo consumer reads AUTHENTIK_URL from this path (harbor's OIDC is
-    # configured in its own UI), so harbor is the safe first oauth2 migration.
+    # AUTHENTIK_URL from this path is the issuer angos pins in `[auth.oidc]`,
+    # so `slug: angos` above is what the registry ends up trusting. The
+    # client_secret written alongside it goes unused: angos only verifies
+    # signatures, it never presents credentials to Authentik.
     secretTargets:
       - backend: vault
-        path: registry/auth
+        path: angos/auth
     provider:
       kind: oauth2
       oauth2:
-        clientId: harbor
+        clientId: angos
         authorizationFlow: default-provider-authorization-implicit-consent
         invalidationFlow: default-provider-invalidation-flow
         signingKey: "authentik Self-signed Certificate"
-        grantTypes: ["authorization_code"]
+        grantTypes:
+          - "authorization_code"
+          - "urn:ietf:params:oauth:grant-type:device_code"
+          - "refresh_token"
         propertyMappings:
           - "authentik default OAuth Mapping: OpenID 'email'"
           - "authentik default OAuth Mapping: OpenID 'profile'"
@@ -493,7 +513,7 @@ applications:
           - "authentik default OAuth Mapping: OpenID 'offline_access'"
         allowedRedirectUris:
           - matchingMode: strict
-            url: "https://registry.weebo.poc/c/oidc/callback"
+            url: "https://registry.pkg.weebo.poc/"
 
   s3:
     enabled: false
@@ -501,7 +521,8 @@ applications:
     name: s3
     metaIcon: "https://maxleriche.net/public/media/application/s3.png"
     accessGroup: weebo_moderator
-    # Same as harbor: nothing in this repo reads AUTHENTIK_URL from mv/s3/auth.
+    # Unlike angos above, nothing in this repo reads AUTHENTIK_URL from
+    # mv/s3/auth.
     secretTargets:
       - backend: vault
         path: s3/auth

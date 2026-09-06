@@ -75,7 +75,10 @@ authentik:
         enabled: true
       clickstack: # phase 3 -- proxy, verify forward_single after sync
         enabled: true
-      harbor: # phase 4 -- oauth2. Order: harbor, s3, argo, che, vault
+      # Was `harbor`, which no longer exists. Flipping this on DELETES the
+      # harbor application and provider in Authentik before creating angos --
+      # see the entry in sub/values.yaml.
+      angos: # phase 4 -- oauth2. Order: angos, s3, argo, che, vault
         enabled: true
       s3:
         enabled: true
