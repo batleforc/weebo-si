@@ -69,6 +69,30 @@ spec:
     - name: RUST_LOG
       value: "debug"
     {{ if .Values.s3.mainInstance.oidc }}
+    # Path to a PEM bundle RustFS adds to the roots its OIDC client trusts --
+    # the value is a file name, not the PEM itself. authentik is served with an
+    # internal-CA certificate, and without this the discovery fetch fails
+    # silently: the provider is simply never registered, and
+    # /rustfs/admin/v3/oidc/providers answers `[]`.
+    #
+    # The Tenant CRD has no volumes field, so the file is put there by the
+    # add-rustfs-tenant-ca Kyverno policy in 2.argo/helm/hook/sub. Keep this
+    # path and that policy's mountPath/bundleKey in step -- a path pointing at
+    # nothing is only a warning in the TLS enrichment loop, so it fails the same
+    # quiet way the missing CA did.
+    - name: RUSTFS_EXTRA_CA_CERT
+      value: {{ .Values.s3.mainInstance.caBundlePath | quote }}
+    # RustFS blocks any outbound request whose name resolves to a private
+    # address, which is every name in this cluster. Without this the discovery
+    # call never reaches authentik and never gets far enough to care about the
+    # CA above:
+    #
+    #   outbound DNS resolution for 'auth.weebo.poc' returned no allowed
+    #   addresses; add https://auth.weebo.poc to RUSTFS_OUTBOUND_ALLOW_ORIGINS
+    #
+    # Origin only -- a value carrying the path is not matched.
+    - name: RUSTFS_OUTBOUND_ALLOW_ORIGINS
+      value: {{ .Values.s3.mainInstance.oidcOrigin | quote }}
     - name: RUSTFS_BROWSER_REDIRECT_URL
       value: "https://{{ .Values.s3.mainInstance.dns}}"
     - name: RUSTFS_IDENTITY_OPENID_ENABLE

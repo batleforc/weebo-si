@@ -47,3 +47,21 @@ defaultLimits:
     # also scales with volume count and size, so any number chosen today expires
     # quietly. Left unbounded as the lesser risk, not as an oversight.
     - "longhorn"
+
+# Feeds templates/mount-cert-rustfs.yaml. The RustFS Tenant CRD cannot declare a
+# volume, so the CA bundle its OIDC client needs is mounted by a Kyverno
+# mutation instead.
+rustfsCaTrust:
+  enabled: true
+  # Where the tenant runs. Matched together with the operator's own
+  # app.kubernetes.io/managed-by label, so nothing else in the namespace is
+  # touched.
+  namespace: s3
+  # The trust-manager Bundle target: public roots plus the internal CA, present
+  # in every namespace.
+  bundleSecret: weebo.poc
+  bundleKey: main-ca.crt
+  # Must match RUSTFS_EXTRA_CA_CERT on the Tenant, which is set in
+  # 2.argo/helm/database/sub/templates/s3/tenant-s3.yaml. The file lands at
+  # <mountPath>/<bundleKey>.
+  mountPath: /etc/rustfs/ca

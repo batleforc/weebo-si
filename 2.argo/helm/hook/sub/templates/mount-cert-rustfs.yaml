@@ -1,0 +1,91 @@
+{{- if .Values.rustfsCaTrust.enabled -}}
+# Mounts the cluster CA bundle into the RustFS tenant pods.
+#
+# RustFS has to verify authentik's certificate when it fetches the OpenID
+# discovery document, and that certificate is signed by the internal CA -- so
+# without the bundle the provider never registers, and
+# /rustfs/admin/v3/oidc/providers answers `[]` with no error anywhere.
+# `RUSTFS_EXTRA_CA_CERT` is what tells RustFS about it, and it takes a PATH to a
+# PEM file, not the PEM itself, so the bundle has to exist as a file in the
+# container. That env var is set on the Tenant, next to the other
+# RUSTFS_IDENTITY_OPENID_* ones; this policy is the half that puts the file
+# there.
+#
+# It exists as a Kyverno mutation because there is no way to ask for it in the
+# Tenant CRD:
+#   * v1alpha1 Tenant has no `volumes` / `volumeMounts` anywhere, at tenant or
+#     pool level -- `persistence` only builds the data PVCs;
+#   * `spec.tls.caTrust` does mount a CA, but the operator returns
+#     TlsPlan::disabled() unless `spec.tls.mode` is `external` or `certManager`,
+#     and turning that on flips the S3 API to HTTPS and demands a certificate
+#     covering main-hl.s3.svc.cluster.local -- a much larger change than
+#     trusting an issuer;
+#   * the operator copies no annotation from the Tenant onto its pod template,
+#     so the existing `inject-certs: enabled` policy cannot be triggered from
+#     the Tenant either.
+#
+# Pods, not the StatefulSet: the operator owns that object and would revert a
+# mutation on it at the next reconcile, restarting the tenant each time. The
+# StatefulSet controller compares its own revision hash, not the live pod, so a
+# pod-level mutation survives.
+#
+# The bundle is mounted beside the system store rather than over /etc/ssl/certs
+# (what the `inject-certs` policy does) because RustFS reads this file by name
+# and finds its default roots in webpki, not on disk -- so replacing the image's
+# trust store would buy nothing and hide what is going on.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-rustfs-tenant-ca
+  annotations:
+    policies.kyverno.io/title: Mount the cluster CA into RustFS tenants
+    policies.kyverno.io/category: TLS
+    policies.kyverno.io/subject: Pod,Volume
+    policies.kyverno.io/description: >-
+      RustFS tenant pods are built by the rustfs operator from a Tenant CR that
+      cannot declare volumes. This adds the trust-manager CA bundle as a file so
+      RUSTFS_EXTRA_CA_CERT has something to point at.
+spec:
+  background: false
+  rules:
+    - name: add-ca-bundle
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - {{ .Values.rustfsCaTrust.namespace | quote }}
+              # Both labels, not just managed-by: the operator's own Deployment
+              # and its console pod live in the same namespace, and they carry
+              # app.kubernetes.io/name=rustfs-operator with a container named
+              # `operator` / `console`. A strategic merge on a container name
+              # they do not have would ADD a container rather than patch one,
+              # so the selector has to exclude them rather than rely on the
+              # patch being a no-op.
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: rustfs
+                  app.kubernetes.io/managed-by: rustfs-operator
+      mutate:
+        patchStrategicMerge:
+          spec:
+            volumes:
+              - name: weebo-ca
+                secret:
+                  # Distributed to every namespace by the trust-manager Bundle
+                  # in the ingress chart, so it is already in s3 -- nothing has
+                  # to copy it here.
+                  secretName: {{ .Values.rustfsCaTrust.bundleSecret | quote }}
+                  items:
+                    - key: {{ .Values.rustfsCaTrust.bundleKey | quote }}
+                      path: {{ .Values.rustfsCaTrust.bundleKey | quote }}
+            containers:
+              # Merged by name into the container the operator builds; the
+              # sidecar-free tenant pod has this one only.
+              - name: rustfs
+                volumeMounts:
+                  - name: weebo-ca
+                    mountPath: {{ .Values.rustfsCaTrust.mountPath | quote }}
+                    readOnly: true
+{{- end -}}

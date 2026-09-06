@@ -9,6 +9,16 @@ s3:
     image: rustfs/rustfs:1.0.0-rc.5
     dns: s3-main.weebo.poc
     oidc: true
+    # Read by RUSTFS_EXTRA_CA_CERT. The file itself is mounted by the
+    # add-rustfs-tenant-ca Kyverno policy (2.argo/helm/hook/sub), whose
+    # mountPath + bundleKey have to add up to this.
+    caBundlePath: /etc/rustfs/ca/main-ca.crt
+    # Origin of the OIDC provider, no path, for RUSTFS_OUTBOUND_ALLOW_ORIGINS.
+    # RustFS refuses every outbound request that resolves to a private address
+    # unless its origin is listed here, so this is what lets the discovery call
+    # to authentik leave the pod at all. The full URL, with its path, stays in
+    # Vault and arrives as AUTHENTIK_URL.
+    oidcOrigin: https://auth.weebo.poc
     creds:
       - name: batlehub
       - name: angos
