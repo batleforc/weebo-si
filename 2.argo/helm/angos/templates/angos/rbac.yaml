@@ -39,4 +39,53 @@ subjects:
   - kind: ServiceAccount
     name: {{ .Values.angos.kubeOidc.serviceAccountName }}
     namespace: {{ .Release.Namespace }}
+{{- if .Values.angos.kubeOidc.credentialProvider.enabled }}
+---
+# Lets the kubelet mint a token with the `{{ .Values.angos.kubeOidc.audience }}` audience for the
+# service account of the pod it is about to start. Without it the plugin is
+# called, asks for that token, and the apiserver refuses:
+#   serviceaccounts "default" is forbidden: audience "angos" not found in pod
+#   spec volume, system:node:<node> is not authorized to request tokens for
+#   this audience
+#
+# `ServiceAccountNodeAudienceRestriction` (beta and on since 1.32) is what
+# refuses it: a node may only request audiences a pod declares in a projected
+# volume, OR audiences a role like this one names. The alternative is a
+# `serviceAccountToken` volume with this audience in every pod that pulls from
+# the registry, which puts the registry's name in workloads that have no other
+# reason to know it.
+#
+# The shape is unusual on purpose and comes from KEP-4412: the verb is
+# `request-serviceaccounts-token-audience`, and the RESOURCE is the audience
+# string itself, not a Kubernetes resource. Adding `resourceNames` would narrow
+# it to named service accounts; it is left off so any pod can pull, which is
+# already what the registry's own policy decides -- `[auth.oidc.kube]` grants
+# reads and nothing else.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: angos-image-pull-audience
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+rules:
+  - verbs: ["request-serviceaccounts-token-audience"]
+    apiGroups: [""]
+    resources: [{{ .Values.angos.kubeOidc.audience | quote }}]
+---
+# To every kubelet, which authenticates as `system:node:<name>` in this group.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: angos-image-pull-audience
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: angos-image-pull-audience
+subjects:
+  - kind: Group
+    name: system:nodes
+    apiGroup: rbac.authorization.k8s.io
+{{- end }}
 {{- end -}}

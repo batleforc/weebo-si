@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -17,6 +18,16 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/pulumi/pulumi-local/sdk/go/local"
+)
+
+// The registry this cluster serves, and the local file holding the CA bundle
+// that signs it. The bundle is written by `task vault:ca-bundle`, read straight
+// out of Vault's pki and pki_int mounts, and is gitignored: it is per-cluster
+// material, regenerated rather than committed. The path is relative to this
+// project's directory, which is where the pulumi task runs.
+const (
+	registryHost     = "registry.pkg.weebo.poc"
+	registryCABundle = "../.tmp/weebo-si-ca.pem"
 )
 
 func main() {
@@ -810,6 +821,12 @@ func main() {
 								"ip": serverNetwork.Routing.Ipv4.Ip,
 								"aliases": []string{
 									"dex.weebo.poc",
+									// The node resolves nothing under .weebo.poc: its
+									// nameservers are OVH and Google, and the name only
+									// exists inside the cluster. Without this the kubelet
+									// cannot pull from the registry at all: it fails on
+									// "no such host", long before any credential is used.
+									registryHost,
 								},
 							},
 						},
@@ -893,6 +910,40 @@ jwt:
 					},
 				}
 			}
+			// Trust for the one registry this cluster serves itself, and only if
+			// this cluster has already produced a PKI. The bundle is whatever
+			// `task vault:ca-bundle` last read out of Vault's own pki/pki_int
+			// mounts, so it belongs to THIS cluster and cannot be a leftover from
+			// the last one.
+			//
+			// Absent is the normal state of a fresh provision: Vault does not
+			// exist yet, the registry does not either, and the node comes up with
+			// no registry trust at all. Run the task and `pulumi up` again once the
+			// PKI is up. Pinning the certificates in this file instead would make
+			// reprovisioning carry a CA no live component signs with.
+			//
+			// Scoped to that host rather than appended to the node's CA bundle, so
+			// the internal PKI vouches for this name and for nothing else.
+			switch ca, readErr := os.ReadFile(registryCABundle); {
+			case readErr == nil:
+				conf["machine"].(map[string]interface{})["registries"] = map[string]interface{}{
+					"config": map[string]interface{}{
+						registryHost: map[string]interface{}{
+							"tls": map[string]interface{}{
+								"ca": base64.StdEncoding.EncodeToString(ca),
+							},
+						},
+					},
+				}
+			case os.IsNotExist(readErr):
+				ctx.Log.Warn(fmt.Sprintf(
+					"%s is missing, so the nodes get no TLS trust for %s: pulls from it "+
+						"will fail on an unknown authority. Run `task vault:ca-bundle` once "+
+						"the PKI exists, then apply again.", registryCABundle, registryHost), nil)
+			default:
+				return "", fmt.Errorf("failed to read %s: %w", registryCABundle, readErr)
+			}
+
 			swapJsonPatchConfig, err := json.Marshal(conf)
 			if err != nil {
 				return "", fmt.Errorf("failed to marshal JSON patch config: %w", err)
