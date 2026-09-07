@@ -35,7 +35,23 @@ angos:
   #                     service-account token
   #   group:<name>      an identity whose `groups` claim carries it, which only
   #                     the `weebo` provider emits
+  #   namespace:<ns>    any workload of one Kubernetes namespace
+  #   serviceaccount:<ns>:<name>
+  #                     one workload identity exactly
   #   anonymous         no identity at all, for a registry meant to be public
+  #
+  # The last two read the `sub` a projected token carries,
+  # `system:serviceaccount:<namespace>:<name>`, so they say who may pull far
+  # more precisely than `provider:kube`, which is every pod in the cluster:
+  #
+  #   prod-images:
+  #     access:
+  #       pull: ["namespace:prod", "serviceaccount:ci:builder"]
+  #       push: ["serviceaccount:ci:builder"]
+  #
+  # Verified that `namespace:prod` refuses a pod of `production` -- the match
+  # keeps the trailing colon -- and that `serviceaccount:ci:builder` refuses
+  # another account of the same namespace.
   #
   # The verbs are pull, browse (the UI's per-image views), push and delete. A
   # verb nobody is listed for is denied, and a repository with no `access` at

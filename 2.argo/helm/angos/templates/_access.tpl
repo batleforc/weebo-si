@@ -8,6 +8,19 @@ A subject is one of:
   provider:<name> any identity a given `[auth.oidc.<name>]` block validated
   group:<name>    an identity whose `groups` claim carries that group, which
                   only the browser/CLI provider emits
+  namespace:<ns>  any workload running in that Kubernetes namespace
+  serviceaccount:<ns>:<name>
+                  one workload identity exactly
+
+The last two read the `sub` of a projected service-account token, which the
+apiserver mints as `system:serviceaccount:<namespace>:<name>`. They pin the
+`kube` provider first, both because that claim means nothing elsewhere and
+because CEL's `&&` returns false rather than an error when one side is false --
+so a browser identity fails the provider test and never reaches the `sub`
+index, which would throw for a token that has no `sub`.
+
+The trailing colon in the namespace form is load-bearing: without it `prod`
+would also match `production`.
 
 Rendered rules are TOML literal strings (single quotes) so the CEL inside can
 use double quotes throughout and nothing has to be escaped. The guard on
@@ -22,8 +35,16 @@ true
 identity.oidc != null && identity.oidc.provider_name == "{{ trimPrefix "provider:" . }}"
 {{- else if hasPrefix "group:" . -}}
 identity.oidc != null && "groups" in identity.oidc.claims && "{{ trimPrefix "group:" . }}" in identity.oidc.claims["groups"]
+{{- else if hasPrefix "serviceaccount:" . -}}
+{{- $sa := splitList ":" (trimPrefix "serviceaccount:" .) -}}
+{{- if ne (len $sa) 2 -}}
+{{- fail (printf "angos: %q -- the service account form is serviceaccount:<namespace>:<name>" .) -}}
+{{- end -}}
+identity.oidc != null && identity.oidc.provider_name == "kube" && identity.oidc.claims["sub"] == "system:serviceaccount:{{ index $sa 0 }}:{{ index $sa 1 }}"
+{{- else if hasPrefix "namespace:" . -}}
+identity.oidc != null && identity.oidc.provider_name == "kube" && identity.oidc.claims["sub"].startsWith("system:serviceaccount:{{ trimPrefix "namespace:" . }}:")
 {{- else -}}
-{{- fail (printf "angos: unknown access subject %q -- expected anonymous, provider:<name> or group:<name>" .) -}}
+{{- fail (printf "angos: unknown access subject %q -- expected anonymous, provider:<name>, group:<name>, namespace:<ns> or serviceaccount:<ns>:<name>" .) -}}
 {{- end -}}
 {{- end -}}
 
