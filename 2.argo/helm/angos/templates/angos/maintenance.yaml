@@ -1,0 +1,114 @@
+{{- if and .Values.angos.enabled .Values.angos.maintenance.enabled -}}
+{{- range $command, $job := .Values.angos.maintenance.jobs }}
+{{- if $job.enabled }}
+---
+# `angos {{ $command }}`. See the `maintenance` block in values.yaml for what it
+# does and why the two are separate objects: the image is FROM scratch with the
+# binary as its entrypoint, so there is no shell to chain two commands in one
+# pod, and one CronJob per command keeps a failing one from blocking the other.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: angos-{{ $command }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: angos
+    app.kubernetes.io/component: maintenance
+spec:
+  schedule: {{ $job.schedule | quote }}
+  {{- with $.Values.angos.maintenance.timeZone }}
+  timeZone: {{ . | quote }}
+  {{- end }}
+  # A sweep that outruns its own schedule must not be joined by a second one:
+  # they would walk the same keys and race on the same repairs.
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      # Every run is safe to repeat -- a heavily damaged store may even need
+      # several to converge -- but a run that keeps failing is a real problem,
+      # not something to retry into the next schedule.
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: angos-{{ $command }}
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: {{ $command }}
+              image: {{ $.Values.angos.image.registry }}:{{ $.Values.angos.image.tag }}
+              # The SAME two files the server reads, in the same order. The
+              # storage credentials live in secrets.toml, so a job given only
+              # config.toml cannot reach the bucket at all -- and the doc is
+              # explicit that maintenance must run against the configuration
+              # the servers use, or it makes decisions about a store it only
+              # half understands.
+              args:
+                - "-c"
+                - "/config/config.toml"
+                - "-c"
+                - "/secrets/secrets.toml"
+                - {{ $command | quote }}
+                {{- range $job.args }}
+                - {{ . | quote }}
+                {{- end }}
+              env:
+                # Both commands report what they changed at info. At the
+                # default level a run that repaired half the store and one that
+                # did nothing look identical.
+                - name: RUST_LOG
+                  value: info
+                {{- if $.Values.angos.caTrust.enabled }}
+                - name: SSL_CERT_FILE
+                  value: {{ printf "%s/%s" $.Values.angos.caTrust.mountPath $.Values.angos.caTrust.bundleKey | quote }}
+                {{- end }}
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+                - name: config-secret
+                  mountPath: /secrets
+                  readOnly: true
+                {{- if $.Values.angos.caTrust.enabled }}
+                - name: weebo-ca
+                  mountPath: {{ $.Values.angos.caTrust.mountPath | quote }}
+                  readOnly: true
+                {{- end }}
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+          volumes:
+            - name: config
+              secret:
+                secretName: angos-config
+            - name: config-secret
+              secret:
+                secretName: registry-credentials
+            {{- if $.Values.angos.caTrust.enabled }}
+            - name: weebo-ca
+              configMap:
+                name: {{ $.Values.angos.caTrust.bundleConfigMap | quote }}
+                items:
+                  - key: {{ $.Values.angos.caTrust.bundleKey | quote }}
+                    path: {{ $.Values.angos.caTrust.bundleKey | quote }}
+            {{- end }}
+{{- end }}
+{{- end }}
+{{- end -}}

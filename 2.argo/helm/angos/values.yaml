@@ -56,6 +56,49 @@ angos:
     # only legitimate caller of this Service) to close that.
     trustedProxyCidrs: []
 
+  # Storage maintenance, as two CronJobs. Not optional in practice: a delete
+  # answers 202 and removes the RECORD, leaving the blob bytes in the bucket
+  # until a scrub sweep reclaims them. Without this the S3 bill only grows.
+  #
+  # Both commands are designed to run against a live server -- no shutdown, no
+  # read-only window. Scrub confirms an inconsistency on a re-read before
+  # repairing it and age-gates every reclaim behind `gc_grace_secs`, so a push
+  # in flight reads as live rather than as garbage.
+  maintenance:
+    enabled: true
+    # Kubernetes reads `schedule` as UTC unless a zone is named here (a tzdata
+    # name, "Europe/Paris"). Left empty because 03:00 UTC is already the quiet
+    # hour for this cluster, and a DST-shifting zone makes "did it run?" harder
+    # to answer than it is worth.
+    timeZone: ""
+    jobs:
+      # Structural: walks every key in both stores, repairs derivable state,
+      # reclaims orphan blobs, and quarantines what it does not recognise into
+      # `_lost_and_found/` rather than deleting it. Inspect that prefix after a
+      # version bump -- an upgrade is exactly when a key shape it has never
+      # seen shows up. `--delete-unknown` exists and is not set on purpose.
+      #
+      # Run it from the same angos version as the server, which the shared
+      # `image.tag` above guarantees.
+      scrub:
+        enabled: true
+        schedule: "0 3 * * *"
+        # e.g. ["--dry-run"] to see a run before trusting it, or
+        # ["--concurrency", "32"] once the store is large.
+        args: []
+      # Config and time: enforces retention policies, clears namespaces no
+      # `[repository]` owns any more, and reclaims upload-lifecycle leftovers
+      # older than its window (`-u`, default 1h -- raise it above the longest
+      # push you expect, since it is what shields an in-flight one).
+      #
+      # After scrub, not before, mirroring upstream: prune makes decisions
+      # about a store scrub has already made consistent, and the grace gate
+      # means bytes it frees are reclaimed by the next night's scrub anyway.
+      prune:
+        enabled: true
+        schedule: "30 3 * * *"
+        args: []
+
   # The internal CA, mounted beside the system store rather than over
   # /etc/ssl/certs the way the `inject-certs` Kyverno policy does: angos has to
   # reach s3-main.weebo.poc (signed by the internal CA) as well as
