@@ -15,7 +15,7 @@ metadata:
   name: {{ .Values.angos.kubeOidc.serviceAccountName }}
   namespace: {{ .Release.Namespace }}
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-wave: "-1"
 ---
 # `system:service-account-issuer-discovery` is a built-in ClusterRole and its
 # whole content is GET on four non-resource URLs: the two discovery paths and

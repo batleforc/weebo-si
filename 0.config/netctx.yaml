@@ -28,3 +28,5 @@ tools:
       - { title: Longhorn, url: "https://longhorn.weebo.poc/" }
       - { title: S3 Admin, url: "https://s3-main.weebo.poc/" }
       - { title: S3 Operator, url: "https://s3-ope.weebo.poc/" }
+      - { title: Angos, url: "https://registry.pkg.weebo.poc/" }
+      - { title: Angos Token, url: "https://registry.pkg.weebo.poc/me" }
