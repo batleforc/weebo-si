@@ -175,6 +175,10 @@ project:
         namespace: "angos"
       - server: https://kubernetes.default.svc
         namespace: "batlehub"
+      # The angos chart's one node-level object, kept out of `angos` so the
+      # Pod Security exception it needs covers nothing else.
+      - server: https://kubernetes.default.svc
+        namespace: "angos-node"
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"

@@ -123,6 +123,20 @@ angos:
     #   task t -- -n <node> list /var/lib/kubelet/credential-providers
     credentialProvider:
       enabled: true
+      # Its own namespace, and not by taste. Talos ships an AdmissionConfiguration
+      # that enforces the `baseline` Pod Security level cluster-wide, exempting
+      # only kube-system, and baseline forbids both hostPath volumes and a
+      # privileged container:
+      #   pods "..." is forbidden: violates PodSecurity "baseline:latest":
+      #   hostPath volumes (volume "host"), privileged (container "install" ...)
+      # A namespace label overrides that default, so the exception is written
+      # where it applies and covers one installer instead of the registry, the
+      # proxy and the maintenance jobs that share the `angos` namespace.
+      #
+      # `kubectl apply --dry-run=server` only reported the `restricted` WARNING
+      # here, never the `baseline` refusal, so a clean dry run says nothing
+      # about admission on this cluster.
+      namespace: angos-node
       # Pinned to the registry's own version: the plugin and the server speak
       # the same `[auth.oidc]` section names, and upstream calls this contrib
       # binary experimental, so drifting them apart buys nothing.
