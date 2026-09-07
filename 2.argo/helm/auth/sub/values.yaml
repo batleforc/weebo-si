@@ -590,6 +590,31 @@ applications:
           - "authorization_code"
           - "urn:ietf:params:oauth:grant-type:device_code"
           - "refresh_token"
+        # How long a `docker login` against the registry survives. The
+        # credential a client stores IS this ID token, replayed on every token
+        # exchange, so its validity is the whole answer to "why do I have to
+        # log in again". angos' own token service cannot extend it: what
+        # `GET /token` mints is accepted as a Bearer and refused as a Basic
+        # password, and `POST /token` answers 405, so there is no refresh grant
+        # a client could keep. Measured, not assumed.
+        #
+        # Twelve hours covers a working day and stays far under the 30-day
+        # refresh token behind the browser session, which is what makes
+        # reloading https://registry.pkg.weebo.poc/me/ cheap. The audience is
+        # `angos` alone, so a leaked one buys the registry and nothing else.
+        #
+        # Needs operator >= 0.14.0, the release that models this field, and it
+        # fails LOUDLY below that -- measured against the live 0.13.0 CRD:
+        #   strict decoding error: unknown field
+        #   "spec.provider.oauth2.accessTokenValidity"
+        # and the apply is refused, taking the rest of this chart's objects
+        # with it. So the operator Application has to reach 0.14.0 before this
+        # one applies. ArgoCD gets there on its own by retrying, but a sub-app
+        # sync that fails on this is not a mystery, it is the ordering.
+        #
+        # Omitting the field entirely leaves whatever the provider has, which
+        # is how every other application here behaves.
+        accessTokenValidity: "hours=12"
         propertyMappings:
           # scopeMappings.weeboEmail above, by its AUTHENTIK name, INSTEAD of
           # "authentik default OAuth Mapping: OpenID 'email'". Same `email`

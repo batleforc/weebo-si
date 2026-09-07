@@ -51,6 +51,11 @@ data:
       button:disabled { opacity:.5; cursor:default; }
       .meta { color:var(--mut); font-size:.85rem; }
       .warn { color:var(--warn); }
+      .tabs { display:flex; gap:.35rem; margin-bottom:.75rem; }
+      .tabs button { background:transparent; color:var(--mut); border-color:transparent;
+                     padding:.35rem .8rem; }
+      .tabs button[aria-selected="true"] { background:var(--bg); color:var(--fg);
+                                           border-color:var(--line); }
       details { margin-top:.75rem; }
       summary { cursor:pointer; color:var(--mut); font-size:.85rem; }
       details pre { margin-top:.6rem; word-break:break-all; white-space:pre-wrap; }
@@ -71,7 +76,12 @@ data:
 
       <section id="login-card">
         <h2>Log in</h2>
+        <div class="tabs" role="tablist">
+          <button role="tab" data-client="docker" aria-selected="true">Docker</button>
+          <button role="tab" data-client="podman" aria-selected="false">Podman</button>
+        </div>
         <pre id="login-cmd">loading…</pre>
+        <p class="meta" id="store"></p>
         <div class="row">
           <button id="copy-login" disabled>Copy command</button>
           <span class="meta" id="who"></span>
@@ -96,6 +106,15 @@ data:
       // The Basic username angos matches against its `[auth.oidc.<name>]`
       // providers. Anything else and the token is never even looked at.
       const PROVIDER = "weebo";
+      // Same command shape, different credential store -- which is the part
+      // worth telling apart when a login "does not stick".
+      const CLIENTS = {
+        docker: { store: "Stored in ~/.docker/config.json." },
+        podman: { store: "Stored in ${XDG_RUNTIME_DIR}/containers/auth.json, " +
+                         "so it is gone on reboot." },
+      };
+      let current = "docker";
+      let currentToken = null;
 
       const $ = (id) => document.getElementById(id);
 
@@ -112,6 +131,24 @@ data:
           const part = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
           return JSON.parse(atob(part.padEnd(part.length + (4 - part.length % 4) % 4, "=")));
         } catch (e) { return {}; }
+      }
+
+      function command(client, token) {
+        return 'echo "' + token + '" | ' + client + " login " + HOST +
+               " -u " + PROVIDER + " --password-stdin";
+      }
+
+      function selectClient(client) {
+        current = client;
+        try { localStorage.setItem("angos-client", client); } catch (e) {}
+        for (const tab of document.querySelectorAll('[role="tab"]')) {
+          tab.setAttribute("aria-selected", String(tab.dataset.client === client));
+        }
+        $("store").textContent = CLIENTS[client].store;
+        if (!currentToken) return;
+        const text = command(client, currentToken);
+        $("login-cmd").textContent = text;
+        copier($("copy-login"), text);
       }
 
       function copier(button, text) {
@@ -147,12 +184,10 @@ data:
         const token = header.replace(/^Bearer\s+/i, "");
         const parsed = claims(token);
 
-        const command = 'echo "' + token + '" | docker login ' + HOST +
-                        " -u " + PROVIDER + " --password-stdin";
-        $("login-cmd").textContent = command;
+        currentToken = token;
         $("raw").textContent = token;
-        copier($("copy-login"), command);
         copier($("copy-raw"), token);
+        selectClient(current);
         if (parsed.email) $("who").textContent = "as " + parsed.email;
 
         if (!parsed.exp) { $("expiry").textContent = "unknown"; return; }
@@ -167,6 +202,15 @@ data:
         tick();
         setInterval(tick, 1000);
       }
+
+      for (const tab of document.querySelectorAll('[role="tab"]')) {
+        tab.onclick = () => selectClient(tab.dataset.client);
+      }
+      try {
+        const remembered = localStorage.getItem("angos-client");
+        if (remembered && CLIENTS[remembered]) current = remembered;
+      } catch (e) {}
+      selectClient(current);
 
       main();
     </script>

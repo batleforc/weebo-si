@@ -29,6 +29,15 @@ spec:
 {{- range .grantTypes }}
         - {{ . | quote }}
 {{- end }}
+{{- with .accessTokenValidity }}
+      # Emitted only when the app sets it: an absent field tells the operator
+      # to leave the provider's validity as it stands, which is what keeps an
+      # app that never mentions it out of this argument entirely. Needs
+      # operator >= 0.14.0 -- against an older CRD the apply is REFUSED with
+      # `strict decoding error: unknown field`, and the whole sync goes with
+      # it, so the operator Application leads this one.
+      accessTokenValidity: {{ . | quote }}
+{{- end }}
       propertyMappings:
 {{- range .propertyMappings }}
         - {{ . | quote }}
