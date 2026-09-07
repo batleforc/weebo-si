@@ -42,6 +42,12 @@ spec:
             # Filtering on the email domain here would be a second, weaker copy
             # of that rule.
             - "--email-domain=*"
+            # The `email` scope resolves to scopeMappings.weeboEmail, not to
+            # Authentik's built-in mapping: the built-in returns a hardcoded
+            # `"email_verified": False` and oauth2-proxy fails the login on it
+            # with `email in id_token isn't verified`. If that message ever
+            # comes back, the provider lost the "weebo email" mapping -- fix it
+            # there, not with --insecure-oidc-allow-unverified-email here.
             # `offline_access` is what makes Authentik issue a refresh token,
             # without which the session dies with the first ID token.
             - --scope=openid email profile offline_access

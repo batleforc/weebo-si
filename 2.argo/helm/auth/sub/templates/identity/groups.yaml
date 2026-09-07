@@ -10,6 +10,15 @@ metadata:
 spec:
   name: {{ .name | quote }}
   isSuperuser: {{ .isSuperuser }}
+{{- with .attributes }}
+  # Merged into every member's identity by `User.group_attributes()`, which
+  # walks `groups.with_ancestors()` -- so an attribute set on a root group
+  # reaches members of its children too. Groups are merged in ALPHABETICAL
+  # order and the user's own attributes last, so the same key set on two
+  # groups is decided by name, not by depth.
+  attributes:
+{{ toYaml . | indent 4 }}
+{{- end }}
 {{- with .parentRef }}
   # group.tf models this as `parents = [...]`; every group here has exactly one
   # parent, so the CRD's single parentRef is a faithful mapping.

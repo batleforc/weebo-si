@@ -150,6 +150,26 @@ identity:
       - crName: weebo-user
         name: weebo_user
         isSuperuser: false
+        # Read by scopeMappings.weeboEmail, which is what the `email` scope
+        # resolves to for angos. Authentik has no email-verification state of
+        # its own -- its built-in mapping returns a hardcoded False -- so this
+        # attribute IS the state, and it says what is actually true here: these
+        # addresses come from `identity.users` below, in git, applied by the
+        # operator. Nobody self-serves one.
+        #
+        # On the root group on purpose. `with_ancestors()` makes it reach
+        # weebo_moderator and weebo_admin members as well, so it is one place
+        # rather than three -- while anyone who ends up in NO weebo group, an
+        # enrolled or external account for instance, is not verified and cannot
+        # get into the angos UI. That is the point of putting it here instead
+        # of hardcoding True in the expression.
+        #
+        # QUOTED: the CRD types `attributes` as map[string]string, so an
+        # unquoted `true` is a boolean the API server rejects outright. The
+        # mapping's expression is what turns this back into the JSON boolean
+        # the claim has to be.
+        attributes:
+          email_verified: "true"
       - crName: weebo-moderator
         name: weebo_moderator
         isSuperuser: false
@@ -289,6 +309,56 @@ scopeMappings:
           if ak_is_group_member(request.user, name=group_name):
               return {"rustfs_policy": [policy]}
       return {"rustfs_policy": []}
+
+  # Replaces authentik's built-in "OpenID 'email'" mapping, for the angos
+  # application only.
+  #
+  # That built-in returns a HARDCODED `"email_verified": False` -- a literal in
+  # the expression, not a state any flow, stage or user attribute can flip,
+  # since Authentik tracks no email-verification state at all. Every consumer
+  # that trusts the claim therefore sees every address as unverified, and
+  # oauth2-proxy refuses the login outright with
+  #   email in id_token (max@weebo.poc) isn't verified
+  # which is what broke the angos UI on its first login.
+  #
+  # So the state has to live somewhere, and it lives on the identity rather
+  # than in this code: `identity.groups` carries `email_verified` and this only
+  # reports it. A group whose members were not vetted simply does not set it,
+  # and its members get a false claim and no UI access -- which a `True`
+  # hardcoded here could never express.
+  #
+  # `group_attributes()` merges the attributes of every group the user is in
+  # AND their ancestors, then the user's own attributes last. So a per-user
+  # override wins over the group, in both directions, the day the operator's
+  # AuthentikUser CRD grows an `attributes` field -- it has none today, which
+  # is the only reason this is set on a group and not on a user.
+  #
+  # Called with no argument on purpose: passing `request` would also merge the
+  # BRAND's attributes, making a brand-level key able to grant verification.
+  #
+  # The coercion is not decoration: the CRD types group attributes as
+  # map[string]string, so the value arrives as `"true"`, while the claim has to
+  # be a JSON boolean or oauth2-proxy fails to parse the ID token. Comparing
+  # `str(...).lower()` also accepts a real boolean, which is what an attribute
+  # set by hand in the Authentik UI would be.
+  #
+  # `scopeName: email` matches the built-in, so the client asks for the same
+  # `email` scope and nothing downstream changes. It REPLACES the built-in on
+  # the angos provider rather than joining it: two mappings on one scope both
+  # writing `email_verified` would leave the winner to evaluation order.
+  weeboEmail:
+    enabled: true
+    crName: weebo-email
+    name: "weebo email"
+    scopeName: email
+    description: "Email address, verified per the identity's attributes"
+    expression: |
+      attributes = request.user.group_attributes()
+      verified = attributes.get("email_verified", "false")
+      return {
+          "email": request.user.email,
+          "email_verified": str(verified).lower() == "true",
+      }
 
 # ---------------------------------------------------------------------------
 # Phases 3 and 4 -- applications and their access policies.
@@ -521,7 +591,14 @@ applications:
           - "urn:ietf:params:oauth:grant-type:device_code"
           - "refresh_token"
         propertyMappings:
-          - "authentik default OAuth Mapping: OpenID 'email'"
+          # scopeMappings.weeboEmail above, by its AUTHENTIK name, INSTEAD of
+          # "authentik default OAuth Mapping: OpenID 'email'". Same `email`
+          # scope, same claim, but `email_verified: True` -- without which
+          # oauth2-proxy rejects every login. Resolved by name against the API,
+          # so the AuthentikScopeMapping has to exist first (sync-wave 3) or
+          # this application's reconcile fails with
+          #   property mapping "weebo email" not found
+          - "weebo email"
           - "authentik default OAuth Mapping: OpenID 'profile'"
           - "authentik default OAuth Mapping: OpenID 'openid'"
           - "authentik default OAuth Mapping: OpenID 'offline_access'"
