@@ -13,6 +13,49 @@ angos:
   # is built from `dns` above. The ceiling angos enforces is 86400.
   tokenService:
     ttlSecs: 3600
+  # Browser SSO for the web UI. angos itself has no login flow of any kind: the
+  # UI is a Svelte app with no auth code, and the server only ever reads an
+  # `Authorization` header or a client certificate -- never a cookie. With
+  # `[auth.token_service]` configured every 401 answers with a Bearer
+  # challenge, which no browser knows how to satisfy either, so a browser
+  # identity has to be handed to angos by something in front of it.
+  #
+  # oauth2-proxy is that something: it runs the authorization-code flow against
+  # the SAME Authentik application `docker login` uses, then forwards the ID
+  # token as `Authorization: Bearer`. angos validates it with the
+  # `[auth.oidc.weebo]` block it already has -- same issuer, same audience --
+  # so the browser and the CLI end up as the same kind of identity and one set
+  # of CEL rules covers both.
+  #
+  # It is NOT on the path of `docker` or the kubelet: the IngressRoute only
+  # sends a request through it when the request carries this proxy's session
+  # cookie, or when it is not an API path at all. See templates/angos/ingress.yaml.
+  oauth2Proxy:
+    enabled: true
+    image:
+      registry: quay.io/oauth2-proxy/oauth2-proxy
+      # renovate: datasource=docker depName=quay.io/oauth2-proxy/oauth2-proxy
+      tag: v7.15.4
+    # The cookie the ingress splits on, so a rename here is a rename in the
+    # IngressRoute rule -- they are read from the same value on purpose.
+    # oauth2-proxy chunks oversized cookies into `<name>_0`, `<name>_1`, which
+    # is why the rule matches a prefix rather than an exact name.
+    cookieName: _angos_ui
+    # Must stay UNDER the Authentik provider's access-token validity (5 minutes
+    # by default): past it the ID token in the session is expired and angos
+    # rejects it. Below that, oauth2-proxy silently swaps in a fresh one using
+    # the refresh token, which is what `offline_access` in the provider's
+    # property mappings is for.
+    cookieRefresh: 3m
+    # How long a browser session survives without re-authenticating at all.
+    cookieExpire: 8h
+    # CIDRs allowed to set X-Forwarded-*. Empty means every caller is believed,
+    # which oauth2-proxy warns about at startup: the redirect URL is pinned
+    # above so a spoofed header cannot move the login anywhere, but it can lie
+    # about the client IP in the logs. Set it to the pod CIDR (Traefik is the
+    # only legitimate caller of this Service) to close that.
+    trustedProxyCidrs: []
+
   # The internal CA, mounted beside the system store rather than over
   # /etc/ssl/certs the way the `inject-certs` Kyverno policy does: angos has to
   # reach s3-main.weebo.poc (signed by the internal CA) as well as

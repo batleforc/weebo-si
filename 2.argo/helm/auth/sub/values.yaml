@@ -489,9 +489,11 @@ applications:
     metaIcon: "https://maxleriche.net/public/media/application/angos.png"
     accessGroup: weebo_moderator
     # AUTHENTIK_URL from this path is the issuer angos pins in `[auth.oidc]`,
-    # so `slug: angos` above is what the registry ends up trusting. The
-    # client_secret written alongside it goes unused: angos only verifies
-    # signatures, it never presents credentials to Authentik.
+    # so `slug: angos` above is what the registry ends up trusting. angos never
+    # presents credentials to Authentik -- it only verifies signatures -- so
+    # the client_secret written alongside it is not for the registry: it is
+    # read by the oauth2-proxy in front of the web UI, which is a confidential
+    # client of this same application.
     secretTargets:
       - backend: vault
         path: angos/auth
@@ -503,8 +505,10 @@ applications:
         invalidationFlow: default-provider-invalidation-flow
         signingKey: "authentik Self-signed Certificate"
         # Device code is how a human gets a token to hand `docker login`:
-        # angos has no callback of its own, so there is no browser leg, and it
-        # reads the token as Basic auth with the provider name as username.
+        # angos has no callback of its own, so the CLI leg has no browser step,
+        # and it reads the token as Basic auth with the provider name as
+        # username. (The web UI does get a browser leg, but angos does not run
+        # it -- see `allowedRedirectUris` below.)
         # Needs the device-code-flow above (phase 2b) AND operator >= 0.13.0 --
         # up to 0.12.0 `grant_types` mapped six short literals and errored on
         # the URN, which left the CR without a status.authentikId and
@@ -521,9 +525,17 @@ applications:
           - "authentik default OAuth Mapping: OpenID 'profile'"
           - "authentik default OAuth Mapping: OpenID 'openid'"
           - "authentik default OAuth Mapping: OpenID 'offline_access'"
+        # The browser leg the comment above says angos does not have: it is
+        # oauth2-proxy that runs it, in front of the UI, on the registry's own
+        # host (2.argo/helm/angos). It is an ordinary confidential client of
+        # THIS application, which is what keeps the UI and `docker login` on
+        # one issuer and one audience -- and what makes the client_secret
+        # written to mv/angos/auth no longer unused.
         allowedRedirectUris:
           - matchingMode: strict
             url: "https://registry.pkg.weebo.poc/"
+          - matchingMode: strict
+            url: "https://registry.pkg.weebo.poc/oauth2/callback"
 
   s3:
     enabled: false

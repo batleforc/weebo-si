@@ -1,0 +1,145 @@
+{{- if and .Values.angos.enabled .Values.angos.oauth2Proxy.enabled -}}
+---
+# The browser half of angos' authentication. See the `oauth2Proxy` comment in
+# values.yaml for why it exists at all, and templates/angos/ingress.yaml for
+# what is routed through it.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: angos-oauth2-proxy
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: angos-oauth2-proxy
+  template:
+    metadata:
+      labels:
+        app: angos-oauth2-proxy
+    spec:
+      containers:
+        - name: oauth2-proxy
+          image: {{ .Values.angos.oauth2Proxy.image.registry }}:{{ .Values.angos.oauth2Proxy.image.tag }}
+          args:
+            - --http-address=0.0.0.0:4180
+            - --provider=oidc
+            # Straight to Authentik instead of showing oauth2-proxy's own
+            # "Sign in with..." page, which would be a second click in front of
+            # a flow that already has implicit consent.
+            - --skip-provider-button=true
+            - --code-challenge-method=S256
+            # Trust the X-Forwarded-* Traefik sets; without it oauth2-proxy
+            # reads the pod IP as the client and builds http:// URLs.
+            - --reverse-proxy=true
+            {{- range .Values.angos.oauth2Proxy.trustedProxyCidrs }}
+            - --trusted-proxy-ip={{ . }}
+            {{- end }}
+            - --upstream=http://angos.{{ .Release.Namespace }}.svc:8000
+            - --redirect-url=https://{{ .Values.angos.dns }}/oauth2/callback
+            # Authorization is Authentik's job: the application binds
+            # `accessGroup`, and anyone it lets through is a legitimate viewer.
+            # Filtering on the email domain here would be a second, weaker copy
+            # of that rule.
+            - "--email-domain=*"
+            # `offline_access` is what makes Authentik issue a refresh token,
+            # without which the session dies with the first ID token.
+            - --scope=openid email profile offline_access
+            # The whole point of the process: hand angos the ID token as a
+            # bearer. Its `aud` is the `angos` client id and its `iss` is the
+            # application issuer, which is exactly what `[auth.oidc.weebo]`
+            # pins, so no angos-side auth config is needed for the browser.
+            - --pass-authorization-header=true
+            # angos reads none of these and they would only widen what a
+            # request carries.
+            - --pass-basic-auth=false
+            - --pass-user-headers=false
+            # An expired session on a UI fetch answers 401 rather than a
+            # redirect to Authentik: the SPA cannot follow a cross-origin login
+            # page from `fetch`, and a redirect there surfaces as an opaque
+            # network error instead of "your session ended". The UI documents
+            # are not matched, so a page load still redirects and logs the user
+            # back in.
+            - --api-route=^/v2/
+            - --cookie-name={{ .Values.angos.oauth2Proxy.cookieName }}
+            - --cookie-secure=true
+            # `lax` still sends the cookie on the top-level navigation back
+            # from Authentik, which `strict` would drop, leaving the browser in
+            # a login loop.
+            - --cookie-samesite=lax
+            - --cookie-refresh={{ .Values.angos.oauth2Proxy.cookieRefresh }}
+            - --cookie-expire={{ .Values.angos.oauth2Proxy.cookieExpire }}
+            - --silence-ping-logging=true
+          envFrom:
+            # OAUTH2_PROXY_CLIENT_ID / _CLIENT_SECRET / _OIDC_ISSUER_URL /
+            # _COOKIE_SECRET, from Vault.
+            - secretRef:
+                name: angos-oauth2-proxy
+          ports:
+            - containerPort: 4180
+          env:
+            {{- if .Values.angos.caTrust.enabled }}
+            # Authentik is served with an internal-CA certificate and this is a
+            # Go binary, so the bundle replaces the root store wholesale. It
+            # carries the public roots too, which is what keeps the JWKS fetch
+            # working whatever the issuer turns out to be.
+            - name: SSL_CERT_FILE
+              value: {{ printf "%s/%s" .Values.angos.caTrust.mountPath .Values.angos.caTrust.bundleKey | quote }}
+            {{- end }}
+          {{- if .Values.angos.caTrust.enabled }}
+          volumeMounts:
+            - name: weebo-ca
+              mountPath: {{ .Values.angos.caTrust.mountPath | quote }}
+              readOnly: true
+          {{- end }}
+          startupProbe:
+            httpGet:
+              path: /ping
+              port: 4180
+            periodSeconds: 1
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 4180
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "20m"
+            limits:
+              memory: "128Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
+      {{- if .Values.angos.caTrust.enabled }}
+      volumes:
+        - name: weebo-ca
+          configMap:
+            name: {{ .Values.angos.caTrust.bundleConfigMap | quote }}
+            items:
+              - key: {{ .Values.angos.caTrust.bundleKey | quote }}
+                path: {{ .Values.angos.caTrust.bundleKey | quote }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: angos-oauth2-proxy
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: angos-oauth2-proxy
+  ports:
+    - port: 4180
+      targetPort: 4180
+{{- end -}}
