@@ -16,9 +16,9 @@
   - [x] Expo : s3-main.weebo.poc
 - [ ] [Angos](https://angos.dev/docs/how-to/deploy-kubernetes#prerequisites)
   - [x] [OIDC user](https://angos.dev/docs/how-to/configure-generic-oidc) : Allow users to login with OIDC
-  - [ ] [OIDC Kube](https://angos.dev/docs/how-to/configure-kubernetes-oidc) : Allow Kubernetes to authenticate with OIDC (e.g. Create a Dockerconfigjson from service account that can be used to pull images from a private registry)
+  - [x] [OIDC Kube](https://angos.dev/docs/how-to/configure-kubernetes-oidc) : Allow Kubernetes to authenticate with OIDC (e.g. Create a Dockerconfigjson from service account that can be used to pull images from a private registry)
     - [x] Cote angos : `[auth.oidc.kube]` sur l'issuer du cluster, ServiceAccount dedie + ClusterRoleBinding pour lire la JWKS, et une policy en lecture seule pour ce provider. Un pod qui presente son propre jeton projete (audience `angos`) est authentifie
-    - [ ] Cote noeud : le pull d'image est fait par le kubelet, avant que le pod existe. Il faut le credential provider d'angos installe sur le noeud (DaemonSet amont, binaire depuis les releases) ET la conf kubelet cote Talos (`machine.kubelet` dans 1.pulu-init/main.go). Redemarre le kubelet
+    - [x] Cote noeud : pull d'image sans imagePullSecret, verifie de bout en bout le 2026-09-08. Quatre pieces, dans cet ordre : DaemonSet installeur (namespace `angos-node`, PSA privileged), drapeaux kubelet Talos, entree DNS + CA du registre pour containerd, et le ClusterRole `angos-image-pull-audience` sans lequel l'apiserver refuse au noeud le jeton pour l'audience `angos`
   - [ ] [OIDC CI](https://angos.dev/docs/how-to/configure-github-actions-oidc) : Directly push images to angos registry from GitHub Actions using OIDC
   - [x] Page `/me/` : rend a l'utilisateur connecte son propre jeton OIDC et la commande `docker login` prete a coller, servie par oauth2-proxy depuis un ConfigMap
   - [x] UI web : SSO navigateur via oauth2-proxy, sur la meme application Authentik que le device grant. angos ne lit aucun cookie, l'IngressRoute ne route par le proxy que ce qui porte la session ou n'est pas une route d'API

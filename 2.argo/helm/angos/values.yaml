@@ -13,6 +13,74 @@ angos:
   # is built from `dns` above. The ceiling angos enforces is 86400.
   tokenService:
     ttlSecs: 3600
+  # Registries, declared here and nowhere else. Each key is the namespace
+  # PREFIX clients address, so `hub` serves `hub/library/alpine` and `weebo`
+  # serves `weebo/whatever`. Keys must not overlap -- `team` and `team/app`
+  # together are refused at startup, since one is a prefix of the other.
+  #
+  # `upstreams` present makes it a pull-through cache of those registries, and
+  # angos refuses pushes to it whatever the policy says. Absent makes it a
+  # local registry that accepts them. That is the entire difference; everything
+  # else below is identical between the two.
+  #
+  # An upstream needing credentials or mTLS cannot be declared here: those keys
+  # would land in config.toml, which is not a secret. They belong beside the S3
+  # credentials in templates/angos/secret.yaml, whose file the server merges
+  # over this one -- but a whole `[[upstream]]` entry has to live in ONE file,
+  # so such a repository moves there entirely.
+  #
+  # `access` is per verb, and each verb lists SUBJECTS:
+  #   provider:<name>   any identity `[auth.oidc.<name>]` validated -- `weebo`
+  #                     is the browser and the CLI, `kube` is a workload's
+  #                     service-account token
+  #   group:<name>      an identity whose `groups` claim carries it, which only
+  #                     the `weebo` provider emits
+  #   anonymous         no identity at all, for a registry meant to be public
+  #
+  # The verbs are pull, browse (the UI's per-image views), push and delete. A
+  # verb nobody is listed for is denied, and a repository with no `access` at
+  # all is unreachable: its policy grants nothing and the global one defers to
+  # it. That is deliberate -- adding a registry and forgetting who may use it
+  # fails closed rather than inheriting someone else's rights.
+  repositories:
+    hub:
+      upstreams:
+        - "https://registry-1.docker.io"
+      access:
+        pull: ["provider:weebo", "provider:kube"]
+        browse: ["provider:weebo"]
+    ghcr:
+      upstreams:
+        - "https://ghcr.io"
+      access:
+        pull: ["provider:weebo", "provider:kube"]
+        browse: ["provider:weebo"]
+    # The local one: what this cluster builds and pushes. Workloads pull it
+    # with their own service-account token, humans push it, and only an admin
+    # removes anything.
+    weebo:
+      access:
+        pull: ["provider:weebo", "provider:kube"]
+        browse: ["provider:weebo"]
+        push: ["provider:weebo"]
+        delete: ["group:weebo_admin"]
+
+  # The rules that belong to no registry, because the actions they cover carry
+  # no namespace and so never reach a repository policy. Same subject
+  # vocabulary as above.
+  #
+  # Everything else namespaced is decided by the repository covering it, and a
+  # namespace no repository declares is denied outright: the global policy ends
+  # on `has_repository_policy()`, which admits a request only when a repository
+  # will decide it. Pushing to an undeclared prefix therefore fails until that
+  # registry exists in the values above, which is the point -- registries are
+  # declared, not discovered.
+  policy:
+    # The registry-wide listings the web UI calls to render its home page.
+    browse: ["provider:weebo"]
+    # The job queue behind the UI's jobs view, including retrying and deleting.
+    jobs: ["group:weebo_admin"]
+
   # Browser SSO for the web UI. angos itself has no login flow of any kind: the
   # UI is a Svelte app with no auth code, and the server only ever reads an
   # `Authorization` header or a client certificate -- never a cookie. With
