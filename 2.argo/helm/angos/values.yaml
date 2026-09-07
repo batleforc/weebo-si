@@ -108,6 +108,42 @@ angos:
     # publishes the signing keys to anyone who can reach the apiserver, angos
     # gets an identity of its own and presents its own service-account token.
     serviceAccountName: angos
+    # The node half: the kubelet pulls before the pod filesystem exists, so it
+    # cannot read a projected token and asks a credential provider plugin
+    # instead. This installs that plugin; `machine.kubelet.extraArgs` in
+    # 1.pulu-init/main.go points the kubelet at it.
+    #
+    # ORDER MATTERS AND IS NOT RECOVERABLE BY RETRY. A kubelet given
+    # --image-credential-provider-config or --image-credential-provider-bin-dir
+    # refuses to START when the file or the binary they name is missing, so
+    # this DaemonSet has to have run on every node before that machine config
+    # is applied. On this cluster that node is also the control plane.
+    #
+    # Verify before applying the Pulumi change:
+    #   task t -- -n <node> list /var/lib/kubelet/credential-providers
+    credentialProvider:
+      enabled: true
+      # Pinned to the registry's own version: the plugin and the server speak
+      # the same `[auth.oidc]` section names, and upstream calls this contrib
+      # binary experimental, so drifting them apart buys nothing.
+      # renovate: datasource=github-releases depName=project-angos/angos
+      version: v1.7.1
+      # sha256 of the release asset, checked against the cosign bundle
+      # published beside it (keyless, identity project-angos/angos): the
+      # installer refuses to write a binary it cannot match.
+      sha256:
+        amd64: "abefdd7eadc16ebe54a9632efef095650d29e7008d36e8d27f7233b258e6732b"
+        # Left empty on purpose: every node here is amd64, and an unchecked
+        # arm64 install would be a download on trust. Fill it before adding an
+        # arm64 node, or that node's installer fails loudly.
+        arm64: ""
+      # Under /var, which Talos mounts `rw,nosuid,nodev` with NO `noexec` --
+      # verified on the node, and the reason this needs no Talos system
+      # extension. The blessed path, /usr/local/lib/kubelet/credentialproviders,
+      # is baked into the image and would mean building an installer image and
+      # rebooting.
+      binDir: /var/lib/kubelet/credential-providers
+      installerImage: "alpine:3.22"
 
   # Storage maintenance, as two CronJobs. Not optional in practice: a delete
   # answers 202 and removes the RECORD, leaving the blob bytes in the bucket

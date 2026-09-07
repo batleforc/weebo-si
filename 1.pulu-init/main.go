@@ -321,6 +321,27 @@ func main() {
 					"kubelet": map[string]interface{}{
 						"extraArgs": map[string]interface{}{
 							"rotate-server-certificates": true,
+							// Lets the kubelet pull from registry.pkg.weebo.poc with
+							// the service-account token of the pod it is starting,
+							// instead of an imagePullSecret shared by everything.
+							// The plugin these two name is installed by the
+							// angos-credential-provider-installer DaemonSet
+							// (2.argo/helm/angos).
+							//
+							// BOTH PATHS MUST ALREADY EXIST ON EVERY NODE. A kubelet
+							// whose config file or plugin binary is missing does not
+							// degrade, it refuses to start -- and here that node is
+							// also the control plane. Check before applying:
+							//   task t -- -n <node> list /var/lib/kubelet/credential-providers
+							//
+							// Not `machine.kubelet.credentialProviderConfig`, which
+							// would write the config for us but pins the bin dir to
+							// /usr/local/lib/kubelet/credentialproviders, a path only
+							// a Talos system extension can fill. /var carries no
+							// noexec here, so the plugin runs from the kubelet's own
+							// directory and no custom image or reboot is involved.
+							"image-credential-provider-config":  "/var/lib/kubelet/credential-providers/config.yaml",
+							"image-credential-provider-bin-dir": "/var/lib/kubelet/credential-providers",
 						},
 						"extraMounts": []map[string]interface{}{
 							{
