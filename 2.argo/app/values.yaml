@@ -180,3 +180,14 @@ project:
         kind: "Namespace"
       - group: "valkey.io"
         kind: "ValkeyCluster"
+      # angos binds its own ServiceAccount to the built-in
+      # `system:service-account-issuer-discovery` ClusterRole, which is how it
+      # reads the cluster's JWKS to validate the service-account tokens
+      # workloads present to it. Without this entry ArgoCD refuses the object
+      # with "ClusterRoleBinding is not permitted in project dev-base".
+      #
+      # ClusterRole is deliberately NOT whitelisted alongside it: this project
+      # may bind an existing role, never define a new one, which keeps the
+      # blast radius to roles someone else already reviewed.
+      - group: "rbac.authorization.k8s.io"
+        kind: "ClusterRoleBinding"

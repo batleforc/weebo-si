@@ -1,0 +1,42 @@
+{{- if and .Values.angos.enabled .Values.angos.kubeOidc.enabled -}}
+---
+# angos' own identity in the cluster, used for exactly one thing: reading the
+# apiserver's OIDC discovery and JWKS so it can verify the service-account
+# tokens workloads present to it.
+#
+# A dedicated account rather than `default`: the ClusterRoleBinding below names
+# a subject, and naming `default` would hand that role to every pod in this
+# namespace that forgets to set serviceAccountName. `default` also stays what
+# the ExternalSecret store authenticates to Vault as, which is a separate
+# concern that should not move because of this.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.angos.kubeOidc.serviceAccountName }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+---
+# `system:service-account-issuer-discovery` is a built-in ClusterRole and its
+# whole content is GET on four non-resource URLs: the two discovery paths and
+# the two JWKS paths. It grants no access to any object.
+#
+# It is needed because both answer 401 to an anonymous caller on this cluster
+# (measured, not assumed). The alternative the upstream doc warns about is
+# binding it to system:unauthenticated, which publishes the cluster's signing
+# keys and issuer metadata to everyone who can reach the apiserver.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: angos-issuer-discovery
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:service-account-issuer-discovery
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.angos.kubeOidc.serviceAccountName }}
+    namespace: {{ .Release.Namespace }}
+{{- end -}}

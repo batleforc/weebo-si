@@ -41,20 +41,73 @@ angos:
     # oauth2-proxy chunks oversized cookies into `<name>_0`, `<name>_1`, which
     # is why the rule matches a prefix rather than an exact name.
     cookieName: _angos_ui
-    # Must stay UNDER the Authentik provider's access-token validity (5 minutes
-    # by default): past it the ID token in the session is expired and angos
+    # Must stay UNDER the Authentik provider's access-token validity, which is
+    # `hours=1` on this instance (read off the API, not the documented
+    # default): past it the ID token in the session is expired and angos
     # rejects it. Below that, oauth2-proxy silently swaps in a fresh one using
     # the refresh token, which is what `offline_access` in the provider's
-    # property mappings is for.
-    cookieRefresh: 3m
+    # property mappings is for. Half the validity leaves room for a refresh
+    # that fails once.
+    cookieRefresh: 30m
     # How long a browser session survives without re-authenticating at all.
     cookieExpire: 8h
+    # A page that hands the logged-in user their own ID token, so a `docker
+    # login` needs neither the Vault client secret `task angos:token` reads nor
+    # a device-code round trip. Served by oauth2-proxy itself from a ConfigMap
+    # (`--upstream=file://`), so it costs no deployment and no image.
+    #
+    # It works because `--set-authorization-header` makes /oauth2/auth answer
+    # with `Authorization: Bearer <id_token>`, which same-origin JavaScript can
+    # read. That flag also echoes the header on every proxied response, so the
+    # token is readable by any script running on this origin. That is not a new
+    # exposure -- a page whose purpose is to hand the token to JavaScript has
+    # already accepted it -- but it is the reason this is a flag you can turn
+    # off rather than something always on.
+    tokenPage:
+      enabled: true
+      # Trailing slash required: oauth2-proxy maps a file upstream onto a path
+      # PREFIX. `/token` (no slash) is angos' own token endpoint, hence a name
+      # that cannot be mistaken for it.
+      path: /me/
+
     # CIDRs allowed to set X-Forwarded-*. Empty means every caller is believed,
     # which oauth2-proxy warns about at startup: the redirect URL is pinned
     # above so a spoofed header cannot move the login anywhere, but it can lie
     # about the client IP in the logs. Set it to the pod CIDR (Traefik is the
     # only legitimate caller of this Service) to close that.
     trustedProxyCidrs: []
+
+  # Lets a workload authenticate with the projected service-account token the
+  # cluster already mints for it, instead of a static imagePullSecret that
+  # never expires and lives in git or Vault.
+  #
+  # A pod calling angos itself (ORAS, a CI job, anything reading its own token
+  # off disk) works with only what is below. An image PULL does not: the
+  # kubelet pulls before the pod filesystem exists, so it needs a credential
+  # provider plugin installed on every node and named in the kubelet config.
+  # On Talos that is a machine-config change, not something this repo can make.
+  kubeOidc:
+    enabled: true
+    # The `iss` of a projected token on THIS cluster, read off
+    # /.well-known/openid-configuration -- and NOT the
+    # "https://kubernetes.default.svc" the upstream doc shows, which is only
+    # right for a cluster whose --service-account-issuer says so. A mismatch
+    # here is silent: tokens simply never validate.
+    #
+    # It is the apiserver's advertised address, which is also the single
+    # endpoint behind the in-cluster `kubernetes` Service, so angos reaches it
+    # over the same path a pod always uses. Its certificate verifies against
+    # the cluster CA below.
+    issuer: "https://37.187.255.5:6443"
+    # What a workload must ask for in `serviceAccountToken.audience`, and what
+    # angos requires: a token minted for the apiserver itself is rejected.
+    audience: angos
+    # Reading the cluster's JWKS takes the system:service-account-issuer-discovery
+    # role -- both discovery endpoints answer 401 to an anonymous caller here,
+    # measured. Rather than granting that role to system:unauthenticated, which
+    # publishes the signing keys to anyone who can reach the apiserver, angos
+    # gets an identity of its own and presents its own service-account token.
+    serviceAccountName: angos
 
   # Storage maintenance, as two CronJobs. Not optional in practice: a delete
   # answers 202 and removes the RECORD, leaving the blob bytes in the bucket

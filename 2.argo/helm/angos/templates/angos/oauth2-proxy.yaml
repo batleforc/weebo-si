@@ -32,6 +32,18 @@ spec:
             # Trust the X-Forwarded-* Traefik sets; without it oauth2-proxy
             # reads the pod IP as the client and builds http:// URLs.
             - --reverse-proxy=true
+            {{- if .Values.angos.oauth2Proxy.tokenPage.enabled }}
+            # The token page, served straight from the ConfigMap. Declared
+            # BEFORE the catch-all upstream: oauth2-proxy matches the longest
+            # path first, but keeping the order readable keeps it obvious which
+            # one is the exception.
+            - --upstream=file:///page/#{{ .Values.angos.oauth2Proxy.tokenPage.path }}
+            # Makes /oauth2/auth answer with `Authorization: Bearer <id_token>`,
+            # which is how the page gets the token. It also echoes that header
+            # on proxied responses, so any script on this origin can read the
+            # token -- see the tokenPage comment in values.yaml.
+            - --set-authorization-header=true
+            {{- end }}
             {{- range .Values.angos.oauth2Proxy.trustedProxyCidrs }}
             - --trusted-proxy-ip={{ . }}
             {{- end }}
@@ -92,12 +104,17 @@ spec:
             - name: SSL_CERT_FILE
               value: {{ printf "%s/%s" .Values.angos.caTrust.mountPath .Values.angos.caTrust.bundleKey | quote }}
             {{- end }}
-          {{- if .Values.angos.caTrust.enabled }}
           volumeMounts:
+            {{- if .Values.angos.oauth2Proxy.tokenPage.enabled }}
+            - name: token-page
+              mountPath: /page
+              readOnly: true
+            {{- end }}
+            {{- if .Values.angos.caTrust.enabled }}
             - name: weebo-ca
               mountPath: {{ .Values.angos.caTrust.mountPath | quote }}
               readOnly: true
-          {{- end }}
+            {{- end }}
           startupProbe:
             httpGet:
               path: /ping
@@ -127,8 +144,13 @@ spec:
             capabilities:
               drop:
                 - ALL
-      {{- if .Values.angos.caTrust.enabled }}
       volumes:
+        {{- if .Values.angos.oauth2Proxy.tokenPage.enabled }}
+        - name: token-page
+          configMap:
+            name: angos-token-page
+        {{- end }}
+        {{- if .Values.angos.caTrust.enabled }}
         - name: weebo-ca
           configMap:
             name: {{ .Values.angos.caTrust.bundleConfigMap | quote }}

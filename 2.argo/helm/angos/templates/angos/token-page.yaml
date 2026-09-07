@@ -1,0 +1,175 @@
+{{- if and .Values.angos.enabled .Values.angos.oauth2Proxy.enabled .Values.angos.oauth2Proxy.tokenPage.enabled -}}
+---
+# Served by oauth2-proxy itself through `--upstream=file://`, so this page has
+# no deployment, no image and no route of its own -- and it is behind the same
+# session as the rest of the host, which is the whole point: it hands the
+# visitor THEIR token, and only ever theirs.
+#
+# The token arrives from /oauth2/auth, whose response carries
+# `Authorization: Bearer <id_token>` because of `--set-authorization-header`.
+# Same-origin JavaScript can read any response header, so nothing else is
+# needed to get it into the page.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: angos-token-page
+  namespace: {{ .Release.Namespace }}
+data:
+  index.html: |
+    <!doctype html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <title>Registry credentials</title>
+    <style>
+      :root { color-scheme: light dark; --bg:#fbfbfa; --fg:#1a1a19; --mut:#6b6b68;
+              --card:#fff; --line:#e4e4e1; --accent:#7a5cff; --warn:#8a5a00; }
+      @media (prefers-color-scheme: dark) {
+        :root { --bg:#16161a; --fg:#eceaf0; --mut:#9a99a4; --card:#1e1e24;
+                --line:#2e2e36; --accent:#a58bff; --warn:#e0b060; }
+      }
+      * { box-sizing: border-box; }
+      body { margin:0; padding:2.5rem 1.25rem; background:var(--bg); color:var(--fg);
+             font:15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+      main { max-width: 46rem; margin: 0 auto; }
+      h1 { font-size:1.5rem; margin:0 0 .25rem; letter-spacing:-.01em; }
+      p.sub { color:var(--mut); margin:0 0 2rem; }
+      section { background:var(--card); border:1px solid var(--line); border-radius:12px;
+                padding:1.25rem; margin-bottom:1rem; }
+      h2 { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em;
+           color:var(--mut); margin:0 0 .75rem; font-weight:600; }
+      pre { margin:0; padding:.85rem 1rem; background:var(--bg); border:1px solid var(--line);
+            border-radius:8px; overflow-x:auto; font:13px/1.5 ui-monospace, SFMono-Regular,
+            Menlo, monospace; }
+      .row { display:flex; gap:.6rem; align-items:center; margin-top:.75rem; flex-wrap:wrap; }
+      button { font:inherit; font-size:.9rem; padding:.45rem .9rem; border-radius:8px;
+               border:1px solid var(--line); background:var(--accent); color:#fff;
+               cursor:pointer; }
+      button.ghost { background:transparent; color:var(--fg); }
+      button:disabled { opacity:.5; cursor:default; }
+      .meta { color:var(--mut); font-size:.85rem; }
+      .warn { color:var(--warn); }
+      details { margin-top:.75rem; }
+      summary { cursor:pointer; color:var(--mut); font-size:.85rem; }
+      details pre { margin-top:.6rem; word-break:break-all; white-space:pre-wrap; }
+      #error { display:none; border-color:var(--warn); }
+    </style>
+    </head>
+    <body>
+    <main>
+      <h1>Registry credentials</h1>
+      <p class="sub">A short-lived token for <code>{{ .Values.angos.dns }}</code>, issued to
+      you by the session you are already signed in with.</p>
+
+      <section id="error">
+        <h2>Not signed in</h2>
+        <p id="error-text" class="meta"></p>
+        <div class="row"><button onclick="location.reload()">Reload</button></div>
+      </section>
+
+      <section id="login-card">
+        <h2>Log in</h2>
+        <pre id="login-cmd">loading…</pre>
+        <div class="row">
+          <button id="copy-login" disabled>Copy command</button>
+          <span class="meta" id="who"></span>
+        </div>
+        <details>
+          <summary>Show the raw token</summary>
+          <pre id="raw">loading…</pre>
+          <div class="row"><button class="ghost" id="copy-raw" disabled>Copy token</button></div>
+        </details>
+      </section>
+
+      <section>
+        <h2>Expiry</h2>
+        <p class="meta" id="expiry">loading…</p>
+        <p class="meta">Reload this page for a fresh one. A push already under way keeps
+        going: the registry swaps this token for one of its own that outlives it.</p>
+      </section>
+    </main>
+
+    <script>
+      const HOST = {{ .Values.angos.dns | quote }};
+      // The Basic username angos matches against its `[auth.oidc.<name>]`
+      // providers. Anything else and the token is never even looked at.
+      const PROVIDER = "weebo";
+
+      const $ = (id) => document.getElementById(id);
+
+      function fail(message) {
+        $("error-text").textContent = message;
+        $("error").style.display = "block";
+        $("login-cmd").textContent = "—";
+        $("raw").textContent = "—";
+        $("expiry").textContent = "—";
+      }
+
+      function claims(token) {
+        try {
+          const part = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+          return JSON.parse(atob(part.padEnd(part.length + (4 - part.length % 4) % 4, "=")));
+        } catch (e) { return {}; }
+      }
+
+      function copier(button, text) {
+        button.disabled = false;
+        button.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(text);
+            const had = button.textContent;
+            button.textContent = "Copied";
+            setTimeout(() => { button.textContent = had; }, 1200);
+          } catch (e) {
+            fail("Copying needs clipboard permission. Select the text instead.");
+          }
+        };
+      }
+
+      async function main() {
+        let response;
+        try {
+          response = await fetch("/oauth2/auth", { credentials: "same-origin" });
+        } catch (e) {
+          return fail("Could not reach the authentication endpoint: " + e.message);
+        }
+        if (!response.ok) {
+          return fail("Your session is not valid any more (HTTP " + response.status +
+                      "). Reload to sign in again.");
+        }
+        const header = response.headers.get("Authorization");
+        if (!header) {
+          return fail("The session is valid but carries no token. " +
+                      "oauth2-proxy needs --set-authorization-header for this page.");
+        }
+        const token = header.replace(/^Bearer\s+/i, "");
+        const parsed = claims(token);
+
+        const command = 'echo "' + token + '" | docker login ' + HOST +
+                        " -u " + PROVIDER + " --password-stdin";
+        $("login-cmd").textContent = command;
+        $("raw").textContent = token;
+        copier($("copy-login"), command);
+        copier($("copy-raw"), token);
+        if (parsed.email) $("who").textContent = "as " + parsed.email;
+
+        if (!parsed.exp) { $("expiry").textContent = "unknown"; return; }
+        const at = new Date(parsed.exp * 1000);
+        const tick = () => {
+          const left = Math.round((at - Date.now()) / 1000);
+          $("expiry").innerHTML = left <= 0
+            ? '<span class="warn">Expired. Reload the page.</span>'
+            : "Valid for another " + Math.floor(left / 60) + " min " + (left % 60) +
+              " s, until " + at.toLocaleTimeString() + ".";
+        };
+        tick();
+        setInterval(tick, 1000);
+      }
+
+      main();
+    </script>
+    </body>
+    </html>
+{{- end -}}

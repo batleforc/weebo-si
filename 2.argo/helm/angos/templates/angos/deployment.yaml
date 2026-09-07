@@ -15,6 +15,12 @@ spec:
       labels:
         app: angos
     spec:
+      {{- if .Values.angos.kubeOidc.enabled }}
+      # Its own identity, and the reason the pod's service-account token is
+      # worth anything: the ClusterRoleBinding in rbac.yaml names THIS account,
+      # and `[auth.oidc.kube]` reads the token this mounts.
+      serviceAccountName: {{ .Values.angos.kubeOidc.serviceAccountName }}
+      {{- end }}
       containers:
         - name: angos
           image: {{ .Values.angos.image.registry }}:{{ .Values.angos.image.tag }}
