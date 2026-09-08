@@ -56,3 +56,5 @@ networkPolicy:
     - vault-infra
     # Traefik terminates vault.weebo.poc and proxies to the openbao Service.
     - traefik
+    # Dex auth
+    - dex

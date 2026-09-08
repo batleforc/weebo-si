@@ -20,15 +20,78 @@ import (
 	"github.com/pulumi/pulumi-local/sdk/go/local"
 )
 
-// The registry this cluster serves, and the local file holding the CA bundle
-// that signs it. The bundle is written by `task vault:ca-bundle`, read straight
-// out of Vault's pki and pki_int mounts, and is gitignored: it is per-cluster
-// material, regenerated rather than committed. The path is relative to this
-// project's directory, which is where the pulumi task runs.
+// The two in-cluster hosts a node has to reach over TLS -- the registry it
+// pulls images from, and the OIDC issuer the apiserver validates tokens
+// against -- and the local file holding the CA bundle that signs both. The
+// bundle is written by `task vault:ca-bundle`, read straight out of Vault's
+// pki and pki_int mounts, and is gitignored: it is per-cluster material,
+// regenerated rather than committed. The path is relative to this project's
+// directory, which is where the pulumi task runs.
 const (
-	registryHost     = "registry.pkg.weebo.poc"
-	registryCABundle = "../.tmp/weebo-si-ca.pem"
+	registryHost    = "registry.pkg.weebo.poc"
+	authHost        = "dex.weebo.poc"
+	clusterCABundle = "../.tmp/weebo-si-ca.pem"
 )
+
+// The apiserver's structured authentication config, for the issuer URL, the
+// client ID it accepts as an audience, and the CA that signs the issuer.
+//
+// Built as an object and handed to the YAML marshaller rather than printed
+// into a text template: certificateAuthority carries a whole PEM bundle, and
+// in a template that PEM has to be escaped by hand into a double-quoted scalar
+// -- correct only as long as newlines are the sole character that scalar
+// treats specially, and silently corrupt otherwise. The marshaller picks a
+// scalar style that fits whatever it is given.
+func authenticationConfig(issuerURL, clientID, caPEM string) (string, error) {
+	doc, err := yaml.Marshal(map[string]interface{}{
+		"apiVersion": "apiserver.config.k8s.io/v1beta1",
+		"kind":       "AuthenticationConfiguration",
+		"jwt": []map[string]interface{}{
+			{
+				"issuer": map[string]interface{}{
+					"url":                  issuerURL,
+					"audiences":            []string{clientID},
+					"audienceMatchPolicy":  "MatchAny",
+					"certificateAuthority": caPEM,
+				},
+				"claimValidationRules": []map[string]interface{}{
+					{
+						"expression": "claims.email_verified == true",
+						"message":    "email must be verified",
+					},
+				},
+				"claimMappings": map[string]interface{}{
+					// The prefix keeps every OIDC identity in its own namespace, so
+					// no token can name a subject an in-cluster binding already uses.
+					"username": map[string]interface{}{
+						"expression": `"labsso:" + claims.email`,
+					},
+					"groups": map[string]interface{}{
+						"claim":  "groups",
+						"prefix": "labsso:",
+					},
+					"uid": map[string]interface{}{
+						"expression": "claims.sub",
+					},
+				},
+				"userValidationRules": []map[string]interface{}{
+					{
+						"expression": "!user.username.startsWith('system:')",
+						"message":    "username cannot used reserved system: prefix",
+					},
+					{
+						"expression": "user.groups.all(group, !group.startsWith('system:'))",
+						"message":    "groups cannot used reserved system: prefix",
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal the apiserver authentication config: %w", err)
+	}
+	return string(doc), nil
+}
 
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
@@ -820,7 +883,7 @@ func main() {
 							{
 								"ip": serverNetwork.Routing.Ipv4.Ip,
 								"aliases": []string{
-									"dex.weebo.poc",
+									authHost,
 									// The node resolves nothing under .weebo.poc: its
 									// nameservers are OVH and Google, and the name only
 									// exists inside the cluster. Without this the kubelet
@@ -852,96 +915,118 @@ func main() {
 					},
 				},
 			}
+			// The Weebo PKI, if this cluster has already produced one. The bundle
+			// is whatever `task vault:ca-bundle` last read out of Vault's own
+			// pki/pki_int mounts, so it belongs to THIS cluster and cannot be a
+			// leftover from the last one.
+			//
+			// Absent is the normal state of a fresh provision: Vault does not exist
+			// yet, neither does the registry, and the node comes up trusting
+			// neither. Run the task and `pulumi up` again once the PKI is up.
+			// Pinning the certificates in this file instead would make
+			// reprovisioning carry a CA no live component signs with.
+			var caPEM []byte
+			switch ca, readErr := os.ReadFile(clusterCABundle); {
+			case readErr == nil:
+				caPEM = ca
+			case os.IsNotExist(readErr):
+				ctx.Log.Warn(fmt.Sprintf(
+					"%s is missing, so the nodes get no TLS trust for %s or %s: pulls "+
+						"from the registry will fail on an unknown authority, and the "+
+						"apiserver falls back to OIDC_CERT for the issuer. Run `task "+
+						"vault:ca-bundle` once the PKI exists, then apply again.",
+					clusterCABundle, registryHost, authHost), nil)
+			default:
+				return "", fmt.Errorf("failed to read %s: %w", clusterCABundle, readErr)
+			}
+
+			// The OIDC authenticator, gated on the three inputs it needs. All
+			// three are produced by the cluster this very config provisions -- the
+			// issuer and its client are dex, the CA is Vault's PKI -- so on a
+			// reprovision none of them exists yet, and failing the apply here would
+			// block the very run that brings them up. Missing inputs drop the
+			// authenticator instead: the cluster comes up reachable through the
+			// Talos admin kubeconfig alone, and the apply that follows dex being up
+			// wires OIDC in. Nothing else in this config depends on this block.
 			if authEnabled {
 				oidcIssuerUrl := os.Getenv("OIDC_ISSUER_URL")
-				if oidcIssuerUrl == "" {
-					return "", fmt.Errorf("OIDC_ISSUER_URL environment variable is not set")
-				}
 				oidcClientID := os.Getenv("OIDC_CLIENT_ID")
-				if oidcClientID == "" {
-					return "", fmt.Errorf("OIDC_CLIENT_ID environment variable is not set")
+				// What the apiserver checks the issuer's serving certificate
+				// against. It has to be the CA, not the issuer's own leaf: a leaf
+				// pinned here stops matching the day cert-manager renews it, and
+				// from then on every token is rejected on an x509 error. This is
+				// also the only place that trust can go -- machine.registries below
+				// is containerd's, so a CA parked there is invisible to the
+				// apiserver.
+				//
+				// OIDC_CERT stays as the fallback, for an issuer signed by
+				// something other than the cluster PKI.
+				issuerCA := string(caPEM)
+				if issuerCA == "" {
+					issuerCA = os.Getenv("OIDC_CERT")
 				}
-				oidcCert := os.Getenv("OIDC_CERT")
-				if oidcCert == "" {
-					return "", fmt.Errorf("OIDC_CERT environment variable is not set")
+
+				var missing []string
+				for _, input := range []struct{ name, value string }{
+					{"OIDC_ISSUER_URL", oidcIssuerUrl},
+					{"OIDC_CLIENT_ID", oidcClientID},
+					{clusterCABundle + " (or OIDC_CERT)", issuerCA},
+				} {
+					if input.value == "" {
+						missing = append(missing, input.name)
+					}
 				}
-				// escape newlines so the PEM survives embedding in a double-quoted YAML scalar;
-				// literal line breaks there get folded into spaces by YAML, corrupting the PEM markers
-				oidcCert = strings.ReplaceAll(oidcCert, "\n", "\\n")
-				conf["cluster"].(map[string]interface{})["apiServer"].(map[string]interface{})["extraArgs"].(map[string]interface{})["authentication-config"] = "/var/lib/apiserver/authentication.yaml"
-				conf["cluster"].(map[string]interface{})["apiServer"].(map[string]interface{})["extraVolumes"] = []map[string]interface{}{
-					{
-						"hostPath":  "/var/lib/apiserver",
-						"mountPath": "/var/lib/apiserver",
-						"readonly":  true,
-					},
-				}
-				// Only indent with spaces, not tabs, because Kube YAML parser is strict about this.
-				conf["machine"].(map[string]interface{})["files"] = []map[string]interface{}{
-					{
-						"permissions": 0644,
-						"path":        "/var/lib/apiserver/authentication.yaml",
-						"op":          "create",
-						"content": fmt.Sprintf(`apiVersion: apiserver.config.k8s.io/v1beta1
-kind: AuthenticationConfiguration
-jwt:
-  - issuer:
-      url: '%s'
-      audiences:
-        - '%s'
-      audienceMatchPolicy: MatchAny
-      certificateAuthority: "%s"
-    claimValidationRules:
-      - expression: "claims.email_verified == true"
-        message: "email must be verified"
-    claimMappings:
-      username:
-        expression: '"labsso:" + claims.email'
-      groups:
-        claim: "groups"
-        prefix: "labsso:"
-      uid:
-        expression: "claims.sub"
-    userValidationRules:
-      - expression: "!user.username.startsWith('system:')"
-        message: "username cannot used reserved system: prefix"
-      - expression: "user.groups.all(group, !group.startsWith('system:'))"
-        message: "groups cannot used reserved system: prefix"`, oidcIssuerUrl, oidcClientID, oidcCert),
-					},
+
+				if len(missing) > 0 {
+					ctx.Log.Warn(fmt.Sprintf(
+						"authEnabled is set but these inputs are missing: %s. The cluster "+
+							"therefore gets no OIDC authenticator, and only the Talos admin "+
+							"kubeconfig reaches it. Expected on a reprovision: run `task "+
+							"vault:ca-bundle`, `task pulunit:vault:OIDC_URL` and `task "+
+							"pulunit:vault:OIDC_CLIENT_ID` once Vault and dex are up, then "+
+							"apply again.",
+						strings.Join(missing, ", ")), nil)
+				} else {
+					authConfig, authErr := authenticationConfig(oidcIssuerUrl, oidcClientID, issuerCA)
+					if authErr != nil {
+						return "", authErr
+					}
+					conf["cluster"].(map[string]interface{})["apiServer"].(map[string]interface{})["extraArgs"].(map[string]interface{})["authentication-config"] = "/var/lib/apiserver/authentication.yaml"
+					conf["cluster"].(map[string]interface{})["apiServer"].(map[string]interface{})["extraVolumes"] = []map[string]interface{}{
+						{
+							"hostPath":  "/var/lib/apiserver",
+							"mountPath": "/var/lib/apiserver",
+							"readonly":  true,
+						},
+					}
+					conf["machine"].(map[string]interface{})["files"] = []map[string]interface{}{
+						{
+							"permissions": 0644,
+							"path":        "/var/lib/apiserver/authentication.yaml",
+							"op":          "create",
+							"content":     authConfig,
+						},
+					}
 				}
 			}
-			// Trust for the one registry this cluster serves itself, and only if
-			// this cluster has already produced a PKI. The bundle is whatever
-			// `task vault:ca-bundle` last read out of Vault's own pki/pki_int
-			// mounts, so it belongs to THIS cluster and cannot be a leftover from
-			// the last one.
-			//
-			// Absent is the normal state of a fresh provision: Vault does not
-			// exist yet, the registry does not either, and the node comes up with
-			// no registry trust at all. Run the task and `pulumi up` again once the
-			// PKI is up. Pinning the certificates in this file instead would make
-			// reprovisioning carry a CA no live component signs with.
+			// Trust for the one registry this cluster serves itself. This block is
+			// containerd's alone: it is consulted when the kubelet pulls an image
+			// and by nothing else, so no other component reaching a .weebo.poc
+			// name -- the apiserver talking to the OIDC issuer above, in
+			// particular -- gains anything from an entry here.
 			//
 			// Scoped to that host rather than appended to the node's CA bundle, so
 			// the internal PKI vouches for this name and for nothing else.
-			switch ca, readErr := os.ReadFile(registryCABundle); {
-			case readErr == nil:
+			if len(caPEM) > 0 {
 				conf["machine"].(map[string]interface{})["registries"] = map[string]interface{}{
 					"config": map[string]interface{}{
 						registryHost: map[string]interface{}{
 							"tls": map[string]interface{}{
-								"ca": base64.StdEncoding.EncodeToString(ca),
+								"ca": base64.StdEncoding.EncodeToString(caPEM),
 							},
 						},
 					},
 				}
-			case os.IsNotExist(readErr):
-				ctx.Log.Warn(fmt.Sprintf(
-					"%s is missing, so the nodes get no TLS trust for %s: pulls from it "+
-						"will fail on an unknown authority. Run `task vault:ca-bundle` once "+
-						"the PKI exists, then apply again.", registryCABundle, registryHost), nil)
-			default:
-				return "", fmt.Errorf("failed to read %s: %w", registryCABundle, readErr)
 			}
 
 			swapJsonPatchConfig, err := json.Marshal(conf)
