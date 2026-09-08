@@ -10,6 +10,7 @@
   - [ ] Point d'accés externe au cluster Kubernetes pour l'authentification OIDC
   - [ ] Rejeter toutes requêtes qui ne viendrais pas de ProxyAuthK8S ?
   - [ ] Expo : kube.weebo.poc
+  - [ ] Expo a travers le noeud principal ?
 - [x] Setup RustFS
   - [x] [OIDC](https://docs.rustfs.com/fr/security-compliance/oidc/keycloak)
   - [x] Operator officielle

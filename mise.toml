@@ -22,6 +22,8 @@ vault = "latest"
 popeye = "latest"
 "github:kubescape/kubescape" = { version = "latest" }
 "cargo:sofka" = "latest"
+nodejs = "24"
+yarn = "latest"
 
 [plugins]
 kkrew = "https://github.com/soupglasses/mise-krew"
