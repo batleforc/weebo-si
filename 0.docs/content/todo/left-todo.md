@@ -42,6 +42,9 @@
 - [ ] [Eclipse Che](https://www.eclipse.org/che/)
   - [ ] Expo : cde.dev.weebo.poc && \*.cde.dev.weebo.poc
 - [ ] Properly apply a CiliumNetworkPolicy with default deny for all
+- [ ] Setup [Stalwart](https://stalw.art/) as an internal mail system for the cluster and connect every app to it (prevent mail to go outside the cluster)
+  - [ ] Weebo.poc for internal messaging (entre les apps du cluster et les utilisateurs du cluster ou user <-> user)
+  - [ ] weebo.[fr/net/untruc] for external messaging si nécessaire plus tard
 
 ## Documentation
 
