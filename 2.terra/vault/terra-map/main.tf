@@ -12,6 +12,16 @@ terraform {
       source  = "hashicorp/time"
       version = "~> 0.13"
     }
+    # Hashes the angos scanner's pull password: the registry stores that
+    # credential as an argon2id hash while the scanner presents it in clear, so
+    # angos.tf has to write both. It is the only provider here that is not
+    # hashicorp-published, and it is a v0.0.1 with no track record, so it is
+    # pinned exactly rather than with a range: a version it gains is a version
+    # someone reads first.
+    password = {
+      source  = "Endevops/password"
+      version = "0.0.1"
+    }
   }
 }
 

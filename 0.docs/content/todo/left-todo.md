@@ -23,6 +23,9 @@
   - [ ] [OIDC CI](https://angos.dev/docs/how-to/configure-github-actions-oidc) : Directly push images to angos registry from GitHub Actions using OIDC
   - [x] Page `/me/` : rend a l'utilisateur connecte son propre jeton OIDC et la commande `docker login` prete a coller, servie par oauth2-proxy depuis un ConfigMap
   - [x] UI web : SSO navigateur via oauth2-proxy, sur la meme application Authentik que le device grant. angos ne lit aucun cookie, l'IngressRoute ne route par le proxy que ce qui porte la session ou n'est pas une route d'API
+  - [ ] [Scan d'images](https://angos.dev/docs/how-to/scan-images/) : StatefulSet `angos-scanner` (trivy par defaut), active registre par registre via `scan: true`, desactive partout par defaut. Identite Basic dediee dans Vault, mot de passe et hash argon2id ecrits par terraform, rapport SARIF attache en referrer de l'image
+    - [ ] Verifie en local (podman) de bout en bout le 2026-09-13 : push -> job -> rapport. Reste a activer sur le cluster
+    - [ ] grype ne recoit pas les credentials de `[scanner.registry]` en 1.8.0 et pull en anonyme ; contourne par `GRYPE_REGISTRY_AUTH_*` dans le chart, a retirer quand upstream corrige
   - [x] Expo : registry.pkg.weebo.poc
 - [ ] [Batlehub](https://batleforc.git.batleforc.fr/batlehub/)
   - [ ] [OIDC](https://batleforc.git.batleforc.fr/batlehub/guide/admin-config.html#auth) : Allow users to login with OIDC

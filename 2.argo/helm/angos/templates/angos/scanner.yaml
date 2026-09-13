@@ -1,0 +1,263 @@
+{{- if and .Values.angos.enabled .Values.angos.scanner.enabled -}}
+{{- $scanner := .Values.angos.scanner -}}
+{{- $username := $scanner.username | default "scanner" -}}
+{{- $port := $scanner.port | default 8766 | int -}}
+{{- $engine := $scanner.engine | default "trivy" -}}
+{{- if not (has $engine (list "trivy" "grype")) -}}
+{{- fail (printf "angos: scanner.engine is %q -- expected trivy or grype" $engine) -}}
+{{- end -}}
+{{- $registryUrl := $scanner.registryUrl | default (printf "https://%s" .Values.angos.dns) -}}
+{{- /*
+  The authority as it appears in an image reference -- host, and port when it
+  is not the default one -- which is what grype matches its credentials
+  against. Derived from the URL above rather than configured, so the two can
+  never disagree.
+*/ -}}
+{{- $authority := regexReplaceAll "^[a-zA-Z][a-zA-Z0-9+.-]*://" $registryUrl "" | trimSuffix "/" -}}
+---
+# The scanner's whole configuration, `[scanner]` and nothing else: `angos
+# scanner` reads that section alone, so this file describes no store, no
+# policy and no repository. It is an ExternalSecret because every value in it
+# is one -- the bearer token the registry presents, and the password the
+# scanner pulls with.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: angos-scanner-config
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretStoreRef:
+    name: cred-store
+    kind: SecretStore
+  target:
+    name: angos-scanner-config
+    template:
+      data:
+        scanner.toml: |
+          [scanner]
+          bind_address = "0.0.0.0"
+          port = {{ $port }}
+          token = "{{ "{{" }}.token}}"
+          max_concurrent_scans = {{ $scanner.maxConcurrentScans | default 2 }}
+
+          [scanner.registry]
+          url = "{{ $registryUrl }}"
+          username = "{{ $username }}"
+          password = "{{ "{{" }}.password}}"
+        # Read by the GRYPE_REGISTRY_AUTH_PASSWORD below. Same value as the one
+        # in the file above, exposed as its own key because an environment
+        # variable cannot be sourced out of the middle of one.
+        registry-password: "{{ "{{" }}.password}}"
+  data:
+    # Written by 2.terra/vault/terra-map/angos.tf, which also writes the
+    # argon2id hash of this same password into the registry's own secret. The
+    # two have to be applied together or the scanner authenticates against a
+    # hash of something else.
+    - secretKey: token
+      remoteRef:
+        key: mv/angos/scanner
+        property: token
+    - secretKey: password
+      remoteRef:
+        key: mv/angos/scanner
+        property: password
+---
+# What `[global.scan].url` names. A plain ClusterIP in front of the replicas,
+# so the registry posts to one address and Kubernetes picks the scanner.
+apiVersion: v1
+kind: Service
+metadata:
+  name: angos-scanner
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: angos
+    app.kubernetes.io/component: scanner
+spec:
+  selector:
+    app: angos-scanner
+  ports:
+    - port: {{ $port }}
+      targetPort: {{ $port }}
+---
+# The StatefulSet's governing Service. Nothing calls a scanner by name, but a
+# StatefulSet requires one and a headless Service is the only kind that gives
+# each replica its own DNS record.
+apiVersion: v1
+kind: Service
+metadata:
+  name: angos-scanner-headless
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: angos
+    app.kubernetes.io/component: scanner
+spec:
+  clusterIP: None
+  selector:
+    app: angos-scanner
+  ports:
+    - port: {{ $port }}
+      targetPort: {{ $port }}
+---
+# A StatefulSet and not a Deployment, for the cache alone: both scanners lock
+# their database directory, so replicas cannot share one volume, and an
+# emptyDir would make every restart re-download it. volumeClaimTemplates gives
+# each replica its own and keeps it across a reschedule.
+#
+# Those templates are immutable once created: growing `cache.size` later means
+# editing the PVCs and recreating the StatefulSet with --cascade=orphan, not a
+# sync.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: angos-scanner
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: angos
+    app.kubernetes.io/component: scanner
+spec:
+  serviceName: angos-scanner-headless
+  replicas: {{ $scanner.replicas | default 1 }}
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: angos-scanner
+  template:
+    metadata:
+      labels:
+        app: angos-scanner
+        app.kubernetes.io/name: angos
+        app.kubernetes.io/component: scanner
+      annotations:
+        # scanner.toml lives in a Secret this pod only mounts, so nothing in
+        # the pod spec changes when one of its values does and the rollout
+        # never happens. This is that change, made visible. It covers the
+        # values this chart renders; a password rotated in Vault is not one of
+        # them and still needs `kubectl rollout restart`.
+        checksum/config: {{ printf "%s|%v|%s|%s|%v" $engine $port $registryUrl $username ($scanner.maxConcurrentScans | default 2) | sha256sum | trunc 16 }}
+    spec:
+      # It talks to the registry over the ingress with a password. Nothing
+      # here ever presents a service-account token.
+      automountServiceAccountToken: false
+      securityContext:
+        # The images run as 65534 and the volume is created root-owned;
+        # without this the scanner cannot write its own database.
+        fsGroup: 65534
+      containers:
+        - name: scanner
+          # The scanner ships inside the registry image under a tag suffix, so
+          # the binary is the same one the server runs and the scanner it
+          # drives comes with it. Keeping the tag equal to the server's is the
+          # point -- they speak the same /scan protocol.
+          image: {{ .Values.angos.image.registry }}:{{ .Values.angos.image.tag }}-{{ $engine }}
+          args: ["-c", "/config/scanner.toml", "scanner", {{ $engine | quote }}]
+          ports:
+            - containerPort: {{ $port }}
+          env:
+            - name: RUST_LOG
+              value: info
+          {{- if .Values.angos.caTrust.enabled }}
+            # Covers both halves of what this pod talks to: the registry,
+            # signed by the internal CA, and the vulnerability database feed
+            # on the public internet. The Bundle carries both, and Go reads
+            # this variable as readily as rustls does -- which matters,
+            # because the scanner it forks is a Go program.
+            - name: SSL_CERT_FILE
+              value: {{ printf "%s/%s" .Values.angos.caTrust.mountPath .Values.angos.caTrust.bundleKey | quote }}
+          {{- end }}
+          {{- if eq $engine "grype" }}
+            # Measured on 1.8.0: `[scanner.registry]`'s username and password
+            # never reach grype, which then pulls anonymously and fails every
+            # scan with `UNAUTHORIZED: Access denied`. grype reads its own
+            # credentials from these three, and with them the same scan
+            # succeeds. trivy needs nothing of the sort, which is why it is
+            # the default engine.
+            #
+            # Remove this block once upstream hands grype the credentials.
+            - name: GRYPE_REGISTRY_AUTH_AUTHORITY
+              value: {{ $authority | quote }}
+            - name: GRYPE_REGISTRY_AUTH_USERNAME
+              value: {{ $username | quote }}
+            - name: GRYPE_REGISTRY_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: angos-scanner-config
+                  key: registry-password
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            # XDG_CACHE_HOME in the image, and where both scanners keep their
+            # database.
+            - name: cache
+              mountPath: /cache
+            # A scan unpacks the image it pulled; with a read-only root there
+            # is nowhere else to put it.
+            - name: tmp
+              mountPath: /tmp
+            {{- if .Values.angos.caTrust.enabled }}
+            - name: weebo-ca
+              mountPath: {{ .Values.angos.caTrust.mountPath | quote }}
+              readOnly: true
+            {{- end }}
+          # The listener opens only once the database is ready -- grype
+          # downloads one before binding, ~90s on an empty cache -- so the
+          # socket answering IS readiness, and a plain TCP probe is honest
+          # here. The startup budget is generous for exactly that first run.
+          startupProbe:
+            tcpSocket:
+              port: {{ $port }}
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket:
+              port: {{ $port }}
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: {{ $port }}
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            {{- toYaml $scanner.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: config
+          secret:
+            secretName: angos-scanner-config
+            items:
+              - key: scanner.toml
+                path: scanner.toml
+        - name: tmp
+          emptyDir: {}
+        {{- if .Values.angos.caTrust.enabled }}
+        - name: weebo-ca
+          configMap:
+            name: {{ .Values.angos.caTrust.bundleConfigMap | quote }}
+            items:
+              - key: {{ .Values.angos.caTrust.bundleKey | quote }}
+                path: {{ .Values.angos.caTrust.bundleKey | quote }}
+        {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: cache
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- with $scanner.cache.storageClassName }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $scanner.cache.size | default "5Gi" }}
+{{- end -}}

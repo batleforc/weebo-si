@@ -6,6 +6,8 @@ every rule and a new registry cannot invent its own spelling.
 A subject is one of:
   anonymous       no identity at all -- everyone, including a passer-by
   provider:<name> any identity a given `[auth.oidc.<name>]` block validated
+  identity:<name> a Basic `[auth.identity.<name>]`, the scanner being the only
+                  one on this instance
   group:<name>    an identity whose `groups` claim carries that group, which
                   only the browser/CLI provider emits
   namespace:<ns>  any workload running in that Kubernetes namespace
@@ -33,6 +35,8 @@ and a throw ends evaluation as a deny for the whole request.
 true
 {{- else if hasPrefix "provider:" . -}}
 identity.oidc != null && identity.oidc.provider_name == "{{ trimPrefix "provider:" . }}"
+{{- else if hasPrefix "identity:" . -}}
+identity.username == "{{ trimPrefix "identity:" . }}"
 {{- else if hasPrefix "group:" . -}}
 identity.oidc != null && "groups" in identity.oidc.claims && "{{ trimPrefix "group:" . }}" in identity.oidc.claims["groups"]
 {{- else if hasPrefix "serviceaccount:" . -}}
@@ -44,7 +48,7 @@ identity.oidc != null && identity.oidc.provider_name == "kube" && identity.oidc.
 {{- else if hasPrefix "namespace:" . -}}
 identity.oidc != null && identity.oidc.provider_name == "kube" && identity.oidc.claims["sub"].startsWith("system:serviceaccount:{{ trimPrefix "namespace:" . }}:")
 {{- else -}}
-{{- fail (printf "angos: unknown access subject %q -- expected anonymous, provider:<name>, group:<name>, namespace:<ns> or serviceaccount:<ns>:<name>" .) -}}
+{{- fail (printf "angos: unknown access subject %q -- expected anonymous, provider:<name>, identity:<name>, group:<name>, namespace:<ns> or serviceaccount:<ns>:<name>" .) -}}
 {{- end -}}
 {{- end -}}
 
