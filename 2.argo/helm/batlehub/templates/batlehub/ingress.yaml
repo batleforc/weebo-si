@@ -1,0 +1,42 @@
+{{- if .Values.batlehub.enabled -}}
+---
+# One router, one service: unlike angos there is no second audience to split off
+# -- batlehub runs its own OIDC login, serves its own SPA and reads its own
+# `Authorization` header, so nothing sits between Traefik and the pod.
+#
+# The regexp half is the wildcard: every registry declared in values.yaml
+# answers on `<name>.pkg.weebo.poc` as well as `/proxy/<name>/`, and adding one
+# should not mean editing a route. CoreDNS already sends `*.weebo.poc` here
+# (2.argo/app/templates/dns/coredns.yaml), so a new registry needs no DNS record
+# either. One label only, matching what the certificate covers.
+#
+# `passHostHeader` is what makes host routing work at all: batlehub selects the
+# registry from the Host (or the X-Forwarded-Host, which is why
+# `trustedProxies` names this cluster's pod CIDR), so a rewritten Host would
+# route every request to the apex.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: batlehub
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: batlehub
+  # With the Application it fronts, rather than the wave 0 it would default to:
+  # a router pointing at a Service that does not exist yet is Traefik logging
+  # an error every few seconds for as long as the first sync takes.
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.batlehub.dns }}`){{ if .Values.batlehub.subdomainRouting.enabled }} || HostRegexp(`^[a-z0-9-]+\.{{ .Values.batlehub.dns | replace "." "\\." }}$`){{ end }}
+      services:
+        - name: batlehub
+          namespace: {{ .Release.Namespace }}
+          port: 8080
+          passHostHeader: true
+  tls:
+    secretName: batlehub-tls
+{{- end -}}

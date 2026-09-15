@@ -1,0 +1,36 @@
+{{- if .Values.batlehub.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: batlehub
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: {{ .Values.batlehub.project }}
+  source:
+    repoURL: '{{ .Values.repo }}'
+    path: '2.argo/helm/batlehub'
+    targetRevision: '{{ .Values.branch }}'
+    helm:
+      releaseName: batlehub
+      valuesObject:
+        project: "{{ .Values.batlehub.project }}"
+        repo: "{{ .Values.repo }}"
+        branch: "{{ .Values.branch }}"
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'batlehub'
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

@@ -616,11 +616,21 @@ applications:
           - "authentik default OAuth Mapping: OpenID 'profile'"
           - "authentik default OAuth Mapping: OpenID 'openid'"
           - "authentik default OAuth Mapping: OpenID 'offline_access'"
+        # batlehub runs the authorization-code flow ITSELF -- it serves its own
+        # SPA and its own login endpoint -- so there is no oauth2-proxy in front
+        # of it and no /oauth2/callback to register. The path is fixed --
+        # /api/v1/auth/oidc/callback is one route whatever the provider is
+        # called, several providers share it, and which one a code is redeemed
+        # at comes from the login state the server kept rather than from the
+        # URL. So this URL does not move when anything is renamed.
+        #
+        # The device grant above stays even though batlehub has no device flow
+        # of its own: what it mints is an ID token for this client, and batlehub
+        # accepts any token the issuer signed for its own client_id. That is how
+        # a CLI or a CI job gets a credential without a browser.
         allowedRedirectUris:
           - matchingMode: strict
-            url: "https://pkg.weebo.poc/"
-          - matchingMode: strict
-            url: "https://pkg.weebo.poc/oauth2/callback"
+            url: "https://pkg.weebo.poc/api/v1/auth/oidc/callback"
 
   s3:
     enabled: false

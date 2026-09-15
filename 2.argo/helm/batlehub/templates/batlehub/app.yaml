@@ -1,0 +1,211 @@
+{{- $b := .Values.batlehub -}}
+{{- if $b.enabled -}}
+---
+# batlehub itself, from the chart its own repository publishes. Everything this
+# Application needs already exists by the time it is created: the credentials
+# (wave 1), the database and the cache (wave 2), and the certificate the
+# IngressRoute in front of it uses.
+#
+# The whole server configuration is passed as `valuesObject` -- the upstream
+# chart serialises `config` verbatim into a config.toml Secret -- so what a
+# `helm template` of this directory prints IS what the pod reads, and there is
+# no second place to look. The one thing that file never carries is a
+# credential: those are `${VAR}` placeholders the server expands from the
+# environment, and the environment comes from the four Secrets below. It exits
+# naming the variable when one is missing, so a broken ExternalSecret is a
+# startup error and not a pod that runs with an empty password.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: batlehub
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  source:
+    chart: {{ $b.chart.name }}
+    repoURL: {{ $b.chart.repoURL }}
+    targetRevision: {{ $b.chart.version }}
+    helm:
+      releaseName: batlehub
+      valuesObject:
+        # Deterministic names. The IngressRoute points at the Service by name,
+        # and a release-name-derived one would make that route depend on a
+        # string chosen in two files.
+        fullnameOverride: batlehub
+        replicaCount: {{ $b.replicaCount }}
+        image:
+          repository: {{ $b.image.registry }}
+          tag: {{ $b.image.tag | quote }}
+        resources:
+          {{- toYaml $b.resources | nindent 10 }}
+        # Traefik terminates TLS and routes by Host; the chart's own Ingress
+        # object would be a second, plainer answer to the same question.
+        ingress:
+          enabled: false
+        {{- if eq $b.storage.type "filesystem" }}
+        # The artifact store itself, not a cache in front of one: losing it
+        # loses every published version, so it is a volume and never an
+        # emptyDir. The chart's fsGroup (65532) is what makes it writable.
+        persistence:
+          enabled: true
+          size: {{ $b.storage.filesystem.size }}
+          storageClass: {{ $b.storage.filesystem.storageClassName }}
+          accessMode: ReadWriteOnce
+        {{- else }}
+        # S3 is the store, so there is no PVC to ask for.
+        persistence:
+          enabled: false
+        {{- end }}
+
+        config:
+          server:
+            host: "0.0.0.0"
+            port: 8080
+            trusted_proxies:
+              {{- toYaml $b.trustedProxies | nindent 14 }}
+          {{- if $b.subdomainRouting.enabled }}
+          subdomain_routing:
+            enabled: true
+            base_domain: {{ $b.dns }}
+            # Only ever used to ADVERTISE a URL (npm's dist.tarball, the cargo
+            # index's dl, the PyPI simple index). A request's own scheme is
+            # what routes it.
+            scheme: https
+          {{- end }}
+          database:
+            type: postgresql
+            url: "postgresql://{{ $b.postgres.owner }}:${DB_PASSWORD}@batlehub-pg-rw.{{ .Release.Namespace }}.svc:5432/{{ $b.postgres.database }}"
+          storage:
+            {{- if eq $b.storage.type "filesystem" }}
+            type: filesystem
+            path: {{ $b.storage.filesystem.path }}
+            {{- else }}
+            type: s3
+            bucket: {{ $b.storage.s3.bucket }}
+            region: {{ $b.storage.s3.region }}
+            endpoint_url: {{ $b.storage.s3.url }}
+            # RustFS addresses buckets by path, not by virtual host.
+            force_path_style: true
+            # The chart's default storage block is the filesystem one, and Helm
+            # merges maps key by key: without this, `path` survives from those
+            # defaults into an `[storage]` that is no longer a filesystem. The
+            # server ignores it today, which is exactly why it would sit there
+            # unnoticed until something stopped ignoring it. `null` is how a
+            # Helm override deletes an inherited key.
+            path: null
+            {{- end }}
+          {{- if $b.valkey.enabled }}
+          cache:
+            type: redis
+            url: "${CACHE_URL}"
+          {{- end }}
+          auth:
+            {{- if $b.oidc.enabled }}
+            - type: oidc
+              name: {{ $b.oidc.name }}
+              issuer_url: "${OIDC_ISSUER_URL}"
+              client_id: "${OIDC_CLIENT_ID}"
+              client_secret: "${OIDC_CLIENT_SECRET}"
+              # The path is FIXED -- /api/v1/auth/oidc/callback is one route
+              # whatever the provider is called, and the provider a code is
+              # redeemed at comes from the login state the server kept, not
+              # from the URL. Building it from `name` would look tidier and
+              # break the day that name changed.
+              redirect_uri: "https://{{ $b.dns }}/api/v1/auth/oidc/callback"
+              scopes:
+                {{- toYaml $b.oidc.scopes | nindent 16 }}
+              user_id_claim: {{ $b.oidc.userIdClaim }}
+              role_claim: {{ $b.oidc.roleClaim }}
+              role_mappings:
+                {{- toYaml $b.oidc.roleMappings | nindent 16 }}
+            {{- end }}
+            {{- if $b.kubeAuth.enabled }}
+            - type: kubernetes
+              # api_server, ca_cert_path and token_path are left at their
+              # in-cluster defaults -- the env vars and the projected files the
+              # kubelet already puts in the pod.
+              audiences:
+                - {{ $b.kubeAuth.audience }}
+              role_mappings:
+                {{- toYaml $b.kubeAuth.roleMappings | nindent 16 }}
+            {{- end }}
+          registries:
+            {{- toYaml $b.registries | nindent 12 }}
+
+        env:
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: batlehub-pg-cred
+                key: password
+          {{- if $b.valkey.enabled }}
+          # The whole redis:// URL, password included, as terraform wrote it.
+          - name: CACHE_URL
+            valueFrom:
+              secretKeyRef:
+                name: batlehub-valkey-cred
+                key: url
+          {{- end }}
+          {{- if $b.oidc.enabled }}
+          - name: OIDC_ISSUER_URL
+            valueFrom:
+              secretKeyRef:
+                name: batlehub-auth
+                key: AUTHENTIK_URL
+          - name: OIDC_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: batlehub-auth
+                key: AUTHENTIK_CLIENT_ID
+          - name: OIDC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: batlehub-auth
+                key: AUTHENTIK_CLIENT_SECRET
+          {{- end }}
+          {{- if eq $b.storage.type "s3" }}
+          # aws-sdk-s3 takes its credentials from the environment alone -- the
+          # `[storage]` block has no field for them.
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: batlehub-s3-cred
+                key: AWS_ACCESS_KEY_ID
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: batlehub-s3-cred
+                key: AWS_SECRET_ACCESS_KEY
+          {{- end }}
+          {{- if $b.caTrust.enabled }}
+          - name: SSL_CERT_FILE
+            value: {{ $b.caTrust.certFile | quote }}
+          {{- end }}
+
+        {{- if $b.caTrust.enabled }}
+        # The whole of the CA wiring: the Kyverno policy reads this annotation
+        # off the pod template and mounts the bundle. Nothing in this chart
+        # creates the ConfigMap -- trust-manager replicates it into every
+        # namespace.
+        podAnnotations:
+          {{ $b.caTrust.annotation }}: "enabled"
+        {{- end }}
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: {{ .Release.Namespace }}
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

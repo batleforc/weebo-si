@@ -1,0 +1,39 @@
+{{- if and .Values.batlehub.enabled .Values.batlehub.postgres.enabled -}}
+---
+# The role CNPG creates at bootstrap, and the password batlehub then connects
+# with. `type: kubernetes.io/basic-auth` is not decoration: CNPG refuses a
+# `bootstrap.initdb.secret` of any other type, and the refusal is a condition on
+# the Cluster rather than an event on the Secret.
+#
+# Sync-wave 1 so this exists before the Cluster of wave 2 asks for it -- a
+# bootstrap that cannot read its credential does not retry the initdb, it stays
+# stuck with an empty data directory.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: batlehub-pg-cred
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  refreshPolicy: Periodic
+  refreshInterval: 24h
+  secretStoreRef:
+    name: cred-store
+  target:
+    name: batlehub-pg-cred
+    template:
+      type: kubernetes.io/basic-auth
+      data:
+        username: "{{ "{{" }}.username}}"
+        password: "{{ "{{" }}.password}}"
+  data:
+  - secretKey: username
+    remoteRef:
+      key: mv/batlehub/pg
+      property: username
+  - secretKey: password
+    remoteRef:
+      key: mv/batlehub/pg
+      property: password
+{{- end -}}

@@ -1,0 +1,38 @@
+{{- if .Values.batlehub.enabled -}}
+# Two SANs, and the wildcard is the one that matters: with subdomain routing on,
+# every registry answers on `<name>.pkg.weebo.poc`, and a client that follows a
+# tarball URL onto a host the certificate does not cover fails the handshake
+# rather than the request -- which is the error nobody recognises.
+#
+# The wildcard is issuable here because the Vault PKI role behind vault-issuer
+# has `allow_subdomains` on `weebo.poc` (2.terra/vault/terra-map/pki.tf), and it
+# covers one label only: `npm.pkg.weebo.poc`, never `a.b.pkg.weebo.poc`.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: batlehub-tls
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  secretName: batlehub-tls
+  commonName: {{ .Values.batlehub.dns }}
+  dnsNames:
+    - {{ .Values.batlehub.dns }}
+    {{- if .Values.batlehub.subdomainRouting.enabled }}
+    - "*.{{ .Values.batlehub.dns }}"
+    {{- end }}
+  issuerRef:
+    name: vault-issuer
+    kind: ClusterIssuer
+  privateKey:
+    size: 4096
+  subject:
+    organizationalUnits:
+      - Infra
+    organizations:
+      - WeeboSI
+  usages:
+    - digital signature
+    - key encipherment
+{{- end -}}

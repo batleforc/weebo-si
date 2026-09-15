@@ -37,6 +37,10 @@ angos:
   enabled: true
   project: dev-base
 
+batlehub:
+  enabled: true
+  project: dev-base
+
 repo: ""
 branch: ""
 
@@ -173,6 +177,11 @@ project:
     sourceRepo:
       - oci://ghcr.io/batlehub/batlehub/charts/batlehub
     dest:
+      # batlehub's chart renders an Application of its own -- the upstream
+      # chart, pulled from the OCI repo above -- and an Application lives in
+      # argocd whatever it deploys.
+      - server: https://kubernetes.default.svc
+        namespace: "argocd"
       - server: https://kubernetes.default.svc
         namespace: "angos"
       - server: https://kubernetes.default.svc

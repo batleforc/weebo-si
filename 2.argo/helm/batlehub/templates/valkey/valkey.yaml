@@ -1,17 +1,19 @@
-{{- if .Values.batlehub.enabled -}}
+{{- if and .Values.batlehub.enabled .Values.batlehub.valkey.enabled -}}
 apiVersion: valkey.io/v1alpha1
 kind: ValkeyCluster
 metadata:
   name: batlehub-valkey
   namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
-  shards: 1
-  replicas: 0
+  shards: {{ .Values.batlehub.valkey.shards }}
+  replicas: {{ .Values.batlehub.valkey.replicas }}
   podDisruptionBudget:
     mode: Disabled
   persistence:
-    size: 5Gi
-    storageClassName: longhorn
+    size: {{ .Values.batlehub.valkey.storage.size }}
+    storageClassName: {{ .Values.batlehub.valkey.storage.storageClassName }}
   users:
     - name: batlehub
       passwordSecret:

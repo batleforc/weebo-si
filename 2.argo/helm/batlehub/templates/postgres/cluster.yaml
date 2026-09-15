@@ -1,0 +1,32 @@
+{{- if and .Values.batlehub.enabled .Values.batlehub.postgres.enabled -}}
+---
+# The database behind batlehub. Reached at `batlehub-pg-rw.<ns>.svc:5432` --
+# CNPG's read-write Service, which follows the primary, so the URL survives a
+# failover and a switchover without anything in the config changing.
+#
+# `enableSuperuserAccess: false` is the CNPG default and is left alone: nothing
+# here needs postgres-the-role, the migrations batlehub runs at startup create
+# ordinary tables and no extension, and a superuser Secret that exists is a
+# superuser Secret that can leak.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: batlehub-pg
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  instances: {{ .Values.batlehub.postgres.instances }}
+  storage:
+    size: {{ .Values.batlehub.postgres.storage.size }}
+    storageClass: {{ .Values.batlehub.postgres.storage.storageClassName }}
+  bootstrap:
+    initdb:
+      database: {{ .Values.batlehub.postgres.database }}
+      owner: {{ .Values.batlehub.postgres.owner }}
+      # Written from Vault by postgres-cred.yaml. Naming it here is also what
+      # stops CNPG from generating a `batlehub-pg-app` Secret of its own, so
+      # there is exactly one place this password exists on the cluster.
+      secret:
+        name: batlehub-pg-cred
+{{- end -}}

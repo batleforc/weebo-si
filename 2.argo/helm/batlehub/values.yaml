@@ -1,2 +1,370 @@
+repo: ""
+project: ""
+branch: ""
+
 batlehub:
-  enabled: true
+  enabled: false
+
+  # The upstream chart, deployed as a nested ArgoCD Application
+  # (templates/batlehub/app.yaml). Everything this chart renders itself --
+  # Postgres, Valkey, the certificate, the IngressRoute, the ExternalSecrets --
+  # exists so that Application has something to point at.
+  #
+  # The path follows the repository, which moved from `batleforc/batlehub` to
+  # the `batlehub` org -- the GitHub workflow publishes to
+  # oci://ghcr.io/${github.repository}/charts, so the owner in the URL is the
+  # owner of the repo. It has to match the `sourceRepo` entry of the dev-base
+  # project in 2.argo/app/values.yaml verbatim, or ArgoCD refuses the
+  # Application before it fetches anything.
+  #
+  # Both packages are public, so ArgoCD and the kubelet pull them anonymously and
+  # this namespace needs no imagePullSecret -- verified with `helm pull` and
+  # `podman pull`. A GHCR package does not inherit the visibility of the
+  # repository it moves with, so that is worth re-checking after any further
+  # move: the symptom is `401 unauthorized: authentication required` at fetch,
+  # before anything in this chart runs.
+  #
+  # The published chart vendors its one dependency (`charts/trivy/`, for the
+  # optional Trivy server), so rendering it needs no access to
+  # aquasecurity.github.io and no extra `sourceRepo` entry.
+  chart:
+    name: batlehub
+    repoURL: oci://ghcr.io/batlehub/batlehub/charts/batlehub
+    # renovate: datasource=docker depName=ghcr.io/batlehub/batlehub/charts/batlehub
+    version: 1.2.0
+
+  image:
+    registry: ghcr.io/batlehub/batlehub
+    # renovate: datasource=docker depName=ghcr.io/batlehub/batlehub
+    tag: 1.2.0
+
+  # The apex. Every registry below also answers on `<name>.<dns>` -- see
+  # `subdomainRouting` -- so the certificate and the IngressRoute both cover the
+  # wildcard as well.
+  dns: pkg.weebo.poc
+
+  # ── Secrets ────────────────────────────────────────────────────────────────
+  # NONE of the values below are in this file, and none of them are in the
+  # rendered config.toml either. batlehub expands `${VAR_NAME}` inside any TOML
+  # string before parsing the file, and exits naming the variable when one is
+  # missing, so every credential travels as an environment variable read from a
+  # Secret that External Secrets materialises from Vault:
+  #
+  #   DB_PASSWORD         mv/batlehub/pg      <- 2.terra/vault/terra-map/batlehub.tf
+  #   CACHE_URL           mv/batlehub/config  <- idem (redis:// URL, password included)
+  #   AWS_*               mv/batlehub/s3      <- 2.terra/vault/terra-map/s3.tf (S3 storage only)
+  #   OIDC_*              mv/batlehub/auth    <- written by the authentik operator
+  #
+  # The config.toml the chart renders is therefore not a secret, which is what
+  # keeps it readable in the admin UI's config page and diffable in ArgoCD.
+  #
+  # The 1.2.0 chart adds a second way to do this -- `credentials.existingSecret`,
+  # a second config file merged over the first, which is what an ExternalSecret
+  # rendering TOML would fill (the shape angos uses for its own secrets.toml).
+  # The env placeholders are kept because they say what is missing when one is:
+  # the server exits naming the variable, where a merged file that failed to
+  # materialise just leaves a config that parses and is wrong.
+
+  # ── Artifact storage ───────────────────────────────────────────────────────
+  # Where the cached and published bytes live. `s3` (the RustFS tenant) or
+  # `filesystem` (a Longhorn volume).
+  #
+  # S3, for the same reason angos uses it: the bytes outlive the pod, the node
+  # and the volume, they are backed up with everything else in the tenant, and
+  # it is the one backend several replicas could share. The `batlehub` bucket,
+  # its RustFS user and its policy are declared in 2.argo/helm/database/sub
+  # (s3.mainInstance.creds) and the keys are in mv/batlehub/s3 -- nothing to
+  # create here, only credentials to read.
+  #
+  # ONE PREREQUISITE, AND IT IS NOT IN THE CHART OR THE CONFIG REFERENCE:
+  # the server must be built with the `storage-s3` cargo feature. It is not a
+  # default -- `default = ["cache-redis", "sbom", "jemalloc"]` in
+  # server/Cargo.toml, still true at the v1.2.0 tag -- and the Containerfile
+  # builds the defaults, so an image without it loads this config happily and
+  # then exits at startup with
+  #
+  #   Error: S3 storage requires the 'storage-s3' feature flag at compile time
+  #
+  # and that is what the PUBLISHED ghcr.io/batlehub/batlehub:1.2.0 does today --
+  # run against this very config.toml, it gets as far as the migrations and
+  # exits on that line. So until an image built with the feature is released,
+  # syncing this lands in CrashLoopBackOff with that message and nothing in
+  # this file is wrong. The fallback that runs on any image is one value:
+  # `type: filesystem` below, verified end to end on 1.2.0 (boot, migrations,
+  # both auth providers, redis cache, /healthz, anonymous npm pull by path and
+  # by host). `cache-redis` IS a default feature, so the Valkey wiring is
+  # unaffected either way.
+  storage:
+    type: s3
+
+    s3:
+      # The public name rather than the in-cluster Service, like angos: it is
+      # signed by the internal CA, which `caTrust` below puts in the pod's
+      # trust store. aws-sdk-s3 reads its credentials from the environment
+      # alone -- the `[storage]` block has no field for them -- which is what
+      # the batlehub-s3-cred ExternalSecret is for.
+      url: "https://s3-main.weebo.poc"
+      bucket: batlehub
+      # RustFS ignores the region but the SDK refuses to build a client
+      # without one.
+      region: us-east-1
+
+    filesystem:
+      # Only read when `type` is filesystem. ReadWriteOnce, which is what
+      # would pin `replicaCount` at 1: this would be the store itself, not a
+      # cache in front of one. Longhorn expands a volume in place.
+      size: 50Gi
+      storageClassName: longhorn
+      # The chart's default, and the path the volume is mounted at.
+      path: /var/cache/batlehub
+
+  # ── Postgres ───────────────────────────────────────────────────────────────
+  # batlehub keeps everything but the artifact bytes in Postgres -- package
+  # metadata, versions, tokens, quotas, the scan verdicts -- and has no other
+  # supported backend. The CNPG operator is already installed cluster-wide by
+  # 2.argo/helm/database/main.
+  #
+  # One instance: the cluster has one worker, so a replica would land on the
+  # same node and buy nothing but a second copy of the disk.
+  postgres:
+    enabled: true
+    instances: 1
+    database: batlehub
+    owner: batlehub
+    storage:
+      size: 10Gi
+      storageClassName: longhorn
+    # Deliberately no `imageName`: the operator picks the PostgreSQL image that
+    # matches its own version, and pinning a tag here means a tag to bump by
+    # hand every time CNPG moves -- with a downgrade (an image older than the
+    # data directory) as the failure mode. Migrations are run by batlehub
+    # itself at startup and need no extension, so the app role suffices.
+
+  # ── Valkey ─────────────────────────────────────────────────────────────────
+  # The metadata cache and the rate-limit counters. `memory` is the default and
+  # is per-process: it would be lost on every roll and, the day this runs more
+  # than one replica, inconsistent between them. Postgres would also work and is
+  # one dependency fewer; Valkey is used because the operator and the credential
+  # are already there.
+  valkey:
+    enabled: true
+    shards: 1
+    replicas: 0
+    storage:
+      size: 5Gi
+      storageClassName: longhorn
+
+  # ── Routing ────────────────────────────────────────────────────────────────
+  # A registry is always reachable at `https://<dns>/proxy/<name>/...`. With
+  # this on it ALSO answers on `<name>.<dns>`, which is what lets a client be
+  # pointed at it with nothing but a URL: `npm.pkg.weebo.poc` is the npm
+  # registry's root, so `npm config set registry https://npm.pkg.weebo.poc/`
+  # needs no path rewriting.
+  #
+  # Registry names must be DNS labels for this to work -- they are, below --
+  # and the certificate and the IngressRoute both carry the wildcard.
+  subdomainRouting:
+    enabled: true
+
+  # CIDRs whose `Forwarded` / `X-Forwarded-Host` / `X-Forwarded-Proto` /
+  # `X-Forwarded-For` are believed. The pod CIDR of this cluster
+  # (`machine.network.podSubnets` in 1.pulu-init/main.go), because Traefik is
+  # the only thing that ever talks to this Service.
+  #
+  # NOT optional: with host routing configured the server refuses to start
+  # without a proxy-trust policy, and for good reason -- the forwarded host is
+  # what selects the registry, so believing it from any peer would let a caller
+  # choose its own registry by sending a header.
+  trustedProxies:
+    - "10.245.0.0/16"
+
+  # ── Who may do what ────────────────────────────────────────────────────────
+  # Three roles, and an identity that matches none of them is `anonymous`.
+  #
+  # The browser SSO leg. batlehub runs the authorization-code flow itself --
+  # unlike angos, which has no login of its own and needs an oauth2-proxy in
+  # front of it -- so the only thing in front of this one is Traefik.
+  #
+  # The Authentik application is declared in 2.argo/helm/auth/sub
+  # (applications.batlehub) and its client credentials are written to
+  # mv/batlehub/auth by the operator. `redirect_uri` below is built from `dns`
+  # and has to be listed in that application's allowedRedirectUris, or the
+  # callback is refused by Authentik before batlehub ever sees it.
+  oidc:
+    enabled: true
+    # Prefixes the groups this provider contributes that no mapping covers
+    # (`oidc:some-group`), and selects it at login time (?provider=<name>).
+    # It does NOT name the callback path -- that route is fixed -- so this is
+    # free to change; what is not free is `client_id`, which is the audience
+    # the token is checked against.
+    name: oidc
+    # Requested scopes. NOT "groups": Authentik has no such scope mapping on
+    # this instance, and asking for one the provider does not know is an error
+    # at the authorize step. The group names arrive in the `groups` claim of the
+    # default `profile` mapping, which is what `roleClaim` reads.
+    scopes:
+      - openid
+      - profile
+      - email
+      # Asks Authentik for a refresh token, which batlehub's SPA keeps and
+      # spends at /api/v1/auth/oidc/refresh. Without it a session ends when the
+      # access token does -- 12 hours on this application -- and ends by
+      # failing a request rather than by asking anyone to log in again. The
+      # provider already carries the matching property mapping.
+      - offline_access
+    # A name rather than the UUID `sub`, so the audit log and the UI show
+    # something a human recognises.
+    userIdClaim: preferred_username
+    roleClaim: groups
+    # Authentik group -> batlehub role. A member of neither is anonymous, and
+    # the application's own `accessGroup` (weebo_moderator) already stops anyone
+    # below that from getting a token at all -- so this maps the two groups that
+    # can arrive, and nothing else.
+    roleMappings:
+      weebo_admin: admin
+      weebo_moderator: user
+
+  # Workloads authenticating with the projected service-account token the
+  # cluster already mints for them, validated through the TokenReview API. The
+  # chart creates the ClusterRole/ClusterRoleBinding that call needs as soon as
+  # a `kubernetes` auth block is present, and forces the pod's own token to be
+  # mounted.
+  #
+  # A pod asks for it explicitly:
+  #
+  #   volumes:
+  #     - name: batlehub-token
+  #       projected:
+  #         sources:
+  #           - serviceAccountToken:
+  #               audience: batlehub
+  #               path: token
+  #
+  # and sends it as `Authorization: Bearer`. A token minted for the apiserver
+  # itself is refused: the audience is the whole point of the check.
+  kubeAuth:
+    enabled: true
+    audience: batlehub
+    # Kubernetes usernames (`system:serviceaccount:<ns>:<name>`) or groups
+    # (`system:serviceaccounts`, `system:serviceaccounts:<ns>`) -> batlehub
+    # role. The highest match wins, so a namespace-wide entry can be narrowed
+    # per service account later without removing this one.
+    roleMappings:
+      "system:serviceaccounts": user
+
+  # ── Registries ─────────────────────────────────────────────────────────────
+  # Each entry is one `[[registries]]` block: a caching proxy in front of one
+  # public upstream, reachable at /proxy/<name>/ and at <name>.pkg.weebo.poc.
+  # `upstreams` is omitted on purpose -- every type here has the obvious default
+  # (registry.npmjs.org, crates.io, proxy.golang.org, pypi.org,
+  # repo1.maven.org), and writing it out only creates something to drift.
+  #
+  # The name is the DNS label AND the path segment, so renaming one is a
+  # client-side change; adding one is a new host under the wildcard and needs no
+  # certificate, no DNS record and no route.
+  #
+  # rbac is per role, and the verb set is CLOSED: a verb that is not one of the
+  # server's own is a startup error rather than a permission granted to nobody.
+  # The ones used here:
+  #   releases:read     download an artifact
+  #   releases:list     read a version listing or index document
+  #   source:read       download a source tarball
+  #   catalogue:browse  the console's package explorer
+  #
+  # anonymous gets read. These are caches of registries that are public on the
+  # internet -- what is behind them is not a secret, and a build pod or a laptop
+  # would otherwise need a credential to install a package it could fetch
+  # directly from npmjs.org.
+  #
+  # `catalogue:browse` is not in the anonymous list, and leaving it out buys
+  # nothing: a subject holding ANY read verb is resolved into holding the
+  # listing and browsing ones too. `batlehub explain-config` on 1.2.0 says so
+  # outright -- `anonymous = ["releases:read"]` alone resolves to
+  #
+  #   *   releases:read, releases:list, catalogue:browse
+  #
+  # and the running 1.1.0 server agrees: /api/v1/explore/packages answers an
+  # anonymous caller in full. So the catalogue -- the list of what this cluster
+  # has pulled -- is public to anyone who can reach the host, and the only way
+  # to close it is `anonymous: []`, which also means no pull without a
+  # credential. That trade is the decision here, not an oversight; `[]` on
+  # every registry is the one edit that reverses it.
+  #
+  # (`batlehub explain-config <file>` prints the whole expansion offline, with
+  # no database. It is the way to check a change to these lists before it is
+  # syncced -- the release ships the server binary as an asset.)
+  #
+  # Nothing here is published to: these are all proxies (`mode` left at its
+  # default). A local registry -- something this cluster pushes its own packages
+  # into -- is a `mode: local` entry with `releases:publish` in its rbac, and is
+  # deliberately not declared before there is something to publish.
+  registries:
+    - type: npm
+      name: npm
+      rbac: &proxyRbac
+        anonymous:
+          - releases:read
+          - releases:list
+          - source:read
+        user:
+          - releases:read
+          - releases:list
+          - source:read
+          - catalogue:browse
+        admin:
+          - "*"
+    - type: cargo
+      name: cargo
+      rbac: *proxyRbac
+    - type: goproxy
+      name: go
+      rbac: *proxyRbac
+    - type: pypi
+      name: pypi
+      rbac: *proxyRbac
+    - type: maven
+      name: maven
+      rbac: *proxyRbac
+
+  # ── The pod ────────────────────────────────────────────────────────────────
+  # One replica. S3 storage is the backend several replicas could share, so the
+  # ceiling here is Postgres and the cluster's single worker, not the store.
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+      ephemeral-storage: 256Mi
+    limits:
+      memory: 1Gi
+      ephemeral-storage: 1Gi
+
+  # The internal CA. batlehub has to reach s3-main.weebo.poc and auth.weebo.poc
+  # (internal CA) as well as registry.npmjs.org, crates.io and the rest (public
+  # roots), and the trust-manager Bundle carries both -- `useDefaultCAs: true`
+  # plus the cluster CA, see 2.argo/helm/ingress/sub.
+  #
+  # Done with the annotation the `add-certificates-volume` Kyverno policy
+  # watches for (2.argo/helm/hook/sub), which mounts the `weebo.poc` ConfigMap
+  # over /etc/ssl/certs -- the same thing the authentik and dex pods do. NOT the
+  # explicit volume angos uses, and not by preference: the upstream chart names
+  # the volume after the ConfigMap it mounts, and `weebo.poc` is not a valid
+  # volume name (a dot is not an RFC 1123 label character), so that entry is
+  # refused by the apiserver before anything else can go wrong.
+  #
+  # SSL_CERT_FILE names the file rather than leaving the process to probe for
+  # one: it is read by rustls-native-certs, which is what both the AWS SDK and
+  # reqwest resolve their roots through here.
+  caTrust:
+    enabled: true
+    annotation: inject-certs
+    certFile: /etc/ssl/certs/main-ca.crt
+
+  # The scan worker -- a second deployment of the same binary that leases scan
+  # jobs, opens artifacts inside a bubblewrap sandbox and records verdicts --
+  # is available on this chart (1.2.0) and deliberately left off, the same way
+  # angos' scanner is. Turning it on is more than a flag: it wants
+  # `config.server.roles = ["proxy"]` so the proxy stops scanning in-process, a
+  # Trivy endpoint (the chart's `trivy` subchart, or an external one), and a
+  # `worker.image.repository` pointing at the new org -- the chart still
+  # defaults it to `ghcr.io/batleforc/batlehub-worker`, which is the old path.

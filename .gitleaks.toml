@@ -1,0 +1,15 @@
+# gitleaks' `generic-api-key` rule fires on the `remoteRef.key` of the batlehub
+# ExternalSecrets: `mv/batlehub/pg` sits behind the literal word `key:` and
+# clears the rule's 3.5 entropy floor, which is the whole of what that rule
+# checks. The value is a Vault KV address, not a credential -- the credential
+# itself never reaches git, which is the point of External Secrets.
+#
+# Scoped to the secret regex rather than to the files, so a real leak dropped
+# into the same manifests still trips the hook.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Vault KV paths in ExternalSecret remoteRefs are addresses, not secrets"
+regexTarget = "secret"
+regexes = ['''^mv/[\w.\-/]+$''']
