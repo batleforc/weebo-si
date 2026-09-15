@@ -574,70 +574,53 @@ applications:
         authorizationFlow: default-provider-authorization-implicit-consent
         invalidationFlow: default-provider-invalidation-flow
         signingKey: "authentik Self-signed Certificate"
-        # Device code is how a human gets a token to hand `docker login`:
-        # angos has no callback of its own, so the CLI leg has no browser step,
-        # and it reads the token as Basic auth with the provider name as
-        # username. (The web UI does get a browser leg, but angos does not run
-        # it -- see `allowedRedirectUris` below.)
-        # Needs the device-code-flow above (phase 2b) AND operator >= 0.13.0 --
-        # up to 0.12.0 `grant_types` mapped six short literals and errored on
-        # the URN, which left the CR without a status.authentikId and
-        # angos-access stuck on ApplicationRefNotFound. Bump
-        # authentik.operator.version FIRST, then land this.
-        #
-        # `client_credentials` is the one to add the day CI pushes on its own.
         grantTypes:
           - "authorization_code"
           - "urn:ietf:params:oauth:grant-type:device_code"
           - "refresh_token"
-        # How long a `docker login` against the registry survives. The
-        # credential a client stores IS this ID token, replayed on every token
-        # exchange, so its validity is the whole answer to "why do I have to
-        # log in again". angos' own token service cannot extend it: what
-        # `GET /token` mints is accepted as a Bearer and refused as a Basic
-        # password, and `POST /token` answers 405, so there is no refresh grant
-        # a client could keep. Measured, not assumed.
-        #
-        # Twelve hours covers a working day and stays far under the 30-day
-        # refresh token behind the browser session, which is what makes
-        # reloading https://registry.pkg.weebo.poc/me/ cheap. The audience is
-        # `angos` alone, so a leaked one buys the registry and nothing else.
-        #
-        # Needs operator >= 0.14.0, the release that models this field, and it
-        # fails LOUDLY below that -- measured against the live 0.13.0 CRD:
-        #   strict decoding error: unknown field
-        #   "spec.provider.oauth2.accessTokenValidity"
-        # and the apply is refused, taking the rest of this chart's objects
-        # with it. So the operator Application has to reach 0.14.0 before this
-        # one applies. ArgoCD gets there on its own by retrying, but a sub-app
-        # sync that fails on this is not a mystery, it is the ordering.
-        #
-        # Omitting the field entirely leaves whatever the provider has, which
-        # is how every other application here behaves.
         accessTokenValidity: "hours=12"
         propertyMappings:
-          # scopeMappings.weeboEmail above, by its AUTHENTIK name, INSTEAD of
-          # "authentik default OAuth Mapping: OpenID 'email'". Same `email`
-          # scope, same claim, but `email_verified: True` -- without which
-          # oauth2-proxy rejects every login. Resolved by name against the API,
-          # so the AuthentikScopeMapping has to exist first (sync-wave 3) or
-          # this application's reconcile fails with
-          #   property mapping "weebo email" not found
           - "weebo email"
           - "authentik default OAuth Mapping: OpenID 'profile'"
           - "authentik default OAuth Mapping: OpenID 'openid'"
           - "authentik default OAuth Mapping: OpenID 'offline_access'"
-        # The browser leg the comment above says angos does not have: it is
-        # oauth2-proxy that runs it, in front of the UI, on the registry's own
-        # host (2.argo/helm/angos). It is an ordinary confidential client of
-        # THIS application, which is what keeps the UI and `docker login` on
-        # one issuer and one audience -- and what makes the client_secret
-        # written to mv/angos/auth no longer unused.
         allowedRedirectUris:
           - matchingMode: strict
             url: "https://registry.pkg.weebo.poc/"
           - matchingMode: strict
             url: "https://registry.pkg.weebo.poc/oauth2/callback"
+
+  batlehub:
+    enabled: true
+    slug: batlehub
+    name: batlehub
+    metaIcon: "https://maxleriche.net/public/media/application/batlehub.png"
+    accessGroup: weebo_moderator
+    secretTargets:
+      - backend: vault
+        path: batlehub/auth
+    provider:
+      kind: oauth2
+      oauth2:
+        clientId: batlehub
+        authorizationFlow: default-provider-authorization-implicit-consent
+        invalidationFlow: default-provider-invalidation-flow
+        signingKey: "authentik Self-signed Certificate"
+        grantTypes:
+          - "authorization_code"
+          - "urn:ietf:params:oauth:grant-type:device_code"
+          - "refresh_token"
+        accessTokenValidity: "hours=12"
+        propertyMappings:
+          - "weebo email"
+          - "authentik default OAuth Mapping: OpenID 'profile'"
+          - "authentik default OAuth Mapping: OpenID 'openid'"
+          - "authentik default OAuth Mapping: OpenID 'offline_access'"
+        allowedRedirectUris:
+          - matchingMode: strict
+            url: "https://pkg.weebo.poc/"
+          - matchingMode: strict
+            url: "https://pkg.weebo.poc/oauth2/callback"
 
   s3:
     enabled: false

@@ -170,6 +170,8 @@ project:
         kind: "Tenant"
   - name: dev-base
     includeBaseRepo: true
+    sourceRepo:
+      - oci://ghcr.io/batlehub/batlehub/charts/batlehub
     dest:
       - server: https://kubernetes.default.svc
         namespace: "angos"
@@ -184,18 +186,11 @@ project:
         kind: "Namespace"
       - group: "valkey.io"
         kind: "ValkeyCluster"
-      # angos binds its own ServiceAccount to the built-in
-      # `system:service-account-issuer-discovery` ClusterRole, which is how it
-      # reads the cluster's JWKS to validate the service-account tokens
-      # workloads present to it. Without this entry ArgoCD refuses the object
-      # with "ClusterRoleBinding is not permitted in project dev-base".
-      #
-      # ClusterRole came later and for one object: `angos-image-pull-audience`,
-      # which grants the single KEP-4412 verb
-      # `request-serviceaccounts-token-audience` on one audience name, so the
-      # kubelet may mint image-pull tokens. There is no built-in role for it,
-      # hence the exception; it grants access to no Kubernetes resource.
       - group: "rbac.authorization.k8s.io"
         kind: "ClusterRole"
       - group: "rbac.authorization.k8s.io"
         kind: "ClusterRoleBinding"
+      - group: "external-secrets.io"
+        kind: "ClusterSecretStore"
+      - group: "external-secrets.io"
+        kind: "ClusterExternalSecret"

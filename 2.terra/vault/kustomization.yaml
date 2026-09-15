@@ -24,3 +24,4 @@ configMapGenerator:
       - ./terra-map/monitoring.tf
       - ./terra-map/s3.tf
       - ./terra-map/angos.tf
+      - ./terra-map/batlehub.tf
