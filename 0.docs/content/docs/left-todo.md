@@ -106,7 +106,16 @@ description: "What's left to do ?"
   - [ ] Otel Collector
 - [ ] Registry
   - [ ] Batlehub
+    - [x] Mode d'authentification (OIDC / KUBE / ETC)
+    - [ ] Gestion des registres
+    - [ ] Analyse de sécurité des packages
+    - [ ] Exposition des registres (pkg.weebo.poc, npm.pkg.weebo.poc, \*.pkg.weebo.poc)
+    - [ ] D-2 ?
   - [ ] Angos
+    - [x] Mode d'authentification (OIDC / KUBE / ETC)
+    - [ ] Gestion des registres
+    - [ ] Analyse de sécurité des images
+    - [ ] D-2 ?
 - [ ] Security
   - [ ] Kloak
   - [ ] KubeArmor
