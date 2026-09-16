@@ -6,6 +6,7 @@
     "Infra",
     "database",
     "monitoring",
+    "registry",
     "security",
     "dev-env",
     "..."

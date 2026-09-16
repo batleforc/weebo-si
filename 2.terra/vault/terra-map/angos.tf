@@ -25,8 +25,16 @@ resource "vault_kv_secret_v2" "angos-valkey" {
   name  = "angos/config"
   data_json = jsonencode(
     {
-      pwd = random_string.angos-accessKey.result
-      url = "redis://angos:${random_string.angos-accessKey.result}@valkey-angos-valkey.angos.svc:6379"
+      # The password of the `angos` user on the ValkeyCluster of the same name
+      # (2.argo/helm/angos/templates/valkey), handed to the operator through
+      # the angos-valkey-cred ExternalSecret, and to angos itself inside the
+      # url below -- `[cache.redis]` and `[metadata_store.s3.redis]` are the
+      # only two consumers. Both sides read this one value, so they cannot
+      # drift; it used to be `random_string.angos-accessKey`, the S3 access
+      # key id, which worked but tied the cache password to an unrelated
+      # credential's rotation.
+      pwd = random_string.angos-valkey.result
+      url = "redis://angos:${random_string.angos-valkey.result}@valkey-angos-valkey.angos.svc:6379"
       # Signs the bearer tokens `GET /token` hands out. Rotating it invalidates
       # every registry token already issued; the OIDC ones are untouched.
       token_service_key = random_id.angos-token-service.b64_std

@@ -1,0 +1,47 @@
+---
+title: Angos
+description: "Le registre d'images et de charts"
+---
+
+Angos sert les images docker et les charts helm du cluster, sur `registry.pkg.weebo.poc`. Il est déployé par le chart `2.argo/helm/angos`, dont le `values.yaml` décrit l'instance entière : dépôts, upstreams, politiques d'accès et scanner.
+
+## Ce que déploie le chart
+
+```mermaid
+graph LR
+    App["Chart angos<br/>2.argo/helm/angos"] --> Dep["Deployment angos<br/>config.toml"]
+    App --> Proxy["oauth2-proxy<br/>SSO navigateur + page /me"]
+    App --> Scan["angos-scanner<br/>trivy ou grype"]
+    App --> Cp["credential provider<br/>DaemonSet, ns angos-node"]
+    App --> Route["IngressRoute<br/>registry.pkg.weebo.poc"]
+    App --> Vk[("ValkeyCluster<br/>angos-valkey")]
+    App --> Es["ExternalSecrets<br/>+ SecretStore"]
+
+    Es --> Bao[("OpenBao")]
+    Dep --> S3[("Bucket S3 angos<br/>s3-main.weebo.poc")]
+    Dep --> Vk
+    Scan -.->|rapport SARIF en referrer| Dep
+```
+
+Le serveur lit deux fichiers : `config.toml`, rendu depuis `values.yaml`, où vivent les dépôts, leurs upstreams et leurs politiques d'accès ; et `secrets.toml`, monté depuis un ExternalSecret, où vivent les blocs qui portent un identifiant. Le stockage S3 et le Valkey sont dans le second, l'URL du Valkey étant écrite dans OpenBao par Terraform, mot de passe compris.
+
+Le scanner est un second déploiement du même binaire qui repull l'image pour l'analyser, d'où son identité propre.
+
+## Les trois chemins d'accès
+
+```mermaid
+graph LR
+    Nav["Navigateur"] --> Proxy["oauth2-proxy<br/>cookie _angos_ui"]
+    Cli["docker login"] --> Tok["Jeton OIDC<br/>device grant ou page /me"]
+    Pod["Pod du cluster"] --> Proj["Jeton projeté<br/>audience angos"]
+
+    Proxy --> Auth["Authentik<br/>provider:weebo"]
+    Tok --> Auth
+    Proj --> Kube["auth.oidc.kube<br/>issuer de l'apiserver"]
+
+    Auth --> Angos["angos"]
+    Kube --> Angos
+    Angos --> Pol["access_policy<br/>pull / browse / push / delete"]
+```
+
+Angos ne lit aucun cookie : c'est l'IngressRoute qui sépare les deux mondes, en ne passant par le proxy que ce qui porte la session ou n'est pas une route d'API. Côté cluster, un pod présente son propre jeton projeté et tire ses images sans `imagePullSecret`.

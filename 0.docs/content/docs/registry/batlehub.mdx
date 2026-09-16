@@ -1,0 +1,57 @@
+---
+title: Batlehub
+description: "Le registre de packages"
+---
+
+Batlehub sert les packages et leurs dépendances, sur `pkg.weebo.poc` et ses sous-domaines. Son déploiement attend la 1.3.0 pour être terminé.
+
+## Ce que déploie le chart
+
+```mermaid
+graph LR
+    Chart["Chart batlehub<br/>2.argo/helm/batlehub"] -->|wave 1| Sec["ExternalSecrets<br/>auth, s3, postgres, valkey"]
+    Chart -->|wave 2| Pg[("Cluster CNPG<br/>batlehub-pg")]
+    Chart -->|wave 2| Vk[("ValkeyCluster<br/>batlehub-valkey")]
+    Chart -->|wave 3| Up["Application batlehub<br/>chart OCI amont"]
+    Chart -->|wave 3| Route["IngressRoute<br/>pkg.weebo.poc"]
+
+    Sec --> Bao[("OpenBao")]
+    Up --> Pg
+    Up --> Vk
+    Up --> S3[("Bucket S3 batlehub")]
+```
+
+Le chart local ne déploie pas batlehub lui-même : il prépare ses dépendances puis crée l'`Application` qui tire le chart amont, toute la configuration serveur étant passée en `valuesObject`. Les métadonnées vont en Postgres, les octets des artefacts dans le bucket S3.
+
+## Les modes d'authentification
+
+Le bloc `auth` de la configuration est une liste de fournisseurs, évalués dans l'ordre : le premier qui reconnaît la credential gagne, et une requête qui n'en porte aucune est traitée comme `anonymous`. Trois façons d'arriver authentifié, toutes sur le même en-tête `Authorization: Bearer` une fois la session obtenue.
+
+```mermaid
+graph LR
+    Nav["Navigateur<br/>console batlehub"] -->|code flow + refresh| Oidc["type: oidc<br/>Authentik"]
+    Pod["Pod du cluster"] -->|jeton projeté<br/>audience batlehub| Kube["type: kubernetes<br/>TokenReview"]
+    Ci["CI / CLI"] -->|Bearer| Tok["jeton d'API"]
+
+    Oidc -->|claim groups| Role["Rôle batlehub<br/>admin, user ou anonymous"]
+    Kube -->|system:serviceaccounts| Role
+    Tok -->|rôle porté par le jeton| Role
+    Role --> Rbac["rbac par registre<br/>releases:read, releases:list,<br/>source:read, catalogue:browse"]
+```
+
+- **OIDC** : le flow classique contre Authentik, avec `offline_access` pour que la SPA renouvelle sa session plutôt que de la voir expirer en pleine requête. Les rôles viennent du claim `groups`, mappé en dur : `weebo_admin` → `admin`, `weebo_moderator` → `user`.
+- **Kubernetes** : un pod monte son propre jeton projeté avec l'audience `batlehub` et l'envoie tel quel ; le serveur le valide par TokenReview. Un jeton émis pour l'apiserver est refusé, l'audience est tout l'intérêt du contrôle. Aujourd'hui `system:serviceaccounts` est mappé sur `user`, donc n'importe quel pod du cluster lit les registres.
+- **Jetons d'API** : c'est le mode qui reste à ouvrir. Deux variantes existent côté serveur — des jetons statiques déclarés en configuration (`type: token`, avec leur valeur, leur rôle et leur `user_id`), et des jetons générés par un utilisateur déjà connecté.
+
+```mermaid
+graph LR
+    User["Utilisateur connecté<br/>session OIDC"] -->|/me/tokens ou<br/>POST /api/v1/auth/tokens| Gen["Jeton<br/>nom, expiration, rôle"]
+    Gen --> Pg[("Postgres<br/>batlehub-pg")]
+    Gen -->|affiché une seule fois| Ci["CI / CLI"]
+    Ci -->|Authorization: Bearer| Srv["batlehub"]
+```
+
+La seconde variante est la plus intéressante ici : elle ne demande aucune configuration dans le chart, l'utilisateur crée son jeton depuis la console une fois connecté en OIDC, et le rôle qu'il porte est choisi à la création. Le jeton vit en base, donc dans le Postgres du schéma plus haut, et n'est affiché qu'une fois.
+
+Dans l'état actuel du chart, seuls `oidc` et `kubernetes` sont rendus dans la configuration : aucun bloc `type: token` n'est déclaré.
+

@@ -64,7 +64,8 @@ description: "What's left to do ?"
 
 - [x] Big Picture Infra
 - [x] Big Picture Database
-- [ ] Big Picture Monitoring
+- [x] Big Picture Monitoring
+- [x] Big Picture Registry
 - [ ] Big Picture Security
 - [ ] Big Picture Dev Environment
 
