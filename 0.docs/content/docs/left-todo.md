@@ -1,3 +1,8 @@
+---
+title: What's left to do ?
+description: "What's left to do ?"
+---
+
 # What's left to do ?
 
 ## Bone of the project
@@ -27,7 +32,7 @@
     - [ ] Verifie en local (podman) de bout en bout le 2026-09-13 : push -> job -> rapport. Reste a activer sur le cluster
     - [ ] grype ne recoit pas les credentials de `[scanner.registry]` en 1.8.0 et pull en anonyme ; contourne par `GRYPE_REGISTRY_AUTH_*` dans le chart, a retirer quand upstream corrige
   - [x] Expo : registry.pkg.weebo.poc
-- [ ] [Batlehub](https://batleforc.git.batleforc.fr/batlehub/)
+- [ ] [Batlehub](https://batleforc.git.batleforc.fr/batlehub/) - Blockage, waiting for 1.3.0 release
   - [ ] [OIDC](https://batleforc.git.batleforc.fr/batlehub/guide/admin-config.html#auth) : Allow users to login with OIDC
   - [ ] [OIDC Kube](https://batleforc.git.batleforc.fr/batlehub/guide/admin-config.html#kubernetes-service-accounts) : Allow Kubernetes to authenticate with OIDC (e.g. Create a configuration in pod from service account that can be used to pull artifacts from a private registry)
   - [ ] [OIDC CI](https://batleforc.git.batleforc.fr/batlehub/guide/admin-config.html#github-actions) : Directly push artifacts to batlehub registry from GitHub Actions using OIDC (Like VsCode Extension or other)
@@ -49,14 +54,16 @@
 - [ ] Setup [Stalwart](https://stalw.art/) as an internal mail system for the cluster and connect every app to it (prevent mail to go outside the cluster)
   - [ ] Weebo.poc for internal messaging (entre les apps du cluster et les utilisateurs du cluster ou user <-> user)
   - [ ] weebo.[fr/net/untruc] for external messaging si nécessaire plus tard
+  - [ ] Mettre en place un script de provisioning, si un objet authentik user a une annotations stalwart/email, alors créer le mail dans stalwart et le lier à l'utilisateur authentik https://stalw.art/docs/auth/backend/oidc/
+  - [ ] Idem, si un user n'existe plus dans Authentik, verouiller le mail dans Stalwart
 
 ## Documentation
 
 - [ ] Installation Guide
 - [ ] User Guide
 
-- [ ] Big Picture Infra
-- [ ] Big Picture Database
+- [x] Big Picture Infra
+- [x] Big Picture Database
 - [ ] Big Picture Monitoring
 - [ ] Big Picture Security
 - [ ] Big Picture Dev Environment
@@ -75,6 +82,8 @@
     - [ ] Secrets
     - [ ] External Secrets
   - [ ] ArgoCD
+    - [ ] Bonne pratique GitOps
+    - [ ] Segmentation des applications
   - [ ] Cert-Manager / Trust Manager
   - [ ] Storage
     - [ ] Longhorn

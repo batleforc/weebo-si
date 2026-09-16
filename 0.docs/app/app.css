@@ -92,3 +92,22 @@ body {
 }
 
 .cyber-text-glow { text-shadow: var(--cyber-glow); }
+
+/* mermaid writes the width it laid the diagram out at as an inline `max-width`
+   on the svg -- the width where the labels are at their real font size -- and
+   otherwise lets the svg shrink to whatever the column is worth. The wrapper in
+   components/mermaid.tsx carries that width as a min-width, so a diagram always
+   renders at exactly its layout size: mermaid's own max-width stops it from
+   being blown up, the min-width stops it from being squeezed, and the container
+   scrolls when the column is too narrow. */
+.mermaid-diagram svg {
+  height: auto;
+}
+
+/* The full-screen view is the one place the svg is meant to leave that size:
+   the wrapper is sized to `natural width x zoom`, and the svg fills it. */
+.mermaid-zoom svg {
+  width: 100%;
+  height: auto;
+  max-width: 100% !important;
+}

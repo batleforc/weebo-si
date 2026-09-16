@@ -2,3 +2,89 @@
 title: Database
 description: "Weebo's database"
 ---
+
+Pour la partit "base de données", le choix a été de passer par des opérateurs pour gérer les base de données.
+
+Les stockage de données en place sont :
+
+- [PostgreSQL](https://cloudnative-pg.io/) (CNPG)
+- [MongoDB](https://github.com/mongodb/mongodb-kubernetes-operator) (MongoDB Operator)
+- [ClickHouse](https://github.com/ClickHouse/ClickHouse) (ClickHouse Operator)
+- [RustFS](https://github.com/rustfs/operator) (RustFS Operator)
+- [Valkey](https://github.com/valkey-io/valkey) (Valkey Operator)
+
+## Installation
+
+Tout le fonctionnement de ce projet est basé sur l'utilisation d'ArgoCD, une application permet donc de regrouper toutes les applications relative a la db dans un seule dossier.
+
+Cette application est trouvable dans `2.argo/helm/database` et est découper en deux parties:
+
+- `main` : Contient tout le nécessaire pour déployer ces opérateurs et est controller via son `values.yaml` permettant de controller qu'elle opérateur est déployé ou non. Ce fichiers est aussi observé par renovate pour proposer des mises a jour des opérateurs.
+- `sub` : Contient, quand nécessaires, le nécessaire a la configuration de chaque opérateur. Aujourd'hui (16-09-2026), seul rustfs nécessite une configuration particulière afin de provisionner un tennant S3 et synchroniser ces identifiant avec OpenBao.
+
+### Déploiement des opérateurs
+
+```mermaid
+graph LR
+    Repo[Git - weebo-si] --> Argo[ArgoCD]
+    Argo --> Main["Application database<br/>helm/database/main"]
+
+    Main --> CNPG[CloudNativePG]
+    Main --> Mongo[MongoDB Operator]
+    Main --> CH[ClickHouse Operator]
+    Main --> RFS[RustFS Operator]
+    Main --> VK[Valkey Operator]
+    Main -->|sync-wave 2| Sub["Application database-app<br/>helm/database/sub"]
+```
+
+Chaque opérateur est activable / désactivable depuis `main/values.yaml` (`<operateur>.enabled`), et `subApp.enabled` conditionne a lui seul le déploiement de la partie `sub`.
+
+### Configuration du tenant S3
+
+La partie `sub` ne déploie aucun opérateur : elle écrit les objets que l'opérateur RustFS et External Secrets vont réconcilier.
+
+```mermaid
+graph TD
+    Sub["Application database-app<br/>helm/database/sub"] --> Store[SecretStore cred-store]
+    Sub --> ES["ExternalSecrets<br/>main-cred, angos-cred,<br/>batlehub-cred, main-oidc"]
+    Sub --> CM["ConfigMaps de policies<br/>readwrite + bucketHealth"]
+    Sub --> Tenant["Tenant RustFS main<br/>policies / users / buckets"]
+    Sub --> Route["IngressRoute<br/>s3-main.weebo.poc"]
+
+    Store -->|auth kubernetes, role s3| Bao[(OpenBao - mv)]
+    ES --> Store
+    ES --> Tenant
+    CM --> Tenant
+    RFS[RustFS Operator] -.->|reconcile| Tenant
+    Tenant --> Pods["Pods RustFS + PVC longhorn"]
+    Route --> Pods
+    Authentik[Authentik] -.->|OIDC, claim rustfs_policy| Tenant
+```
+
+## Qui consomme quoi
+
+Les opérateurs ne portent aucune donnée : ce sont les applications qui déclarent leurs propres instances (CR) dans leur chart.
+
+```mermaid
+graph LR
+    CNPG[CloudNativePG] --> PG[("Cluster<br/>batlehub-pg")]
+    VK[Valkey Operator] --> VKB[("ValkeyCluster<br/>batlehub-valkey")]
+    VK --> VKA[("ValkeyCluster<br/>angos-valkey")]
+    CH[ClickHouse Operator] --> CHC[("ClickHouseCluster<br/>+ Keeper")]
+    Mongo[MongoDB Operator] --> MGC[("MongoDBCommunity")]
+    RFS[RustFS Operator] --> Tenant[("Tenant main<br/>s3-main.weebo.poc")]
+
+    PG --> Batlehub[Batlehub]
+    VKB --> Batlehub
+    VKA --> Angos[Angos]
+    CHC --> ClickStack[ClickStack / HyperDX]
+    MGC --> ClickStack
+    Tenant -->|bucket batlehub| Batlehub
+    Tenant -->|bucket angos| Angos
+```
+
+Les instances ClickHouse et MongoDB sont portées par le chart `2.helm/clickstack`, les instances Postgres / Valkey par les charts applicatifs (`2.argo/helm/batlehub`, `2.argo/helm/angos`), et le tenant S3 par `2.argo/helm/database/sub`.
+
+## NTB
+
+- !TODO : Au prochain reset de cluster, il faudra migrer Authentik vers la gestion CNPG/Valkey.

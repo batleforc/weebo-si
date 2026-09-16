@@ -1,0 +1,13 @@
+{
+  "pages": [
+    "index",
+    "left-todo",
+    "archi",
+    "Infra",
+    "database",
+    "monitoring",
+    "security",
+    "dev-env",
+    "..."
+  ]
+}
