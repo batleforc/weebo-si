@@ -25,7 +25,7 @@ netbird:
     enabled: true
     image: netbirdio/netbird
     # renovate: datasource=docker depName=netbirdio/netbird versioning=loose
-    version: "0.73.2"
+    version: "0.77.1"
     pullPolicy: Always
     capabilities:
       - NET_ADMIN
