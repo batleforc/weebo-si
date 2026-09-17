@@ -1,0 +1,76 @@
+# Publie les deux documentations dans un seul artifact Pages:
+#   /weebo-si/      -> doc courante (Fumadocs + React Router, 0.docs)
+#   /weebo-si/v2/   -> archive VitePress figee des saisons 1 & 2, construite
+#                      depuis le tag v2.0.0 qui porte encore ses sources
+# deploy-pages remplace tout le site a chaque run: les deux docs doivent donc
+# etre construites dans le meme job, sinon l'archive disparait.
+#
+# Le deploiement suit develop, la branche par defaut du depot. main n'est plus
+# fusionnee: elle reste sur l'etat des saisons 1 & 2, et l'archive vient de
+# toute facon du tag, pas d'une branche.
+name: Deploy docs to Pages
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "0.docs/**"
+      - ".github/workflows/deploy-docs.yml"
+      - ".github/scripts/**"
+      - ".github/pages/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # L'archive est construite dans un worktree sur le tag v2.0.0: sans
+          # l'historique complet, ce tag n'existe pas dans le clone.
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: 0.docs/yarn.lock
+      - name: Setup Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - name: Install current docs
+        run: yarn --cwd 0.docs install --frozen-lockfile
+      - name: Build current docs
+        run: yarn --cwd 0.docs build
+      - name: Build archived docs from tag
+        run: .github/scripts/build-legacy-docs.sh
+        env:
+          VITE_UMAMI_URL: ${{ vars.UMAMI_URL }}
+          VITE_UMAMI_ID: ${{ vars.UMAMI_ID }}
+      - name: Assemble Pages site
+        run: .github/scripts/assemble-pages.sh
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

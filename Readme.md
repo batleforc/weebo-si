@@ -11,12 +11,17 @@ Ce projet a pour but de définir et de mettre en place un environnement Kubernet
 
 Pour plus d'informations sur le projet, veuillez vous référer à la [documentation](https://batleforc.github.io/weebo-si/?utm_source=github&utm_medium=readme&utm_campaign=weebo-si).
 
-Dans cette doc vous retrouverez les informations suivantes:
+Deux documentations cohabitent sur le même site:
 
-- [Les sources](https://batleforc.github.io/weebo-si/0.introduction/sources.html?utm_source=github&utm_medium=readme&utm_campaign=weebo-si)
-- [Les technologies utilisées](https://batleforc.github.io/weebo-si/0.introduction/home.html#technologies-utilisees?utm_source=github&utm_medium=readme&utm_campaign=weebo-si)
-- [Le déroulement du projet et les étapes](https://batleforc.github.io/weebo-si/0.introduction/etape.html?utm_source=github&utm_medium=readme&utm_campaign=weebo-si)
-- [Comment contribuer](https://batleforc.github.io/weebo-si/0.introduction/contributing.html?utm_source=github&utm_medium=readme&utm_campaign=weebo-si) qui explique surtout comment installer les outils nécessaires et la mise en place de git-hooks.
+- la [doc de la saison 3](https://batleforc.github.io/weebo-si/docs?utm_source=github&utm_medium=readme&utm_campaign=weebo-si), celle qui vit et qui est écrite depuis `0.docs`;
+- la [doc archivée des saisons 1 & 2](https://batleforc.github.io/weebo-si/v2/?utm_source=github&utm_medium=readme&utm_campaign=weebo-si), figée sous `/v2/` et reconstruite à l'identique depuis le tag `v2.0.0`, qui porte encore ses sources. Les anciens liens vers la racine y sont redirigés automatiquement.
+
+Dans la doc archivée vous retrouverez les informations suivantes:
+
+- [Les sources](https://batleforc.github.io/weebo-si/v2/0.introduction/sources.html?utm_source=github&utm_medium=readme&utm_campaign=weebo-si)
+- [Les technologies utilisées](https://batleforc.github.io/weebo-si/v2/0.introduction/home.html?utm_source=github&utm_medium=readme&utm_campaign=weebo-si#technologies-utilisees)
+- [Le déroulement du projet et les étapes](https://batleforc.github.io/weebo-si/v2/0.introduction/etape.html?utm_source=github&utm_medium=readme&utm_campaign=weebo-si)
+- [Comment contribuer](https://batleforc.github.io/weebo-si/v2/0.introduction/contributing.html?utm_source=github&utm_medium=readme&utm_campaign=weebo-si) qui explique surtout comment installer les outils nécessaires et la mise en place de git-hooks.
 
 ## Participating
 

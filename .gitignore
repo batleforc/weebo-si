@@ -29,13 +29,9 @@ root_ca*.crt
 weebo-si-int-ca.crt
 weebo-si-int-ca.pem
 1.pulu-init/patch.json
-## VitePress
+## Worktree jetable de l'archive VitePress (voir .github/scripts/build-legacy-docs.sh)
 
-0.docs/.vitepress/dist
-0.docs/.vitepress/cache
-
-0.docs_old/.vitepress/dist
-0.docs_old/.vitepress/cache
+.legacy-docs
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/yarn,node

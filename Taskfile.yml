@@ -40,9 +40,33 @@ tasks:
     cmds:
       - kubectl {{ .CLI_ARGS }}
   docs:run:
+    desc: "Run the current doc (Fumadocs) dev server"
     dir: 0.docs
     cmds:
       - npm run dev
+  docs:legacy:run:
+    desc: "Run the archived VitePress doc (saisons 1 & 2) from its git tag, in a throwaway worktree"
+    cmds:
+      - .github/scripts/build-legacy-docs.sh --worktree-only
+      - yarn --cwd .legacy-docs install
+      - yarn --cwd .legacy-docs run docs:dev
+  docs:pages:
+    desc: "Build both docs and assemble the GitHub Pages site into dist/ (what the CI does)"
+    cmds:
+      - yarn --cwd 0.docs install
+      - yarn --cwd 0.docs build
+      - .github/scripts/build-legacy-docs.sh
+      - .github/scripts/assemble-pages.sh
+  docs:pages:preview:
+    desc: "Serve the assembled Pages site on http://localhost:8080/weebo-si/ (both docs, real base path)"
+    deps: [docs:pages]
+    cmds:
+      # Les deux sites referencent /weebo-si/... en absolu: on recree ce prefixe
+      # avec un lien symbolique plutot que de servir dist/ a la racine.
+      - rm -rf .tmp/pages-preview
+      - mkdir -p .tmp/pages-preview
+      - ln -s "$(pwd)/dist" .tmp/pages-preview/weebo-si
+      - python3 -m http.server 8080 --directory .tmp/pages-preview
   talosctl:
     env:
       TALOSCONFIG: "0.config/talosconfig2.yaml"

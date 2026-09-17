@@ -60,6 +60,9 @@
   ignorePaths: [
     '**/node_modules/**',
     '.tmp/**',
+    // The VitePress archive served at /weebo-si/v2/ needs no entry here: its
+    // sources never land in the working tree, they are built from the v2.0.0
+    // tag in a worktree, and Renovate only scans the base branch.
     // Vendored subchart of the ClickStack fork -- it is a build output of
     // `helm dependency update`, not a thing to bump in place.
     '2.helm/clickstack/charts/**',
