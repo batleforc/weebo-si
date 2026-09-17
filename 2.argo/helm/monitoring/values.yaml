@@ -84,7 +84,7 @@ clickstack:
   bootstrap:
     enabled: true
     mongoshImage: "mongo:7"
-    curlImage: "curlimages/curl:8.11.1"
+    curlImage: "curlimages/curl:8.22.0"
 
   preauth:
     enabled: true
