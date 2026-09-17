@@ -21,11 +21,21 @@ export function baseOptions(): BaseLayoutProps {
     githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
     links: [
       {
-        // Hors du perimetre de la SPA (site VitePress statique): lien brut,
-        // construit sur BASE_URL pour rester juste en dev comme sur Pages.
-        text: 'Archive v2',
-        url: `${import.meta.env.BASE_URL}v2/`,
-        external: true,
+        // L'archive est hors du perimetre de la SPA (site VitePress statique).
+        // `type: 'custom'` parce qu'un item standard passe par le Link de
+        // fumadocs: soit le Link React Router, qui reprefixerait le basename,
+        // soit un target="_blank" impose par `external`. Ici un <a> nu, meme
+        // onglet, navigation complete. L'URL est construite sur BASE_URL pour
+        // rester juste en dev comme sur Pages.
+        type: 'custom',
+        children: (
+          <a
+            href={`${import.meta.env.BASE_URL}v2/`}
+            className="inline-flex items-center gap-1 p-2 text-fd-muted-foreground transition-colors hover:text-fd-accent-foreground"
+          >
+            Archive v2
+          </a>
+        ),
       },
       {
         type: 'icon',

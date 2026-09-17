@@ -39,7 +39,13 @@ const STYLE = `<style ${MARKER}>
 const BANNER = `<div class="weebo-archive-banner" ${MARKER}>`
   + `<span class="weebo-long">Vous lisez la documentation archiv&eacute;e (saisons 1 &amp; 2), fig&eacute;e et conserv&eacute;e pour les anciens liens.</span>`
   + `<span class="weebo-short">Documentation archiv&eacute;e (saisons 1 &amp; 2).</span>`
-  + `<a href="/weebo-si/">Aller &agrave; la doc actuelle &rarr;</a>`
+  // target="_self" n'ouvre pas un nouvel onglet: il sert a sortir du routeur
+  // de VitePress. Son listener de clic (en capture) detourne TOUT lien same
+  // origin sans verifier sa base, et tenterait donc de charger /weebo-si/
+  // comme une page de l'archive -- ecran casse jusqu'au rechargement force.
+  // Ses seules echappatoires sont .vp-raw, [download] et la presence de
+  // l'attribut target, quelle que soit sa valeur.
+  + `<a href="/weebo-si/" target="_self">Aller &agrave; la doc actuelle &rarr;</a>`
   + `</div>`;
 
 function htmlFiles(dir) {
