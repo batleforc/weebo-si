@@ -115,6 +115,8 @@ angos:
     browse: ["provider:weebo"]
     # The job queue behind the UI's jobs view, including retrying and deleting.
     jobs: ["group:weebo_admin"]
+    # Admin actions that are not repository-specific, like the `/v2/_catalog` listing
+    admin: ["group:weebo_admin"]
 
   # Vulnerability scanning, off everywhere by default. A manifest pushed into a
   # repository carrying `scan: true` enqueues a job; the job asks the service

@@ -84,3 +84,12 @@ browse: ["list-revisions", "list-uploads"]
 push: ["start-upload", "update-upload", "complete-upload", "cancel-upload", "get-upload", "mount-blob", "put-manifest"]
 delete: ["delete-manifest", "delete-blob"]
 {{- end -}}
+
+{{/*
+Give a provider's group admin rights to the whole registry.
+The `group:` prefix is load-bearing: it is the only way to distinguish a group from a namespace or service account,
+and the CEL rule must check the `groups` claim rather than the `sub` claim.
+*/}}
+{{- define "angos.access.group.admin" -}}
+identity.oidc != null && identity.oidc.provider_name == "{{ .provider }}" && "groups" in identity.oidc.claims && "{{ .subjects}}" in identity.oidc.claims["groups"]
+{{- end -}}
