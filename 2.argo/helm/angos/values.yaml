@@ -82,6 +82,7 @@ angos:
       access:
         pull: ["provider:weebo", "provider:kube"]
         browse: ["provider:weebo"]
+        delete: ["group:weebo_admin"]
     ghcr:
       scan: false
       upstreams:
