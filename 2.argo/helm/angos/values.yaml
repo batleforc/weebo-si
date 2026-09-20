@@ -212,6 +212,7 @@ angos:
   ui:
     enabled: true
     nativeAuth: true
+    scope: "openid email profile offline_access groups"
 
   # Browser SSO for the web UI. angos itself has no login flow of any kind: the
   # UI is a Svelte app with no auth code, and the server only ever reads an

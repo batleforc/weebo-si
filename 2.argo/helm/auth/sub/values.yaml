@@ -360,6 +360,15 @@ scopeMappings:
           "email_verified": str(verified).lower() == "true",
       }
 
+  weeboGroups:
+    enabled: true
+    crName: weebo-groups
+    name: "weebo groups"
+    scopeName: groups
+    description: "Weebo group membership, for angos"
+    expression: |
+      return {"groups": [g.name for g in request.user.ak_groups.all()]}
+
 # ---------------------------------------------------------------------------
 # Phases 3 and 4 -- applications and their access policies.
 #
@@ -582,6 +591,7 @@ applications:
         accessTokenValidity: "hours=12"
         propertyMappings:
           - "weebo email"
+          - "weebo groups"
           - "authentik default OAuth Mapping: OpenID 'profile'"
           - "authentik default OAuth Mapping: OpenID 'openid'"
           - "authentik default OAuth Mapping: OpenID 'offline_access'"
