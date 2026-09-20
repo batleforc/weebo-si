@@ -570,6 +570,7 @@ applications:
     provider:
       kind: oauth2
       oauth2:
+        clientType: public
         clientId: angos
         authorizationFlow: default-provider-authorization-implicit-consent
         invalidationFlow: default-provider-invalidation-flow

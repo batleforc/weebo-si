@@ -25,6 +25,9 @@ spec:
       authorizationFlow: {{ .authorizationFlow | quote }}
       invalidationFlow: {{ .invalidationFlow | quote }}
       signingKey: {{ .signingKey | quote }}
+      {{- if .clientType }}
+      clientType: {{ .clientType | quote }}
+      {{- end }}
       grantTypes:
 {{- range .grantTypes }}
         - {{ . | quote }}
