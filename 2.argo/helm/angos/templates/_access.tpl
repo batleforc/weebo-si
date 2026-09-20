@@ -91,5 +91,13 @@ The `group:` prefix is load-bearing: it is the only way to distinguish a group f
 and the CEL rule must check the `groups` claim rather than the `sub` claim.
 */}}
 {{- define "angos.access.group.admin" -}}
-identity.oidc != null && identity.oidc.provider_name == "{{ .provider }}" && "groups" in identity.oidc.claims && "{{ .subjects}}" in identity.oidc.claims["groups"]
+{{- $conds := list -}}
+{{- range .subjects -}}
+{{- $conds = append $conds (printf "(%s)" (include "angos.access.subject" .)) -}}
+{{- end -}}
+{{- $who := first $conds -}}
+{{- if gt (len $conds) 1 -}}
+{{- $who = printf "(%s)" (join " || " $conds) -}}
+{{- end -}}
+{{ $who }} && request.action in ["list-catalog", "list-repositories", "list-namespaces", "list-jobs", "list-failed-jobs", "retry-job", "delete-job"]
 {{- end -}}
