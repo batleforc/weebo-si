@@ -3,7 +3,7 @@ project: ""
 branch: ""
 
 batlehub:
-  enabled: false
+  enabled: true
 
   # The upstream chart, deployed as a nested ArgoCD Application
   # (templates/batlehub/app.yaml). Everything this chart renders itself --
@@ -31,12 +31,12 @@ batlehub:
     name: batlehub
     repoURL: oci://ghcr.io/batlehub/batlehub/charts/batlehub
     # renovate: datasource=docker depName=ghcr.io/batlehub/batlehub/charts/batlehub
-    version: 1.2.0
+    version: 1.4.0
 
   image:
     registry: ghcr.io/batlehub/batlehub
     # renovate: datasource=docker depName=ghcr.io/batlehub/batlehub
-    tag: 1.2.0
+    tag: 1.4.0
 
   # The apex. Every registry below also answers on `<name>.<dns>` -- see
   # `subdomainRouting` -- so the certificate and the IngressRoute both cover the
