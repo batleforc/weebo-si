@@ -209,6 +209,10 @@ angos:
       limits:
         memory: "2Gi"
 
+  ui:
+    enabled: true
+    nativeAuth: false
+
   # Browser SSO for the web UI. angos itself has no login flow of any kind: the
   # UI is a Svelte app with no auth code, and the server only ever reads an
   # `Authorization` header or a client certificate -- never a cookie. With
@@ -227,7 +231,7 @@ angos:
   # sends a request through it when the request carries this proxy's session
   # cookie, or when it is not an API path at all. See templates/angos/ingress.yaml.
   oauth2Proxy:
-    enabled: false
+    enabled: true
     image:
       registry: quay.io/oauth2-proxy/oauth2-proxy
       # renovate: datasource=docker depName=quay.io/oauth2-proxy/oauth2-proxy
