@@ -65,7 +65,7 @@ spec:
           server:
             host: "0.0.0.0"
             port: 8080
-            static_dir: "./ui/dist"
+            static_dir: "/app/ui/dist"
             trusted_proxies:
               {{- toYaml $b.trustedProxies | nindent 14 }}
           {{- if $b.subdomainRouting.enabled }}
