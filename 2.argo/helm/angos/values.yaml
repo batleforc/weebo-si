@@ -8,7 +8,7 @@ angos:
   image:
     registry: ghcr.io/project-angos/angos
     # renovate: datasource=docker depName=ghcr.io/project-angos/angos
-    tag: 1.8.0
+    tag: 1.9.2
   dns: registry.pkg.weebo.poc
   # `[auth.token_service]`, whose secret_key comes from Vault and whose realm
   # is built from `dns` above. The ceiling angos enforces is 86400.
@@ -144,7 +144,7 @@ angos:
     # subcommand, and nothing else in this chart changes with it.
     #
     # trivy is the default because it is the one that works from configuration
-    # alone. Measured on 1.8.0: the `[scanner.registry]` username and password
+    # alone. Measured on 1.9.2: the `[scanner.registry]` username and password
     # never reach grype, which then pulls anonymously and fails every scan with
     # `UNAUTHORIZED: Access denied` from this registry's own policy. The
     # `GRYPE_REGISTRY_AUTH_*` environment in templates/angos/scanner.yaml is
@@ -227,7 +227,7 @@ angos:
   # sends a request through it when the request carries this proxy's session
   # cookie, or when it is not an API path at all. See templates/angos/ingress.yaml.
   oauth2Proxy:
-    enabled: true
+    enabled: false
     image:
       registry: quay.io/oauth2-proxy/oauth2-proxy
       # renovate: datasource=docker depName=quay.io/oauth2-proxy/oauth2-proxy
