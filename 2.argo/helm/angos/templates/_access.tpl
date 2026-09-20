@@ -99,5 +99,5 @@ and the CEL rule must check the `groups` claim rather than the `sub` claim.
 {{- if gt (len $conds) 1 -}}
 {{- $who = printf "(%s)" (join " || " $conds) -}}
 {{- end -}}
-{{ $who }} && request.action in ["list-catalog", "list-repositories", "list-namespaces", "list-jobs", "list-failed-jobs", "retry-job", "delete-job"]
+{{ $who }}
 {{- end -}}
