@@ -1,0 +1,31 @@
+{{- if .Values.che.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: "eclipse-che-operator"
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: {{ .Values.project }}
+  syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/warn: privileged
+    automated: {}
+    syncOptions:
+    - ServerSideApply=true
+  source:
+    chart: eclipse-che
+    repoURL: {{ .Values.che.operator.che.repoURL }}
+    targetRevision: "{{ .Values.che.operator.che.version }}"
+    helm:
+      releaseName: eclipse-che-operator
+  destination:
+    name: "in-cluster"
+    namespace: {{ .Values.che.namespace }}
+{{- end -}}

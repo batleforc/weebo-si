@@ -1,0 +1,16 @@
+project: ""
+
+cheUser:
+  username: "max"
+  externalConfig:
+    enabled: true
+    repoURL: "https://github.com/batleforc/weebo-dotfiles-che"
+    path: "config"
+    branch: "HEAD"
+
+vault:
+  enabled: true
+  server: "https://openbao.vault:8200"
+  path: "mk"
+  role: "auth-read"
+  sa: "default"

@@ -1,0 +1,34 @@
+{{- if .Values.che.cheApp.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: che-app
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: "{{ .Values.project }}"
+  source:
+    repoURL: '{{ .Values.repo }}'
+    targetRevision: '{{ .Values.branch }}'
+    path: '1.argo/helm/che/sub'
+    helm:
+      releaseName: che-app
+      valuesObject:
+        {{- with .Values }}
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'argocd'
+  syncPolicy:
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

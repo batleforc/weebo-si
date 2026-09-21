@@ -1,0 +1,20 @@
+{{ if .Values.cheUser.externalConfig.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cheUser.username }}external-config
+  namespace: argocd
+spec:
+  project: {{ .Values.project }}
+  source:
+    path: {{ .Values.cheUser.externalConfig.path }}
+    repoURL: {{ .Values.cheUser.externalConfig.repoURL }}
+    targetRevision: {{ .Values.cheUser.externalConfig.branch }}
+  destination:
+    namespace: dev-ws-{{ .Values.cheUser.username }}
+    server: "https://kubernetes.default.svc"
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+{{- end }}

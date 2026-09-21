@@ -1,0 +1,23 @@
+che:
+  enabled: true
+  namespace: eclipse-che
+  cheApp:
+    enabled: true
+  cheAppBis:
+    enabled: true
+  ingress:
+    enabled: true
+    host: cde.dev.weebo.poc
+  operator:
+    che:
+      repoURL: https://eclipse-che.github.io/che-operator/charts
+      ## renovate: datasource=docker depName=ghcr.io/batlehub/batlehub/charts/batlehub
+      version: 7.122.0
+    devworkspace:
+      repoURL: https://github.com/devfile/devworkspace-operator
+      ## renovate: datasource=docker depName=ghcr.io/batlehub/batlehub/charts/batlehub
+      version: v0.43.0
+
+repo: ""
+project: ""
+branch: ""

@@ -1,0 +1,13 @@
+che:
+  enabled: true
+  cluster:
+    enabled: true
+  cheApp:
+    enabled: true
+  ingress:
+    enabled: true
+    host: cde.dev.weebo.poc
+
+repo: ""
+project: ""
+branch: ""

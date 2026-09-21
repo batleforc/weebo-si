@@ -1,0 +1,6 @@
+repo: ""
+project: ""
+branch: ""
+
+che:
+  enabled: true

@@ -41,6 +41,10 @@ batlehub:
   enabled: true
   project: dev-base
 
+che:
+  enabled: false
+  project: dev
+
 repo: ""
 branch: ""
 
@@ -203,3 +207,19 @@ project:
         kind: "ClusterSecretStore"
       - group: "external-secrets.io"
         kind: "ClusterExternalSecret"
+  - name: dev
+    includeBaseRepo: true
+    sourceRepo:
+      - https://github.com/devfile/devworkspace-operator
+    dest:
+      - server: https://kubernetes.default.svc
+        namespace: "argocd"
+      - server: https://kubernetes.default.svc
+        namespace: "eclipse-che"
+    clusterResourceWhitelist:
+      - group: ""
+        kind: "Namespace"
+      - group: "rbac.authorization.k8s.io"
+        kind: "ClusterRole"
+      - group: "rbac.authorization.k8s.io"
+        kind: "ClusterRoleBinding"

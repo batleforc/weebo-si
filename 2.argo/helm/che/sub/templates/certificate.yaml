@@ -1,0 +1,24 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: che-cluster-tls
+  namespace: {{ .Values.che.namespace }}
+spec:
+  commonName: "{{ .Values.che.ingress.host }}"
+  dnsNames:
+    - "{{ .Values.che.ingress.host }}"
+  dnsNames:
+    - {{ .Values.angos.dns }}
+  issuerRef:
+    name: vault-issuer
+    kind: ClusterIssuer
+  privateKey:
+    size: 4096
+  subject:
+    organizationalUnits:
+      - Infra
+    organizations:
+      - WeeboSI
+  usages:
+    - digital signature
+    - key encipherment
