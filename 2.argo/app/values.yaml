@@ -217,6 +217,8 @@ project:
         namespace: "argocd"
       - server: https://kubernetes.default.svc
         namespace: "eclipse-che"
+      - server: "https://kubernetes.default.svc"
+        namespace: "devworkspace-controller"
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"
