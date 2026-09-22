@@ -12,7 +12,7 @@ spec:
   source:
     repoURL: '{{ .Values.repo }}'
     targetRevision: '{{ .Values.branch }}'
-    path: '1.argo/helm/che/sub-bis'
+    path: '2.argo/helm/che/sub-bis'
     helm:
       releaseName: che-app
       valuesObject:
