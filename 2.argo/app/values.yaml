@@ -42,7 +42,7 @@ batlehub:
   project: dev-base
 
 che:
-  enabled: false
+  enabled: true
   project: dev
 
 repo: ""
@@ -211,6 +211,7 @@ project:
     includeBaseRepo: true
     sourceRepo:
       - https://github.com/devfile/devworkspace-operator
+      - https://eclipse-che.github.io/che-operator/charts
     dest:
       - server: https://kubernetes.default.svc
         namespace: "argocd"

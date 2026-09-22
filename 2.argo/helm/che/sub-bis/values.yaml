@@ -4,3 +4,8 @@ branch: ""
 
 che:
   enabled: true
+  ingress:
+    enabled: true
+    host: cde.dev.weebo.poc
+
+user: []
