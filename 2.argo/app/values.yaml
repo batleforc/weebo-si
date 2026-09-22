@@ -232,3 +232,5 @@ project:
         kind: "CustomResourceDefinition"
       - group: "admissionregistration.k8s.io"
         kind: "ValidatingWebhookConfiguration"
+      - group: "controller.devfile.io"
+        kind: "DevWorkspaceOperatorConfig"
