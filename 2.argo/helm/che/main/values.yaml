@@ -8,6 +8,18 @@ che:
   ingress:
     enabled: true
     host: cde.dev.weebo.poc
+  # Root CA injected into che-server (and, through `ca-certs-merged`, into
+  # workspaces) so it trusts the internal PKI -- authentik's issuer above all.
+  # Rendered as a trust-manager Bundle in sub-bis; `name` is both the Bundle and
+  # the ConfigMap it writes into the Che namespace, `key` the file name the
+  # certificate gets under /public-certs.
+  caBundle:
+    enabled: true
+    name: che-custom-ca-certificates
+    key: custom-ca-certificates.pem
+    # In cert-manager, where trust-manager reads its sources; created by the
+    # ingress chart's ExternalSecret from mv/cert-manager/config.
+    sourceSecret: main-ca.crt
   operator:
     che:
       repoURL: https://eclipse-che.github.io/che-operator/charts

@@ -1,0 +1,21 @@
+{{- if .Values.che.caBundle.enabled -}}
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: {{ .Values.che.caBundle.name }}
+spec:
+  sources:
+    - secret:
+        name: {{ .Values.che.caBundle.sourceSecret | quote }}
+        includeAllKeys: true
+  target:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: {{ .Values.che.namespace }}
+    configMap:
+      key: {{ .Values.che.caBundle.key | quote }}
+      metadata:
+        labels:
+          app.kubernetes.io/part-of: che.eclipse.org
+          app.kubernetes.io/component: ca-bundle
+{{- end -}}
