@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: batlehub
+  name: che
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "1"
