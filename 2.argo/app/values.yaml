@@ -234,3 +234,5 @@ project:
         kind: "ValidatingWebhookConfiguration"
       - group: "controller.devfile.io"
         kind: "DevWorkspaceOperatorConfig"
+      - group: "trust.cert-manager.io"
+        kind: "Bundle"
