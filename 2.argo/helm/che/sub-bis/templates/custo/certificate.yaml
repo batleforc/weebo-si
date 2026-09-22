@@ -5,6 +5,10 @@ metadata:
   namespace: {{ .Values.che.namespace }}
 spec:
   commonName: "{{ .Values.che.ingress.host }}"
+  secretName: che-cluster-tls
+  secretTemplate:
+    labels:
+      app.kubernetes.io/part-of: che.eclipse.org
   dnsNames:
     - "{{ .Values.che.ingress.host }}"
   issuerRef:
