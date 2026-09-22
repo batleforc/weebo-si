@@ -16,7 +16,7 @@ spec:
     helm:
       releaseName: batlehub
       valuesObject:
-        project: "{{ .Values.batlehub.project }}"
+        project: "{{ .Values.che.project }}"
         repo: "{{ .Values.repo }}"
         branch: "{{ .Values.branch }}"
   destination:
