@@ -532,7 +532,7 @@ applications:
         signingKey: "authentik Self-signed Certificate"
         grantTypes: ["authorization_code"]
         propertyMappings:
-          - "authentik default OAuth Mapping: OpenID 'email'"
+          - "weebo email"
           - "authentik default OAuth Mapping: OpenID 'profile'"
           - "authentik default OAuth Mapping: OpenID 'openid'"
           - "authentik default OAuth Mapping: OpenID 'offline_access'"
