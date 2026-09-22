@@ -31,3 +31,4 @@ tools:
       - { title: Angos, url: "https://registry.pkg.weebo.poc/" }
       - { title: Angos Token, url: "https://registry.pkg.weebo.poc/me/" }
       - { title: Batlehub, url: "https://pkg.weebo.poc" }
+      - { title: Eclipse Che, url: "https://cde.dev.weebo.poc" }
