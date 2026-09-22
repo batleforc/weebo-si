@@ -81,7 +81,7 @@ spec:
     # useless, since angos grants a browser nothing without a credential.
     - kind: Rule
       match: Host(`{{ .Values.angos.dns}}`)
-      priority: 10
+      priority: 100
       services:
         - name: angos
           namespace: {{ .Release.Namespace }}

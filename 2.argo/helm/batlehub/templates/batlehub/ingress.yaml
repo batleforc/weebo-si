@@ -32,6 +32,7 @@ spec:
   routes:
     - kind: Rule
       match: Host(`{{ .Values.batlehub.dns }}`){{ if .Values.batlehub.subdomainRouting.enabled }} || HostRegexp(`^[a-z0-9-]+\.{{ .Values.batlehub.dns | replace "." "\\." }}$`){{ end }}
+      priority: 10
       services:
         - name: batlehub
           namespace: {{ .Release.Namespace }}
