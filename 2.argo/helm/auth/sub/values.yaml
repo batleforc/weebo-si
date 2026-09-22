@@ -542,9 +542,9 @@ applications:
           - matchingMode: strict
             url: "https://dex.weebo.poc/callback"
           - matchingMode: strict
-            url: "https://cde.weebo.poc/oauth/callback"
+            url: "https://cde.dev.weebo.poc/oauth/callback"
           - matchingMode: regex
-            url: "https://.*.cde.weebo.poc/*."
+            url: "https://.*.cde.dev.weebo.poc/*."
 
   # Replaces the `harbor` entry: harbor is gone from this repo and angos
   # (2.argo/helm/angos) is the registry now. Renaming the key is not a rename
