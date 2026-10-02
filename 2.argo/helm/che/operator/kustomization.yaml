@@ -1,0 +1,33 @@
+# che-operator from the weebo-si fork (develop): adds `spec.gitServices.forgejo`
+# to the CheCluster CRD and the matching reconcile logic. The upstream
+# eclipse-che Helm chart hardcodes the operator image and ships the upstream
+# CRD (which prunes `gitServices.forgejo`), so the fork's plain manifests are
+# used instead. The operator image itself is set by the `eclipse-che-operator`
+# Application (spec.source.kustomize.images) from main/values.yaml.
+# https://github.com/batleforc/weebo-che-project/tree/main/deploy/develop
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - https://raw.githubusercontent.com/weebo-si/che-operator/develop/deploy/deployment/kubernetes/combined.yaml
+
+patches:
+  # The namespace is created by Argo (CreateNamespace + managedNamespaceMetadata
+  # for the pod-security labels), not owned by this app.
+  - target:
+      kind: Namespace
+      name: eclipse-che
+    patch: |
+      $patch: delete
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: eclipse-che
+  # `develop` is a moving tag, rebuilt nightly.
+  - target:
+      kind: Deployment
+      name: che-operator
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Always

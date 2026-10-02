@@ -49,6 +49,29 @@ traefik:
         # IP NETBIRD
         - fd67:3c3d:53b7:8bb7::/64
         - 100.64.0.0/16
+  # CiliumNetworkPolicy in front of traefik, see
+  # templates/middleware/network-policy.yaml. Off until it has been checked
+  # against `hubble observe --to-namespace traefik`.
+  networkPolicy:
+    enabled: false
+    # Allow every pod in the cluster. Simplest and safest first step, because
+    # a lot of in-cluster OIDC traffic goes through auth.weebo.poc. Set to
+    # false and use the lists below to restrict further.
+    fromWholeCluster: true
+    allowedNamespaces:
+      # netbird exit node: masqueraded traffic from every VPN peer.
+      - netbird
+      # Che server / gateway (OIDC against auth.weebo.poc, dashboard).
+      - eclipse-che
+    # Matched against namespace labels, so new namespaces are picked up on
+    # their own.
+    allowedNamespaceLabels:
+      # Every Che workspace namespace (dev-ws-*), see 2.helm/user-app.
+      app.kubernetes.io/component: workspaces-namespace
+    allowedCIDRs:
+      # Netbird peers when they are not masqueraded by the exit node.
+      - 100.64.0.0/16
+      - fd67:3c3d:53b7:8bb7::/64
 
 authentik:
   enabled: true

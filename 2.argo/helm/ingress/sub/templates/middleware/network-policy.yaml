@@ -1,0 +1,75 @@
+{{- if and .Values.traefik.enabled .Values.traefik.networkPolicy.enabled -}}
+# Locks traefik down at L3/L4, under the `vpn-only` middleware.
+#
+# The middleware only applies to routes that ask for it. Any route without it
+# answers anyone who can reach the LoadBalancer IP. This policy sits in the
+# datapath in front of every entrypoint, so a route that forgets the middleware
+# is still closed.
+#
+# INGRESS ONLY, like openbao-ingress in the vault chart: a rule makes an endpoint
+# default-deny only for the direction it specifies, so traefik's egress to its
+# backends, the apiserver and DNS stays as it is.
+#
+# Before enabling, list who actually talks to traefik today and check that every
+# source is covered below:
+#   hubble observe --to-namespace traefik --last 5000 -o compact
+#
+# Sources:
+#   - host / remote-node: kubelet probes on the `traefik` entrypoint (/ping).
+#     Hairpin traffic from the node's own public IP also shows up as `host`.
+#   - netbird: the exit node masquerades peers, so their traffic reaches
+#     traefik from the exit-node pod in the `netbird` namespace. The raw
+#     netbird CIDRs are listed too, for the case where a route skips the
+#     masquerade.
+#   - in-cluster: pods that resolve *.weebo.poc to traefik. OIDC clients
+#     (argocd/dex, che, oauth2-proxy, rustfs -> auth.weebo.poc) are the
+#     important ones. Che workspaces are matched by namespace label, so a new
+#     dev-ws-* namespace is allowed without editing this file.
+#
+# Everything else is dropped, in particular `world` (anyone outside the
+# cluster hitting the LoadBalancer IP directly). This also blocks Let's Encrypt
+# HTTP-01 challenges against the `outbound` ClusterIssuer.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: traefik-ingress
+  namespace: traefik
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+    {{- with .Values.traefik.networkPolicy }}
+    {{- if .fromWholeCluster }}
+    # Any pod in the cluster. Turn off and fill allowedNamespaces to restrict.
+    - fromEntities:
+        - cluster
+    {{- end }}
+    {{- if .allowedNamespaces }}
+    - fromEndpoints:
+        {{- range $ns := .allowedNamespaces }}
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: {{ $ns | quote }}
+        {{- end }}
+    {{- end }}
+    {{- if .allowedNamespaceLabels }}
+    - fromEndpoints:
+        {{- range $k, $v := .allowedNamespaceLabels }}
+        - matchLabels:
+            k8s:io.cilium.k8s.namespace.labels.{{ $k }}: {{ $v | quote }}
+        {{- end }}
+    {{- end }}
+    {{- if .allowedCIDRs }}
+    - fromCIDRSet:
+        {{- range $cidr := .allowedCIDRs }}
+        - cidr: {{ $cidr }}
+        {{- end }}
+    {{- end }}
+    {{- end }}
+{{- end -}}

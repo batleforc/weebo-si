@@ -25,6 +25,11 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
+    syncOptions:
+    # CheCluster's CRD is installed by eclipse-che-operator (wave 1); skip the
+    # dry-run so the first sync does not fail before it exists.
+    - SkipDryRunOnMissingResource=true
+    - ServerSideApply=true
     retry:
       limit: 5
       backoff:

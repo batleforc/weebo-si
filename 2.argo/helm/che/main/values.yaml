@@ -21,10 +21,13 @@ che:
     # ingress chart's ExternalSecret from mv/cert-manager/config.
     sourceSecret: main-ca.crt
   operator:
+    # weebo-si fork, built by weebo-si/che-images. `develop` moves nightly:
+    # pin a `sha-<short>` tag for a reproducible rollout. Rollback: point
+    # eclipse-che.yaml back at the upstream chart
+    # (https://eclipse-che.github.io/che-operator/charts, eclipse-che 7.122.0).
     che:
-      repoURL: https://eclipse-che.github.io/che-operator/charts
-      ## renovate: datasource=docker depName=ghcr.io/batlehub/batlehub/charts/batlehub
-      version: 7.122.0
+      image: ghcr.io/weebo-si/che-operator
+      tag: develop
     devworkspace:
       repoURL: https://github.com/devfile/devworkspace-operator
       ## renovate: datasource=docker depName=ghcr.io/batlehub/batlehub/charts/batlehub

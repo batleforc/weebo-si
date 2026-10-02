@@ -1,5 +1,6 @@
 che:
   enabled: true
+  namespace: eclipse-che
   cluster:
     enabled: true
   cheApp:
@@ -7,6 +8,30 @@ che:
   ingress:
     enabled: true
     host: cde.dev.weebo.poc
+  # weebo-si forks built by weebo-si/che-images (develop = moving tag, rebuilt
+  # nightly; pin `sha-<short>` for a reproducible rollout).
+  #   che-server:    Forgejo factory, OAuth and PAT modules
+  #   che-dashboard: Forgejo provider + workspace Storage tab
+  images:
+    server: ghcr.io/weebo-si/che-server:develop
+    dashboard: ghcr.io/weebo-si/che-dashboard:develop
+  # Forgejo as a Che git service (`spec.gitServices.forgejo`, fork only). The
+  # OAuth2 application lives on Forgejo with redirect URI
+  # https://<che host>/api/oauth/callback; its id/secret are read from Vault.
+  forgejo:
+    enabled: false
+    secretName: forgejo-oauth-config
+    endpoint: https://git.batleforc.fr
+    vaultKey: mv/eclipse-che/forgejo
+  # OIDC client the Che gateway authenticates against. Only the client secret
+  # is sensitive: it stays in mv/eclipse-che/auth and reaches the CheCluster by
+  # Secret name (see templates/oauth-secret.yaml). The client id and issuer
+  # mirror `applications.che` in 2.argo/helm/auth/sub/values.yaml (clientId and
+  # slug) and must follow it if either changes.
+  auth:
+    clientId: che-cluster
+    identityProviderURL: https://auth.weebo.poc/application/o/che-cluster/
+    oAuthSecretName: che-oauth-secret
 
 repo: ""
 project: ""

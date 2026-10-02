@@ -1,96 +1,84 @@
 {{- if .Values.che.cluster.enabled -}}
 # https://doc.crds.dev/github.com/eclipse-che/che-operator
-apiVersion: external-secrets.io/v1
-kind: ExternalSecret
+# https://eclipse.dev/che/docs/stable/install/proc_deploying-che-using-gitops/
+apiVersion: org.eclipse.che/v2
+kind: CheCluster
 metadata:
-  name: che-cluster
+  name: eclipse-che
   namespace: {{ .Values.che.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    che.eclipse.org/self-signed-certificate: "false"
 spec:
-  refreshPolicy: Periodic
-  refreshInterval: 24h
-  secretStoreRef:
-    name: che-cluster-store
-  target:
-    name: che-cluster
-    template:
-      type: Opaque
-      data:
-        che-cluster.yaml: |
-          kind: CheCluster
-          apiVersion: org.eclipse.che/v2
-          metadata:
-            name: eclipse-che
-            namespace: {{ .Values.che.namespace }}
-            annotations:
-              che.eclipse.org/self-signed-certificate: "false"
-              argocd.argoproj.io/tracking-id: che-app:org.eclipse.che/CheCluster:eclipse-che/che-cluster
-          spec:
-            devEnvironments:
-              disableContainerBuildCapabilities: false
-              maxNumberOfWorkspacesPerUser: 20
-              maxNumberOfRunningWorkspacesPerUser: 5
-              secondsOfInactivityBeforeIdling: 10800
-              defaultNamespace:
-                template: dev-ws-<username>
-                autoProvision: false
-              persistUserHome:
-                enabled: true
-              networking:
-                externalTLSConfig:
-                  enabled: true
-                  annotations:
-                    cert-manager.io/cluster-issuer: outbound
-              storage:
-                pvcStrategy: per-workspace
-                perUserStrategyPvcConfig:
-                  claimSize: "10Gi"
-                perWorkspaceStrategyPvcConfig:
-                  claimSize: "10Gi"
-              defaultComponents:
-                - name: tool
-                  container:
-                    image: ghcr.io/batleforc/weebodevimage/che-min-mise:main
-            networking:
-              hostname: {{ .Values.che.ingress.host }}
-              domain: {{ .Values.che.ingress.host }}
-              ingressClassName: traefik
-              tlsSecretName: che-cluster-tls
-              annotations:
-                kubernetes.io/ingress.class: "traefik"
-              auth:
-                oAuthClientName: '{{ printf "{{"}} .client_id }}'
-                oAuthSecret: '{{ printf "{{"}} .client_secret }}'
-                oAuthScope: "openid email profile offline_access"
-                identityProviderURL: '{{ printf "{{"}} .url }}'
-                gateway:
-                  oAuthProxy:
-                    cookieExpireSeconds: 32400
-            components:
-              cheServer:
-                extraProperties:
-                  CHE_SYSTEM_ADMIN_NAME: "Batleforc"
-              metrics:
-                enable: true
-              dashboard:
-                logLevel: INFO
-                deployment:
-                  containers:
-                    - name: che-dashboard
-                      image: quay.io/eclipse/che-dashboard:pr-1663
-                      imagePullPolicy: Always
-
-  data:
-    - secretKey: url
-      remoteRef:
-        key: mv/eclipse-che/auth
-        property: AUTHENTIK_URL
-    - secretKey: client_id
-      remoteRef:
-        key: mv/eclipse-che/auth
-        property: AUTHENTIK_CLIENT_ID
-    - secretKey: client_secret
-      remoteRef:
-        key: mv/eclipse-che/auth
-        property: AUTHENTIK_CLIENT_SECRET
-
+  devEnvironments:
+    disableContainerBuildCapabilities: false
+    maxNumberOfWorkspacesPerUser: 20
+    maxNumberOfRunningWorkspacesPerUser: 5
+    secondsOfInactivityBeforeIdling: 10800
+    defaultNamespace:
+      template: dev-ws-<username>
+      autoProvision: false
+    persistUserHome:
+      enabled: true
+    networking:
+      externalTLSConfig:
+        enabled: true
+        # Same set as the other ingresses (vault, dex), minus common-name:
+        # every workspace endpoint gets its own host, so cert-manager takes
+        # the names from each Ingress's tls hosts instead.
+        annotations:
+          cert-manager.io/cluster-issuer: "vault-issuer"
+          cert-manager.io/private-key-size: "4096"
+          cert-manager.io/subject-organizations: "WeeboSI"
+          cert-manager.io/subject-organizationalunits: "Dev"
+    storage:
+      pvcStrategy: per-workspace
+      perUserStrategyPvcConfig:
+        claimSize: "10Gi"
+      perWorkspaceStrategyPvcConfig:
+        claimSize: "10Gi"
+    defaultComponents:
+      - name: tool
+        container:
+          image: ghcr.io/batleforc/weebodevimage/che-min-mise:main
+  {{- if .Values.che.forgejo.enabled }}
+  # Needs the forked CRD (operator/), the upstream one prunes this field.
+  gitServices:
+    forgejo:
+      - secretName: {{ .Values.che.forgejo.secretName }}
+  {{- end }}
+  networking:
+    hostname: {{ .Values.che.ingress.host }}
+    domain: {{ .Values.che.ingress.host }}
+    ingressClassName: traefik
+    tlsSecretName: che-cluster-tls
+    annotations:
+      kubernetes.io/ingress.class: "traefik"
+    auth:
+      oAuthClientName: {{ .Values.che.auth.clientId | quote }}
+      # Name of the Secret rendered by oauth-secret.yaml, not the value itself.
+      oAuthSecret: {{ .Values.che.auth.oAuthSecretName | quote }}
+      oAuthScope: "openid email profile offline_access"
+      identityProviderURL: {{ .Values.che.auth.identityProviderURL | quote }}
+      gateway:
+        oAuthProxy:
+          cookieExpireSeconds: 32400
+  components:
+    cheServer:
+      extraProperties:
+        CHE_SYSTEM_ADMIN_NAME: "Batleforc"
+      deployment:
+        containers:
+          - name: che
+            image: {{ .Values.che.images.server | quote }}
+            imagePullPolicy: Always
+    metrics:
+      enable: true
+    dashboard:
+      logLevel: INFO
+      deployment:
+        containers:
+          - name: che-dashboard
+            image: {{ .Values.che.images.dashboard | quote }}
+            imagePullPolicy: Always
 {{- end -}}

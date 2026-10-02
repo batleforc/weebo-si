@@ -19,12 +19,14 @@ spec:
     automated: {}
     syncOptions:
     - ServerSideApply=true
+  # Fork of che-operator, see 2.argo/helm/che/operator/kustomization.yaml.
   source:
-    chart: eclipse-che
-    repoURL: {{ .Values.che.operator.che.repoURL }}
-    targetRevision: "{{ .Values.che.operator.che.version }}"
-    helm:
-      releaseName: eclipse-che-operator
+    repoURL: '{{ .Values.repo }}'
+    targetRevision: '{{ .Values.branch }}'
+    path: '2.argo/helm/che/operator'
+    kustomize:
+      images:
+        - "quay.io/eclipse/che-operator={{ .Values.che.operator.che.image }}:{{ .Values.che.operator.che.tag }}"
   destination:
     name: "in-cluster"
     namespace: {{ .Values.che.namespace }}
