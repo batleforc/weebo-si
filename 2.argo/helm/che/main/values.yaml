@@ -32,6 +32,13 @@ che:
       repoURL: https://github.com/devfile/devworkspace-operator
       ## renovate: datasource=docker depName=ghcr.io/batlehub/batlehub/charts/batlehub
       version: v0.43.0
+  # weebo-si-operator from batleforc/weebo-si-hardening, pulled as an OCI chart.
+  # The chart version is also the image tag (appVersion).
+  hardening:
+    enabled: true
+    namespace: weebo-si-hardening
+    ## renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-si-operator
+    version: 0.1.1
 
 repo: ""
 project: ""

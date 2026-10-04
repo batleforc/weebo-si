@@ -1,0 +1,49 @@
+{{- if .Values.che.hardening.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: weebo-si-hardening-operator
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: weebo-si-hardening-operator
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: {{ .Values.project }}
+  # Admission webhook + controller from batleforc/weebo-si-hardening. Ships its
+  # three CRDs (WeeboSiConfig/Team/User) and every feature RBAC switch off: it
+  # does nothing until a WeeboSiConfig turns a feature on.
+  source:
+    chart: weebo-si-operator
+    repoURL: oci://ghcr.io/batleforc/charts/weebo-si-operator
+    targetRevision: "{{ .Values.che.hardening.version }}"
+    helm:
+      releaseName: weebo-si-operator
+      valuesObject:
+        # The chart renders the namespace itself, labelled
+        # hardening.weebo.io/exclude so its own webhook never gates it.
+        namespace:
+          create: true
+        # Left empty, the chart renders a self-signed Issuer for the webhook
+        # serving cert and has cert-manager inject the CA bundle.
+        certificates:
+          provider: cert-manager
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.che.hardening.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

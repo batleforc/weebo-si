@@ -212,6 +212,7 @@ project:
     sourceRepo:
       - https://github.com/devfile/devworkspace-operator
       - https://eclipse-che.github.io/che-operator/charts
+      - oci://ghcr.io/batleforc/charts/weebo-si-operator
     dest:
       - server: https://kubernetes.default.svc
         namespace: "argocd"
@@ -219,6 +220,8 @@ project:
         namespace: "eclipse-che"
       - server: "https://kubernetes.default.svc"
         namespace: "devworkspace-controller"
+      - server: "https://kubernetes.default.svc"
+        namespace: "weebo-si-hardening"
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"
