@@ -46,6 +46,15 @@ spec:
           # Che's webhook defaults it on admission; written out so Argo
           # does not see it as drift.
           sourceMapping: /projects
+    # Workspace images through angos' quay.io cache (2.argo/helm/angos,
+    # repository `quay`) rather than from quay.io directly.
+    #   defaultEditor: che-code/latest re-declared in sub-bis
+    #     (custo/editor.yaml, che-code-angos.yaml) with its images rewritten;
+    #   projectCloneContainer: the init container cloning the projects.
+    defaultEditor: {{ .Values.che.workspaceImages.editor | quote }}
+    projectCloneContainer:
+      name: project-clone
+      image: {{ .Values.che.workspaceImages.projectClone | quote }}
   {{- if .Values.che.forgejo.enabled }}
   # Needs the forked CRD (operator/), the upstream one prunes this field.
   gitServices:
@@ -71,6 +80,13 @@ spec:
       gateway:
         oAuthProxy:
           cookieExpireSeconds: 32400
+        # The workspace's che--traefik sidecar takes this same image
+        # (che-operator, che_routing.go provisionPodAdditions): one field, so
+        # the che-gateway Deployment here pulls through angos as well.
+        deployment:
+          containers:
+            - name: gateway
+              image: {{ .Values.che.workspaceImages.gateway | quote }}
   components:
     # che-code's extension gallery: batlehub's `vsx` registry, an open-vsx.org
     # proxy (2.argo/helm/batlehub). che-code appends /vscode/gallery,

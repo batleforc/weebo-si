@@ -236,7 +236,12 @@ config:
       # images (builtin), plus extra patterns for a mirrored platform.
       platform:
         builtin: true
-        extra: []
+        # The same Che/DevWorkspace images, mirrored by angos' quay cache
+        # (che.workspaceImages in 2.argo/helm/che/sub).
+        extra:
+          - "registry.pkg.weebo.poc/quay/che-incubator/**"
+          - "registry.pkg.weebo.poc/quay/devfile/**"
+          - "registry.pkg.weebo.poc/quay/eclipse/**"
 
     # RFC 0006. What a workspace's processes may do (exec, files, network,
     # capabilities), through KubeArmor. KubeArmor is not installed here:
