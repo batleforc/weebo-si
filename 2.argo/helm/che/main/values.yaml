@@ -38,7 +38,7 @@ che:
     enabled: true
     namespace: weebo-si-hardening
     ## renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-si-operator
-    version: 0.2.0
+    version: 0.2.1
     # 1 = no HA (no webhook during a drain, see hardening-operator.yaml).
     replicas: 1
     # WeeboSiConfig/Team/User, rendered by 2.argo/helm/che/hardening and

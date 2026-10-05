@@ -95,13 +95,6 @@ spec:
             suffix: .{{ .Values.che.ingress.host }}
             exclude:
               - {{ .Values.che.ingress.host }}
-          selfOrigin:
-            # Not the chart's X-Real-Ip: the operator's Middleware sets
-            # trustForwardHeader: false, so Traefik (v3.7) deletes X-Real-Ip
-            # and every X-Forwarded-* from the /auth request, then sets
-            # X-Forwarded-For to the connection's own address alone. With
-            # X-Real-Ip no workspace pod is ever recognised by its address.
-            clientIpHeader: X-Forwarded-For
           bearer:
             # Its own client id: a token minted for another client of the
             # same Authentik is refused.
