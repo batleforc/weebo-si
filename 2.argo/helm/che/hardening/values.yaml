@@ -50,7 +50,7 @@ config:
     # Profiles only add: in Cilium, a direction a policy selects is
     # default-deny. Needs operator.networkProfiles.cilium.enabled.
     networkProfiles:
-      enabled: false
+      enabled: true
       mode: DryRun
       catalog:
         - key: base
