@@ -95,8 +95,9 @@ config:
           intervalSeconds: 300
       # The policies copied above. The operator sets the selector itself.
       templates:
-        # The floor: DNS, the namespace itself, Che, and *.weebo.poc (CoreDNS
-        # rewrites every *.weebo.poc to Traefik). No Internet, no apiserver.
+        # The floor: DNS, the namespace itself, Che (gateway auth included),
+        # the apiserver, and *.weebo.poc (CoreDNS rewrites every *.weebo.poc
+        # to Traefik). No Internet.
         weebo-net-base:
           apiVersion: cilium.io/v2
           kind: CiliumNetworkPolicy
@@ -109,11 +110,16 @@ config:
                   - matchLabels:
                       k8s:io.kubernetes.pod.namespace: traefik
                       app.kubernetes.io/name: traefik
-              # The workspace's main endpoint, through Che's gateway.
+              # The Che namespace as a whole (Che's own NetworkPolicy guide,
+              # allow-from-eclipse-che): che-gateway reaches the workspace's
+              # main endpoint (the che--traefik sidecar, :3030) from there.
               - fromEndpoints:
                   - matchLabels:
                       k8s:io.kubernetes.pod.namespace: eclipse-che
-                      app.kubernetes.io/component: che-gateway
+              # DevWorkspace Operator (allow-from-devworkspace-operator).
+              - fromEndpoints:
+                  - matchLabels:
+                      k8s:io.kubernetes.pod.namespace: devworkspace-controller
             egress:
               - toEndpoints:
                   - {}
@@ -149,6 +155,27 @@ config:
                 toPorts:
                   - ports:
                       - { port: "8080", protocol: TCP }
+              # che-gateway's kube-rbac-proxy: the workspace's che--traefik
+              # sidecar forwardAuths every request to che-code there
+              # (http://che-gateway.eclipse-che:8089). Without it the IDE
+              # never opens.
+              - toEndpoints:
+                  - matchLabels:
+                      k8s:io.kubernetes.pod.namespace: eclipse-che
+                      app.kubernetes.io/component: che-gateway
+                toPorts:
+                  - ports:
+                      - { port: "8089", protocol: TCP }
+              # The apiserver. Not optional for a workspace: che-code and its
+              # extensions read the DevWorkspace, gitconfig and secrets, run
+              # terminals and report activity through it -- under Enforce
+              # without it, both workspaces hammered :6443 with refused SYNs.
+              # Same rule as the kube-api profile, which stays for templates
+              # that grant it on its own.
+              - toEntities: [kube-apiserver]
+                toPorts:
+                  - ports:
+                      - { port: "6443", protocol: TCP }
         # Git forges and package registries, by name.
         weebo-net-dev-registries:
           apiVersion: cilium.io/v2
