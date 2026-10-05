@@ -177,6 +177,12 @@ otel:
   # Deployment: cluster-level metrics and Kubernetes events.
   cluster:
     enabled: true
+    # weebo-si-hardening's operator (webhook + controller) and endpoint-gateway,
+    # scraped by otel-cluster. Neither chart takes pod annotations, so they
+    # cannot opt into otel-node's annotation discovery; this is a pod-role
+    # service discovery on that one namespace instead. Empty = no scrape.
+    # Feeds dashboards/hardening.json.
+    hardeningNamespace: weebo-si-hardening
 
 obi:
   enabled: true

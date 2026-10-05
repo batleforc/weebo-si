@@ -73,6 +73,44 @@ spec:
             otlp: null
             jaeger: null
             zipkin: null
+            {{- with .Values.otel.cluster.hardeningNamespace }}
+            # The chart's own self-scrape job is restated: a list in values
+            # replaces the default one rather than merging with it.
+            prometheus:
+              config:
+                scrape_configs:
+                  - job_name: opentelemetry-collector
+                    scrape_interval: 10s
+                    static_configs:
+                      - targets:
+                          - ${env:MY_POD_IP}:8888
+                  # Per pod, not through the operator's -metrics Service: that
+                  # Service fronts webhook and controller alike, so each scrape
+                  # would land on one of the two at random. The ClusterRole
+                  # the clusterMetrics preset renders already lists pods.
+                  - job_name: weebo-si-hardening
+                    scrape_interval: 30s
+                    metrics_path: /metrics
+                    kubernetes_sd_configs:
+                      - role: pod
+                        namespaces:
+                          names: [{{ . | quote }}]
+                    relabel_configs:
+                      # The operator serves /metrics on http-health (8081),
+                      # the gateway on its own `metrics` port (9090).
+                      - source_labels: [__meta_kubernetes_pod_container_port_name]
+                        regex: http-health|metrics
+                        action: keep
+                      - source_labels: [__meta_kubernetes_pod_phase]
+                        regex: Running
+                        action: keep
+                      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+                        target_label: app
+                      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_component]
+                        target_label: component
+                      - source_labels: [__meta_kubernetes_pod_name]
+                        target_label: pod
+            {{- end }}
           exporters:
             debug: null
             otlphttp/hyperdx:

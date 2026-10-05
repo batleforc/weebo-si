@@ -384,6 +384,35 @@ from HyperDX 2.32.
   Blank `% lim` is the normal state here, not a gap: the Tenant declares no
   resources, so the containers are unbounded.
 
+- `hardening.json` — weebo-si-hardening: what the operator decided and what
+  it *would* decide. A verdict row (telemetry age, would-deny in DryRun,
+  denied in Enforce, writes allowed unchecked, Cilium canary, identity API
+  errors), the mode of every feature, admission decisions over time and in
+  range with p95 latency per feature, then one section per feature (dwocPin,
+  policyGuard, imagePolicy, networkProfiles, endpointAuth, identity), the
+  operator pods, and the namespace's logs.
+
+  **`outcome = denied` with `mode = dry_run` is the rollout gate.** In DryRun
+  the webhook evaluates exactly as under Enforce and throws the verdict away,
+  so that count is the writes Enforce would refuse. Drive it to zero (or
+  explain every row) before flipping a feature.
+
+  The `weebo_si_*` metrics come from otel-cluster's `weebo-si-hardening`
+  scrape job (`otel.cluster.hardeningNamespace`), not from otel-node's
+  annotation discovery: neither the operator chart nor the endpoint-gateway
+  chart takes pod annotations. The job discovers pods, not the operator's
+  `-metrics` Service, because that Service fronts webhook and controller
+  alike and would hand each scrape to one of them at random. The pod tiles
+  (kubeletstats) and logs (filelog) need nothing extra.
+
+  Counter totals are `last - first` per series within the range, so a series
+  that appears mid-range (a new pod) misses whatever it counted before its
+  first scrape, and a counter reset reads as zero rather than negative. The
+  over-time charts diff consecutive buckets and drop each series' first
+  bucket, like `node.json`. No `weebo_si_*` metric carries a namespace or a
+  user (the operator's cardinality rule): which workspace was denied is in
+  the log tiles, or `kubectl describe weebosiconfig cluster`.
+
 ## Round trip: build it in the UI, then commit it
 
 There is no export button. Get the JSON from the API with the same credentials
