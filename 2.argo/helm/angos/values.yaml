@@ -89,6 +89,17 @@ angos:
       access:
         pull: ["provider:weebo", "provider:kube"]
         browse: ["provider:weebo"]
+    # Che workspace images (che-code, project-clone, the che--traefik
+    # sidecar), pulled as registry.pkg.weebo.poc/quay/<org>/<image>. Only
+    # those: cilium, cert-manager and argocd stay on quay.io directly, since
+    # angos itself needs them up to serve anything.
+    quay:
+      scan: false
+      upstreams:
+        - "https://quay.io"
+      access:
+        pull: ["provider:weebo", "provider:kube"]
+        browse: ["provider:weebo"]
     # The local one: what this cluster builds and pushes. Workloads pull it
     # with their own service-account token, humans push it, and only an admin
     # removes anything.
