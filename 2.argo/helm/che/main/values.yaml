@@ -66,10 +66,12 @@ che:
           enabled: true
         argoNamespace: argocd
       # features.networkProfiles with the Cilium backend (and policyGuard
-      # over CiliumNetworkPolicy).
+      # over CiliumNetworkPolicy). On: Cilium serves ciliumnetworkpolicies,
+      # and without the RBAC the operator logs the backend as absent. Grants
+      # the watch only; the feature itself stays off in the config chart.
       networkProfiles:
         cilium:
-          enabled: false
+          enabled: true
       # features.policyGuard: Fail is the safe default; Ignore only once no
       # user can write networkpolicies (true of every access level today).
       policyGuard:
