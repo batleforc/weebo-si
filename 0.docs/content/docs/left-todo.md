@@ -43,15 +43,18 @@ description: "What's left to do ?"
 - [ ] [Kuberarmor](https://kubearmor.com/)
 - [ ] [Kloak](https://une-tasse-de.cafe/blog/kloak/)
 - [ ] [Weebo Si Hardening](https://github.com/batleforc/weebo-si-hardening)
-  - [ ] NetPolicy
-  - [ ] DWOC restrictions
+  - [x] NetPolicy (networkProfiles, Enforce)
+  - [ ] NetPolicy guard (policyGuard, DryRun)
+  - [ ] DWOC restrictions (dwocPin, DryRun)
   - [ ] Image Pull Policy
-  - [ ] Image Registry
-  - [ ] Package Registry
+  - [ ] Image Registry (imagePolicy, DryRun)
+  - [ ] Package Registry (registryConfig)
+  - [x] Endpoint auth (endpointAuth, Enforce)
+  - [ ] KubeArmor policies (kubearmorPolicy, needs KubeArmor)
 - [ ] [Eclipse Che](https://www.eclipse.org/che/)
   - [x] Expo : cde.dev.weebo.poc && \*.cde.dev.weebo.poc
   - [x] Deploy App
-  - [ ] Deploy User through Weebo-Si-Hardening ?
+  - [x] Deploy User through Weebo-Si-Hardening (identity)
 - [ ] Properly apply a CiliumNetworkPolicy with default deny for all
 - [ ] Setup [Stalwart](https://stalw.art/) as an internal mail system for the cluster and connect every app to it (prevent mail to go outside the cluster)
   - [ ] Weebo.poc for internal messaging (entre les apps du cluster et les utilisateurs du cluster ou user <-> user)

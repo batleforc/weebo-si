@@ -28,8 +28,12 @@ config:
     # RFC 0002. Pins every DevWorkspace to an admin-authored
     # DevWorkspaceOperatorConfig, so a devfile cannot bring its own.
     dwocPin:
-      enabled: false
+      enabled: true
       mode: DryRun
+      # Workspace namespaces only, like networkProfiles.
+      namespaceSelector:
+        matchLabels:
+          hardening.weebo.io/workspace-namespace: "true"
       catalog:
         # Che's own DWOC (che-operator maintains it).
         - key: che
@@ -234,8 +238,13 @@ config:
     # workspace namespaces. No access level grants networkpolicies: defence
     # in depth. Enforce only once networkProfiles has converged.
     policyGuard:
-      enabled: false
+      enabled: true
       mode: DryRun
+      # Workspace namespaces only: unscoped, it would gate every
+      # NetworkPolicy write in the cluster (argocd, vault, s3...).
+      namespaceSelector:
+        matchLabels:
+          hardening.weebo.io/workspace-namespace: "true"
       # Identities that may author unmanaged policies in workspace
       # namespaces. Nobody but the operator may touch a managed one.
       allowedIdentities: []
