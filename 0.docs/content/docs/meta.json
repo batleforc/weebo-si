@@ -9,6 +9,7 @@
     "registry",
     "security",
     "dev-env",
+    "runbooks",
     "..."
   ]
 }
