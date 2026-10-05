@@ -72,6 +72,11 @@ spec:
         oAuthProxy:
           cookieExpireSeconds: 32400
   components:
+    # che-code's extension gallery: batlehub's `vsx` registry, an open-vsx.org
+    # proxy (2.argo/helm/batlehub). che-code appends /vscode/gallery,
+    # /vscode/item and /vscode/unpkg/... itself.
+    pluginRegistry:
+      openVSXURL: {{ .Values.che.openVSXURL | quote }}
     cheServer:
       extraProperties:
         CHE_SYSTEM_ADMIN_NAME: "batleforc"

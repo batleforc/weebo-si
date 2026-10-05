@@ -325,6 +325,14 @@ batlehub:
     - type: maven
       name: maven
       rbac: *proxyRbac
+    # VS Code extensions, proxied from open-vsx.org: Che's extension gallery
+    # (spec.components.pluginRegistry.openVSXURL in 2.argo/helm/che/sub). Its
+    # anonymous read is not only the "public upstream" trade above but a hard
+    # requirement: an editor sends no Authorization header to its gallery, so
+    # a registry that wants one answers every search with an empty list.
+    - type: openvsx
+      name: vsx
+      rbac: *proxyRbac
 
   # ── The pod ────────────────────────────────────────────────────────────────
   # One replica. S3 storage is the backend several replicas could share, so the

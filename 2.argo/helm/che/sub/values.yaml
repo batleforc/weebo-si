@@ -23,6 +23,8 @@ che:
     secretName: forgejo-oauth-config
     endpoint: https://git.batleforc.fr
     vaultKey: mv/eclipse-che/forgejo
+  # Read anonymously: the editor cannot authenticate to its gallery.
+  openVSXURL: https://pkg.weebo.poc/proxy/vsx
   # OIDC client the Che gateway authenticates against. Only the client secret
   # is sensitive: it stays in mv/eclipse-che/auth and reaches the CheCluster by
   # Secret name (see templates/oauth-secret.yaml). The client id and secret
