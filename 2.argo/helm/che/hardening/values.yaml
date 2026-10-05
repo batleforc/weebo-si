@@ -342,13 +342,14 @@ config:
               registry=https://registry.npmjs.org/
 
     # RFC 0009. An authenticating gate in front of every workspace endpoint
-    # on its own FQDN. The endpoint-gateway is deployed
-    # (che/main/templates/endpoint-gateway.yaml); enabling this, together
-    # with operator.endpointAuth.rbac.enabled, is what links it. The value
-    # marked "verify" has to be read off a real workspace first.
+    # on its own FQDN, served by the endpoint-gateway
+    # (che/main/templates/endpoint-gateway.yaml). Enforced: dev-ws-batleforc
+    # is the only workspace namespace, so it is its own pilot. Rollback that
+    # keeps the gate attached: gateway.enforcement Observe here and in the
+    # gateway's config.enforcement; mode: Off strips the annotations.
     endpointAuth:
-      enabled: false
-      mode: DryRun
+      enabled: true
+      mode: Enforce
       gateway:
         # The deployed gateway's host (che.hardening.endpointGateway.host).
         externalUrl: https://endpoint-auth.cde.dev.weebo.poc
@@ -357,7 +358,8 @@ config:
         # Keep in step with operator.endpointAuth.dialect.
         dialect: Traefik
         # Observe: computes and counts every decision, answers 200.
-        enforcement: Observe
+        # Keep in step with the gateway's config.enforcement.
+        enforcement: Enforce
         allowedMiddlewares: []
         haproxyPrerequisite: false
       breakGlassIdentities: []
@@ -369,7 +371,8 @@ config:
         devworkspaceOperatorIdentity: system:serviceaccount:eclipse-che:che-operator
       hosts:
         suffix: .cde.dev.weebo.poc
-        # verify: how Che names an endpoint host here.
+        # How Che names an endpoint host here, read off a running
+        # workspace: batleforc-weebo-si-igdr-base.cde.dev.weebo.poc.
         ownership:
           - template: "{user}-{workspace}-{endpoint}"
         exclude: [cde.dev.weebo.poc]

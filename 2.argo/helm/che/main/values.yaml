@@ -92,11 +92,11 @@ che:
         rbac:
           enabled: false
         failurePolicy: Ignore
-      # features.endpointAuth. Also needs the endpoint-gateway deployment
-      # (oci://ghcr.io/batleforc/charts/endpoint-gateway), not deployed yet.
+      # features.endpointAuth. Served by the endpoint-gateway deployment
+      # (templates/endpoint-gateway.yaml, che.hardening.endpointGateway).
       endpointAuth:
         rbac:
-          enabled: false
+          enabled: true
         failurePolicy: Fail
         dialect: Traefik
         namespaceLabel:

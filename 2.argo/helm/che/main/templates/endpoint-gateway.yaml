@@ -2,11 +2,10 @@
 {{- $gw := .Values.che.hardening.endpointGateway -}}
 ---
 # weebo-si-hardening's endpoint-gateway: the sign-in and the verdict behind
-# features.endpointAuth. Deployed on its own and NOT linked: nothing routes
-# through it until features.endpointAuth is enabled in
-# 2.argo/helm/che/hardening/values.yaml and che.hardening.operator.endpointAuth
-# .rbac.enabled is set, which is what has the operator attach it to workspace
-# Ingresses.
+# features.endpointAuth. The operator attaches it to workspace Ingresses
+# while features.endpointAuth (2.argo/helm/che/hardening/values.yaml) is in
+# mode Enforce. It fails closed: with no ready replica, every workspace
+# endpoint on its own FQDN stops answering.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -101,8 +100,9 @@ spec:
             # same Authentik is refused.
             audiences:
               - endpoint-gateway
-          # Decides and counts, answers 200: the first step once linked.
-          enforcement: Observe
+          # Observe decides and counts but answers 200. Keep in step with
+          # features.endpointAuth.gateway.enforcement.
+          enforcement: Enforce
           # Authentik sends no back-channel logout here.
           backchannelLogout:
             enabled: false
