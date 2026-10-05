@@ -239,3 +239,41 @@ project:
         kind: "DevWorkspaceOperatorConfig"
       - group: "trust.cert-manager.io"
         kind: "Bundle"
+      - group: "hardening.weebo.io"
+        kind: "WeeboSiConfig"
+      - group: "hardening.weebo.io"
+        kind: "WeeboSiTeam"
+      - group: "hardening.weebo.io"
+        kind: "WeeboSiUser"
+  # The per-user Applications weebo-si-operator creates (identity feature),
+  # rendering 2.helm/user-app, and the external-config Application that chart
+  # renders in turn. Kept to what they do: a dev-ws-* namespace, plus that
+  # one Application in argocd.
+  - name: che-users
+    includeBaseRepo: true
+    sourceRepo:
+      # Users' external config (cheUser.externalConfig.repoURL).
+      - https://github.com/batleforc/weebo-dotfiles-che
+    dest:
+      - server: https://kubernetes.default.svc
+        namespace: "dev-ws-*"
+      - server: https://kubernetes.default.svc
+        namespace: "argocd"
+    clusterResourceWhitelist:
+      - group: ""
+        kind: "Namespace"
+    # Unset, every namespaced kind is allowed, a RoleBinding to `admin` and an
+    # Application naming another project included. Kept to what user-app
+    # renders. The user's external config (dotfiles, ConfigMaps, Secrets...)
+    # is deployed under this project too, so a kind it needs goes here.
+    namespaceResourceWhitelist:
+      - group: "rbac.authorization.k8s.io"
+        kind: "RoleBinding"
+      - group: "external-secrets.io"
+        kind: "SecretStore"
+      - group: "argoproj.io"
+        kind: "Application"
+      - group: ""
+        kind: "ConfigMap"
+      - group: ""
+        kind: "Secret"

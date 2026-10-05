@@ -1,16 +1,44 @@
+# Rendered per person by weebo-si-operator: the team template
+# (2.argo/helm/che/hardening/templates/teams.yaml) sets the base, the
+# WeeboSiUser's spec.che.values is deep-merged over it.
+
+# AppProject of the external-config Application.
 project: ""
 
 cheUser:
-  username: "max"
+  # Che username: dev-ws-<username>, and the namespace owner annotation.
+  username: ""
+  # The apiserver maps an OIDC login to "labsso:" + email (1.pulu-init).
+  email: ""
+  # weebo.io/team, which the WeeboSiTeam's namespaceSelector matches.
+  teamLabel: ""
+  # What this person may do in their namespace. Levels and add-ons are
+  # defined in templates/_access.tpl: min < baseline < deploy, and the
+  # port-forward add-on (JetBrains Gateway).
+  access:
+    # Set by the team template: the floor every member gets.
+    teamLevel: ""
+    # Set per person, in the WeeboSiUser's che.values. Empty = teamLevel;
+    # below teamLevel is a refused render.
+    level: ""
+    # The team's add-ons, and the person's on top (both apply).
+    addons: []
+    extraAddons: []
   externalConfig:
-    enabled: true
-    repoURL: "https://github.com/batleforc/weebo-dotfiles-che"
+    enabled: false
+    repoURL: ""
     path: "config"
     branch: "HEAD"
 
+# Prefix of Che's own ClusterRoles (the `baseline` level): the namespace
+# che-operator runs in.
+cheNamespace: eclipse-che
+
+# Off until the auth-read role in 2.terra/vault/terra-map/auth-base.tf binds
+# dev-ws-* namespaces.
 vault:
-  enabled: true
+  enabled: false
   server: "https://openbao.vault:8200"
-  path: "mk"
+  path: "mv"
   role: "auth-read"
   sa: "default"

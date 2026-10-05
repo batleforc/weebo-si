@@ -1,0 +1,66 @@
+# Rendered as the WeeboSiTeam's workspace.che source, and as the only entry
+# of identity.che.allowedRepoUrls: the per-user chart lives in this repo.
+repo: ""
+branch: ""
+
+# features.identity: creates one Argo Application per WeeboSiUser asking for
+# a workspace. DryRun = every decision taken, nothing written; read
+# `kubectl get wsuser -o yaml` (status.che.message: "would create ...").
+identity:
+  mode: Enforce
+  # AppProject the per-user Applications run in (2.argo/app/values.yaml).
+  project: che-users
+
+# features.imagePolicy, observe-only to start: denials are logged and counted,
+# nothing is refused. Read the webhook logs before moving to Enforce.
+imagePolicy:
+  mode: DryRun
+
+teams:
+  - name: weebo
+    displayName: Weebo
+    priority: 100
+    # Namespaces this team owns. The user chart puts this label on every
+    # workspace namespace it creates.
+    namespaceLabel: weebo
+    # Che's defaultNamespace.template is dev-ws-<username>, autoProvision off:
+    # the namespace must exist, and must be named what Che expects.
+    namespace: "dev-ws-{USERNAME}"
+    # Floor for every member's namespace (2.helm/user-app/templates/_access.tpl):
+    #   min       what the Che dashboard needs, nothing more
+    #   baseline  Che's own default roles (adds pods/deployments/services/
+    #             ingresses/PVC writes, port-forward)
+    #   deploy    min + port-forward + run their own workloads (a curated edit)
+    # addons: [port-forward] (JetBrains Gateway), for every member.
+    access:
+      level: min
+      addons: []
+    imageCatalog:
+      - key: weebo-devimages
+        patterns:
+          - "ghcr.io/batleforc/weebodevimage/**"
+
+users:
+  # metadata.name. Never remove an entry without meaning it: deleting a
+  # WeeboSiUser deletes its Application and, through it, its namespace.
+  - name: batleforc
+    # Che's username (Authentik preferred_username), which is what Che
+    # substitutes into dev-ws-<username> and writes as the namespace owner.
+    username: batleforc
+    # The RoleBindings use the apiserver identity, "labsso:" + this email.
+    email: max@weebo.poc
+    team: weebo
+    che: true
+    # Raises the team's floor for this person only; below it is refused.
+    # addons are added to the team's, never replace them.
+    access:
+      level: ""
+      addons: []
+    # spec.che.values: overrides for 2.helm/user-app.
+    cheValues:
+      cheUser:
+        externalConfig:
+          enabled: true
+          repoURL: "https://github.com/batleforc/weebo-dotfiles-che"
+          path: "config"
+          branch: "HEAD"

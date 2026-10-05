@@ -1,0 +1,32 @@
+{{- range .Values.users }}
+---
+apiVersion: hardening.weebo.io/v1alpha1
+kind: WeeboSiUser
+metadata:
+  name: {{ .name }}
+spec:
+  username: {{ .username | quote }}
+  {{- with .displayName }}
+  displayName: {{ . | quote }}
+  {{- end }}
+  {{- with .email }}
+  email: {{ . | quote }}
+  {{- end }}
+  team: {{ .team | quote }}
+  {{- if .che }}
+  {{- $values := deepCopy (.cheValues | default dict) }}
+  {{- with .access }}
+  {{- $access := dict }}
+  {{- with .level }}{{ $_ := set $access "level" . }}{{ end }}
+  {{- with .addons }}{{ $_ := set $access "extraAddons" . }}{{ end }}
+  {{- $values = mergeOverwrite $values (dict "cheUser" (dict "access" $access)) }}
+  {{- end }}
+  che:
+    mode: Ensure
+    {{- with $values }}
+    # Deep-merged over the team's values (2.helm/user-app/values.yaml).
+    values:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  {{- end }}
+{{- end }}

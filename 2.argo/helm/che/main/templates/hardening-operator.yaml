@@ -31,6 +31,23 @@ spec:
         # serving cert and has cert-manager inject the CA bundle.
         certificates:
           provider: cert-manager
+        # No HA for now. The webhook keeps maxUnavailable: 0 / maxSurge: 1, so a
+        # rollout still never leaves it without a ready endpoint; a node drain
+        # does, and every webhook here is failurePolicy: Fail.
+        webhook:
+          replicaCount: {{ .Values.che.hardening.replicas }}
+        controller:
+          replicaCount: {{ .Values.che.hardening.replicas }}
+          # minAvailable: 1 on a single replica can never be satisfied and
+          # would stall every node drain.
+          podDisruptionBudget:
+            enabled: {{ gt (int .Values.che.hardening.replicas) 1 }}
+        # Lets the `identity` feature create the per-user Argo Application
+        # (in argocd only). Nothing happens until the WeeboSiConfig turns it on.
+        identity:
+          rbac:
+            enabled: true
+          argoNamespace: argocd
   destination:
     server: https://kubernetes.default.svc
     namespace: {{ .Values.che.hardening.namespace }}

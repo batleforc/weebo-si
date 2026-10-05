@@ -1,0 +1,122 @@
+{{- /*
+  The ClusterRoles a Che user can be given in their own dev-ws-<username>
+  namespace. Which of them a person gets — a level, plus add-ons — is decided
+  by 2.helm/user-app (templates/_access.tpl), from the team's floor and the
+  person's override. Every one is bound by a RoleBinding, never a
+  ClusterRoleBinding, so nothing here reaches past that namespace.
+
+  The `baseline` level is not defined here: it binds Che's own
+  <che-namespace>-cheworkspaces-* ClusterRoles, which che-operator maintains.
+*/ -}}
+---
+# Level `min`: what che-dashboard's backend does with the user's token
+# (packages/dashboard-backend/src/devworkspaceClient/services), nothing more.
+# Left out compared to Che's own roles: pods create/update/delete,
+# deployments, replicasets, services, ingresses, PVCs, port-forward, metrics.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: weebo-che-min
+  labels:
+    weebo.io/che-access: level
+rules:
+  # Workspaces themselves.
+  - apiGroups: ["workspace.devfile.io"]
+    resources: ["devworkspaces", "devworkspacetemplates"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Git credentials, SSH keys, PATs, registry auth, AI provider keys.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "create", "update", "delete"]
+  # gitconfig, workspace preferences, editors and samples lookups.
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "create", "update", "patch"]
+  # Workspace status, logs and events in the dashboard.
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch"]
+  # The dashboard injects the kubeconfig and runs `podman login` in the
+  # workspace container. Websocket exec is a GET, hence both verbs.
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["get", "create"]
+  # Bound by a RoleBinding, this only reaches the user's own namespace.
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get"]
+---
+# Level `deploy`, on top of `min` and `port-forward`: run their own
+# workloads next to their workspaces. A curated `edit`, without what makes
+# `edit` an escalation or a bypass here:
+#   - serviceaccounts create/impersonate, serviceaccounts/token: borrowing an
+#     identity other than their own;
+#   - ingresses: publishing on Traefik outside endpoint-auth (Che's own
+#     workspace ingresses are created by DevWorkspace Operator, not the user);
+#   - networkpolicies: what network-profiles / policy-guard own;
+#   - external-secrets.io: a SecretStore reaches Vault with a role of its own;
+#   - devworkspaceoperatorconfigs: what dwoc-pin pins;
+#   - pods create: a bare pod skips the controllers; workloads go through
+#     Deployments, StatefulSets and Jobs, and still through the pod webhook.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: weebo-che-deploy
+  labels:
+    weebo.io/che-access: level
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/scale", "statefulsets", "statefulsets/scale"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets", "controllerrevisions"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["services", "configmaps", "secrets", "persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Restarting a pod is deleting it.
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["delete"]
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Read-only, so they see why a pod is not scheduled.
+  - apiGroups: [""]
+    resources: ["resourcequotas", "limitranges"]
+    verbs: ["get", "list", "watch"]
+---
+# Add-on `port-forward`: a tunnel from the user's machine to a pod in their
+# namespace, which is how JetBrains Gateway (IntelliJ...) reaches a Che
+# workspace. Already part of `baseline` (Che's role has it) and `deploy`.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: weebo-che-port-forward
+  labels:
+    weebo.io/che-access: addon
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/portforward"]
+    verbs: ["get", "create"]

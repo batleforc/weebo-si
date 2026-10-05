@@ -1,42 +1,38 @@
+{{- $user := required "cheUser.username is rendered by the operator" .Values.cheUser.username -}}
+{{- $kubeUser := printf "labsso:%s" (required "cheUser.email is rendered by the operator" .Values.cheUser.email) -}}
+# Che runs with defaultNamespace.autoProvision: false, so the namespace has to
+# exist beforehand, carrying the labels and annotation Che looks it up by.
 kind: Namespace
 apiVersion: v1
 metadata:
-  name: dev-ws-{{ .Values.cheUser.username }}
+  name: dev-ws-{{ $user }}
   labels:
     app.kubernetes.io/part-of: che.eclipse.org
     app.kubernetes.io/component: workspaces-namespace
+    # Brings the namespace into the scope of weebo-si-operator's pod-level
+    # image-policy and policy-guard webhooks.
+    hardening.weebo.io/workspace-namespace: "true"
+    weebo.io/team: {{ required "cheUser.teamLabel is rendered by the operator" .Values.cheUser.teamLabel | quote }}
   annotations:
-    che.eclipse.org/username: {{ .Values.cheUser.username }}
+    che.eclipse.org/username: {{ $user | quote }}
+{{- range include "user-app.access.clusterRoles" . | fromYamlArray }}
 ---
+# To the apiserver identity of this person, not the Che username: che-server's
+# own bindings name the latter and grant nothing. Which ClusterRoles is
+# templates/_access.tpl's call (cheUser.access).
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: dev-ws-{{ .Values.cheUser.username }}-rolebinding
-  namespace: dev-ws-{{ .Values.cheUser.username }}
+  name: dev-ws-{{ $user }}-{{ . }}
+  namespace: dev-ws-{{ $user }}
   labels:
     app.kubernetes.io/part-of: che.eclipse.org
 subjects:
   - kind: User
-    name: weebsso:max@batleforc.fr
+    name: {{ $kubeUser | quote }}
     apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
-  name: eclipse-che-cheworkspaces-clusterrole
+  name: {{ . }}
   apiGroup: rbac.authorization.k8s.io
----
-kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: dev-ws-{{ .Values.cheUser.username }}-rolebinding-devworkspace
-  namespace: dev-ws-{{ .Values.cheUser.username }}
-  labels:
-    app.kubernetes.io/part-of: che.eclipse.org
-subjects:
-  - kind: User
-    name: weebsso:{{ .Values.cheUser.username }}@weebo.poc
-    apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: ClusterRole
-  name: eclipse-che-cheworkspaces-devworkspace-clusterrole
-  apiGroup: rbac.authorization.k8s.io
-
+{{- end }}

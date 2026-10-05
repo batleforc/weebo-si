@@ -1,0 +1,40 @@
+{{- if and .Values.che.hardening.enabled .Values.che.hardening.config.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: weebo-si-hardening-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: "{{ .Values.project }}"
+  source:
+    repoURL: '{{ .Values.repo }}'
+    targetRevision: '{{ .Values.branch }}'
+    path: '2.argo/helm/che/hardening'
+    helm:
+      releaseName: weebo-si-hardening-config
+      valuesObject:
+        repo: '{{ .Values.repo }}'
+        branch: '{{ .Values.branch }}'
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: {{ .Values.che.hardening.namespace }}
+  syncPolicy:
+    # No prune on purpose: deleting a WeeboSiUser garbage-collects the
+    # Application the operator created for it, and with it the user's
+    # namespace and workspaces. Removing a person stays a manual act.
+    automated:
+      selfHeal: true
+    syncOptions:
+    # The CRDs come from weebo-si-hardening-operator (wave 1).
+    - SkipDryRunOnMissingResource=true
+    - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

@@ -1,0 +1,30 @@
+---
+# The singleton: any name other than `cluster` is ignored by the operator.
+# A feature absent from spec.features is Off.
+apiVersion: hardening.weebo.io/v1alpha1
+kind: WeeboSiConfig
+metadata:
+  name: cluster
+spec:
+  features:
+    identity:
+      mode: {{ .Values.identity.mode | quote }}
+      che:
+        # Must match the chart's identity.argoNamespace (hardening-operator.yaml).
+        applicationNamespace: argocd
+        allowedProjects:
+          - {{ .Values.identity.project | quote }}
+        # Matched against the team template as written, before rendering.
+        allowedRepoUrls:
+          - {{ .Values.repo | quote }}
+    imagePolicy:
+      mode: {{ .Values.imagePolicy.mode | quote }}
+      # What a namespace with no team gets. Che and DevWorkspace Operator
+      # images are allowed everywhere through platform.builtin.
+      catalog:
+        - key: devfile-udi
+          patterns:
+            - "quay.io/devfile/universal-developer-image:*"
+      default: [devfile-udi]
+      platform:
+        builtin: true

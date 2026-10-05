@@ -25,4 +25,8 @@ spec:
   clusterResourceWhitelist:
 {{ . | toYaml | indent 4 }}
   {{ end -}}
+  {{- with .namespaceResourceWhitelist }}
+  namespaceResourceWhitelist:
+{{ . | toYaml | indent 4 }}
+  {{ end -}}
 {{- end -}}
