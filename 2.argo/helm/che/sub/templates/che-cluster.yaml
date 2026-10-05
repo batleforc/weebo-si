@@ -71,7 +71,12 @@ spec:
   components:
     cheServer:
       extraProperties:
-        CHE_SYSTEM_ADMIN_NAME: "Batleforc"
+        CHE_SYSTEM_ADMIN_NAME: "batleforc"
+        # Default is the `name` claim (Authentik's display name, "max"), which
+        # Che would turn into dev-ws-max. preferred_username is the Authentik
+        # username: what WeeboSiUser.username, the dev-ws-<username> namespace
+        # and the endpoint gateway's owner check all use.
+        CHE_OIDC_USERNAME__CLAIM: "preferred_username"
       deployment:
         containers:
           - name: che
