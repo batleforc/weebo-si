@@ -435,7 +435,10 @@ teams:
         catalog:
           - key: angos
             patterns: ["registry.pkg.weebo.poc/**"]
-        default: [angos]
+          # The weebodevimage images, also straight from ghcr.io.
+          - key: weebo-devimages
+            patterns: ["ghcr.io/batleforc/weebodevimage/**"]
+        default: [angos, weebo-devimages]
       kubearmorPolicy:
         catalog: []
         default: []
