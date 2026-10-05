@@ -22,16 +22,6 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: 'argocd'
-  # che-operator rewrites part of the CheCluster after every apply (see the
-  # che.eclipse.org/checluster-defaults-cleanup annotation), which kept it
-  # OutOfSync and selfHeal re-applying it in a loop. Only the fields its own
-  # field manager (`manager`) owns are ignored: a change to anything else in
-  # git still shows as a diff and syncs.
-  ignoreDifferences:
-    - group: org.eclipse.che
-      kind: CheCluster
-      managedFieldsManagers:
-        - manager
   syncPolicy:
     automated:
       selfHeal: true

@@ -43,6 +43,9 @@ spec:
       - name: tool
         container:
           image: ghcr.io/batleforc/weebodevimage/che-min-mise:main
+          # Che's webhook defaults it on admission; written out so Argo
+          # does not see it as drift.
+          sourceMapping: /projects
   {{- if .Values.che.forgejo.enabled }}
   # Needs the forked CRD (operator/), the upstream one prunes this field.
   gitServices:
