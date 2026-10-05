@@ -117,6 +117,7 @@ resource "vault_pki_secret_backend_role" "intermediate_role" {
   key_bits         = 4096
   allowed_domains  = ["weebo.poc"]
   allow_subdomains = true
+  require_cn = false
 }
 
 resource "vault_kv_secret_v2" "certificate" {
