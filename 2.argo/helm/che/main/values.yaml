@@ -8,6 +8,31 @@ che:
   ingress:
     enabled: true
     host: cde.dev.weebo.poc
+  # The IDEs the dashboard offers. Passed to sub (CheCluster) and sub-bis
+  # (editor ConfigMap). Whatever is offered, imagePolicy still decides which
+  # images run: a house editor's images go through angos
+  # (registry.pkg.weebo.poc) or weebodevimage.
+  editors:
+    # <publisher>/<name>/<version> preselected when creating a workspace.
+    # Must be a shipped house editor or an upstream one left visible.
+    default: weebo/che-code/latest
+    # House editors: one devfile per file in 2.argo/helm/che/sub-bis/editors/,
+    # keyed by file name without .yaml. true ships it, false keeps it out.
+    # Every file there must be listed (the render fails otherwise), so a new
+    # IDE is: drop editors/<name>.yaml, add `<name>: true` here.
+    custom:
+      che-code-angos: true            # weebo/che-code/latest
+      che-code-insiders-weebo: true   # weebo/che-code-weebo/next
+    # The che-incubator editors che-operator ships (list: sub/values.yaml
+    # che.editors.upstream.known). Hidden from the picker only: a
+    # che-editor.yaml naming one still resolves, and imagePolicy refuses
+    # its quay.io images.
+    upstream:
+      # true: hide every known upstream editor except `show`.
+      # false: hide only `hide`.
+      hideAll: true
+      show: []
+      hide: []
   # Root CA injected into che-server (and, through `ca-certs-merged`, into
   # workspaces) so it trusts the internal PKI -- authentik's issuer above all.
   # Rendered as a trust-manager Bundle in sub-bis; `name` is both the Bundle and

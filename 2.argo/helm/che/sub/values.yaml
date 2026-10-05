@@ -23,12 +23,52 @@ che:
     secretName: forgejo-oauth-config
     endpoint: https://git.batleforc.fr
     vaultKey: mv/eclipse-che/forgejo
+  # IDE control lives in 2.argo/helm/che/main/values.yaml (che.editors),
+  # which overrides these defaults. Only `upstream.known` belongs here.
+  editors:
+    default: weebo/che-code/latest
+    custom: {}
+    upstream:
+      hideAll: true
+      show: []
+      hide: []
+      # Every editor che-operator ships in its editors-definitions ConfigMap
+      # (all che-incubator/, images straight from quay.io). hideAll hides
+      # exactly this list, so re-list after a che-operator bump:
+      #   kubectl exec -n eclipse-che deploy/che-dashboard -- \
+      #     curl -s http://localhost:8080/dashboard/api/editors \
+      #     | jq -r '.[].metadata | "\(.attributes.publisher)/\(.name)/\(.attributes.version)"'
+      known:
+        - che-incubator/che-chemuxer/next
+        - che-incubator/che-clion-server/latest
+        - che-incubator/che-clion-server/next
+        - che-incubator/che-code/insiders
+        - che-incubator/che-code/latest
+        - che-incubator/che-code-server/latest
+        - che-incubator/che-code-server/next
+        - che-incubator/che-code-sshd/insiders
+        - che-incubator/che-code-sshd/next
+        - che-incubator/che-goland-server/latest
+        - che-incubator/che-goland-server/next
+        - che-incubator/che-herdr/latest
+        - che-incubator/che-idea-server/latest
+        - che-incubator/che-idea-server/next
+        - che-incubator/che-phpstorm-server/latest
+        - che-incubator/che-phpstorm-server/next
+        - che-incubator/che-pycharm-server/latest
+        - che-incubator/che-pycharm-server/next
+        - che-incubator/che-rider-server/latest
+        - che-incubator/che-rider-server/next
+        - che-incubator/che-rubymine-server/latest
+        - che-incubator/che-rubymine-server/next
+        - che-incubator/che-webstorm-server/latest
+        - che-incubator/che-webstorm-server/next
+        - che-incubator/che-web-terminal/latest
+        - che-incubator/jetbrains-sshd/next
   # Workspace images pulled through angos (registry.pkg.weebo.poc/quay = a
   # quay.io pull-through cache). Pinned tags: unlike the operator defaults
   # they do not move when che-operator is upgraded, so bump them with it.
   workspaceImages:
-    # <publisher>/<name>/<version> of an editor definition (sub-bis).
-    editor: weebo/che-code/latest
     projectClone: registry.pkg.weebo.poc/quay/devfile/project-clone:v0.43.0
     gateway: registry.pkg.weebo.poc/quay/eclipse/che--traefik:v3.7.13-24841fe2de7304c149343d877d2923b4c8800a38ba015dea9174c23b20e344a0
   # Read anonymously: the editor cannot authenticate to its gallery.
