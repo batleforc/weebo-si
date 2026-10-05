@@ -42,11 +42,19 @@ port-forward:
 {{- $order := include "user-app.access.levelOrder" . | fromYamlArray -}}
 {{- $levels := include "user-app.access.levels" . | fromYaml -}}
 {{- $addons := include "user-app.access.addons" . | fromYaml -}}
+{{- /*
+  Former levels still accepted, mapped to their replacement. `min` is read as
+  `baseline`: a WeeboSiTeam rendered before min was dropped keeps its member
+  Applications rendering until the operator rewrites them.
+*/ -}}
+{{- $aliases := dict "min" "baseline" -}}
 {{- $floor := required "cheUser.access.teamLevel is set by the team template" $access.teamLevel -}}
+{{- $floor = get $aliases $floor | default $floor -}}
 {{- if not (has $floor $order) -}}
 {{- fail (printf "cheUser.access.teamLevel %q is not one of %v" $floor $order) -}}
 {{- end -}}
 {{- $level := $access.level | default $floor -}}
+{{- $level = get $aliases $level | default $level -}}
 {{- if not (has $level $order) -}}
 {{- fail (printf "cheUser.access.level %q is not one of %v" $level $order) -}}
 {{- end -}}
