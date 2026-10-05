@@ -1,57 +1,15 @@
-{{- range .Values.teams }}
+{{- range $name, $team := .Values.teams }}
+{{- $spec := deepCopy $team -}}
+{{- with (($spec.workspace).che).source }}
+{{- if not .repoUrl }}{{ $_ := set . "repoUrl" $.Values.repo }}{{ end }}
+{{- if not .targetRevision }}{{ $_ := set . "targetRevision" $.Values.branch }}{{ end }}
+{{- end }}
 ---
+# Spec from values.yaml `teams.{{ $name }}`.
 apiVersion: hardening.weebo.io/v1alpha1
 kind: WeeboSiTeam
 metadata:
-  name: {{ .name }}
+  name: {{ $name }}
 spec:
-  displayName: {{ .displayName | default .name | quote }}
-  priority: {{ .priority | default 1000 }}
-  namespaceSelector:
-    matchLabels:
-      weebo.io/team: {{ .namespaceLabel | quote }}
-  {{- with .imageCatalog }}
-  features:
-    imagePolicy:
-      catalog:
-        {{- toYaml . | nindent 8 }}
-      default:
-        {{- range . }}
-        - {{ .key }}
-        {{- end }}
-  {{- end }}
-  # One Argo Application per member asking for a workspace. {VAR} placeholders
-  # are rendered by the operator, per person, not by Helm.
-  workspace:
-    che:
-      mode: Ensure
-      name: "che-user-{OBJECT_NAME}"
-      project: {{ $.Values.identity.project | quote }}
-      source:
-        repoUrl: {{ $.Values.repo | quote }}
-        path: 2.helm/user-app
-        targetRevision: {{ $.Values.branch | quote }}
-        # Base values; a WeeboSiUser's spec.che.values is deep-merged over them.
-        values:
-          project: {{ $.Values.identity.project | quote }}
-          cheUser:
-            username: "{USERNAME}"
-            email: "{EMAIL}"
-            teamLabel: {{ .namespaceLabel | quote }}
-            # The floor every member gets; a WeeboSiUser may raise it.
-            access:
-              teamLevel: {{ required (printf "team %s: access.level" .name) (.access).level | quote }}
-              addons: {{ (.access).addons | default list | toJson }}
-      destination:
-        server: https://kubernetes.default.svc
-        namespace: {{ .namespace | quote }}
-      syncPolicy:
-        # The chart renders the Namespace itself (labels Che needs), so no
-        # CreateNamespace. No prune: a chart change must never take the
-        # namespace, and the workspaces in it, along.
-        automated:
-          prune: false
-          selfHeal: true
-        options:
-          - ServerSideApply=true
+  {{- toYaml $spec | nindent 2 }}
 {{- end }}

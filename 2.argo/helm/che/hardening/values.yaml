@@ -1,66 +1,495 @@
-# Rendered as the WeeboSiTeam's workspace.che source, and as the only entry
-# of identity.che.allowedRepoUrls: the per-user chart lives in this repo.
+# weebo-si-operator's objects, managed from here. Everything under `config`,
+# `teams.<name>` and `users.<name>` is the objects' own spec, written exactly
+# as the CRDs take it, with two keys of ours on each config.features block:
+#   enabled    false = the feature is left out of the WeeboSiConfig (Off)
+#   templates  objects the feature copies into workspace namespaces,
+#              rendered into this namespace while the feature is enabled
+# References (field by field):
+#   https://github.com/batleforc/weebo-si-hardening/blob/main/docs/weebosiconfig.md
+#   https://github.com/batleforc/weebo-si-hardening/blob/main/docs/weebositeam.md
+#   https://github.com/batleforc/weebo-si-hardening/blob/main/docs/weebosiuser.md
+# Rollout per feature: Off -> DryRun -> Enforce, reading the operator's logs
+# and metrics at each step (docs/bricks/weebo-si-operator.md).
+
+# Set by the Application (che/main/templates/hardening-config.yaml). Filled
+# into a team's workspace.che.source when left empty, and always added to
+# identity's allowedRepoUrls: the per-user chart (2.helm/user-app) is here.
 repo: ""
 branch: ""
 
-# features.identity: creates one Argo Application per WeeboSiUser asking for
-# a workspace. DryRun = every decision taken, nothing written; read
-# `kubectl get wsuser -o yaml` (status.che.message: "would create ...").
-identity:
-  mode: Enforce
-  # AppProject the per-user Applications run in (2.argo/app/values.yaml).
-  project: che-users
+# Set by the Application from che.hardening.operator (che/main/values.yaml):
+# the operator chart's RBAC switches. A feature enabled below whose switch is
+# off there is a refused render, not a runtime Degraded.
+operator: {}
 
-# features.imagePolicy, observe-only to start: denials are logged and counted,
-# nothing is refused. Read the webhook logs before moving to Enforce.
-imagePolicy:
-  mode: DryRun
+# WeeboSiConfig `cluster`.
+config:
+  features:
+    # RFC 0002. Pins every DevWorkspace to an admin-authored
+    # DevWorkspaceOperatorConfig, so a devfile cannot bring its own.
+    dwocPin:
+      enabled: false
+      mode: DryRun
+      catalog:
+        # Che's own DWOC (che-operator maintains it).
+        - key: che
+          name: devworkspace-config
+          namespace: eclipse-che
+      default: che
+      namespaceSelection:
+        annotation: hardening.weebo.io/dwoc
+        onUnknownKey: Default
+      # Skip: a missing DWOC lets the workspace through unpinned rather
+      # than denying every workspace for an admin mistake.
+      onMissingTarget: Skip
 
+    # RFC 0004. What workspace pods may reach. `baseline` applies to every
+    # namespace in scope and no team can withhold it; the other entries are
+    # reachable by a team that re-declares them (identically), and picked per
+    # workspace with the devfile attribute below, else the team's default.
+    # Profiles only add: in Cilium, a direction a policy selects is
+    # default-deny. Needs operator.networkProfiles.cilium.enabled.
+    networkProfiles:
+      enabled: false
+      mode: DryRun
+      catalog:
+        - key: base
+          variants:
+            - backend: Cilium
+              templateRef: { name: weebo-net-base, namespace: weebo-si-hardening }
+        - key: dev-registries
+          variants:
+            - backend: Cilium
+              templateRef: { name: weebo-net-dev-registries, namespace: weebo-si-hardening }
+        - key: internet
+          variants:
+            - backend: Cilium
+              templateRef: { name: weebo-net-internet, namespace: weebo-si-hardening }
+        - key: kube-api
+          variants:
+            - backend: Cilium
+              templateRef: { name: weebo-net-kube-api, namespace: weebo-si-hardening }
+      baseline: base
+      namespaceSelection:
+        annotation: hardening.weebo.io/network-profiles
+      workspaceSelection:
+        attribute: hardening.weebo.io/network-profiles
+      # A workspace naming a profile its team does not grant gets the team
+      # default instead of being refused.
+      onNotGranted: Default
+      enforcement:
+        # Not Auto: the templates only exist as CiliumNetworkPolicy, and a
+        # plain NetworkPolicy cannot reach the apiserver (on the node) here.
+        backend: Cilium
+        # Proves Cilium actually enforces (weebo_si_network_canary). Both
+        # fields or none.
+        canary:
+          enabled: true
+          intervalSeconds: 300
+      # The policies copied above. The operator sets the selector itself.
+      templates:
+        # The floor: DNS, the namespace itself, Che, and *.weebo.poc (CoreDNS
+        # rewrites every *.weebo.poc to Traefik). No Internet, no apiserver.
+        weebo-net-base:
+          apiVersion: cilium.io/v2
+          kind: CiliumNetworkPolicy
+          spec:
+            ingress:
+              - fromEndpoints:
+                  - {}
+              # Workspace endpoints, through their Ingress.
+              - fromEndpoints:
+                  - matchLabels:
+                      k8s:io.kubernetes.pod.namespace: traefik
+                      app.kubernetes.io/name: traefik
+              # The workspace's main endpoint, through Che's gateway.
+              - fromEndpoints:
+                  - matchLabels:
+                      k8s:io.kubernetes.pod.namespace: eclipse-che
+                      app.kubernetes.io/component: che-gateway
+            egress:
+              - toEndpoints:
+                  - {}
+              # DNS, through Cilium's proxy: what makes toFQDNs work.
+              - toEndpoints:
+                  - matchLabels:
+                      k8s:io.kubernetes.pod.namespace: kube-system
+                      k8s-app: kube-dns
+                toPorts:
+                  - ports:
+                      - { port: "53", protocol: ANY }
+                    rules:
+                      dns:
+                        - matchPattern: "*"
+              # *.weebo.poc (Traefik's web/websecure container ports, after
+              # service translation).
+              - toEndpoints:
+                  - matchLabels:
+                      k8s:io.kubernetes.pod.namespace: traefik
+                      app.kubernetes.io/name: traefik
+                toPorts:
+                  - ports:
+                      - { port: "8000", protocol: TCP }
+                      - { port: "8443", protocol: TCP }
+              # che-host, che-dashboard and che-gateway's internal URLs.
+              - toEndpoints:
+                  - matchLabels:
+                      k8s:io.kubernetes.pod.namespace: eclipse-che
+                    matchExpressions:
+                      - key: app.kubernetes.io/component
+                        operator: In
+                        values: [che, che-dashboard, che-gateway]
+                toPorts:
+                  - ports:
+                      - { port: "8080", protocol: TCP }
+        # Git forges and package registries, by name.
+        weebo-net-dev-registries:
+          apiVersion: cilium.io/v2
+          kind: CiliumNetworkPolicy
+          spec:
+            egress:
+              - toFQDNs:
+                  - matchName: github.com
+                  - matchName: git.batleforc.fr
+                toPorts:
+                  - ports:
+                      - { port: "443", protocol: TCP }
+                      - { port: "22", protocol: TCP }
+              - toFQDNs:
+                  - matchPattern: "*.github.com"
+                  - matchPattern: "*.githubusercontent.com"
+                  - matchName: ghcr.io
+                  - matchName: quay.io
+                  - matchPattern: "*.quay.io"
+                  - matchName: registry-1.docker.io
+                  - matchName: auth.docker.io
+                  - matchName: production.cloudflare.docker.com
+                  - matchName: registry.npmjs.org
+                  - matchName: pypi.org
+                  - matchName: files.pythonhosted.org
+                  - matchName: crates.io
+                  - matchName: index.crates.io
+                  - matchName: static.crates.io
+                  - matchName: proxy.golang.org
+                  - matchName: sum.golang.org
+                  - matchName: open-vsx.org
+                  - matchPattern: "*.open-vsx.org"
+                toPorts:
+                  - ports:
+                      - { port: "443", protocol: TCP }
+        # Anything outside the cluster (Cilium's `world`: not pods, nodes or
+        # the apiserver).
+        weebo-net-internet:
+          apiVersion: cilium.io/v2
+          kind: CiliumNetworkPolicy
+          spec:
+            egress:
+              - toEntities: [world]
+        # kubectl from the workspace terminal (Che injects a kubeconfig).
+        weebo-net-kube-api:
+          apiVersion: cilium.io/v2
+          kind: CiliumNetworkPolicy
+          spec:
+            egress:
+              - toEntities: [kube-apiserver]
+                toPorts:
+                  - ports:
+                      - { port: "6443", protocol: TCP }
+
+    # RFC 0004/0008. Refuses writes to the policies the operator owns, in
+    # workspace namespaces. No access level grants networkpolicies: defence
+    # in depth. Enforce only once networkProfiles has converged.
+    policyGuard:
+      enabled: false
+      mode: DryRun
+      # Identities that may author unmanaged policies in workspace
+      # namespaces. Nobody but the operator may touch a managed one.
+      allowedIdentities: []
+
+    # RFC 0005. Which images a workspace may run, per team.
+    imagePolicy:
+      enabled: true
+      # Observe-only to start: denials are logged and counted, nothing is
+      # refused. Read the webhook logs before moving to Enforce.
+      mode: DryRun
+      # What a namespace with no team gets.
+      catalog:
+        - key: devfile-udi
+          patterns: ["quay.io/devfile/universal-developer-image:*"]
+      default: [devfile-udi]
+      # Pattern variables read from namespace annotations, e.g.
+      # COST_CENTRE: { fromNamespaceAnnotation: weebo.io/cost-centre }.
+      variables: {}
+      namespaceSelection:
+        annotation: hardening.weebo.io/image-policy
+      workspaceSelection:
+        attribute: hardening.weebo.io/image-policy
+      onNotGranted: Default
+      # Allowed everywhere, whatever the team: Che and DevWorkspace Operator
+      # images (builtin), plus extra patterns for a mirrored platform.
+      platform:
+        builtin: true
+        extra: []
+
+    # RFC 0006. What a workspace's processes may do (exec, files, network,
+    # capabilities), through KubeArmor. KubeArmor is not installed here:
+    # Auto resolves to nothing and the feature writes nothing. Needs
+    # operator.kubearmorPolicy.rbac.enabled.
+    kubearmorPolicy:
+      enabled: false
+      mode: DryRun
+      catalog:
+        - key: base
+          templateRef: { name: weebo-armor-base, namespace: weebo-si-hardening }
+      baseline: base
+      namespaceSelection:
+        annotation: hardening.weebo.io/kubearmor-policy
+      workspaceSelection:
+        attribute: hardening.weebo.io/kubearmor-policy
+      onNotGranted: Default
+      enforcement:
+        backend: Auto
+        # What happens to an operation no rule matched. Block denies
+        # everything the templates did not think to allow.
+        defaultPosture:
+          file: Audit
+          network: Audit
+          capabilities: Audit
+      templates:
+        # Starting point: audit reads of the pod's ServiceAccount token.
+        weebo-armor-base:
+          apiVersion: security.kubearmor.com/v1
+          kind: KubeArmorPolicy
+          spec:
+            file:
+              matchDirectories:
+                - dir: /var/run/secrets/kubernetes.io/serviceaccount/
+                  recursive: true
+            action: Audit
+
+    # RFC 0007. Package-manager configuration (.npmrc, pip.conf...) mounted
+    # into every workspace container of a namespace, per team. No baseline
+    # and no cluster default: a team reaches only what it catalogues. Not a
+    # control on its own (networkProfiles is). Needs
+    # operator.registryConfig.rbac.enabled.
+    registryConfig:
+      enabled: false
+      mode: DryRun
+      catalog:
+        - key: npm-mirror
+          ecosystem: Npm
+          sources:
+            - kind: ConfigMap
+              templateRef: { name: weebo-npmrc, namespace: weebo-si-hardening }
+      namespaceSelection:
+        annotation: hardening.weebo.io/registry-config
+      onNotGranted: Default
+      # Copied verbatim into each granted namespace. Never a Secret in git:
+      # a Secret template belongs to an ExternalSecret, rendered elsewhere.
+      templates:
+        weebo-npmrc:
+          apiVersion: v1
+          kind: ConfigMap
+          labels:
+            controller.devfile.io/mount-to-devworkspace: "true"
+          annotations:
+            # subpath, not file: `file` at /home/user replaces the home
+            # directory (and is refused by the operator).
+            controller.devfile.io/mount-as: subpath
+            controller.devfile.io/mount-path: /home/user
+          data:
+            # Placeholder: point it at the internal mirror.
+            .npmrc: |
+              registry=https://registry.npmjs.org/
+
+    # RFC 0009. An authenticating gate in front of every workspace endpoint
+    # on its own FQDN. The endpoint-gateway is deployed
+    # (che/main/templates/endpoint-gateway.yaml); enabling this, together
+    # with operator.endpointAuth.rbac.enabled, is what links it. The value
+    # marked "verify" has to be read off a real workspace first.
+    endpointAuth:
+      enabled: false
+      mode: DryRun
+      gateway:
+        # The deployed gateway's host (che.hardening.endpointGateway.host).
+        externalUrl: https://endpoint-auth.cde.dev.weebo.poc
+        service: { name: endpoint-gateway, namespace: weebo-si-hardening, port: 4180 }
+        clusterDomain: cluster.local
+        # Keep in step with operator.endpointAuth.dialect.
+        dialect: Traefik
+        # Observe: computes and counts every decision, answers 200.
+        enforcement: Observe
+        allowedMiddlewares: []
+        haproxyPrerequisite: false
+      breakGlassIdentities: []
+      owner:
+        # Its value must equal what the gateway's claims.username yields.
+        namespaceAnnotation: che.eclipse.org/username
+        # Under Che (routingClass: che), che-operator writes the routing
+        # objects, not DevWorkspace Operator.
+        devworkspaceOperatorIdentity: system:serviceaccount:eclipse-che:che-operator
+      hosts:
+        suffix: .cde.dev.weebo.poc
+        # verify: how Che names an endpoint host here.
+        ownership:
+          - template: "{user}-{workspace}-{endpoint}"
+        exclude: [cde.dev.weebo.poc]
+      catalog:
+        - { key: private, delegation: [] }
+        - { key: team, delegation: [Team] }
+        - { key: shared, delegation: [Team, UsersAndGroups] }
+      default: private
+      # Per-user narrowing, intersected with the team's grant.
+      overrides: []
+      endpointSelection:
+        annotation: hardening.weebo.io/access
+        onUnknownKey: Default
+      selfOrigin:
+        podNetwork: Auto
+        serviceAccountToken: true
+
+    # RFC 0011. One Argo Application per WeeboSiUser asking for a
+    # workspace, from its team's workspace.che template (and an
+    # AuthentikUser per person asking for one). Needs
+    # operator.identity.rbac.enabled.
+    identity:
+      enabled: true
+      mode: Enforce
+      authentik:
+        # Groups a team or a person may request; empty allows none.
+        allowedGroupRefs: []
+      che:
+        # Must match operator.identity.argoNamespace.
+        applicationNamespace: argocd
+        allowedProjects: [che-users]
+        # .Values.repo is always added.
+        allowedRepoUrls: []
+
+# WeeboSiTeam objects: name -> spec. A team's feature block only does
+# something while that feature is enabled above; its catalogue entries must
+# be identical to the cluster's when they share a key.
 teams:
-  - name: weebo
+  weebo:
     displayName: Weebo
     priority: 100
-    # Namespaces this team owns. The user chart puts this label on every
-    # workspace namespace it creates.
-    namespaceLabel: weebo
-    # Che's defaultNamespace.template is dev-ws-<username>, autoProvision off:
-    # the namespace must exist, and must be named what Che expects.
-    namespace: "dev-ws-{USERNAME}"
-    # Floor for every member's namespace (2.helm/user-app/templates/_access.tpl):
-    #   min       what the Che dashboard needs, nothing more
-    #   baseline  Che's own default roles (adds pods/deployments/services/
-    #             ingresses/PVC writes, port-forward)
-    #   deploy    min + port-forward + run their own workloads (a curated edit)
-    # addons: [port-forward] (JetBrains Gateway), for every member.
-    access:
-      level: min
-      addons: []
-    imageCatalog:
-      - key: weebo-devimages
-        patterns:
-          - "ghcr.io/batleforc/weebodevimage/**"
+    # The namespaces this team owns; 2.helm/user-app puts this label on
+    # every workspace namespace it creates (cheUser.teamLabel below).
+    namespaceSelector:
+      matchLabels:
+        weebo.io/team: weebo
+    features:
+      dwocPin:
+        catalog: []
+        default: che
+      networkProfiles:
+        catalog:
+          - key: dev-registries
+            variants:
+              - backend: Cilium
+                templateRef: { name: weebo-net-dev-registries, namespace: weebo-si-hardening }
+          - key: internet
+            variants:
+              - backend: Cilium
+                templateRef: { name: weebo-net-internet, namespace: weebo-si-hardening }
+          - key: kube-api
+            variants:
+              - backend: Cilium
+                templateRef: { name: weebo-net-kube-api, namespace: weebo-si-hardening }
+        default: [dev-registries]
+      imagePolicy:
+        catalog:
+          - key: weebo-devimages
+            patterns: ["ghcr.io/batleforc/weebodevimage/**"]
+        default: [weebo-devimages]
+      kubearmorPolicy:
+        catalog: []
+        default: []
+      registryConfig:
+        catalog:
+          - key: npm-mirror
+            ecosystem: Npm
+            sources:
+              - kind: ConfigMap
+                templateRef: { name: weebo-npmrc, namespace: weebo-si-hardening }
+        default: [npm-mirror]
+      endpointAuth:
+        catalog: []
+        default: private
+    identity:
+      authentik:
+        # Every member provisioned with authentik.mode: Ensure gets these;
+        # each must be on identity.authentik.allowedGroupRefs.
+        groupRefs: []
+    # One Argo Application per member asking for a workspace. {VAR}
+    # placeholders are rendered by the operator, per person, not by Helm.
+    workspace:
+      che:
+        mode: Ensure
+        name: "che-user-{OBJECT_NAME}"
+        project: che-users
+        source:
+          repoUrl: ""          # empty = .Values.repo
+          path: 2.helm/user-app
+          targetRevision: ""   # empty = .Values.branch
+          # Base values; a WeeboSiUser's che.values is deep-merged over them
+          # (objects merge, lists are replaced).
+          values:
+            project: che-users
+            cheUser:
+              username: "{USERNAME}"
+              email: "{EMAIL}"
+              teamLabel: weebo
+              # The floor every member gets (2.helm/user-app/templates/_access.tpl):
+              #   min       what the Che dashboard needs, nothing more
+              #   baseline  Che's own default roles
+              #   deploy    min + port-forward + their own workloads
+              # A WeeboSiUser may raise it (access.level), never lower it.
+              access:
+                teamLevel: min
+                # Add-ons every member gets, e.g. [port-forward].
+                addons: []
+        # Che's defaultNamespace.template is dev-ws-<username>, autoProvision
+        # off: the namespace must exist, and be named what Che expects.
+        destination:
+          server: https://kubernetes.default.svc
+          namespace: "dev-ws-{USERNAME}"
+        syncPolicy:
+          # The chart renders the Namespace itself (labels Che needs), so no
+          # CreateNamespace. No prune: a chart change must never take the
+          # namespace, and the workspaces in it, along.
+          automated:
+            prune: false
+            selfHeal: true
+          options: [ServerSideApply=true]
 
+# WeeboSiUser objects: name -> spec. Removing an entry deletes the object,
+# its Application and, through it, dev-ws-<username> and every workspace in
+# it (the Application syncing this chart does not prune, so that takes a
+# manual delete).
 users:
-  # metadata.name. Never remove an entry without meaning it: deleting a
-  # WeeboSiUser deletes its Application and, through it, its namespace.
-  - name: batleforc
-    # Che's username (Authentik preferred_username), which is what Che
-    # substitutes into dev-ws-<username> and writes as the namespace owner.
+  batleforc:
+    # Che's username (Authentik preferred_username): what Che substitutes
+    # into dev-ws-<username> and writes as the namespace owner.
     username: batleforc
     # The RoleBindings use the apiserver identity, "labsso:" + this email.
     email: max@weebo.poc
     team: weebo
-    che: true
-    # Raises the team's floor for this person only; below it is refused.
-    # addons are added to the team's, never replace them.
-    access:
-      level: ""
-      addons: []
-    # spec.che.values: overrides for 2.helm/user-app.
-    cheValues:
-      cheUser:
-        externalConfig:
-          enabled: true
-          repoURL: "https://github.com/batleforc/weebo-dotfiles-che"
-          path: "config"
-          branch: "HEAD"
+    active: true
+    # authentik: { mode: Ensure, groupRefs: [] } would have the operator
+    # create (or adopt) the AuthentikUser. Left out: the auth chart already
+    # manages AuthentikUser/batleforc.
+    che:
+      mode: Ensure
+      # Deep-merged over the team's workspace.che.source.values.
+      values:
+        cheUser:
+          # Raises the team's floor for this person only; below it is
+          # refused. extraAddons add to the team's addons.
+          access:
+            level: ""
+            extraAddons: []
+          externalConfig:
+            enabled: true
+            repoURL: https://github.com/batleforc/weebo-dotfiles-che
+            path: config
+            branch: HEAD

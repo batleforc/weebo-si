@@ -1,0 +1,10 @@
+# Names the upstream chart's secrets.sessionKeys / secrets.clientSecret point at.
+sessionKeys:
+  name: endpoint-gateway-session-keys
+  key: keys
+clientSecret:
+  name: endpoint-gateway-oidc
+  key: client-secret
+  # Written by the AuthentikApplication `endpoint-gateway` (2.argo/helm/auth).
+  vaultKey: mv/weebo-si-hardening/endpoint-gateway
+  vaultProperty: AUTHENTIK_CLIENT_SECRET

@@ -1,0 +1,37 @@
+# The gateway's session keys: base64 of 32 random bytes, newest first,
+# comma-separated. Generated once and never refreshed (CreatedOnce):
+# a new key here signs everybody out. Rotation is by hand, as the chart
+# describes it — prepend a new key, drop the old one twelve hours later.
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: endpoint-gateway-session-key
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  length: 32
+  digits: 8
+  symbols: 0
+  noUpper: false
+  allowRepeat: true
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ .Values.sessionKeys.name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: {{ .Values.sessionKeys.name }}
+    template:
+      data:
+        # 32 generated characters are 32 bytes; base64 is what the key is read as.
+        {{ .Values.sessionKeys.key }}: "{{ `{{ .password | b64enc }}` }}"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: endpoint-gateway-session-key

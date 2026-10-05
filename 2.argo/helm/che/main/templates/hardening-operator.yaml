@@ -36,18 +36,20 @@ spec:
         # does, and every webhook here is failurePolicy: Fail.
         webhook:
           replicaCount: {{ .Values.che.hardening.replicas }}
+          # The chart refuses a webhook PDB under 2 replicas: the one
+          # eviction it allows would be an outage of every Fail webhook.
+          podDisruptionBudget:
+            enabled: {{ gt (int .Values.che.hardening.replicas) 1 }}
         controller:
           replicaCount: {{ .Values.che.hardening.replicas }}
           # minAvailable: 1 on a single replica can never be satisfied and
           # would stall every node drain.
           podDisruptionBudget:
             enabled: {{ gt (int .Values.che.hardening.replicas) 1 }}
-        # Lets the `identity` feature create the per-user Argo Application
-        # (in argocd only). Nothing happens until the WeeboSiConfig turns it on.
-        identity:
-          rbac:
-            enabled: true
-          argoNamespace: argocd
+        # Per-feature RBAC and failure policies: che.hardening.operator in
+        # values.yaml. The config chart refuses to enable a feature whose
+        # switch here is off.
+        {{- toYaml .Values.che.hardening.operator | nindent 8 }}
   destination:
     server: https://kubernetes.default.svc
     namespace: {{ .Values.che.hardening.namespace }}

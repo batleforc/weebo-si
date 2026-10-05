@@ -1,0 +1,122 @@
+{{- if and .Values.che.hardening.enabled .Values.che.hardening.endpointGateway.enabled -}}
+{{- $gw := .Values.che.hardening.endpointGateway -}}
+---
+# weebo-si-hardening's endpoint-gateway: the sign-in and the verdict behind
+# features.endpointAuth. Deployed on its own and NOT linked: nothing routes
+# through it until features.endpointAuth is enabled in
+# 2.argo/helm/che/hardening/values.yaml and che.hardening.operator.endpointAuth
+# .rbac.enabled is set, which is what has the operator attach it to workspace
+# Ingresses.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: weebo-si-endpoint-gateway
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: weebo-si-endpoint-gateway
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  annotations:
+    # After the operator (wave 1): the gateway watches its CRDs.
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: {{ .Values.project }}
+  sources:
+  # Its Secrets, referenced by name from the chart below.
+  - repoURL: '{{ .Values.repo }}'
+    targetRevision: '{{ .Values.branch }}'
+    path: 2.argo/helm/che/endpoint-gateway
+    helm:
+      releaseName: endpoint-gateway-secrets
+  - chart: endpoint-gateway
+    repoURL: oci://ghcr.io/batleforc/charts/endpoint-gateway
+    targetRevision: "{{ .Values.che.hardening.version }}"
+    helm:
+      releaseName: endpoint-gateway
+      valuesObject:
+        # Fails closed: once linked, with no ready replica every workspace
+        # endpoint stops answering. One replica, like the operator, until HA
+        # is wanted; the chart refuses a PDB it could never satisfy.
+        replicaCount: {{ $gw.replicas }}
+        podDisruptionBudget:
+          enabled: {{ gt (int $gw.replicas) 1 }}
+          minAvailable: {{ sub (int $gw.replicas) 1 }}
+        # Only Traefik may call it (/auth and the login paths), and the
+        # metrics port only from monitoring: a workspace pod must never ask
+        # for a verdict itself.
+        networkPolicy:
+          enabled: true
+          ingressController:
+            namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: traefik
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: traefik
+          monitoring:
+            namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: monitoring
+            podSelector: {}
+        ingress:
+          enabled: true
+          className: traefik
+          host: {{ $gw.host }}
+          annotations:
+            cert-manager.io/cluster-issuer: "vault-issuer"
+            cert-manager.io/private-key-size: "4096"
+            cert-manager.io/subject-organizations: "WeeboSI"
+            cert-manager.io/subject-organizationalunits: "Dev"
+          tls:
+            enabled: true
+            secretName: endpoint-gateway-tls
+        # auth.weebo.poc is signed by the Vault PKI; `weebo.poc` is
+        # trust-manager's bundle, replicated into every namespace.
+        extraCa:
+          secret: weebo.poc
+          key: main-ca.crt
+        # No status page to point at yet; the chart needs a service for it.
+        errorPage:
+          enabled: false
+        config:
+          # The `endpoint-gateway` Authentik application (2.argo/helm/auth).
+          issuer: https://auth.weebo.poc/application/o/endpoint-gateway/
+          clientId: endpoint-gateway
+          redirectUrl: https://{{ $gw.host }}/oidc/callback
+          claims:
+            # What Che derives its username from, and what 2.helm/user-app
+            # writes in che.eclipse.org/username: the owner check compares
+            # the two.
+            username: preferred_username
+            groups: groups
+          # Must agree with features.endpointAuth.hosts once it is linked.
+          hosts:
+            suffix: .{{ .Values.che.ingress.host }}
+            exclude:
+              - {{ .Values.che.ingress.host }}
+          bearer:
+            # Its own client id: a token minted for another client of the
+            # same Authentik is refused.
+            audiences:
+              - endpoint-gateway
+          # Decides and counts, answers 200: the first step once linked.
+          enforcement: Observe
+          # Authentik sends no back-channel logout here.
+          backchannelLogout:
+            enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.che.hardening.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

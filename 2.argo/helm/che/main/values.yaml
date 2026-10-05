@@ -41,9 +41,69 @@ che:
     version: 0.1.1
     # 1 = no HA (no webhook during a drain, see hardening-operator.yaml).
     replicas: 1
-    # WeeboSiConfig/Team/User, rendered by 2.argo/helm/che/hardening.
+    # WeeboSiConfig/Team/User, rendered by 2.argo/helm/che/hardening and
+    # managed from its values.yaml.
     config:
       enabled: true
+    # endpoint-gateway (templates/endpoint-gateway.yaml), same release as
+    # the operator (version above). Deployed, not linked: see that file.
+    endpointGateway:
+      enabled: true
+      replicas: 1
+      # Its own sign-in host; must match the redirect URI of the
+      # `endpoint-gateway` Authentik application (2.argo/helm/auth).
+      host: endpoint-auth.cde.dev.weebo.poc
+    # weebo-si-operator chart values that gate a feature: the RBAC it needs
+    # and the failurePolicy of its webhooks. Merged into the operator
+    # Application, and passed to the config chart, which refuses to render
+    # a feature enabled in 2.argo/helm/che/hardening/values.yaml whose switch
+    # here is off. Each feature's own settings live there, not here.
+    operator:
+      # features.identity: AuthentikUser cluster-wide, Applications in
+      # argoNamespace only (must match identity.che.applicationNamespace).
+      identity:
+        rbac:
+          enabled: true
+        argoNamespace: argocd
+      # features.networkProfiles with the Cilium backend (and policyGuard
+      # over CiliumNetworkPolicy).
+      networkProfiles:
+        cilium:
+          enabled: false
+      # features.policyGuard: Fail is the safe default; Ignore only once no
+      # user can write networkpolicies (true of every access level today).
+      policyGuard:
+        failurePolicy: Fail
+      # features.imagePolicy's Pod webhook (the DevWorkspace one is always
+      # Fail). Fail: no workspace pod is (re)created while the operator is
+      # down, a node drain included.
+      imagePolicy:
+        podWebhook:
+          failurePolicy: Fail
+      # features.kubearmorPolicy. KubeArmor is not installed on this cluster.
+      kubearmorPolicy:
+        rbac:
+          enabled: false
+      # features.registryConfig: create/update/delete on secrets
+      # cluster-wide (read RFC 0007's Security considerations first).
+      registryConfig:
+        rbac:
+          enabled: false
+        failurePolicy: Ignore
+      # features.endpointAuth. Also needs the endpoint-gateway deployment
+      # (oci://ghcr.io/batleforc/charts/endpoint-gateway), not deployed yet.
+      endpointAuth:
+        rbac:
+          enabled: false
+        failurePolicy: Fail
+        dialect: Traefik
+        namespaceLabel:
+          key: app.kubernetes.io/part-of
+          value: che.eclipse.org
+        gateway:
+          name: endpoint-gateway
+          namespace: weebo-si-hardening
+          port: 4180
 
 repo: ""
 project: ""

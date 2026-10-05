@@ -1,5 +1,5 @@
 # Rendered per person by weebo-si-operator: the team template
-# (2.argo/helm/che/hardening/templates/teams.yaml) sets the base, the
+# (2.argo/helm/che/hardening/templates/teams/<team>.yaml, workspace.che) sets the base, the
 # WeeboSiUser's spec.che.values is deep-merged over it.
 
 # AppProject of the external-config Application.

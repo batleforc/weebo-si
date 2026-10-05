@@ -58,6 +58,10 @@ authentik:
         enabled: true
       che:
         enabled: true
+      # New, not adopted: che/main's endpoint-gateway reads its client from
+      # mv/weebo-si-hardening/endpoint-gateway.
+      endpoint-gateway:
+        enabled: true
       vault:
         enabled: false
 

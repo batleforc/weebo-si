@@ -1,0 +1,10 @@
+apiVersion: v2
+name: endpoint-gateway
+description: >-
+  The Secrets weebo-si-hardening's endpoint-gateway chart only references by
+  name (secrets.*.existingSecret): its OIDC client, from Vault, and its session
+  keys, generated in-cluster. Deployed next to the upstream chart, as the
+  second source of che/main's endpoint-gateway Application.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

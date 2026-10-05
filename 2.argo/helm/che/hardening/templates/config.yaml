@@ -1,30 +1,20 @@
+{{- include "hardening.checkRbac" . -}}
+{{- $features := dict -}}
+{{- range $name, $block := .Values.config.features -}}
+{{- if $block.enabled -}}
+{{- $_ := set $features $name (omit $block "enabled" "templates") -}}
+{{- end -}}
+{{- end -}}
+{{- with $features.identity }}{{ with .che -}}
+{{- $_ := set . "allowedRepoUrls" ((.allowedRepoUrls | default list) | concat (list $.Values.repo) | uniq) -}}
+{{- end }}{{ end -}}
 ---
 # The singleton: any name other than `cluster` is ignored by the operator.
-# A feature absent from spec.features is Off.
+# Spec from values.yaml `config`, enabled features only.
 apiVersion: hardening.weebo.io/v1alpha1
 kind: WeeboSiConfig
 metadata:
   name: cluster
 spec:
   features:
-    identity:
-      mode: {{ .Values.identity.mode | quote }}
-      che:
-        # Must match the chart's identity.argoNamespace (hardening-operator.yaml).
-        applicationNamespace: argocd
-        allowedProjects:
-          - {{ .Values.identity.project | quote }}
-        # Matched against the team template as written, before rendering.
-        allowedRepoUrls:
-          - {{ .Values.repo | quote }}
-    imagePolicy:
-      mode: {{ .Values.imagePolicy.mode | quote }}
-      # What a namespace with no team gets. Che and DevWorkspace Operator
-      # images are allowed everywhere through platform.builtin.
-      catalog:
-        - key: devfile-udi
-          patterns:
-            - "quay.io/devfile/universal-developer-image:*"
-      default: [devfile-udi]
-      platform:
-        builtin: true
+    {{- toYaml $features | nindent 4 }}

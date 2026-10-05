@@ -1,0 +1,44 @@
+{{- /*
+  The objects enabled features copy into workspace namespaces
+  (config.features.<feature>.templates). A policy template is a live policy
+  in this namespace too, so its selector is forced to match no pod — the
+  operator ignores it and sets its own when copying.
+*/ -}}
+{{- $neverSelected := dict "matchLabels" (dict "hardening.weebo.io/never-selected" "true") -}}
+{{- $selectorField := dict
+      "NetworkPolicy" "podSelector"
+      "CiliumNetworkPolicy" "endpointSelector"
+      "KubeArmorPolicy" "selector" -}}
+{{- range $feature, $block := .Values.config.features }}
+{{- if $block.enabled }}
+{{- range $name, $obj := $block.templates }}
+---
+# Template of config.features.{{ $feature }}.
+apiVersion: {{ $obj.apiVersion }}
+kind: {{ $obj.kind }}
+metadata:
+  name: {{ $name }}
+  labels:
+    hardening.weebo.io/template: {{ $feature }}
+    {{- with $obj.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with $obj.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- with $obj.spec }}
+{{- $spec := deepCopy . }}
+{{- with get $selectorField $obj.kind }}
+{{- $_ := set $spec . $neverSelected }}
+{{- end }}
+spec:
+  {{- toYaml $spec | nindent 2 }}
+{{- end }}
+{{- with $obj.data }}
+data:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

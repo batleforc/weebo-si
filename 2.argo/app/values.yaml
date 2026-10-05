@@ -213,6 +213,7 @@ project:
       - https://github.com/devfile/devworkspace-operator
       - https://eclipse-che.github.io/che-operator/charts
       - oci://ghcr.io/batleforc/charts/weebo-si-operator
+      - oci://ghcr.io/batleforc/charts/endpoint-gateway
     dest:
       - server: https://kubernetes.default.svc
         namespace: "argocd"

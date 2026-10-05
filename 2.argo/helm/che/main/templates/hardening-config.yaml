@@ -18,6 +18,10 @@ spec:
       valuesObject:
         repo: '{{ .Values.repo }}'
         branch: '{{ .Values.branch }}'
+        # What the operator was granted, so the chart can refuse a feature
+        # whose RBAC is off instead of letting it fail at runtime.
+        operator:
+          {{- toYaml .Values.che.hardening.operator | nindent 10 }}
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: {{ .Values.che.hardening.namespace }}
