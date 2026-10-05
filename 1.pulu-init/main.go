@@ -384,12 +384,20 @@ func main() {
 				},
 				"machine": map[string]interface{}{
 					"sysctls": map[string]interface{}{
-						"net.ipv4.ip_forward":              1,
-						"net.ipv6.conf.all.forwarding":     1,
-						"vm.nr_hugepages":                  2048,
-						"net.ipv6.conf.all.autoconf":       0,
-						"net.ipv6.conf.all.accept_ra":      0,
-						"net.ipv4.conf.all.src_valid_mark": 1,
+						"net.ipv4.ip_forward":          1,
+						"net.ipv6.conf.all.forwarding": 1,
+						"vm.nr_hugepages":              2048,
+						"net.ipv6.conf.all.autoconf":   0,
+						"net.ipv6.conf.all.accept_ra":  0,
+						// 0, not 1: with Cilium's legacy host routing, a pod's DNS
+						// query redirected to the transparent DNS proxy carries the
+						// 0x200 fwmark, and with src_valid_mark=1 the kernel's source
+						// check follows that mark into table 2004 (`local default dev
+						// lo`) and rejects the packet. Every IPv4 lookup from a pod
+						// under a `rules.dns` policy (all toFQDNs, so networkProfiles)
+						// then timed out, IPv6 being unaffected. Verified on this node
+						// by flipping it live. cilium/cilium#46284, #46260.
+						"net.ipv4.conf.all.src_valid_mark": 0,
 						"user.max_user_namespaces":         11255,
 					},
 					"kubelet": map[string]interface{}{
