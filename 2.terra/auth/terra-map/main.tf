@@ -18,7 +18,7 @@ locals {
 variable "authentik_url" {
   type        = string
   description = "The URL of the Authentik instance"
-  default     = "https://login.main-cluster.weebo.poc"
+  default     = "https://auth.weebo.poc"
 }
 
 variable "authentik_token" {
