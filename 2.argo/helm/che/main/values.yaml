@@ -8,6 +8,20 @@ che:
   ingress:
     enabled: true
     host: cde.dev.weebo.poc
+  # Forgejo as a Che git service (forked che-operator/che-server/dashboard),
+  # for che.forgejo.endpoint (sub/values.yaml, git.batleforc.fr).
+  #   enabled  che-server recognises its URLs as Forgejo: devfiles of public
+  #            repositories are read anonymously, like GitHub's; a private
+  #            one needs a Forgejo PAT added in the dashboard (User
+  #            Preferences > Personal Access Tokens). No OAuth app needed.
+  #   oauth    also "sign in with Forgejo", which mints the token itself.
+  #            Needs an OAuth2 application on Forgejo (redirect URI
+  #            https://<che host>/api/oauth/callback, scopes read:user and
+  #            write:repository) with its `id` and `secret` in Vault at
+  #            mv/eclipse-che/forgejo, before switching on.
+  forgejo:
+    enabled: true
+    oauth: false
   # The IDEs the dashboard offers. Passed to sub (CheCluster) and sub-bis
   # (editor ConfigMap). Whatever is offered, imagePolicy still decides which
   # images run: a house editor's images go through angos

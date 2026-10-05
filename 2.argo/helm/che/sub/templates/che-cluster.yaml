@@ -55,7 +55,7 @@ spec:
     projectCloneContainer:
       name: project-clone
       image: {{ .Values.che.workspaceImages.projectClone | quote }}
-  {{- if .Values.che.forgejo.enabled }}
+  {{- if and .Values.che.forgejo.enabled .Values.che.forgejo.oauth }}
   # Needs the forked CRD (operator/), the upstream one prunes this field.
   gitServices:
     forgejo:
@@ -101,6 +101,14 @@ spec:
         # username: what WeeboSiUser.username, the dev-ws-<username> namespace
         # and the endpoint gateway's owner check all use.
         CHE_OIDC_USERNAME__CLAIM: "preferred_username"
+        {{- if and .Values.che.forgejo.enabled (not .Values.che.forgejo.oauth) }}
+        # che.integration.forgejo.oauth_endpoint without an OAuth client: the
+        # host is recognised as Forgejo, public repositories are read
+        # anonymously, private ones need a PAT added in the dashboard. With
+        # forgejo.oauth, che-operator sets this itself from the gitServices
+        # Secret.
+        CHE_INTEGRATION_FORGEJO_OAUTH__ENDPOINT: {{ .Values.che.forgejo.endpoint | quote }}
+        {{- end }}
       deployment:
         containers:
           - name: che

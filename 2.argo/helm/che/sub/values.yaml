@@ -20,6 +20,9 @@ che:
   # https://<che host>/api/oauth/callback; its id/secret are read from Vault.
   forgejo:
     enabled: false
+    # Sign-in through an OAuth2 application (gitServices.forgejo); off, the
+    # endpoint alone is declared to che-server. See main/values.yaml.
+    oauth: false
     secretName: forgejo-oauth-config
     endpoint: https://git.batleforc.fr
     vaultKey: mv/eclipse-che/forgejo
