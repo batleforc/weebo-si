@@ -25,12 +25,15 @@ che:
     vaultKey: mv/eclipse-che/forgejo
   # OIDC client the Che gateway authenticates against. Only the client secret
   # is sensitive: it stays in mv/eclipse-che/auth and reaches the CheCluster by
-  # Secret name (see templates/oauth-secret.yaml). The client id and issuer
-  # mirror `applications.che` in 2.argo/helm/auth/sub/values.yaml (clientId and
-  # slug) and must follow it if either changes.
+  # Secret name (see templates/oauth-secret.yaml). The client id and secret
+  # mirror `applications.che` in 2.argo/helm/auth/sub/values.yaml, which dex's
+  # che-cluster static client reuses: they must follow it if it changes.
   auth:
     clientId: che-cluster
-    identityProviderURL: https://auth.weebo.poc/application/o/che-cluster/
+    # dex, not Authentik: the apiserver only trusts dex (aud weebo-kube), and
+    # che-dashboard calls it with the user's token. `che-cluster` is a dex
+    # static client trusted by weebo-kube (2.argo/helm/auth/main dex.yaml).
+    identityProviderURL: https://dex.weebo.poc
     oAuthSecretName: che-oauth-secret
 
 repo: ""

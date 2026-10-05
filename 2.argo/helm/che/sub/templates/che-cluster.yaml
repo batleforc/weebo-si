@@ -63,7 +63,10 @@ spec:
       oAuthClientName: {{ .Values.che.auth.clientId | quote }}
       # Name of the Secret rendered by oauth-secret.yaml, not the value itself.
       oAuthSecret: {{ .Values.che.auth.oAuthSecretName | quote }}
-      oAuthScope: "openid email profile offline_access"
+      # The two audience scopes are dex cross-client: weebo-kube is the
+      # audience the apiserver accepts, che-cluster keeps this client in aud
+      # so the gateway's own id_token check still passes.
+      oAuthScope: "openid email profile offline_access groups audience:server:client_id:che-cluster audience:server:client_id:weebo-kube"
       identityProviderURL: {{ .Values.che.auth.identityProviderURL | quote }}
       gateway:
         oAuthProxy:

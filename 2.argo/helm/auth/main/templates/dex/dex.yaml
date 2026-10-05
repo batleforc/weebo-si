@@ -64,6 +64,23 @@ spec:
             - 'http://localhost:8000'
             name: 'Kube App'
             secretEnv: KUBE_CLIENT_SECRET
+            # The apiserver only accepts tokens whose aud holds weebo-kube.
+            # Trusting che-cluster lets Che ask for that audience
+            # (audience:server:client_id:weebo-kube), so the token its
+            # dashboard forwards to the apiserver is accepted.
+            trustedPeers:
+            - che-cluster
+          # Che (2.argo/helm/che/sub, networking.auth). Its gateway and
+          # che-server log in here rather than at Authentik directly: dex is
+          # the only issuer the apiserver trusts. Same id and secret as the
+          # upstream Authentik che-cluster client (mv/dex/auth and
+          # mv/eclipse-che/auth hold one credential), so Che's own
+          # oAuthSecret needs no second Vault entry.
+          - id: che-cluster
+            redirectURIs:
+            - 'https://cde.dev.weebo.poc/oauth/callback'
+            name: 'Eclipse Che'
+            secretEnv: AUTHENTIK_CLIENT_SECRET
 
         envVars:
           - name: "AUTHENTIK_URL"
