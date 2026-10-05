@@ -11,7 +11,9 @@ metadata:
     che.eclipse.org/self-signed-certificate: "false"
 spec:
   devEnvironments:
-    disableContainerBuildCapabilities: false
+    # che-operator forces this to true on Kubernetes (container builds are
+    # OpenShift-only); false here only kept che-app OutOfSync.
+    disableContainerBuildCapabilities: true
     maxNumberOfWorkspacesPerUser: 20
     maxNumberOfRunningWorkspacesPerUser: 5
     secondsOfInactivityBeforeIdling: 10800
