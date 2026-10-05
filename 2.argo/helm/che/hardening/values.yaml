@@ -51,7 +51,7 @@ config:
     # default-deny. Needs operator.networkProfiles.cilium.enabled.
     networkProfiles:
       enabled: true
-      mode: Enforce
+      mode: DryRun
       # Workspace namespaces only. Without it the baseline applies to every
       # namespace in the cluster (argocd, vault, s3...): the DryRun reported a
       # diff for each, which Enforce would have written. The label is the one
