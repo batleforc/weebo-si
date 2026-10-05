@@ -207,7 +207,7 @@ data:
         - /entrypoint-init-container.sh
         cpuLimit: 500m
         cpuRequest: 30m
-        image: ghcr.io/batleforc/weebodevimage/che-vscode:main
+        image: registry.pkg.weebo.poc/ghcr/batleforc/weebodevimage/che-vscode:main
         memoryLimit: 256Mi
         memoryRequest: 32Mi
         volumeMounts:
@@ -253,7 +253,7 @@ data:
           name: code-redirect-3
           protocol: https
           targetPort: 13133
-        image: quay.io/devfile/universal-developer-image:latest
+        image: registry.pkg.weebo.poc/quay/devfile/universal-developer-image:latest
         memoryLimit: 1024Mi
         memoryRequest: 256Mi
         volumeMounts:

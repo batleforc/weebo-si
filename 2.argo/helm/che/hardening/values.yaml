@@ -180,7 +180,11 @@ config:
                 toPorts:
                   - ports:
                       - { port: "6443", protocol: TCP }
-        # Git forges and package registries, by name.
+        # Git forges only. Images and packages go through angos/batlehub
+        # (*.weebo.poc, already in the base profile): no registry is reached
+        # directly. Add a mirror to angos/batlehub rather than a host here.
+        # The key keeps its name so existing grants and devfile attributes
+        # still resolve.
         weebo-net-dev-registries:
           apiVersion: cilium.io/v2
           kind: CiliumNetworkPolicy
@@ -193,28 +197,6 @@ config:
                   - ports:
                       - { port: "443", protocol: TCP }
                       - { port: "22", protocol: TCP }
-              - toFQDNs:
-                  - matchPattern: "*.github.com"
-                  - matchPattern: "*.githubusercontent.com"
-                  - matchName: ghcr.io
-                  - matchName: quay.io
-                  - matchPattern: "*.quay.io"
-                  - matchName: registry-1.docker.io
-                  - matchName: auth.docker.io
-                  - matchName: production.cloudflare.docker.com
-                  - matchName: registry.npmjs.org
-                  - matchName: pypi.org
-                  - matchName: files.pythonhosted.org
-                  - matchName: crates.io
-                  - matchName: index.crates.io
-                  - matchName: static.crates.io
-                  - matchName: proxy.golang.org
-                  - matchName: sum.golang.org
-                  - matchName: open-vsx.org
-                  - matchPattern: "*.open-vsx.org"
-                toPorts:
-                  - ports:
-                      - { port: "443", protocol: TCP }
         # Anything outside the cluster (Cilium's `world`: not pods, nodes or
         # the apiserver).
         weebo-net-internet:
@@ -252,14 +234,17 @@ config:
     # RFC 0005. Which images a workspace may run, per team.
     imagePolicy:
       enabled: true
-      # Observe-only to start: denials are logged and counted, nothing is
-      # refused. Read the webhook logs before moving to Enforce.
-      mode: DryRun
+      # Every image goes through angos (registry.pkg.weebo.poc): its caches
+      # (hub, ghcr, quay) and the local `weebo` repository. Anything pulled
+      # straight from an upstream registry is refused. A workspace image is
+      # written registry.pkg.weebo.poc/<cache>/<upstream path>, e.g.
+      # registry.pkg.weebo.poc/ghcr/batleforc/weebodevimage/che-vscode:main.
+      mode: Enforce
       # What a namespace with no team gets.
       catalog:
-        - key: devfile-udi
-          patterns: ["quay.io/devfile/universal-developer-image:*"]
-      default: [devfile-udi]
+        - key: angos
+          patterns: ["registry.pkg.weebo.poc/**"]
+      default: [angos]
       # Pattern variables read from namespace annotations, e.g.
       # COST_CENTRE: { fromNamespaceAnnotation: weebo.io/cost-centre }.
       variables: {}
@@ -268,10 +253,11 @@ config:
       workspaceSelection:
         attribute: hardening.weebo.io/image-policy
       onNotGranted: Default
-      # Allowed everywhere, whatever the team: Che and DevWorkspace Operator
-      # images (builtin), plus extra patterns for a mirrored platform.
+      # Allowed everywhere, whatever the team. builtin off: it allows the
+      # upstream Che/DevWorkspace images straight from quay.io, which angos
+      # now serves (che.workspaceImages in 2.argo/helm/che/sub).
       platform:
-        builtin: true
+        builtin: false
         # The same Che/DevWorkspace images, mirrored by angos' quay cache
         # (che.workspaceImages in 2.argo/helm/che/sub).
         extra:
@@ -438,10 +424,8 @@ teams:
             variants:
               - backend: Cilium
                 templateRef: { name: weebo-net-dev-registries, namespace: weebo-si-hardening }
-          - key: internet
-            variants:
-              - backend: Cilium
-                templateRef: { name: weebo-net-internet, namespace: weebo-si-hardening }
+          # No `internet`: everything goes through angos/batlehub, and a
+          # devfile asking for it gets the default instead (onNotGranted).
           - key: kube-api
             variants:
               - backend: Cilium
@@ -449,9 +433,9 @@ teams:
         default: [dev-registries]
       imagePolicy:
         catalog:
-          - key: weebo-devimages
-            patterns: ["ghcr.io/batleforc/weebodevimage/**"]
-        default: [weebo-devimages]
+          - key: angos
+            patterns: ["registry.pkg.weebo.poc/**"]
+        default: [angos]
       kubearmorPolicy:
         catalog: []
         default: []

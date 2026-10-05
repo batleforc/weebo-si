@@ -42,7 +42,7 @@ spec:
     defaultComponents:
       - name: tool
         container:
-          image: ghcr.io/batleforc/weebodevimage/che-min-mise:main
+          image: registry.pkg.weebo.poc/ghcr/batleforc/weebodevimage/che-min-mise:main
           # Che's webhook defaults it on admission; written out so Argo
           # does not see it as drift.
           sourceMapping: /projects
