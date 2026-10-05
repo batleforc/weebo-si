@@ -13,7 +13,7 @@ cheUser:
   # weebo.io/team, which the WeeboSiTeam's namespaceSelector matches.
   teamLabel: ""
   # What this person may do in their namespace. Levels and add-ons are
-  # defined in templates/_access.tpl: min < baseline < deploy, and the
+  # defined in templates/_access.tpl: baseline < deploy, and the
   # port-forward add-on (JetBrains Gateway).
   access:
     # Set by the team template: the floor every member gets.

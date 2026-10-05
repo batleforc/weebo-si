@@ -10,21 +10,19 @@
 
 {{- /* Ordered, lowest first: the order is what "floor" compares. */ -}}
 {{- define "user-app.access.levelOrder" -}}
-- min
 - baseline
 - deploy
 {{- end -}}
 
 {{- define "user-app.access.levels" -}}
-min:
-  - weebo-che-min
-# What Che binds by default (CHE_INFRA_KUBERNETES_USER__CLUSTER__ROLES).
+# What Che binds by default (CHE_INFRA_KUBERNETES_USER__CLUSTER__ROLES), and
+# the floor: Che does not work on less.
 baseline:
   - {{ .Values.cheNamespace }}-cheworkspaces-clusterrole
   - {{ .Values.cheNamespace }}-cheworkspaces-devworkspace-clusterrole
 deploy:
-  - weebo-che-min
-  - weebo-che-port-forward
+  - {{ .Values.cheNamespace }}-cheworkspaces-clusterrole
+  - {{ .Values.cheNamespace }}-cheworkspaces-devworkspace-clusterrole
   - weebo-che-deploy
 {{- end -}}
 

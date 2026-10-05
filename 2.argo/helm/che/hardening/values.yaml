@@ -440,12 +440,11 @@ teams:
               email: "{EMAIL}"
               teamLabel: weebo
               # The floor every member gets (2.helm/user-app/templates/_access.tpl):
-              #   min       what the Che dashboard needs, nothing more
-              #   baseline  Che's own default roles
-              #   deploy    min + port-forward + their own workloads
+              #   baseline  Che's own default roles, the least Che works with
+              #   deploy    baseline + their own workloads
               # A WeeboSiUser may raise it (access.level), never lower it.
               access:
-                teamLevel: min
+                teamLevel: baseline
                 # Add-ons every member gets, e.g. [port-forward].
                 addons: []
         # Che's defaultNamespace.template is dev-ws-<username>, autoProvision

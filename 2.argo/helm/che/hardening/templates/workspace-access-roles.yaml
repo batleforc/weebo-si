@@ -9,52 +9,10 @@
   <che-namespace>-cheworkspaces-* ClusterRoles, which che-operator maintains.
 */ -}}
 ---
-# Level `min`: what che-dashboard's backend does with the user's token
-# (packages/dashboard-backend/src/devworkspaceClient/services), nothing more.
-# Left out compared to Che's own roles: pods create/update/delete,
-# deployments, replicasets, services, ingresses, PVCs, port-forward, metrics.
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: weebo-che-min
-  labels:
-    weebo.io/che-access: level
-rules:
-  # Workspaces themselves.
-  - apiGroups: ["workspace.devfile.io"]
-    resources: ["devworkspaces", "devworkspacetemplates"]
-    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-  # Git credentials, SSH keys, PATs, registry auth, AI provider keys.
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "list", "create", "update", "delete"]
-  # gitconfig, workspace preferences, editors and samples lookups.
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get", "list", "create", "update", "patch"]
-  # Workspace status, logs and events in the dashboard.
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["pods/log"]
-    verbs: ["get"]
-  - apiGroups: [""]
-    resources: ["events"]
-    verbs: ["list", "watch"]
-  # The dashboard injects the kubeconfig and runs `podman login` in the
-  # workspace container. Websocket exec is a GET, hence both verbs.
-  - apiGroups: [""]
-    resources: ["pods/exec"]
-    verbs: ["get", "create"]
-  # Bound by a RoleBinding, this only reaches the user's own namespace.
-  - apiGroups: [""]
-    resources: ["namespaces"]
-    verbs: ["get"]
----
-# Level `deploy`, on top of `min` and `port-forward`: run their own
-# workloads next to their workspaces. A curated `edit`, without what makes
-# `edit` an escalation or a bypass here:
+# Level `deploy`, on top of `baseline`: run their own workloads next to their
+# workspaces. A curated `edit`, without what makes `edit` an escalation or a
+# bypass here. "Without" means this role does not add it: Che's own
+# `baseline` roles may already grant some of it (pods create, ingresses).
 #   - serviceaccounts create/impersonate, serviceaccounts/token: borrowing an
 #     identity other than their own;
 #   - ingresses: publishing on Traefik outside endpoint-auth (Che's own
@@ -106,7 +64,8 @@ rules:
 ---
 # Add-on `port-forward`: a tunnel from the user's machine to a pod in their
 # namespace, which is how JetBrains Gateway (IntelliJ...) reaches a Che
-# workspace. Already part of `baseline` (Che's role has it) and `deploy`.
+# workspace. Already part of `baseline` (Che's role has it), so of every
+# level today.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
