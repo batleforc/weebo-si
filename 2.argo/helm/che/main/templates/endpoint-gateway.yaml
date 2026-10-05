@@ -64,6 +64,8 @@ spec:
           host: {{ $gw.host }}
           annotations:
             cert-manager.io/cluster-issuer: "vault-issuer"
+            # pki_int/sign/weebo-poc requires a common name.
+            cert-manager.io/common-name: {{ $gw.host | quote }}
             cert-manager.io/private-key-size: "4096"
             cert-manager.io/subject-organizations: "WeeboSI"
             cert-manager.io/subject-organizationalunits: "Dev"
