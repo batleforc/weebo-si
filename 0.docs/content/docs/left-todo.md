@@ -56,7 +56,7 @@ description: "What's left to do ?"
   - [x] Deploy App
   - [x] Deploy User through Weebo-Si-Hardening (identity)
 - [ ] Properly apply a CiliumNetworkPolicy with default deny for all
-- [ ] Setup [Stalwart](https://stalw.art/) as an internal mail system for the cluster and connect every app to it (prevent mail to go outside the cluster)
+- [ ] Setup [Stalwart](https://stalw.art/) as an internal mail system for the cluster and connect every app to it (prevent mail to go outside the cluster)
   - [ ] Weebo.poc for internal messaging (entre les apps du cluster et les utilisateurs du cluster ou user <-> user)
   - [ ] weebo.[fr/net/untruc] for external messaging si nécessaire plus tard
   - [ ] Mettre en place un script de provisioning, si un objet authentik user a une annotations stalwart/email, alors créer le mail dans stalwart et le lier à l'utilisateur authentik https://stalw.art/docs/auth/backend/oidc/
