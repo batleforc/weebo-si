@@ -33,6 +33,10 @@ weebo-si-int-ca.pem
 
 .legacy-docs
 
+## Brouillons de RFC, locaux tant qu'ils ne sont pas tranchés
+
+.rfc
+
 
 # Created by https://www.toptal.com/developers/gitignore/api/yarn,node
 # Edit at https://www.toptal.com/developers/gitignore?templates=yarn,node

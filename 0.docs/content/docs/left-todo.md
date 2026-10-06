@@ -61,6 +61,14 @@ description: "What's left to do ?"
   - [ ] weebo.[fr/net/untruc] for external messaging si nécessaire plus tard
   - [ ] Mettre en place un script de provisioning, si un objet authentik user a une annotations stalwart/email, alors créer le mail dans stalwart et le lier à l'utilisateur authentik https://stalw.art/docs/auth/backend/oidc/
   - [ ] Idem, si un user n'existe plus dans Authentik, verouiller le mail dans Stalwart
+- [ ] Mise en place d'un forgejo pour assurer que le code source est toujours la (préviens les indispo github)
+  - [ ] Fork auto des projets github lister ?
+  - [ ] Couper github pour eclipse che pour inciter les devs a utiliser le forgejo interne
+- [ ] Plateforme engineering
+  - [ ] Git provider Integration ?
+  - [ ] podman build/run ?
+  - [ ] CI/CD pipelines
+  - [ ] Dev Environment
 
 ## Documentation
 

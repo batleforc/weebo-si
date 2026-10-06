@@ -1,5 +1,5 @@
 schemaVersion: 1
-name: wsi
+name: netctx
 description: The weebo si mesh
 
 transport:
