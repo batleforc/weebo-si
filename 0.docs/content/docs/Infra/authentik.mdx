@@ -4,3 +4,27 @@ description: "Weebo's auth / Authentik setup"
 ---
 
 > Le maitre de la porte, sans lui, tu n'as ni droit, ni identité !
+
+## Déploiement
+
+[Authentik](https://goauthentik.io/) est déployé en uttilisant le chart `authentik/authentik` via ArgoCD. Il fait partit de la deuxiéme étape `2.argo/app` du bootstrap ArgoCD.
+
+Il est par contre configuré via l'opérateur [`weebo-authentik`](https://batleforc.github.io/weebo-authentik/) qui est déployé en même temps que le chart Authentik. L'opérateur permet de gérer les ressources Authentik via des CRD Kubernetes.
+
+## Mettre à jour Authentik
+
+Sa mise a jours est fait via le values du chart `authentik/authentik` dans l'application ArgoCD `2.argo/helm/auth/main` et la clef `authentik.version`.
+
+<Callout type="warn">
+Penser a bien sauvegarder la base de données et surtout migrer Authentik sous CNPG au cours de la prochaine MAJ.
+</Callout>
+
+## Accéder à Authentik
+
+Rien de bien compliqué, Authentik est accessible via l'url `https://auth.weebo.poc`.
+
+## L'opérateur weebo-authentik
+
+Cette opérateur est un projet maison qui permet la gestion des applications Authentik via la CRD.
+
+Pour plus d'information, vous pouvez consulter la documentation de l'opérateur sur [https://batleforc.github.io/weebo-authentik/](https://batleforc.github.io/weebo-authentik/).
