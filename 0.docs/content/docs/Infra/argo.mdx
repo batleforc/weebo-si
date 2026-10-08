@@ -4,3 +4,77 @@ description: "Weebo's conductor / ArgoCD setup"
 ---
 
 > Le chef d'orchestre de la symphonie Weebo-SI, un instrument en trop sera purgé, un instrument mal accordé sera écrasé, un instrument en moin sera recreer.
+
+## Déploiement
+
+ArgoCD est déployé en uttilisant le chart `argo/argo-cd` via Pulumi. Il fait partit de la deuxiéme étape `1.pulu-conf` du bootstrap Pulumi.
+
+Plusieurs levier de configuration sont utilisés pour adapter le déploiement de ArgoCD :
+
+- Via le fichier `Pulumi.dev.yaml`
+  - `0.pulumi-conf:argoAppsVersion` : La version du chart ArgoCD à déployer
+  - `0.pulumi-conf:deployed` : Si oui ou non ArgoCD doit étre accessible via l'ingress
+- Via les variables d'environnement
+  - `GIT_REPO` : Le dépôt Git ou trouver l'application `2.argo/app` qui déploie l'ensemble des composants.
+  - `GIT_BRANCH` : La branche Git ou trouver l'application `2.argo/app` qui déploie l'ensemble des composants.
+  - `ARGO_DNS` : Le nom de domaine ou ArgoCD sera accessible via l'ingress.
+  - `GIT_PASSWORD` : Le token a uttiliser pour accéder au dépôt Git, permet l'accés au repo priver et préviens de possible RateLimit.
+
+## Mettre à jour ArgoCD
+
+Rien de plus simple, il suffit de changer la valeur de `0.pulumi-conf:argoAppsVersion` dans le fichier `Pulumi.dev.yaml` et de lancer la commande `task puluconf:up`.
+
+<Callout type="warn">
+Verifier bien ce que pulumi va vouloir faire avant de valider la mise a jour. Un des leviers de configuration non renseigner a nouveau pourait casser ArgoCD.
+</Callout>
+
+## Accéder à ArgoCD
+
+ArgoCD est accessible a deux moments, avant que l'ingress soit déployé et après que l'ingress soit déployé.
+
+Dans les deux cas, il l'identifiant est `admin` et le mot de passe est obtensible via la commande `task argo:pwd`.
+
+### Avant l'ingress
+
+Pour accéder a ArgoCD avant que l'ingress soit déployé, il faut utiliser le port-forwarding sur le pod ArgoCD.
+
+```bash
+task argo:forward
+```
+
+Puis, rendez-vous sur l'url `http://localhost:8080` pour accéder a ArgoCD.
+
+### Après l'ingress
+
+Une fois que l'ingress est déployé, ArgoCD est accessible via l'url `https://argo.weebo.poc` (ou le nom de domaine que vous avez configuré dans la variable d'environnement `ARGO_DNS`).
+
+## Argo App of Apps of Apps of Appppppppsssss
+
+Bon, petit jeux de mots mais on reste sur une imbrication "light".
+
+Le dossier `2.argo` contient nos application "App of Apps" qui sont déployées par ArgoCD.
+
+- `2.argo`
+  - `app` : L'application principale déployer via le pulumi
+  - `helm` : Les charts helm déployés par l'application principale
+    - `storage` : Le chart helm qui déploie tout les composant relatif au stockage, appartient a l'argo project `infra`
+    - `ingress` : Le chart helm qui déploie tout les composant relatif a l'ingress, appartient a l'argo project `infra`
+    - `database` : Regroupe les chart helm qui déploie tout les composant relatif a la base de donnée, appartient a l'argo project `database`
+      - `main` : Composant principale, déploie les CRD et les opérateurs
+      - `sub` : Déploie les élément d'instance, dépend des CRD et opérateurs du chart `main`
+    - `etc...`
+- `2.helm` : Contient les chart helm customisé pour Weebo-SI, qui sont déployés par les applications ArgoCD.
+- `2.terra` : Contient des kustomize pour déployer les application Terraform qui configure et resynchronise les brique compatible
+
+### Argo app projects
+
+Il a été choisit de ségmenter les applications ArgoCD en plusieurs app projects, pas de défault ou de "catch all" pour tout le monde, chaque projet a ses propres règles de RBAC et de sync policy.
+
+|App Project|Description|
+|---|---|
+|infra|Composant de l'infrastructure, comme Authentik, OpenBao, etc...|
+|database|Contient les systéme de donnée, comme Postgres, etc...|
+|dev-base|Composant de l'environnement de développement, comme Batlehub, etc...|
+|monitoring|Application orienté monitoring, clickstack, otel collector, OBI, etc...|
+|registry|Application orienté registry, comme Batlehub, Angos, etc...|
+|security|Application orienté sécurité, comme Kloak, KubeArmor, etc...|
