@@ -64,6 +64,7 @@ description: "What's left to do ?"
 - [ ] Mise en place d'un forgejo pour assurer que le code source est toujours la (préviens les indispo github)
   - [ ] Fork auto des projets github lister ?
   - [ ] Couper github pour eclipse che pour inciter les devs a utiliser le forgejo interne
+  - [ ] [Opérateur forgejo](https://batleforc.github.io/weebo-forgejo/) pour gérer les projets et les utilisateurs
 - [ ] Plateforme engineering
   - [ ] Git provider Integration ?
   - [ ] podman build/run ?
