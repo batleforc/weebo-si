@@ -100,6 +100,8 @@ description: "What's left to do ?"
     - [ ] Bonne pratique GitOps
     - [ ] Segmentation des applications
   - [ ] Cert-Manager / Trust Manager
+  - [ ] Ingress / Traefik
+  - [ ] Hook / Kyverno
   - [ ] Storage
     - [ ] Longhorn
     - [ ] LocalStorage
@@ -134,6 +136,7 @@ description: "What's left to do ?"
   - [ ] Kloak
   - [ ] KubeArmor
   - [ ] Weebo-SI Hardening
+  - [ ] Netbird
 - [ ] Dev Environment
   - [ ] Eclipse Che
   - [ ] Future components ?

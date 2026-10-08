@@ -1,0 +1,13 @@
+{
+  "pages": [
+    "talos",
+    "cilium",
+    "longhorn",
+    "authentik",
+    "dex",
+    "openbao",
+    "argo",
+    "cert-manager",
+    "..."
+  ]
+}

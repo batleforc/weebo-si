@@ -14,6 +14,8 @@ Au niveau macro, l'infrastructure est composée de plusieurs composants :
 - [ArgoCD](https://argo-cd.readthedocs.io/) pour la gestion des déploiements via l'approche GitOps
 - [Cert-Manager](https://cert-manager.io/) pour la gestion des certificats et [Trust Manager](https://cert-manager.io/docs/trust/trust-manager/installation/) pour la propagation d'un bundle de confiance
 - [Longhorn](https://longhorn.io/) pour le stockage persistant et [LocalStorage](https://github.com/rancher/local-path-provisioner) pour certains edge cases
+- [Traefik](https://traefik.io/) pour l'ingress et le reverse proxy
+- [Kyverno](https://kyverno.io/) pour la gestion des policies et des hooks
 - [ProxyAuthK8S](https://github.com/batleforc/ProxyAuthK8S) pour la gestion de l'authentification kube (WIP)
 
 ## Installation
