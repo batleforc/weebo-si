@@ -8,7 +8,7 @@ angos:
   image:
     registry: ghcr.io/project-angos/angos
     # renovate: datasource=docker depName=ghcr.io/project-angos/angos
-    tag: 1.9.2
+    tag: 1.12.2
   dns: registry.pkg.weebo.poc
   # `[auth.token_service]`, whose secret_key comes from Vault and whose realm
   # is built from `dns` above. The ceiling angos enforces is 86400.

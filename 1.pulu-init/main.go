@@ -30,6 +30,7 @@ import (
 const (
 	registryHost    = "registry.pkg.weebo.poc"
 	authHost        = "dex.weebo.poc"
+	s3Host 					= "s3-main.weebo.poc"
 	clusterCABundle = "../.tmp/weebo-si-ca.pem"
 )
 
@@ -898,6 +899,8 @@ func main() {
 									// cannot pull from the registry at all: it fails on
 									// "no such host", long before any credential is used.
 									registryHost,
+									// Needed when pulling image from angos ?
+									s3Host,
 								},
 							},
 						},
