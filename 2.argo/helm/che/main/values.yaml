@@ -35,8 +35,9 @@ che:
     # Every file there must be listed (the render fails otherwise), so a new
     # IDE is: drop editors/<name>.yaml, add `<name>: true` here.
     custom:
-      che-code-angos: true            # weebo/che-code/latest
-      che-code-insiders-weebo: true   # weebo/che-code-weebo/next
+      che-code-angos: true # weebo/che-code/latest
+      che-code-insiders-weebo: true # weebo/che-code-weebo/next
+      che-code-fast-weebo: true # weebo/che-code-fast/latest
     # The che-incubator editors che-operator ships (list: sub/values.yaml
     # che.editors.upstream.known). Hidden from the picker only: a
     # che-editor.yaml naming one still resolves, and imagePolicy refuses
