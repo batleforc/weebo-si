@@ -11,7 +11,7 @@ metadata:
       - ppc64le
     publisher: weebo-si
     version: develop
-    title: Microsoft Visual Studio Code - Open Source IDE for Eclipse Che
+    title: Microsoft Visual Studio Code - Open Source IDE for Eclipse Che (Weebo-SI)
     repository: https://github.com/weebo-si/che-code
     firstPublicationDate: "2021-10-31"
     iconMediatype: image/svg+xml
