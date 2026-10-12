@@ -11,6 +11,8 @@ offered is decided in `2.argo/helm/che/main/values.yaml`, under `che.editors`.
 2. Save it here as `<name>.yaml` and give it its own identity in `metadata`:
    `attributes.publisher: weebo`, a `name`, an `attributes.version`. The
    editor id is `<publisher>/<name>/<version>`; two files must not share one.
+   Nor should they share a `name`: the dashboard draws one card per `name`
+   and tucks the others into that card's version menu.
 3. Point every `image:` at angos (`registry.pkg.weebo.poc/<cache>/...`) or at
    `ghcr.io/batleforc/weebodevimage/...`. Anything else is refused by
    imagePolicy when the workspace starts, not when the editor is listed.

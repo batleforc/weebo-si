@@ -1,6 +1,6 @@
 schemaVersion: 2.3.0
 metadata:
-  name: che-code
+  name: che-code-fast
   displayName: VS Code - Open Source (weebo-si develop)
   description: che-code built from the develop branch of weebo-si/che-code
   attributes:
@@ -9,8 +9,8 @@ metadata:
       - arm64
       - s390x
       - ppc64le
-    publisher: weebo-si
-    version: develop
+    publisher: weebo
+    version: latest
     title: Microsoft Visual Studio Code - Open Source IDE for Eclipse Che (Weebo-SI)
     repository: https://github.com/weebo-si/che-code
     firstPublicationDate: "2021-10-31"
