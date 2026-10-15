@@ -2,7 +2,7 @@ terraform {
   required_providers {
     vault = {
       source  = "hashicorp/vault"
-      version = "5.8.0"
+      version = "5.12.0"
     }
     # Drives the PKI intermediate rotation clock in pki.tf. Vault does not
     # rotate issuers on its own -- it only refuses to issue leaves that would
@@ -10,7 +10,7 @@ terraform {
     # the piece that gives terraform a reason to re-sign.
     time = {
       source  = "hashicorp/time"
-      version = "~> 0.13"
+      version = "~> 0.14"
     }
     # Hashes the angos scanner's pull password: the registry stores that
     # credential as an argon2id hash while the scanner presents it in clear, so
