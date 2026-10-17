@@ -21,6 +21,17 @@ spec:
     namespace: auth
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
+  # The chart's CRDs carry empty `categories`, `shortNames` and
+  # `additionalPrinterColumns` lists, which the API server drops on write, so
+  # the app sat OutOfSync forever. Only the empty lists are ignored: a list
+  # the chart fills in still shows up as a diff.
+  ignoreDifferences:
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      jqPathExpressions:
+        - .spec.names.categories | select(. == [])
+        - .spec.names.shortNames | select(. == [])
+        - .spec.versions[].additionalPrinterColumns | select(. == [])
   source:
     chart: weebo-authentik
     repoURL: oci://ghcr.io/batleforc/charts/weebo-authentik

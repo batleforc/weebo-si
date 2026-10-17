@@ -103,16 +103,17 @@ helm template auth-app 2.argo/helm/auth/sub -n auth -f /tmp/sub-values.yaml
       (l'opérateur ne logue rien en info).
 - [x] Nombre d'objets Authentik inchangé (9 applications, bindings stables).
 - [x] Les 8 chemins KV identiques à la sauvegarde, versions inchangées, `owner` posé sur chacun.
-- [ ] Un login OIDC (argo ou che) et un login proxy (clickstack,
-      `forward_single`).
+- [x] Un login OIDC (argo ou che) et un login proxy (clickstack,
+      `forward_single`) : ok.
 - [x] Réactiver l'auto-sync (`main`, `auth` ; les deux autres via le sync d'`auth`).
 
-## Reste ouvert
+## Après coup
 
-- `authentik-operator` reste `OutOfSync`, comme avant l'upgrade : les CRDs
+- `authentik-operator` restait `OutOfSync` (déjà avant l'upgrade) : les CRDs
   du chart déclarent `categories: []`, `shortNames: []` et
-  `additionalPrinterColumns: []`, que l'API server ne stocke pas. Écart
-  cosmétique ; à corriger dans le chart ou par un `ignoreDifferences`.
+  `additionalPrinterColumns: []`, que l'API server ne stocke pas. Réglé par
+  un `ignoreDifferences` limité aux listes vides dans
+  `main/templates/authentik/operator.yaml`.
 
 ## Retour arrière
 
