@@ -9,7 +9,9 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "5"
 spec:
-  instanceRef: {{ $.Values.instanceRef }}
+  # An object since operator 0.16.0 (was a bare name).
+  instanceRef:
+    name: {{ $.Values.instanceRef }}
   name: {{ $app.name | quote }}
   slug: {{ $app.slug | quote }}
 {{- with $app.metaIcon }}
@@ -56,15 +58,18 @@ spec:
   # instance's single default. Vault targets reuse the instance's
   # secretStore.vault connection and pin only the path (relative to its mount),
   # so these are the exact `vault_kv_secret_v2` names in 2.terra/auth.
+  #
+  # `name` is required since operator 0.16.0, Vault targets included. With an
+  # explicit `path` it names nothing in Vault, so it defaults to the path with
+  # `/` turned into `-` (dex/auth -> dex-auth): unique within an app that
+  # writes to several paths, like che.
   secretTargets:
 {{- range . }}
     - backend: {{ .backend }}
 {{- with .path }}
       path: {{ . | quote }}
 {{- end }}
-{{- with .name }}
-      name: {{ . | quote }}
-{{- end }}
+      name: {{ .name | default (.path | replace "/" "-") | quote }}
 {{- end }}
 {{- end }}
 {{- else if eq $app.provider.kind "proxy" }}

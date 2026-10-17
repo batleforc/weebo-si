@@ -48,6 +48,33 @@ spec:
       # ServiceAccount, authentik-weebo-authentik. MIGRATION.md 3.2.
       kubernetesAuthRole: {{ .Values.foundation.vault.kubernetesAuthRole | quote }}
       pathPrefix: {{ .Values.foundation.vault.pathPrefix | quote }}
+{{- $paths := list }}
+{{- range $app := .Values.applications }}
+{{- if $app.enabled }}
+{{- range $app.secretTargets }}
+{{- if and (eq .backend "vault") .path }}
+{{- $paths = append $paths .path }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- with $paths | uniq | sortAlpha }}
+      # Since operator 0.16.0 a Vault target's `path` must sit under
+      # `<pathPrefix>/auth/` -- which none of ours do: each one is the KV path
+      # its consumer already reads (mv/dex/auth, mv/argocd/auth...). This
+      # opens exactly those, and nothing else, to the auth namespace (operator
+      # >= 0.18.0). Built from the enabled applications' `secretTargets`, so
+      # a new Vault target needs no second edit here.
+      #
+      # A path no CR owns yet is taken over on the first write, which is how
+      # the values Terraform and operator 0.15.0 wrote (no `owner` in their
+      # KV metadata) get adopted; one another CR owns is refused.
+      pathGrants:
+        - namespaces:
+            - auth
+          paths:
+            {{- toYaml . | nindent 12 }}
+{{- end }}
 {{- with .Values.foundation.vault.caSecretRef }}
       # openbao serves a cert self-signed by the bank-vaults operator, which
       # nothing in the pod's system trust store chains to. The operator reads

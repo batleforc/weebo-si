@@ -17,7 +17,7 @@ authentik:
     enabled: true
   operator:
     enabled: true
-    version: 0.15.0
+    version: 0.18.1
     replicaCount: 1
   sub:
     enabled: true
