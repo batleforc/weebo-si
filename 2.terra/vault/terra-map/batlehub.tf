@@ -58,13 +58,17 @@ resource "vault_kv_secret_v2" "batlehub-pg" {
 # que batlehub et l'operateur utilisent eux-memes, et epingles pour que le
 # plan ne bouge pas d'un poste a l'autre. Changer le cout :
 #   tofu apply -replace=password_argon2.batlehub-operator
-resource "random_string" "batlehub-operator" {
+#
+# `random_password` et pas `random_string` : l'id d'un random_string EST sa
+# valeur, et le plan comme l'apply l'affichent en clair dans les logs du job.
+# Celui d'un random_password vaut `none`.
+resource "random_password" "batlehub-operator" {
   length  = 48
   special = false
 }
 
 resource "password_argon2" "batlehub-operator" {
-  password = random_string.batlehub-operator.result
+  password = random_password.batlehub-operator.result
 
   memory     = 19456
   iterations = 2
@@ -77,7 +81,7 @@ resource "vault_kv_secret_v2" "batlehub-operator" {
   name  = "batlehub/operator"
   data_json = jsonencode(
     {
-      token      = random_string.batlehub-operator.result
+      token      = random_password.batlehub-operator.result
       token_hash = password_argon2.batlehub-operator.hash
     }
   )
