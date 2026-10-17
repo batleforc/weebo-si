@@ -43,6 +43,6 @@ spec:
         key: {{ $o.instance.caSecret.key }}
   {{- if $o.manageConfig }}
   config:
-    {{- include "batlehub.serverConfig" (dict "root" $ "forChart" false) | nindent 4 }}
+    {{- include "batlehub.serverConfig" $ | nindent 4 }}
   {{- end }}
 {{- end -}}

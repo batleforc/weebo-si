@@ -71,7 +71,7 @@ spec:
         {{- end }}
 
         config:
-        {{- include "batlehub.serverConfig" (dict "root" $ "forChart" true) | nindent 10 }}
+        {{- include "batlehub.serverConfig" $ | nindent 10 }}
           registries:
             {{- toYaml $b.registries | nindent 12 }}
 

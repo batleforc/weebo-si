@@ -11,12 +11,10 @@ registries, rendered once for two readers --
 One template, so the two cannot disagree: the file a pod starts on is the one
 the operator would push, and its first push after a restart changes nothing.
 
-Takes a dict: `root` (the chart's top-level context) and `forChart` (true for
-the upstream chart's values, which need Helm-merge-only keys).
+Takes the chart's top-level context.
 */}}
 {{- define "batlehub.serverConfig" -}}
-{{- $root := .root -}}
-{{- $forChart := .forChart -}}
+{{- $root := . -}}
 {{- $b := $root.Values.batlehub -}}
 server:
   host: "0.0.0.0"
@@ -48,15 +46,13 @@ storage:
   # RustFS addresses buckets by path, not by virtual host.
   force_path_style: true
   # The chart's default storage block is the filesystem one, and Helm
-  # merges maps key by key: without this, `path` survives from those
-  # defaults into an `[storage]` that is no longer a filesystem. The
-  # server ignores it today, which is exactly why it would sit there
-  # unnoticed until something stopped ignoring it. `null` is how a
-  # Helm override deletes an inherited key. Only for the chart: the
-  # operator's spec.config has no defaults to delete from.
-  {{- if $forChart }}
-  path: null
-  {{- end }}
+  # merges maps key by key, so its `path` survives into this `[storage]`:
+  # the `null` that would delete it never reaches Helm, Argo CD drops
+  # nulls from valuesObject. The server ignores it for S3, but the
+  # operator compares its spec.config with the running file and holds a
+  # changed `storage.path` back as RestartForbidden. So both sides carry
+  # the chart's default, spelled out.
+  path: /var/cache/batlehub
   {{- end }}
 {{- if $b.valkey.enabled }}
 cache:
