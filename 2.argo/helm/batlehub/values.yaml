@@ -31,12 +31,12 @@ batlehub:
     name: batlehub
     repoURL: oci://ghcr.io/batlehub/batlehub/charts/batlehub
     # renovate: datasource=docker depName=ghcr.io/batlehub/batlehub/charts/batlehub
-    version: 1.4.0
+    version: 1.7.0
 
   image:
     registry: ghcr.io/batlehub/batlehub
     # renovate: datasource=docker depName=ghcr.io/batlehub/batlehub
-    tag: 1.4.0
+    tag: 1.7.0
 
   # The apex. Every registry below also answers on `<name>.<dns>` -- see
   # `subdomainRouting` -- so the certificate and the IngressRoute both cover the
@@ -117,6 +117,23 @@ batlehub:
       storageClassName: longhorn
       # The chart's default, and the path the volume is mounted at.
       path: /var/cache/batlehub
+
+  # ── Writable configuration ─────────────────────────────────────────────────
+  # The chart's `writableConfig` (1.7.0): the config file batlehub serves and
+  # rewrites lives on a small claim instead of the read-only Secret, which is
+  # what lets the operator push its configuration (operator.manageConfig).
+  #
+  # `seed: Always`: at every pod start the chart's copy -- rendered from this
+  # file by the same template as the operator's (templates/_config.tpl) -- is
+  # put back. So a restart never starts on a stale file, and a startup-only key
+  # (database, auth, storage...), which the operator refuses to push to an
+  # instance it does not restart (RestartForbidden), lands the usual way: this
+  # file changes, the pod rolls on the checksum. The registries change through
+  # the operator, hot, and the seed carries the same list for the next start.
+  writableConfig:
+    seed: Always
+    size: 64Mi
+    storageClassName: longhorn
 
   # ── Postgres ───────────────────────────────────────────────────────────────
   # batlehub keeps everything but the artifact bytes in Postgres -- package
@@ -427,6 +444,11 @@ operator:
   # pins disruptionsAllowed at 0 and blocks every node drain.
   replicaCount: 1
 
+  # The operator owns batlehub's configuration (templates/operator/): the
+  # instance's spec.config and one BatleHubRegistry per batlehub.registries
+  # entry. Needs batlehub.writableConfig, which it turns on.
+  manageConfig: true
+
   # The BatleHubLocalInstance the CRs of this namespace bind to.
   instance:
     name: main
@@ -457,4 +479,10 @@ operator:
     - name: go-batleforc
       registry: go
       prefix: git.weebo.poc/batleforc
+      group: oidc:batleforc
+    # The Forgejo organization of the same group (2.argo/helm/forgejo,
+    # operator.organizations): its repositories are its module paths.
+    - name: go-batleforc-org
+      registry: go
+      prefix: git.weebo.poc/batleforc-org
       group: oidc:batleforc

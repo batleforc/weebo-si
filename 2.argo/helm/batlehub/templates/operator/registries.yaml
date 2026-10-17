@@ -1,0 +1,22 @@
+{{- $o := .Values.operator -}}
+{{- if and .Values.batlehub.enabled $o.enabled $o.manageConfig -}}
+{{- range .Values.batlehub.registries }}
+---
+# One `[[registries]]` entry of batlehub.registries, as its own object: the
+# operator renders it after the instance's spec.config and pushes the result.
+# A change here is a hot reload, no restart. The upstream chart's seed carries
+# the same list, so a pod that restarts starts on it.
+apiVersion: batlehub.weebo.io/v1alpha1
+kind: BatleHubRegistry
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  type: {{ .type }}
+  config:
+    {{- toYaml (omit . "type" "name") | nindent 4 }}
+{{- end }}
+{{- end -}}
