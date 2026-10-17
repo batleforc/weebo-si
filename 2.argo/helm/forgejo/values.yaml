@@ -121,6 +121,19 @@ forgejo:
     groupClaimName: groups
     # Authentik group -> Forgejo site admin. Recomputed at every login.
     adminGroup: weebo_admin
+    # Authentik group -> Forgejo organization -> teams, applied at every
+    # login: a member of the group is put in those teams, and with
+    # `groupTeamMapRemoval` taken out of mapped teams when they leave it. The
+    # organizations and teams must already exist (operator.organizations
+    # below); Forgejo never creates them. Only teams NOT declared as
+    # ForgejoTeam CRs belong here: the operator treats a CR's member list as
+    # authoritative and would undo every login. `Owners` exists in every
+    # organization and is not a CR.
+    groupTeamMap:
+      batleforc:
+        batleforc-org:
+          - Owners
+    groupTeamMapRemoval: true
     # Accounts come from Authentik only: no sign-up form, and a first SSO
     # login creates the user. NOT `DISABLE_REGISTRATION`, which also refuses
     # that SSO auto-registration and leaves every new user stuck on a "link
@@ -209,6 +222,16 @@ operator:
     caSecret:
       name: weebo.poc
       key: main-ca.crt
+
+  # Organizations (templates/operator/organizations.yaml), one
+  # ForgejoOrganization each, in this chart's namespace. Created owned by the
+  # operator's admin account (no ownerRef: there are no ForgejoUser CRs);
+  # people reach them through oidc.groupTeamMap. An organization shares the
+  # user namespace: `batleforc` is taken by the account, hence `-org`.
+  organizations:
+    - name: batleforc-org
+      fullName: batleforc
+      visibility: public
 
   # The allow-list (ForgejoNamespacePolicy `weebo-allow`). With NO policy in
   # the cluster every namespace may create every namespaced kind against the

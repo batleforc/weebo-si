@@ -148,6 +148,14 @@ spec:
               scopes: {{ $f.oidc.scopes | quote }}
               groupClaimName: {{ $f.oidc.groupClaimName | quote }}
               adminGroup: {{ $f.oidc.adminGroup | quote }}
+              {{- with $f.oidc.groupTeamMap }}
+              # JSON, single-quoted by the chart on the command line.
+              groupTeamMap: {{ toJson . | quote }}
+              {{- end }}
+              {{- if $f.oidc.groupTeamMapRemoval }}
+              # A flag: the chart passes it as soon as the key exists.
+              groupTeamMapRemoval: true
+              {{- end }}
           {{- end }}
 
           podAnnotations:

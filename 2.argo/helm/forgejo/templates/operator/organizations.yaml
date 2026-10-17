@@ -1,0 +1,22 @@
+{{- $o := .Values.operator -}}
+{{- if and .Values.forgejo.enabled $o.enabled -}}
+{{- range $o.organizations }}
+---
+# A Forgejo organization, bound to the default ForgejoInstance. Its members
+# come from Authentik through forgejo.oidc.groupTeamMap, not from this CR.
+apiVersion: forgejo.weebo.io/v1alpha1
+kind: ForgejoOrganization
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  name: {{ .name }}
+  {{- with .fullName }}
+  fullName: {{ . | quote }}
+  {{- end }}
+  visibility: {{ .visibility | default "public" }}
+{{- end }}
+{{- end -}}
