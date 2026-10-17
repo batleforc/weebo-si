@@ -114,7 +114,9 @@ forgejo:
     # Built from the Authentik slug: auth/sub's `slug: forgejo` is what this
     # depends on.
     discoveryUrl: https://auth.weebo.poc/application/o/forgejo/.well-known/openid-configuration
-    scopes: "openid email profile groups"
+    # Comma-separated: the chart hands it to `forgejo admin auth --scopes`, a
+    # string slice the CLI splits on commas. Spaces would store ONE scope.
+    scopes: "openid,email,profile,groups"
     # The `groups` claim, emitted by the "weebo groups" scope mapping.
     groupClaimName: groups
     # Authentik group -> Forgejo site admin. Recomputed at every login.
