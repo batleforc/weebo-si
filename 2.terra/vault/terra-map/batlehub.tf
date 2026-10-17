@@ -42,3 +42,43 @@ resource "vault_kv_secret_v2" "batlehub-pg" {
     }
   )
 }
+
+# Le token admin de l'operateur weebo-batlehub (2.argo/helm/batlehub,
+# operator.*), qui pilote ce batlehub en mode `external`. Les deux faces du
+# meme secret vont dans mv/batlehub/operator :
+#
+#   - `token`, en clair, lu par l'operateur (Secret batlehub-operator-token,
+#     etiquete batlehub.weebo.io/instance-token) ;
+#   - `token_hash`, l'argon2id que batlehub compare : il entre dans la config
+#     par `${OPERATOR_TOKEN_HASH}` (`[[auth]] type = "token"`), le token en
+#     clair n'atteint jamais le pod.
+#
+# Memes parametres que password_argon2.angos-scanner, pour la meme raison
+# (angos.tf) : ce sont ceux d'Argon2::default() -- 19 MiB, 2 passes, 1 voie --
+# que batlehub et l'operateur utilisent eux-memes, et epingles pour que le
+# plan ne bouge pas d'un poste a l'autre. Changer le cout :
+#   tofu apply -replace=password_argon2.batlehub-operator
+resource "random_string" "batlehub-operator" {
+  length  = 48
+  special = false
+}
+
+resource "password_argon2" "batlehub-operator" {
+  password = random_string.batlehub-operator.result
+
+  memory     = 19456
+  iterations = 2
+  thread     = 1
+  key_len    = 32
+}
+
+resource "vault_kv_secret_v2" "batlehub-operator" {
+  mount = "mv"
+  name  = "batlehub/operator"
+  data_json = jsonencode(
+    {
+      token      = random_string.batlehub-operator.result
+      token_hash = password_argon2.batlehub-operator.hash
+    }
+  )
+}

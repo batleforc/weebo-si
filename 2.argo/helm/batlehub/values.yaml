@@ -376,3 +376,36 @@ batlehub:
   # Trivy endpoint (the chart's `trivy` subchart, or an external one), and a
   # `worker.image.repository` pointing at the new org -- the chart still
   # defaults it to `ghcr.io/batleforc/batlehub-worker`, which is the old path.
+
+# ── weebo-batlehub ───────────────────────────────────────────────────────────
+# The operator that manages what is INSIDE batlehub -- team namespaces
+# (package name prefixes reserved to a group), package grants and policies,
+# maintenance actions -- as CRs (https://batleforc.github.io/weebo-batlehub/).
+# `external` mode: it connects to the batlehub above, deploys nothing and
+# leaves its configuration to this file. Deployed as a nested Application in
+# its own namespace, like weebo-forgejo in 2.argo/helm/forgejo;
+# templates/operator/ also renders the BatleHubLocalInstance that connects it.
+#
+# Its admin token comes from mv/batlehub/operator
+# (2.terra/vault/terra-map/batlehub.tf): the bearer for the operator, the
+# argon2id hash for batlehub's `[[auth]] type = "token"` entry.
+operator:
+  enabled: true
+  namespace: weebo-batlehub
+  chart:
+    name: weebo-batlehub
+    repoURL: oci://ghcr.io/batleforc/charts/weebo-batlehub
+    # renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-batlehub
+    version: 0.2.1
+  # One replica, as for the other operators: the cluster has one worker, so a
+  # second one buys a webhook that dies with the first. The chart's PDB
+  # (minAvailable: 1) is turned off with it -- against a single replica it
+  # pins disruptionsAllowed at 0 and blocks every node drain.
+  replicaCount: 1
+
+  # The BatleHubLocalInstance the CRs of this namespace bind to.
+  instance:
+    name: main
+    caSecret:
+      name: weebo.poc
+      key: main-ca.crt

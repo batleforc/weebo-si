@@ -1,0 +1,58 @@
+{{- $o := .Values.operator -}}
+{{- if and .Values.batlehub.enabled $o.enabled -}}
+---
+# weebo-batlehub, from the chart its repository publishes: CRDs, the operator,
+# its admission webhook and the webhook's certificate, from a self-signed
+# Issuer the chart creates -- cert-manager is already there. Same shape as
+# weebo-forgejo in 2.argo/helm/forgejo.
+#
+# Limited to this chart's namespace (`watch.namespace`): the namespaced kinds
+# (namespace claims, grants, policies, maintenances) are only watched, and only
+# writable, there -- the operator has no allow-list kind of its own, the Role
+# is the boundary. Opening another namespace is widening this, not a rule.
+# The token Secret is still read through the ClusterRole (`clusterSecrets`),
+# and only when labelled for it.
+#
+# TokenReview off: it only serves `managed` instances with a `kubernetes` auth
+# provider, and this one is `external` -- the upstream chart binds batlehub's
+# own TokenReview access.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: weebo-batlehub
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  source:
+    chart: {{ $o.chart.name }}
+    repoURL: {{ $o.chart.repoURL }}
+    targetRevision: {{ $o.chart.version }}
+    helm:
+      releaseName: weebo-batlehub
+      valuesObject:
+        replicaCount: {{ $o.replicaCount }}
+        podDisruptionBudget:
+          enabled: {{ gt (int $o.replicaCount) 1 }}
+        watch:
+          namespace: {{ .Release.Namespace }}
+        tokenReview:
+          enabled: false
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: {{ $o.namespace }}
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

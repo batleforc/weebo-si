@@ -134,6 +134,18 @@ spec:
               role_mappings:
                 {{- toYaml $b.kubeAuth.roleMappings | nindent 16 }}
             {{- end }}
+            {{- if .Values.operator.enabled }}
+            # weebo-batlehub's admin token, as its argon2id hash: the bearer
+            # itself stays in the operator's Secret (secret/operator-token.yaml).
+            # The hash arrives through the environment, read at startup: a
+            # rotated token (tofu -replace) needs a restart of the pod, nothing
+            # here changes to roll it.
+            - type: token
+              tokens:
+                - value: "${OPERATOR_TOKEN_HASH}"
+                  role: admin
+                  user_id: weebo-batlehub-operator
+            {{- end }}
           registries:
             {{- toYaml $b.registries | nindent 12 }}
 
@@ -181,6 +193,13 @@ spec:
               secretKeyRef:
                 name: batlehub-s3-cred
                 key: AWS_SECRET_ACCESS_KEY
+          {{- end }}
+          {{- if .Values.operator.enabled }}
+          - name: OPERATOR_TOKEN_HASH
+            valueFrom:
+              secretKeyRef:
+                name: batlehub-operator-token
+                key: token_hash
           {{- end }}
           {{- if $b.caTrust.enabled }}
           - name: SSL_CERT_FILE

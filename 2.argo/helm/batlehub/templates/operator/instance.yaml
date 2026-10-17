@@ -1,0 +1,36 @@
+{{- $o := .Values.operator -}}
+{{- if and .Values.batlehub.enabled $o.enabled -}}
+---
+# The batlehub above, as an `external` instance: the upstream chart keeps
+# deploying it and its config.toml stays in values.yaml. No `manageConfig`:
+# the chart mounts that file read-only, and the configuration is git's, not
+# the operator's. What the operator writes is what lives in batlehub's
+# database -- namespace claims, package grants and policies, maintenances --
+# from the CRs of this namespace.
+#
+# The public URL rather than the Service, as for the ForgejoInstance: Traefik
+# in front, signed by the internal CA that trust-manager replicates into this
+# namespace as the `weebo.poc` Secret.
+#
+# Its CRD comes from the weebo-batlehub Application of the same sync, so the
+# first dry-run cannot know the kind: SkipDryRunOnMissingResource, and the
+# Application's retries, cover the time the CRDs take to land.
+apiVersion: batlehub.weebo.io/v1alpha1
+kind: BatleHubLocalInstance
+metadata:
+  name: {{ $o.instance.name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  external:
+    url: "https://{{ .Values.batlehub.dns }}"
+    adminTokenSecretRef:
+      name: batlehub-operator-token
+      key: token
+    tls:
+      caSecretRef:
+        name: {{ $o.instance.caSecret.name }}
+        key: {{ $o.instance.caSecret.key }}
+{{- end -}}
