@@ -39,7 +39,7 @@ changement que ce fichier ; les étapes 1 à 4 restent à exécuter.
   Terraform et la 0.15.0 ont écrit n'en a pas -> `None` -> repris à la
   première écriture. Pas de conflit attendu sur les 8 chemins.
 
-## Étape 0 -- préparation (fait, sauf les sauvegardes)
+## Étape 0 -- préparation (fait)
 
 - [x] `main/values.yaml` : `operator.version: 0.18.1`.
 - [x] `sub/templates/applications/applications.yaml` : `instanceRef` en
@@ -50,9 +50,9 @@ changement que ce fichier ; les étapes 1 à 4 restent à exécuter.
       `pathGrants`, plus des valeurs par défaut de CRD que l'API pose au live
       (`negate`, `clientType`, `attributes`, `insecureSkipVerify`), identiques
       en 0.18.1.
-- [ ] Sauvegarde des CRs :
+- [x] Sauvegarde des CRs (2026-10-17, hors repo : `~/backups/authentik-upgrade-2026-10-17/`) :
       `kubectl get authentikapplications,authentikaccesspolicies,authentikgroups,authentikusers,authentikbrands,authentikflows,authentikscopemappings,authentiknamespacepolicies,authentikinstances -A -o yaml > backup-authentik-crs.yaml`
-- [ ] Sauvegarde du `.data.data` des 8 chemins KV (`mv/<path>`) pour la
+- [x] Sauvegarde du `.data.data` des 8 chemins KV (`backup-kv.json`, même dossier) (`mv/<path>`) pour la
       comparaison finale.
 
 Pour refaire le rendu :
@@ -64,24 +64,29 @@ helm template auth-app 2.argo/helm/auth/sub -n auth -f /tmp/sub-values.yaml
 
 ## Étape 1 -- geler
 
-- [ ] Couper l'auto-sync de l'app racine qui porte `auth`, de
+- [x] Couper l'auto-sync de l'app racine (`main`), d'`auth`, de
       `authentik-operator` et de `auth-app` (sinon selfHeal remet tout).
-- [ ] `kubectl -n auth scale deploy/authentik-weebo-authentik --replicas=0`
+- [x] `kubectl -n auth scale deploy/authentik-weebo-authentik --replicas=0`
 
 ## Étape 2 -- CRDs et migration
 
-- [ ] Appliquer les CRDs 0.18.1 :
+- [x] Passer le webhook en `failurePolicy: Ignore` le temps de la migration :
+      il valide les `UPDATE` d'`authentikapplications` et l'opérateur est à 0,
+      donc le patch de migration serait refusé. Sauvegarde de la config et des
+      CRDs 0.15.0 dans `~/backups/authentik-upgrade-2026-10-17/`. Le sync
+      d'`authentik-operator` (étape 3) le remet en `Fail`.
+- [x] Appliquer les CRDs 0.18.1 :
       ```sh
       helm template authentik oci://ghcr.io/batleforc/charts/weebo-authentik \
         --version 0.18.1 -n auth \
         | yq 'select(.kind == "CustomResourceDefinition")' \
         | kubectl apply --server-side --force-conflicts -f -
       ```
-- [ ] Lancer `weebo-authentik-operator migrate-instance-ref --dry-run`, puis
+- [x] Lancer `operator migrate-instance-ref --dry-run`, puis
       sans `--dry-run`, dans un pod ponctuel : image
       `ghcr.io/batleforc/weebo-authentik-operator:v0.18.1`, SA
       `authentik-weebo-authentik`, namespace `auth`.
-- [ ] Vérifier :
+- [x] Vérifier (9 apps migrées) :
       `kubectl get authentikapplications -A -o jsonpath='{..instanceRef}'`
       -> des objets `{"name":"main"}`.
 
