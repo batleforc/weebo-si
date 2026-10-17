@@ -294,14 +294,31 @@ batlehub:
   # no database. It is the way to check a change to these lists before it is
   # syncced -- the release ships the server binary as an asset.)
   #
-  # Nothing here is published to: these are all proxies (`mode` left at its
-  # default). A local registry -- something this cluster pushes its own packages
-  # into -- is a `mode: local` entry with `releases:publish` in its rbac, and is
-  # deliberately not declared before there is something to publish.
+  # pypi, maven and vsx are plain proxies (`mode` left at its default) and
+  # refuse publishes.
+  #
+  #
+  # npm, cargo and go are `hybrid`: what is published here is served first,
+  # anything else falls through to the public upstream, so the same URL both
+  # caches and hosts. Hybrid REQUIRES `upstreams` (and `index_url` for cargo),
+  # which is why those three spell theirs out; the values are the defaults the
+  # proxy mode was already using.
+  #
+  # Nothing in `rbac` opens publishing, and nothing has to: on a local or
+  # hybrid registry batlehub itself grants `role:user` releases:publish,
+  # :overwrite, :yank and :delete (RFC 0015 §10 rule 5 -- `explain-config`
+  # shows them). Who may publish under a given prefix is the job of the team
+  # namespaces (operator.namespaceClaims): a claim narrows a prefix to its
+  # group, admins bypass it. `overwrite` is still subject to `immutable`, which
+  # defaults to `never` -- a published version can be replaced until a
+  # namespace block says otherwise.
   registries:
     - type: npm
       name: npm
-      rbac: &proxyRbac
+      mode: hybrid
+      upstreams:
+        - https://registry.npmjs.org
+      rbac: &readRbac
         anonymous:
           - releases:read
           - releases:list
@@ -315,16 +332,23 @@ batlehub:
           - "*"
     - type: cargo
       name: cargo
-      rbac: *proxyRbac
+      mode: hybrid
+      upstreams:
+        - https://crates.io
+      index_url: https://index.crates.io
+      rbac: *readRbac
     - type: goproxy
       name: go
-      rbac: *proxyRbac
+      mode: hybrid
+      upstreams:
+        - https://proxy.golang.org
+      rbac: *readRbac
     - type: pypi
       name: pypi
-      rbac: *proxyRbac
+      rbac: *readRbac
     - type: maven
       name: maven
-      rbac: *proxyRbac
+      rbac: *readRbac
     # VS Code extensions, proxied from open-vsx.org: Che's extension gallery
     # (spec.components.pluginRegistry.openVSXURL in 2.argo/helm/che/sub). Its
     # anonymous read is not only the "public upstream" trade above but a hard
@@ -332,7 +356,7 @@ batlehub:
     # a registry that wants one answers every search with an empty list.
     - type: openvsx
       name: vsx
-      rbac: *proxyRbac
+      rbac: *readRbac
 
   # ── The pod ────────────────────────────────────────────────────────────────
   # One replica. S3 storage is the backend several replicas could share, so the
@@ -409,3 +433,28 @@ operator:
     caSecret:
       name: weebo.poc
       key: main-ca.crt
+
+  # Team namespaces (templates/operator/namespace-claims.yaml), one
+  # BatleHubNamespaceClaim each. `group` is spelled as batlehub sees it: the
+  # OIDC provider's name, then the Authentik group (`oidc:<group>`, see
+  # batlehub.oidc.name). `prefix` follows the registry's own separator, `/`
+  # for all three here, and covers the prefix itself and anything under it:
+  #
+  #   npm    @batleforc               -> @batleforc/<pkg>
+  #   go     git.weebo.poc/batleforc  -> module paths on the forge
+  #   cargo  batleforc                -> that crate name only: crate names
+  #                                      have no `/`, so a cargo claim is an
+  #                                      exact name, one entry per crate
+  namespaceClaims:
+    - name: npm-batleforc
+      registry: npm
+      prefix: "@batleforc"
+      group: oidc:batleforc
+    - name: cargo-batleforc
+      registry: cargo
+      prefix: batleforc
+      group: oidc:batleforc
+    - name: go-batleforc
+      registry: go
+      prefix: git.weebo.poc/batleforc
+      group: oidc:batleforc

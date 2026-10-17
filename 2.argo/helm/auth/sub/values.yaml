@@ -178,6 +178,14 @@ identity:
         name: weebo_admin
         isSuperuser: true
         parentRef: weebo_moderator
+      # A personal group, outside the weebo_* tree on purpose: it grants
+      # nothing by itself, it is an owner to name. batlehub's team
+      # namespaces reserve a package prefix to a GROUP, never to a user
+      # (`oidc:batleforc` there, 2.argo/helm/batlehub), and this is the one
+      # those of batleforc are claimed for.
+      - crName: batleforc
+        name: batleforc
+        isSuperuser: false
   users:
     enabled: false
     items:
@@ -190,6 +198,7 @@ identity:
         # AuthentikGroup CRs.
         groupRefs:
           - weebo_admin
+          - batleforc
 
 # ---------------------------------------------------------------------------
 # Phase 2 -- brand. Mirrors the `authentik_brand.default` half of flow.tf.

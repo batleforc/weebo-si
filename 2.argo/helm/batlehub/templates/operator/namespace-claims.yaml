@@ -1,0 +1,23 @@
+{{- $o := .Values.operator -}}
+{{- if and .Values.batlehub.enabled $o.enabled -}}
+{{- range $o.namespaceClaims }}
+---
+# A team namespace: `prefix` of registry `registry` reserved to `group`, in
+# batlehub's database (not its config). Only that group -- and admins -- may
+# publish the prefix or a package under it. `registry` and `prefix` are
+# immutable on the CR: renaming one is a new entry here, and deleting an
+# entry releases the prefix.
+apiVersion: batlehub.weebo.io/v1alpha1
+kind: BatleHubNamespaceClaim
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  registry: {{ .registry }}
+  prefix: {{ .prefix | quote }}
+  group: {{ .group | quote }}
+{{- end }}
+{{- end -}}
