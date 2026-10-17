@@ -1,0 +1,287 @@
+{
+  "name": "Probe health",
+  "tags": [],
+  "tiles": [
+    {
+      "id": "legend",
+      "config": {
+        "name": "How to read this",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_logs WHERE $__timeFilter(Timestamp) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "markdown",
+        "markdown": "**Are probes failing, and is it one workload or the whole node?** Every row here is a kubelet `Unhealthy` event, read from the Kubernetes events otel-cluster already ships into `otel_logs` (k8sobjects) \u2014 no new telemetry.\n\n**The baseline is not zero.** In October 2026 this cluster sat at 2\u20136 failures an hour, almost all of them *timeouts* on `openbao`, `cnpg`, `metrics-server`, `kube-scheduler`, `vault-webhook` and `longhorn-manager`. *Worst hour* is coloured against that baseline (amber above 10, red above 30), not against zero.\n\n**Node-wide stalls** are the tile to watch. A 10\u00a0s window in which probes time out in two namespaces or more is the node failing to answer, not one application: the workloads share nothing but the kubelet, the CNI and the host. The stall table lists them; lay the CPU chart beside it to see whether the node was busy at that moment (at the stalls of 2026-10-17 it was not: CPU mostly idle, disks under 1\u00a0% busy).\n\n**Liveness failures restart containers**, readiness failures only take a pod out of its Service \u2014 hence a red threshold on liveness alone. Cause `other` covers the start-up refusals a rollout produces (che-dashboard), which are expected."
+      },
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 5
+    },
+    {
+      "id": "failures",
+      "config": {
+        "name": "Probe failures",
+        "configType": "sql",
+        "sqlTemplate": "SELECT count() AS \"Probe failures\"\nFROM (\n    SELECT\n      Timestamp AS ts,\n      LogAttributes['object'] AS o,\n      JSONExtractString(o, 'regarding', 'namespace') AS ns,\n      JSONExtractString(o, 'regarding', 'name') AS pod,\n      extract(JSONExtractString(o, 'regarding', 'fieldPath'), 'spec\\\\.containers\\\\{(.*)\\\\}') AS ctr,\n      JSONExtractString(o, 'note') AS note,\n      extract(note, '^(\\\\w+) probe') AS probe,\n      multiIf(\n        note ILIKE '%timeout%' OR note ILIKE '%deadline exceeded%' OR note ILIKE '%timed out%', 'timeout',\n        note ILIKE '%connection refused%', 'refused',\n        note ILIKE '%statuscode%' OR note ILIKE '%status code%', 'HTTP status',\n        'other'\n      ) AS cause\n    FROM default.otel_logs\n    WHERE $__timeFilter(Timestamp)\n      AND LogAttributes['k8s.resource.name'] = 'events'\n      AND LogAttributes['type'] != 'DELETED'\n      AND LogAttributes['object'] LIKE '%\"reason\":\"Unhealthy\"%'\n  )",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": []
+      },
+      "x": 0,
+      "y": 5,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "worst-hour",
+      "config": {
+        "name": "Worst hour",
+        "configType": "sql",
+        "sqlTemplate": "SELECT max(n) AS \"Worst hour\"\nFROM (\n  SELECT toStartOfHour(ts) AS h, count() AS n\n  FROM (\n      SELECT\n        Timestamp AS ts,\n        LogAttributes['object'] AS o,\n        JSONExtractString(o, 'regarding', 'namespace') AS ns,\n        JSONExtractString(o, 'regarding', 'name') AS pod,\n        extract(JSONExtractString(o, 'regarding', 'fieldPath'), 'spec\\\\.containers\\\\{(.*)\\\\}') AS ctr,\n        JSONExtractString(o, 'note') AS note,\n        extract(note, '^(\\\\w+) probe') AS probe,\n        multiIf(\n          note ILIKE '%timeout%' OR note ILIKE '%deadline exceeded%' OR note ILIKE '%timed out%', 'timeout',\n          note ILIKE '%connection refused%', 'refused',\n          note ILIKE '%statuscode%' OR note ILIKE '%status code%', 'HTTP status',\n          'other'\n        ) AS cause\n      FROM default.otel_logs\n      WHERE $__timeFilter(Timestamp)\n        AND LogAttributes['k8s.resource.name'] = 'events'\n        AND LogAttributes['type'] != 'DELETED'\n        AND LogAttributes['object'] LIKE '%\"reason\":\"Unhealthy\"%'\n    )\n  GROUP BY h\n)",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 10,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 30,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 4,
+      "y": 5,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "pods",
+      "config": {
+        "name": "Pods affected",
+        "configType": "sql",
+        "sqlTemplate": "SELECT uniq(ns, pod) AS \"Pods affected\"\nFROM (\n    SELECT\n      Timestamp AS ts,\n      LogAttributes['object'] AS o,\n      JSONExtractString(o, 'regarding', 'namespace') AS ns,\n      JSONExtractString(o, 'regarding', 'name') AS pod,\n      extract(JSONExtractString(o, 'regarding', 'fieldPath'), 'spec\\\\.containers\\\\{(.*)\\\\}') AS ctr,\n      JSONExtractString(o, 'note') AS note,\n      extract(note, '^(\\\\w+) probe') AS probe,\n      multiIf(\n        note ILIKE '%timeout%' OR note ILIKE '%deadline exceeded%' OR note ILIKE '%timed out%', 'timeout',\n        note ILIKE '%connection refused%', 'refused',\n        note ILIKE '%statuscode%' OR note ILIKE '%status code%', 'HTTP status',\n        'other'\n      ) AS cause\n    FROM default.otel_logs\n    WHERE $__timeFilter(Timestamp)\n      AND LogAttributes['k8s.resource.name'] = 'events'\n      AND LogAttributes['type'] != 'DELETED'\n      AND LogAttributes['object'] LIKE '%\"reason\":\"Unhealthy\"%'\n  )",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": []
+      },
+      "x": 8,
+      "y": 5,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "liveness",
+      "config": {
+        "name": "Liveness failures",
+        "configType": "sql",
+        "sqlTemplate": "SELECT countIf(probe = 'Liveness') AS \"Liveness failures\"\nFROM (\n    SELECT\n      Timestamp AS ts,\n      LogAttributes['object'] AS o,\n      JSONExtractString(o, 'regarding', 'namespace') AS ns,\n      JSONExtractString(o, 'regarding', 'name') AS pod,\n      extract(JSONExtractString(o, 'regarding', 'fieldPath'), 'spec\\\\.containers\\\\{(.*)\\\\}') AS ctr,\n      JSONExtractString(o, 'note') AS note,\n      extract(note, '^(\\\\w+) probe') AS probe,\n      multiIf(\n        note ILIKE '%timeout%' OR note ILIKE '%deadline exceeded%' OR note ILIKE '%timed out%', 'timeout',\n        note ILIKE '%connection refused%', 'refused',\n        note ILIKE '%statuscode%' OR note ILIKE '%status code%', 'HTTP status',\n        'other'\n      ) AS cause\n    FROM default.otel_logs\n    WHERE $__timeFilter(Timestamp)\n      AND LogAttributes['k8s.resource.name'] = 'events'\n      AND LogAttributes['type'] != 'DELETED'\n      AND LogAttributes['object'] LIKE '%\"reason\":\"Unhealthy\"%'\n  )",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 10,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 12,
+      "y": 5,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "timeout-share",
+      "config": {
+        "name": "Of which timeouts",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(100 * countIf(cause = 'timeout') / nullIf(count(), 0), 0) AS \"Timeouts %\"\nFROM (\n    SELECT\n      Timestamp AS ts,\n      LogAttributes['object'] AS o,\n      JSONExtractString(o, 'regarding', 'namespace') AS ns,\n      JSONExtractString(o, 'regarding', 'name') AS pod,\n      extract(JSONExtractString(o, 'regarding', 'fieldPath'), 'spec\\\\.containers\\\\{(.*)\\\\}') AS ctr,\n      JSONExtractString(o, 'note') AS note,\n      extract(note, '^(\\\\w+) probe') AS probe,\n      multiIf(\n        note ILIKE '%timeout%' OR note ILIKE '%deadline exceeded%' OR note ILIKE '%timed out%', 'timeout',\n        note ILIKE '%connection refused%', 'refused',\n        note ILIKE '%statuscode%' OR note ILIKE '%status code%', 'HTTP status',\n        'other'\n      ) AS cause\n    FROM default.otel_logs\n    WHERE $__timeFilter(Timestamp)\n      AND LogAttributes['k8s.resource.name'] = 'events'\n      AND LogAttributes['type'] != 'DELETED'\n      AND LogAttributes['object'] LIKE '%\"reason\":\"Unhealthy\"%'\n  )",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": []
+      },
+      "x": 16,
+      "y": 5,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "stalls",
+      "config": {
+        "name": "Node-wide stalls",
+        "configType": "sql",
+        "sqlTemplate": "SELECT count() AS \"Node-wide stalls\"\nFROM (\n  SELECT toStartOfInterval(ts, INTERVAL 10 SECOND) AS b\n  FROM (\n      SELECT\n        Timestamp AS ts,\n        LogAttributes['object'] AS o,\n        JSONExtractString(o, 'regarding', 'namespace') AS ns,\n        JSONExtractString(o, 'regarding', 'name') AS pod,\n        extract(JSONExtractString(o, 'regarding', 'fieldPath'), 'spec\\\\.containers\\\\{(.*)\\\\}') AS ctr,\n        JSONExtractString(o, 'note') AS note,\n        extract(note, '^(\\\\w+) probe') AS probe,\n        multiIf(\n          note ILIKE '%timeout%' OR note ILIKE '%deadline exceeded%' OR note ILIKE '%timed out%', 'timeout',\n          note ILIKE '%connection refused%', 'refused',\n          note ILIKE '%statuscode%' OR note ILIKE '%status code%', 'HTTP status',\n          'other'\n        ) AS cause\n      FROM default.otel_logs\n      WHERE $__timeFilter(Timestamp)\n        AND LogAttributes['k8s.resource.name'] = 'events'\n        AND LogAttributes['type'] != 'DELETED'\n        AND LogAttributes['object'] LIKE '%\"reason\":\"Unhealthy\"%'\n    )\n  WHERE cause = 'timeout'\n  GROUP BY b\n  HAVING uniq(ns) >= 2\n)",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 3,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 20,
+      "y": 5,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "by-ns",
+      "config": {
+        "name": "Probe failures by namespace",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(ts) AS t, ns AS \"Namespace\", count() AS \"Failures\"\nFROM (\n    SELECT\n      Timestamp AS ts,\n      LogAttributes['object'] AS o,\n      JSONExtractString(o, 'regarding', 'namespace') AS ns,\n      JSONExtractString(o, 'regarding', 'name') AS pod,\n      extract(JSONExtractString(o, 'regarding', 'fieldPath'), 'spec\\\\.containers\\\\{(.*)\\\\}') AS ctr,\n      JSONExtractString(o, 'note') AS note,\n      extract(note, '^(\\\\w+) probe') AS probe,\n      multiIf(\n        note ILIKE '%timeout%' OR note ILIKE '%deadline exceeded%' OR note ILIKE '%timed out%', 'timeout',\n        note ILIKE '%connection refused%', 'refused',\n        note ILIKE '%statuscode%' OR note ILIKE '%status code%', 'HTTP status',\n        'other'\n      ) AS cause\n    FROM default.otel_logs\n    WHERE $__timeFilter(Timestamp)\n      AND LogAttributes['k8s.resource.name'] = 'events'\n      AND LogAttributes['type'] != 'DELETED'\n      AND LogAttributes['object'] LIKE '%\"reason\":\"Unhealthy\"%'\n  )\nGROUP BY t, ns\nORDER BY t",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 0,
+      "y": 8,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "cpu",
+      "config": {
+        "name": "CPU: busy, waiting, stolen",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts,\n  greatest(0, least(100, 100 * (1 - idle_d / nullIf(total_d, 0)))) AS \"Busy %\",\n  greatest(0, 100 * wait_d  / nullIf(total_d, 0)) AS \"I/O wait %\",\n  greatest(0, 100 * steal_d / nullIf(total_d, 0)) AS \"Steal %\"\nFROM (\n  SELECT\n    ts,\n    idle  - lagInFrame(idle)  OVER (ORDER BY ts) AS idle_d,\n    wait  - lagInFrame(wait)  OVER (ORDER BY ts) AS wait_d,\n    steal - lagInFrame(steal) OVER (ORDER BY ts) AS steal_d,\n    total - lagInFrame(total) OVER (ORDER BY ts) AS total_d,\n    row_number() OVER (ORDER BY ts) AS rn\n  FROM (\n    SELECT\n      ts,\n      sumIf(v, state = 'idle')  AS idle,\n      sumIf(v, state = 'wait')  AS wait,\n      sumIf(v, state = 'steal') AS steal,\n      sum(v) AS total\n    FROM (\n      SELECT\n        $__timeInterval(TimeUnix) AS ts,\n        Attributes['cpu']   AS cpu,\n        Attributes['state'] AS state,\n        argMax(Value, TimeUnix) AS v\n      FROM default.otel_metrics_sum\n      WHERE MetricName = 'system.cpu.time' AND $__timeFilter(TimeUnix)\n      GROUP BY ts, cpu, state\n    )\n    GROUP BY ts\n  )\n)\nWHERE rn > 1 AND total_d > 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 1
+        }
+      },
+      "x": 12,
+      "y": 8,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "per-pod",
+      "config": {
+        "name": "Failing probes, per pod and container",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ns AS \"Namespace\",\n  pod AS \"Pod\",\n  ctr AS \"Container\",\n  probe AS \"Probe\",\n  cause AS \"Cause\",\n  count() AS \"Failures\",\n  min(ts) AS \"First\",\n  max(ts) AS \"Last\"\nFROM (\n    SELECT\n      Timestamp AS ts,\n      LogAttributes['object'] AS o,\n      JSONExtractString(o, 'regarding', 'namespace') AS ns,\n      JSONExtractString(o, 'regarding', 'name') AS pod,\n      extract(JSONExtractString(o, 'regarding', 'fieldPath'), 'spec\\\\.containers\\\\{(.*)\\\\}') AS ctr,\n      JSONExtractString(o, 'note') AS note,\n      extract(note, '^(\\\\w+) probe') AS probe,\n      multiIf(\n        note ILIKE '%timeout%' OR note ILIKE '%deadline exceeded%' OR note ILIKE '%timed out%', 'timeout',\n        note ILIKE '%connection refused%', 'refused',\n        note ILIKE '%statuscode%' OR note ILIKE '%status code%', 'HTTP status',\n        'other'\n      ) AS cause\n    FROM default.otel_logs\n    WHERE $__timeFilter(Timestamp)\n      AND LogAttributes['k8s.resource.name'] = 'events'\n      AND LogAttributes['type'] != 'DELETED'\n      AND LogAttributes['object'] LIKE '%\"reason\":\"Unhealthy\"%'\n  )\nGROUP BY ns, pod, ctr, probe, cause\nORDER BY \"Failures\" DESC, \"Last\" DESC\nLIMIT 50",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Logs"
+          },
+          "whereTemplate": "ResourceAttributes['k8s.pod.name'] = '{{Pod}}'",
+          "whereLanguage": "sql"
+        }
+      },
+      "x": 0,
+      "y": 14,
+      "w": 24,
+      "h": 8
+    },
+    {
+      "id": "stall-table",
+      "config": {
+        "name": "Node-wide stalls (timeouts in 2+ namespaces within 10 s)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  toStartOfInterval(ts, INTERVAL 10 SECOND) AS \"Moment\",\n  uniq(ns) AS \"Namespaces\",\n  arrayStringConcat(arraySort(groupUniqArray(pod)), ', ') AS \"Pods\"\nFROM (\n    SELECT\n      Timestamp AS ts,\n      LogAttributes['object'] AS o,\n      JSONExtractString(o, 'regarding', 'namespace') AS ns,\n      JSONExtractString(o, 'regarding', 'name') AS pod,\n      extract(JSONExtractString(o, 'regarding', 'fieldPath'), 'spec\\\\.containers\\\\{(.*)\\\\}') AS ctr,\n      JSONExtractString(o, 'note') AS note,\n      extract(note, '^(\\\\w+) probe') AS probe,\n      multiIf(\n        note ILIKE '%timeout%' OR note ILIKE '%deadline exceeded%' OR note ILIKE '%timed out%', 'timeout',\n        note ILIKE '%connection refused%', 'refused',\n        note ILIKE '%statuscode%' OR note ILIKE '%status code%', 'HTTP status',\n        'other'\n      ) AS cause\n    FROM default.otel_logs\n    WHERE $__timeFilter(Timestamp)\n      AND LogAttributes['k8s.resource.name'] = 'events'\n      AND LogAttributes['type'] != 'DELETED'\n      AND LogAttributes['object'] LIKE '%\"reason\":\"Unhealthy\"%'\n  )\nWHERE cause = 'timeout'\nGROUP BY \"Moment\"\nHAVING \"Namespaces\" >= 2\nORDER BY \"Moment\" DESC\nLIMIT 30",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "table",
+        "alternateRowBackground": true
+      },
+      "x": 0,
+      "y": 22,
+      "w": 12,
+      "h": 7
+    },
+    {
+      "id": "recent",
+      "config": {
+        "name": "Latest failures",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts AS \"Time\",\n  ns AS \"Namespace\",\n  pod AS \"Pod\",\n  probe AS \"Probe\",\n  note AS \"Message\"\nFROM (\n    SELECT\n      Timestamp AS ts,\n      LogAttributes['object'] AS o,\n      JSONExtractString(o, 'regarding', 'namespace') AS ns,\n      JSONExtractString(o, 'regarding', 'name') AS pod,\n      extract(JSONExtractString(o, 'regarding', 'fieldPath'), 'spec\\\\.containers\\\\{(.*)\\\\}') AS ctr,\n      JSONExtractString(o, 'note') AS note,\n      extract(note, '^(\\\\w+) probe') AS probe,\n      multiIf(\n        note ILIKE '%timeout%' OR note ILIKE '%deadline exceeded%' OR note ILIKE '%timed out%', 'timeout',\n        note ILIKE '%connection refused%', 'refused',\n        note ILIKE '%statuscode%' OR note ILIKE '%status code%', 'HTTP status',\n        'other'\n      ) AS cause\n    FROM default.otel_logs\n    WHERE $__timeFilter(Timestamp)\n      AND LogAttributes['k8s.resource.name'] = 'events'\n      AND LogAttributes['type'] != 'DELETED'\n      AND LogAttributes['object'] LIKE '%\"reason\":\"Unhealthy\"%'\n  )\nORDER BY ts DESC\nLIMIT 50",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Logs"
+          },
+          "whereTemplate": "ResourceAttributes['k8s.pod.name'] = '{{Pod}}'",
+          "whereLanguage": "sql"
+        }
+      },
+      "x": 12,
+      "y": 22,
+      "w": 12,
+      "h": 7
+    }
+  ]
+}

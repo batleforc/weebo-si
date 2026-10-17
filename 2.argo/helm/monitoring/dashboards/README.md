@@ -413,6 +413,28 @@ from HyperDX 2.32.
   user (the operator's cardinality rule): which workspace was denied is in
   the log tiles, or `kubectl describe weebosiconfig cluster`.
 
+- `probes.json` — failing liveness/readiness probes, and whether it is one
+  workload or the whole node. Totals, the worst hour, pods affected, liveness
+  failures (the ones that restart containers), the share that are timeouts,
+  and **node-wide stalls**: 10 s windows in which probes time out in two
+  namespaces or more. Then failures by namespace beside the node's CPU (same
+  query as `node-health.json`), a per-pod/container table, the stall table and
+  the latest messages.
+
+  Every row is a kubelet `Unhealthy` event: otel-cluster's k8sobjects preset
+  already watches Events into `otel_logs`, so nothing new is collected. The
+  event sits in `LogAttributes['object']` as JSON and is parsed per query, with
+  a `LIKE` on the raw string first so the JSON parse only runs on the few rows
+  that can match. A repeated event arrives as a `MODIFIED` row, so counting
+  rows counts occurrences; `DELETED` (the event's TTL expiring) is excluded.
+
+  The baseline is not zero: 2–6 failures an hour in October 2026, nearly all
+  timeouts on openbao, cnpg, metrics-server, kube-scheduler, vault-webhook and
+  longhorn-manager. *Worst hour* is coloured against that baseline. At the
+  stalls of 2026-10-17 the node was mostly idle with disks under 1 % busy, and
+  kube-scheduler times out on `localhost` too — so the cause is not CPU, disk
+  or the pod network; read the stall table against kubelet and host logs.
+
 ## Round trip: build it in the UI, then commit it
 
 There is no export button. Get the JSON from the API with the same credentials
