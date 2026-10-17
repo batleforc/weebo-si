@@ -1,0 +1,43 @@
+{{- $o := .Values.operator -}}
+{{- if and .Values.forgejo.enabled $o.enabled -}}
+---
+# The Forgejo above, as the operator's default instance: a CR that names no
+# `instanceRef` uses the cluster's only ForgejoInstance.
+#
+# Its CRD comes from the weebo-forgejo Application of the same sync, so the
+# first dry-run cannot know the kind: SkipDryRunOnMissingResource, and the
+# Application's retries, cover the time the CRDs take to land. Until the
+# token CronJob has run once the instance is `Ready: False`
+# (TokenSecretNotFound), and turns Ready on its own afterwards.
+apiVersion: forgejo.weebo.io/v1alpha1
+kind: ForgejoInstance
+metadata:
+  name: {{ $o.instance.name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  url: "https://{{ .Values.forgejo.dns }}"
+  tokenSecretRef:
+    name: {{ $o.token.secretName }}
+    namespace: {{ .Release.Namespace }}
+    key: token
+  tls:
+    caSecretRef:
+      name: {{ $o.instance.caSecret.name }}
+      namespace: {{ $o.namespace }}
+      key: {{ $o.instance.caSecret.key }}
+  secretStore:
+    backend: kubernetes
+    {{- if $o.vault.enabled }}
+    vault:
+      address: {{ $o.vault.address | quote }}
+      mount: {{ $o.vault.mount }}
+      kubernetesAuthRole: {{ $o.vault.kubernetesAuthRole }}
+      pathPrefix: {{ $o.vault.pathPrefix }}
+      caSecretRef:
+        name: openbao-tls
+        namespace: {{ $o.namespace }}
+        key: ca.crt
+    {{- end }}
+{{- end -}}

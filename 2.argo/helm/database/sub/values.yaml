@@ -54,3 +54,4 @@ s3:
     creds:
       - name: batlehub
       - name: angos
+      - name: forgejo

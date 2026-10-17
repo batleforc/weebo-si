@@ -1,0 +1,253 @@
+{{- $f := .Values.forgejo -}}
+{{- if $f.enabled -}}
+{{- $theme := dict -}}
+{{- $themeFiles := list -}}
+{{- if $f.theme.enabled -}}
+{{- $theme = include "forgejo.theme.settings" . | fromYaml -}}
+{{- $themeFiles = include "forgejo.theme.files" . | trim | splitList "\n" | compact -}}
+{{- end -}}
+---
+# Forgejo itself, from the upstream chart. Everything it needs already exists
+# by the time this is created: the credentials and the theme (wave 1), the
+# database (wave 2), and the certificate the IngressRoute uses.
+#
+# The whole app.ini is in `gitea.config` below, so what a `helm template` of
+# this directory prints is what the pod reads. Credentials never are: they
+# reach app.ini as FORGEJO__<SECTION>__<KEY> environment variables
+# (`additionalConfigFromEnvs`), or through the chart's own existingSecret
+# fields for the admin and the OIDC source.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: forgejo-app
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  source:
+    chart: {{ $f.chart.name }}
+    repoURL: {{ $f.chart.repoURL }}
+    targetRevision: {{ $f.chart.version }}
+    helm:
+      releaseName: forgejo
+      valuesObject:
+        # Deterministic names: the IngressRoute points at `forgejo-http`.
+        fullnameOverride: forgejo
+        {{- with $f.image.tag }}
+        image:
+          tag: {{ . | quote }}
+        {{- end }}
+        resources:
+          {{- toYaml $f.resources | nindent 10 }}
+        # Traefik terminates TLS and routes by Host (templates/forgejo/
+        # ingress.yaml); the chart's Ingress would be a second answer.
+        ingress:
+          enabled: false
+        # A Pod that runs `wget` against the Service: a Helm test, which ArgoCD
+        # would otherwise apply as a plain resource on every sync.
+        test:
+          enabled: false
+
+        persistence:
+          enabled: true
+          create: true
+          claimName: {{ $f.persistence.claimName }}
+          size: {{ $f.persistence.size }}
+          storageClass: {{ $f.persistence.storageClassName }}
+
+        service:
+          ssh:
+            {{- if $f.ssh.enabled }}
+            type: LoadBalancer
+            port: {{ $f.ssh.port }}
+            # Same addresses and families as Traefik's Service, which this
+            # shares an IP with.
+            ipFamilyPolicy: PreferDualStack
+            ipFamilies:
+              - IPv4
+              - IPv6
+            annotations:
+              lbipam.cilium.io/sharing-key: {{ $f.ssh.sharingKey | quote }}
+              lbipam.cilium.io/ips: {{ .Values.traefik.ips | quote }}
+              lbipam.cilium.io/sharing-cross-namespace: "traefik"
+            {{- else }}
+            type: ClusterIP
+            {{- end }}
+
+        deployment:
+          env:
+            {{- if $f.caTrust.enabled }}
+            - name: SSL_CERT_FILE
+              value: {{ printf "%s/%s" $f.caTrust.mountPath $f.caTrust.key | quote }}
+            {{- end }}
+
+        {{- if or $f.caTrust.enabled $f.theme.enabled }}
+        extraVolumes:
+          {{- if $f.caTrust.enabled }}
+          - name: weebo-ca
+            configMap:
+              name: {{ $f.caTrust.configMap }}
+              items:
+                - key: {{ $f.caTrust.key }}
+                  path: {{ $f.caTrust.key }}
+          {{- end }}
+          {{- if $f.theme.enabled }}
+          - name: theme
+            configMap:
+              name: forgejo-theme
+              items:
+                {{- range $themeFiles }}
+                - key: {{ include "forgejo.theme.key" . }}
+                  path: {{ trimPrefix "files/theme/" . }}
+                {{- end }}
+          {{- end }}
+        {{- if $f.caTrust.enabled }}
+        # The init containers get the CA too: configure-gitea is the one that
+        # registers the OIDC source, and that fetches the discovery document.
+        extraInitVolumeMounts:
+          - name: weebo-ca
+            mountPath: {{ $f.caTrust.mountPath }}
+            readOnly: true
+        {{- end }}
+        extraContainerVolumeMounts:
+          {{- if $f.caTrust.enabled }}
+          - name: weebo-ca
+            mountPath: {{ $f.caTrust.mountPath }}
+            readOnly: true
+          {{- end }}
+          {{- if $f.theme.enabled }}
+          # GITEA_CUSTOM is /data/gitea in this chart. Whatever the volume holds
+          # under these two paths is hidden, which is the point: the theme is
+          # the only source of custom assets and templates.
+          - name: theme
+            mountPath: /data/gitea/public
+            subPath: public
+            readOnly: true
+          - name: theme
+            mountPath: /data/gitea/templates
+            subPath: templates
+            readOnly: true
+          {{- end }}
+        {{- end }}
+
+        gitea:
+          admin:
+            existingSecret: forgejo-admin
+            email: {{ $f.admin.email | quote }}
+            passwordMode: {{ $f.admin.passwordMode }}
+
+          {{- if $f.oidc.enabled }}
+          oauth:
+            - name: {{ $f.oidc.name | quote }}
+              provider: openidConnect
+              existingSecret: forgejo-oidc
+              autoDiscoverUrl: {{ $f.oidc.discoveryUrl | quote }}
+              scopes: {{ $f.oidc.scopes | quote }}
+              groupClaimName: {{ $f.oidc.groupClaimName | quote }}
+              adminGroup: {{ $f.oidc.adminGroup | quote }}
+          {{- end }}
+
+          podAnnotations:
+            {{- if $f.theme.enabled }}
+            # Rolls the pod when the theme changes: the subPath mounts above
+            # never see a ConfigMap update, and templates are read at startup.
+            checksum/theme: {{ include "forgejo.theme.checksum" . }}
+            {{- end }}
+
+          additionalConfigFromEnvs:
+            {{- if $f.postgres.enabled }}
+            - name: FORGEJO__DATABASE__PASSWD
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-pg-cred
+                  key: password
+            {{- end }}
+            {{- if $f.s3.enabled }}
+            - name: FORGEJO__STORAGE__MINIO_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-s3-cred
+                  key: accesskey
+            - name: FORGEJO__STORAGE__MINIO_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-s3-cred
+                  key: secretkey
+            {{- end }}
+
+          config:
+            APP_NAME: {{ $f.appName | quote }}
+            server:
+              DOMAIN: {{ $f.dns }}
+              ROOT_URL: "https://{{ $f.dns }}/"
+              SSH_DOMAIN: {{ $f.dns }}
+              # What clone URLs advertise. The rootless image listens on 2222
+              # (the chart's SSH_LISTEN_PORT default); the Service maps.
+              SSH_PORT: {{ $f.ssh.port }}
+              DISABLE_SSH: {{ not $f.ssh.enabled }}
+              LFS_START_SERVER: true
+            {{- if $f.postgres.enabled }}
+            database:
+              DB_TYPE: postgres
+              HOST: "forgejo-pg-rw.{{ .Release.Namespace }}.svc:5432"
+              NAME: {{ $f.postgres.database }}
+              USER: {{ $f.postgres.owner }}
+              # CNPG serves TLS by default; `require` encrypts without
+              # verifying its self-signed CA.
+              SSL_MODE: require
+            {{- end }}
+            {{- if $f.s3.enabled }}
+            # One [storage] block, inherited by attachment, lfs, avatar,
+            # repo-avatar, packages, actions_log and actions_artifacts.
+            # Repositories are not a "storage" and stay on the volume.
+            storage:
+              STORAGE_TYPE: minio
+              MINIO_ENDPOINT: {{ $f.s3.endpoint }}
+              MINIO_USE_SSL: {{ $f.s3.useSSL }}
+              MINIO_BUCKET: {{ $f.s3.bucket }}
+              MINIO_LOCATION: {{ $f.s3.region }}
+              MINIO_BUCKET_LOOKUP_TYPE: {{ $f.s3.bucketLookup }}
+            {{- end }}
+            # In Postgres rather than the chart's `memory`: every theme change
+            # restarts the pod, and memory sessions would sign everyone out.
+            session:
+              PROVIDER: db
+            {{- if $f.oidc.enabled }}
+            service:
+              ALLOW_ONLY_EXTERNAL_REGISTRATION: {{ $f.oidc.externalRegistrationOnly }}
+              SHOW_REGISTRATION_BUTTON: {{ not $f.oidc.externalRegistrationOnly }}
+            oauth2_client:
+              # A first SSO login creates the account, named after
+              # `preferred_username`. One that collides with a local account
+              # (the admin) is asked for that account's password, never linked
+              # silently.
+              ENABLE_AUTO_REGISTRATION: true
+              USERNAME: nickname
+              ACCOUNT_LINKING: login
+            openid:
+              ENABLE_OPENID_SIGNIN: false
+              ENABLE_OPENID_SIGNUP: false
+            {{- end }}
+            {{- if $f.theme.enabled }}
+            ui:
+              THEMES: {{ $theme.themes }}
+              DEFAULT_THEME: {{ $theme.defaultTheme }}
+            {{- end }}
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: {{ .Release.Namespace }}
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

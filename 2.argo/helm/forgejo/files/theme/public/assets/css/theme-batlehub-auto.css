@@ -1,0 +1,3 @@
+/* batlehub theme for Forgejo — follows the device. Generated. */
+@import "./theme-batlehub-light.css" (prefers-color-scheme: light);
+@import "./theme-batlehub-dark.css" (prefers-color-scheme: dark);

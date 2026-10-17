@@ -1,0 +1,38 @@
+{{- if and .Values.forgejo.enabled .Values.forgejo.theme.enabled -}}
+{{- $files := include "forgejo.theme.files" . | trim | splitList "\n" | compact -}}
+{{- if not $files }}
+{{- fail "forgejo.theme.enabled but files/theme/ is empty: run `npm run build` in 3.custo/forgejo" }}
+{{- end }}
+---
+# Every file of the theme, keyed by its path with `/` turned into `_`. The
+# nested Application maps each key back to its path (templates/forgejo/app.yaml)
+# and mounts the whole thing over <custom>/public and <custom>/templates.
+#
+# Server-side apply: the fonts and the halftone plate make this ~330 KiB once
+# base64-encoded, past the 256 KiB a client-side apply can store in its
+# last-applied-configuration annotation -- the sync would fail with
+# "metadata.annotations: Too long".
+#
+# Text files are JSON-quoted rather than block scalars: byte-exact, trailing
+# newline and all, whatever the file starts with.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forgejo-theme
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+data:
+  {{- range $files }}
+  {{- if regexMatch "\\.(css|svg|tmpl)$" . }}
+  {{ include "forgejo.theme.key" . }}: {{ $.Files.Get . | toJson }}
+  {{- end }}
+  {{- end }}
+binaryData:
+  {{- range $files }}
+  {{- if not (regexMatch "\\.(css|svg|tmpl)$" .) }}
+  {{ include "forgejo.theme.key" . }}: {{ $.Files.Get . | b64enc }}
+  {{- end }}
+  {{- end }}
+{{- end -}}

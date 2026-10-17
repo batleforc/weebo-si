@@ -1,0 +1,28 @@
+{{- if and .Values.forgejo.enabled .Values.forgejo.postgres.enabled -}}
+---
+# The database behind Forgejo, reached at `forgejo-pg-rw.<ns>.svc:5432` --
+# CNPG's read-write Service, which follows the primary. No `imageName`, for
+# the reason given in 2.argo/helm/batlehub: the operator picks the image that
+# matches its own version. Forgejo runs its migrations itself, at startup
+# (the chart's configure-gitea init container), and needs no extension.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: forgejo-pg
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  instances: {{ .Values.forgejo.postgres.instances }}
+  storage:
+    size: {{ .Values.forgejo.postgres.storage.size }}
+    storageClass: {{ .Values.forgejo.postgres.storage.storageClassName }}
+  bootstrap:
+    initdb:
+      database: {{ .Values.forgejo.postgres.database }}
+      owner: {{ .Values.forgejo.postgres.owner }}
+      # Written from Vault by secret/pg-cred.yaml; naming it also stops CNPG
+      # from generating a `forgejo-pg-app` Secret of its own.
+      secret:
+        name: forgejo-pg-cred
+{{- end -}}

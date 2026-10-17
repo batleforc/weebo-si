@@ -1,0 +1,38 @@
+{{- if .Values.forgejo.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: forgejo
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: {{ .Values.forgejo.project }}
+  source:
+    repoURL: '{{ .Values.repo }}'
+    path: '2.argo/helm/forgejo'
+    targetRevision: '{{ .Values.branch }}'
+    helm:
+      releaseName: forgejo
+      valuesObject:
+        project: "{{ .Values.forgejo.project }}"
+        repo: "{{ .Values.repo }}"
+        branch: "{{ .Values.branch }}"
+        traefik:
+          ips: "{{ .Values.traefik.ips }}"
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'forgejo'
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

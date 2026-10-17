@@ -1,0 +1,266 @@
+repo: ""
+project: ""
+branch: ""
+
+# The LoadBalancer IPs Traefik answers on, passed down from 2.argo/app. The
+# SSH Service shares them (see forgejo.ssh).
+traefik:
+  ips: ""
+
+forgejo:
+  enabled: true
+
+  # The upstream chart, deployed as a nested ArgoCD Application
+  # (templates/forgejo/app.yaml), the same shape as batlehub. Everything this
+  # chart renders itself -- Postgres, the theme ConfigMap, the certificate, the
+  # IngressRoute, the ExternalSecrets -- exists so that Application has
+  # something to point at.
+  #
+  # The repoURL has to match the `sourceRepo` entry of the dev-base project in
+  # 2.argo/app/values.yaml verbatim, or ArgoCD refuses the Application before
+  # it fetches anything.
+  #
+  # The 17.x chart ships no database and no cache subchart any more: what it
+  # needs is provided below, so nothing else is pulled.
+  chart:
+    name: forgejo
+    repoURL: oci://code.forgejo.org/forgejo-helm/forgejo
+    # renovate: datasource=docker depName=code.forgejo.org/forgejo-helm/forgejo
+    version: 17.3.0
+
+  # The chart runs the 15.x LTS by default (15.0.10 on 17.3.0); the operator
+  # below needs v16 or later -- older releases lack the admin token API it
+  # relies on, and its ForgejoInstance reports `UnsupportedForgejoVersion`.
+  # The chart appends `-rootless` itself.
+  image:
+    # renovate: datasource=docker depName=code.forgejo.org/forgejo/forgejo
+    tag: "16.0.6"
+
+  dns: git.weebo.poc
+  appName: "Weebo Forge"
+
+  # ── Secrets ────────────────────────────────────────────────────────────────
+  # None of them are in this file. All come from Vault through External
+  # Secrets (templates/secret/), in the forgejo namespace's own mv/forgejo/*:
+  #
+  #   mv/forgejo/pg      <- 2.terra/vault/terra-map/forgejo.tf
+  #   mv/forgejo/admin   <- idem
+  #   mv/forgejo/s3      <- 2.terra/vault/terra-map/s3.tf
+  #   mv/forgejo/auth    <- written by the authentik operator (auth/sub)
+
+  # ── Repositories ───────────────────────────────────────────────────────────
+  # The git repositories themselves, plus app.ini and the queues: what has to
+  # be a filesystem. ReadWriteOnce, which is what pins the replica count at 1.
+  # `helm.sh/resource-policy: keep` (the chart's default) is left on: deleting
+  # the Application must not delete every repository.
+  persistence:
+    claimName: forgejo-data
+    size: 20Gi
+    storageClassName: longhorn
+
+  # ── Object storage ─────────────────────────────────────────────────────────
+  # Everything that is not a repository -- LFS objects, attachments, avatars,
+  # packages, Actions logs and artifacts -- goes to the RustFS tenant, through
+  # Forgejo's `[storage]` section, which every one of those inherits. The
+  # `forgejo` bucket, its user and its policy are declared in
+  # 2.argo/helm/database/sub (s3.mainInstance.creds).
+  s3:
+    enabled: true
+    # host[:port], no scheme: the minio client takes the scheme from useSSL.
+    # The public name rather than the in-cluster Service, signed by the
+    # internal CA that `caTrust` below puts in the pod's trust store.
+    endpoint: s3-main.weebo.poc
+    useSSL: true
+    bucket: forgejo
+    # RustFS ignores the region, the client wants one.
+    region: us-east-1
+    # RustFS addresses buckets by path, not by virtual host.
+    bucketLookup: path
+
+  # ── Postgres ───────────────────────────────────────────────────────────────
+  # CNPG, as for batlehub. One instance: the cluster has one worker.
+  postgres:
+    enabled: true
+    instances: 1
+    database: forgejo
+    owner: forgejo
+    storage:
+      size: 10Gi
+      storageClassName: longhorn
+
+  # ── Admin ──────────────────────────────────────────────────────────────────
+  # A local admin, for the day Authentik is down or before the OIDC source
+  # works. Username and password come from mv/forgejo/admin; `keepUpdated`
+  # resets the password to the Vault one on every pod start, so Vault stays
+  # the only place it is written. The chart refuses `admin` as a username.
+  admin:
+    email: forgejo-admin@weebo.poc
+    passwordMode: keepUpdated
+
+  # ── SSO ────────────────────────────────────────────────────────────────────
+  # Authentik, through the `forgejo` application declared in
+  # 2.argo/helm/auth/sub (applications.forgejo), whose client credentials the
+  # operator writes to mv/forgejo/auth.
+  #
+  # `name` is the auth source name, and it IS in the callback URL:
+  # https://<dns>/user/oauth2/<name>/callback has to be listed in that
+  # application's allowedRedirectUris. Renaming it is an edit on both sides.
+  #
+  # The chart creates the source at the first start and updates it on the next
+  # ones, but never deletes it: removing it from here leaves it in the UI.
+  oidc:
+    enabled: true
+    name: authentik
+    # Built from the Authentik slug: auth/sub's `slug: forgejo` is what this
+    # depends on.
+    discoveryUrl: https://auth.weebo.poc/application/o/forgejo/.well-known/openid-configuration
+    scopes: "openid email profile groups"
+    # The `groups` claim, emitted by the "weebo groups" scope mapping.
+    groupClaimName: groups
+    # Authentik group -> Forgejo site admin. Recomputed at every login.
+    adminGroup: weebo_admin
+    # Accounts come from Authentik only: no sign-up form, and a first SSO
+    # login creates the user. NOT `DISABLE_REGISTRATION`, which also refuses
+    # that SSO auto-registration and leaves every new user stuck on a "link
+    # account" page.
+    externalRegistrationOnly: true
+
+  # ── SSH ────────────────────────────────────────────────────────────────────
+  # git over SSH, on port 22 of the same LoadBalancer IP as Traefik: Cilium's
+  # LB-IPAM shares an address between Services carrying the same sharing-key,
+  # and Traefik's allows any namespace (2.argo/helm/ingress/main). So
+  # `git@git.weebo.poc:org/repo.git` works with nothing but the DNS that
+  # already points *.weebo.poc at Traefik. The rootless image listens on 2222
+  # inside the pod; 22 is only the Service port.
+  ssh:
+    enabled: true
+    port: 22
+    sharingKey: weebo-gate
+
+  # ── Theme ──────────────────────────────────────────────────────────────────
+  # The BatleHub theme from 3.custo/forgejo. `npm run build` there copies its
+  # output into files/theme/ in this chart (committed); templates/theme/
+  # turns it into one ConfigMap mounted over <custom>/public and
+  # <custom>/templates, and reads files/theme/theme.yaml for the [ui] THEMES
+  # and DEFAULT_THEME. A checksum of those files is a pod annotation, so a
+  # rebuilt theme rolls the pod -- subPath mounts never see a ConfigMap
+  # update, and templates are only read at startup.
+  theme:
+    enabled: true
+
+  # ── The pod ────────────────────────────────────────────────────────────────
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+
+  # The internal CA: Forgejo reaches auth.weebo.poc (OIDC discovery) and
+  # s3-main.weebo.poc (storage), both signed by it. The `weebo.poc` bundle --
+  # public roots plus the cluster CA, replicated into every namespace by
+  # trust-manager (2.argo/helm/ingress/sub) -- is mounted beside the system
+  # store and named by SSL_CERT_FILE, which Go and git's OpenSSL both read.
+  #
+  # An explicit volume, NOT the `inject-certs` Kyverno annotation batlehub
+  # uses: that policy only patches `containers`, and the chart's
+  # `configure-gitea` init container is the one that registers the OIDC
+  # source -- which fetches the discovery document from auth.weebo.poc, and
+  # would fail on an unknown CA before Forgejo ever starts.
+  caTrust:
+    enabled: true
+    configMap: weebo.poc
+    key: main-ca.crt
+    mountPath: /etc/ssl/weebo
+
+# ── weebo-forgejo ────────────────────────────────────────────────────────────
+# The operator that manages what is INSIDE Forgejo -- users, organizations,
+# teams, repositories, webhooks, keys, OAuth2 applications, access tokens --
+# as CRs (https://batleforc.github.io/weebo-forgejo/). Deployed as a nested
+# Application in its own namespace, like the authentik operator in
+# 2.argo/helm/auth/main; templates/operator/ also renders what connects it to
+# the Forgejo above.
+operator:
+  enabled: true
+  namespace: weebo-forgejo
+  chart:
+    name: weebo-forgejo
+    repoURL: oci://ghcr.io/batleforc/charts/weebo-forgejo
+    # renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-forgejo
+    version: 0.3.2
+  # One replica, as for the authentik operator: the cluster has one worker,
+  # so a second one buys a webhook that dies with the first. The chart's PDB
+  # (minAvailable: 1) is turned off with it -- against a single replica it
+  # pins disruptionsAllowed at 0 and blocks every node drain.
+  replicaCount: 1
+
+  # The ForgejoInstance every CR uses when it names none (`main`).
+  #
+  # The public URL rather than the in-cluster Service: it is also what the
+  # operator writes as FORGEJO_URL into the credentials it emits, and those
+  # are read by workloads that go through Traefik anyway. CoreDNS sends
+  # *.weebo.poc to Traefik, whose certificate is signed by the internal CA --
+  # hence `caSecret`, the trust-manager Bundle's Secret target, replicated
+  # into every namespace.
+  instance:
+    name: main
+    caSecret:
+      name: weebo.poc
+      key: main-ca.crt
+
+  # The allow-list (ForgejoNamespacePolicy `weebo-allow`). With NO policy in
+  # the cluster every namespace may create every namespaced kind against the
+  # shared instance; as soon as one exists the default is deny. This one exists
+  # so that the default is deny from the first sync, and lets only the forgejo
+  # namespace in -- where the platform's own CRs (organizations, teams,
+  # mirrors...) are meant to live.
+  #
+  # A rule here is one `spec.rules` entry, verbatim. `allowedOrganizations` /
+  # `allowedUsers` take Forgejo names, not CR names; leaving `allowedUsers`
+  # unset means ANY non-admin user, and a credential for a site admin is
+  # refused unless a rule names that admin explicitly. Opening a team's
+  # namespace later is one more entry, e.g.
+  #
+  #   - namespaces: ["dev-ws-*"]
+  #     allowedKinds: [ForgejoRepository, ForgejoWebhook, ForgejoDeployKey]
+  #     allowedOrganizations: [weebo]
+  #
+  # The release namespace is added by the template, not listed here.
+  allowList:
+    extraRules: []
+
+  # The site-admin token the instance authenticates with. Forgejo has no way
+  # to be handed one at install, so templates/operator/token.yaml mints it
+  # through the API with the local admin's Vault password, into `secretName`,
+  # and does nothing while that token still answers. It runs as a PostSync
+  # hook after every sync (which covers a fresh install) and on `schedule`
+  # (a token revoked or a Secret deleted between syncs). A failed run is not
+  # alerted on: it shows on the ForgejoInstance, which goes Ready: False.
+  token:
+    secretName: forgejo-operator-token
+    # The token's name in Forgejo, under the admin's Settings > Applications.
+    name: weebo-forgejo
+    schedule: "0 4 * * *"
+    # How long the PostSync run waits for Forgejo to answer: on a first
+    # install, the database bootstrap and the migrations come first.
+    syncWaitSeconds: 600
+    image:
+      repository: docker.io/curlimages/curl
+      # renovate: datasource=docker depName=docker.io/curlimages/curl
+      tag: "8.23.0"
+
+  # Where the CRs that emit a credential (OAuth2 apps, access tokens,
+  # generated passwords, keys) write it when they set no `secretTargets`:
+  # a Kubernetes Secret next to the CR. Vault is declared too, so a CR can
+  # pin `secretTargets: [{backend: vault, path: <ns>/<name>}]` like the
+  # authentik applications do. The operator logs in with its own
+  # ServiceAccount, through the `forgejo-operator` role in
+  # 2.terra/vault/terra-map/forgejo.tf. openbao's CA is not in the weebo.poc
+  # bundle, so it is named explicitly (openbao-tls, replicated by bank-vaults).
+  vault:
+    enabled: true
+    address: "https://openbao.vault:8200"
+    mount: mv
+    kubernetesAuthRole: forgejo-operator
+    # Only used by targets that do not pin a path.
+    pathPrefix: weebo-forgejo

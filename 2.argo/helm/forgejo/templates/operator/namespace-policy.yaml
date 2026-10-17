@@ -1,0 +1,39 @@
+{{- $o := .Values.operator -}}
+{{- if and .Values.forgejo.enabled $o.enabled -}}
+---
+# The allow-list: deny by default from the moment this object exists, so
+# every namespace not named below is refused by the operator's admission
+# webhook (and by its reconcilers, should the webhook be bypassed). Only
+# the namespaced kinds bound to a shared ForgejoInstance are governed;
+# cluster-scoped ones (instances, policies) stay under plain RBAC, which
+# here means ArgoCD.
+#
+# Cluster-scoped, so it is one object for the whole cluster: every rule for
+# every namespace goes in it (values.yaml, operator.allowList).
+apiVersion: forgejo.weebo.io/v1alpha1
+kind: ForgejoNamespacePolicy
+metadata:
+  name: weebo-allow
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  rules:
+    # This chart's namespace, for every kind. No allowedOrganizations nor
+    # allowedUsers: any organization, any non-admin user.
+    - namespaces:
+        - {{ .Release.Namespace }}
+      allowedKinds:
+        - ForgejoUser
+        - ForgejoUserKey
+        - ForgejoOrganization
+        - ForgejoTeam
+        - ForgejoRepository
+        - ForgejoWebhook
+        - ForgejoDeployKey
+        - ForgejoOAuth2Application
+        - ForgejoAccessToken
+    {{- with $o.allowList.extraRules }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- end -}}

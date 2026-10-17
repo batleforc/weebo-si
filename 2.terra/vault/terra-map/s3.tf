@@ -61,6 +61,27 @@ resource "vault_kv_secret_v2" "angos-s3" {
   )
 }
 
+resource "random_string" "forgejo-accessKey" {
+  length  = 42
+  special = false
+}
+
+resource "random_string" "forgejo-secretKey" {
+  length  = 42
+  special = false
+}
+
+resource "vault_kv_secret_v2" "forgejo-s3" {
+  mount = "mv"
+  name  = "forgejo/s3"
+  data_json = jsonencode(
+    {
+      accesskey = random_string.forgejo-accessKey.result
+      secretkey = random_string.forgejo-secretKey.result
+    }
+  )
+}
+
 resource "random_string" "main-accessKey" {
   length  = 42
   special = false

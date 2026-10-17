@@ -1,0 +1,526 @@
+/* batlehub theme for Forgejo — light rendition. Generated; edit theme.config.mjs or src/ and rebuild. */
+@import "./theme-forgejo-light.css";
+
+:root {
+  --is-dark-theme: false;
+  --bh-ground: #faf3f3;
+  --bh-raised: #f0e7e7;
+  --bh-sunk: #fefbfb;
+  --bh-ink: #1f1212;
+  --bh-ink-dim: #674a47;
+  --bh-rule-soft: #cab9b7;
+  --bh-rule-strong: #a27b77;
+  --bh-accent: #c50220;
+  --bh-accent-ink: #fefbfb;
+  --bh-copper: #974c12;
+  --bh-focus: #8f6b09;
+  --color-primary: #c50220;
+  --color-primary-contrast: #fefbfb;
+  --color-primary-dark-1: #b30e1f;
+  --color-primary-dark-2: #a1151f;
+  --color-primary-dark-3: #90181e;
+  --color-primary-dark-4: #7e1a1d;
+  --color-primary-dark-5: #5d1b1a;
+  --color-primary-dark-6: #3d1817;
+  --color-primary-dark-7: #291414;
+  --color-primary-light-1: #ce3537;
+  --color-primary-light-2: #d6504d;
+  --color-primary-light-3: #dd6761;
+  --color-primary-light-4: #e47c75;
+  --color-primary-light-5: #eea49e;
+  --color-primary-light-6: #f6ccc8;
+  --color-primary-light-7: #f9e5e4;
+  --color-primary-alpha-10: #c502201a;
+  --color-primary-alpha-20: #c5022033;
+  --color-primary-alpha-30: #c502204d;
+  --color-primary-alpha-40: #c5022066;
+  --color-primary-alpha-50: #c5022080;
+  --color-primary-alpha-60: #c5022099;
+  --color-primary-alpha-70: #c50220b3;
+  --color-primary-alpha-80: #c50220cc;
+  --color-primary-alpha-90: #c50220e6;
+  --color-primary-hover: var(--color-primary-dark-1);
+  --color-primary-active: var(--color-primary-dark-2);
+  --color-secondary: #cab9b7;
+  --color-secondary-dark-1: #beacab;
+  --color-secondary-dark-2: #b1a09e;
+  --color-secondary-dark-3: #a59492;
+  --color-secondary-dark-4: #988886;
+  --color-secondary-dark-5: #8c7c7a;
+  --color-secondary-dark-6: #80706f;
+  --color-secondary-dark-7: #756463;
+  --color-secondary-dark-8: #695958;
+  --color-secondary-dark-9: #5e4e4d;
+  --color-secondary-dark-10: #534343;
+  --color-secondary-dark-11: #483938;
+  --color-secondary-dark-12: #3d2f2e;
+  --color-secondary-dark-13: #332524;
+  --color-secondary-light-1: #d4c4c3;
+  --color-secondary-light-2: #ddd0cf;
+  --color-secondary-light-3: #e7dcdb;
+  --color-secondary-light-4: #f1e7e7;
+  --color-secondary-alpha-10: #cab9b71a;
+  --color-secondary-alpha-20: #cab9b733;
+  --color-secondary-alpha-30: #cab9b74d;
+  --color-secondary-alpha-40: #cab9b766;
+  --color-secondary-alpha-50: #cab9b780;
+  --color-secondary-alpha-60: #cab9b799;
+  --color-secondary-alpha-70: #cab9b7b3;
+  --color-secondary-alpha-80: #cab9b7cc;
+  --color-secondary-alpha-90: #cab9b7e6;
+  --color-secondary-button: #a27b77;
+  --color-secondary-hover: #674a47;
+  --color-secondary-active: #674a47;
+  --color-console-fg: #1f1212;
+  --color-console-fg-subtle: #674a47;
+  --color-console-bg: #fefbfb;
+  --color-console-border: #cab9b7;
+  --color-console-hover-bg: #f0e7e7;
+  --color-console-active-bg: #f0e7e7;
+  --color-console-menu-bg: #faf3f3;
+  --color-console-menu-border: #a27b77;
+  --color-red: #c50220;
+  --color-red-light: #ad001a;
+  --color-red-dark-1: #d72630;
+  --color-red-dark-2: #ea3c3f;
+  --color-orange: #974c12;
+  --color-orange-light: #853e00;
+  --color-orange-dark-1: #a75a25;
+  --color-orange-dark-2: #b76935;
+  --color-yellow: #865900;
+  --color-yellow-light: #744c00;
+  --color-yellow-dark-1: #986600;
+  --color-yellow-dark-2: #a97416;
+  --color-green: #146d34;
+  --color-green-light: #005e28;
+  --color-green-dark-1: #287c42;
+  --color-green-dark-2: #398b50;
+  --color-brown: #895534;
+  --color-brown-light: #794726;
+  --color-brown-dark-1: #986342;
+  --color-brown-dark-2: #a87250;
+  --color-gold: #974c12;
+  --color-git: #c50220;
+  --color-ansi-red: #c50220;
+  --color-ansi-green: #146d34;
+  --color-ansi-yellow: #974c12;
+  --color-grey: #cab9b7;
+  --color-grey-light: #674a47;
+  --color-diff-added-linenum-bg: #cad5c7;
+  --color-diff-added-row-bg: #dee1d9;
+  --color-diff-added-row-border: #b8cab7;
+  --color-diff-added-word-bg: #acc2ab;
+  --color-diff-removed-linenum-bg: #f5c4c0;
+  --color-diff-removed-row-bg: #f8d8d5;
+  --color-diff-removed-row-border: #f2b4af;
+  --color-diff-removed-word-bg: #eea49e;
+  --color-diff-moved-row-bg: #e3c8bc;
+  --color-diff-moved-row-border: #974c12;
+  --color-diff-inactive: #f0e7e7;
+  --color-error-border: #c50220;
+  --color-error-bg: #f8dcd9;
+  --color-error-bg-active: #f4c0bb;
+  --color-error-bg-hover: #f6ceca;
+  --color-error-text: #c50220;
+  --color-success-border: #146d34;
+  --color-success-bg: #e4e5df;
+  --color-success-text: #146d34;
+  --color-warning-border: #974c12;
+  --color-warning-bg: #f1e2dd;
+  --color-warning-text: #974c12;
+  --color-info-border: #a27b77;
+  --color-info-bg: #f0e7e7;
+  --color-info-text: #1f1212;
+  --color-red-badge: #c50220;
+  --color-red-badge-bg: #c502201a;
+  --color-red-badge-hover-bg: #c502204d;
+  --color-green-badge: #146d34;
+  --color-green-badge-bg: #146d341a;
+  --color-green-badge-hover-bg: #146d344d;
+  --color-yellow-badge: #974c12;
+  --color-yellow-badge-bg: #974c121a;
+  --color-yellow-badge-hover-bg: #974c124d;
+  --color-orange-badge: #974c12;
+  --color-orange-badge-bg: #974c121a;
+  --color-orange-badge-hover-bg: #974c124d;
+  --color-body: #faf3f3;
+  --color-box-header: #fefbfb;
+  --color-box-body: #faf3f3;
+  --color-box-body-highlight: #f0e7e7;
+  --color-header-wrapper: #faf3f3;
+  --color-text-dark: #1f1212;
+  --color-text: #1f1212;
+  --color-text-light: #372423;
+  --color-text-light-1: #503836;
+  --color-text-light-2: #674a47;
+  --color-text-light-3: #674a47;
+  --color-footer: var(--color-nav-bg);
+  --color-timeline: #cab9b7;
+  --color-input-text: #1f1212;
+  --color-input-background: #fefbfb;
+  --color-input-toggle-background: #cab9b7;
+  --color-input-border: #a27b77;
+  --color-input-border-hover: #674a47;
+  --color-light: #1f12120f;
+  --color-light-border: #1f121229;
+  --color-hover: #1f121214;
+  --color-active: #1f12121f;
+  --color-menu: #fefbfb;
+  --color-card: #faf3f3;
+  --color-button: #faf3f3;
+  --color-markup-table-row: #1f12120d;
+  --color-markup-code-block: #1f12120f;
+  --color-markup-code-inline: #1f121221;
+  --color-code-bg: #fefbfb;
+  --color-shadow: #00000000;
+  --color-secondary-bg: #f0e7e7;
+  --color-expand-button: #f0e7e7;
+  --color-placeholder-text: #674a47;
+  --color-editor-line-highlight: #f0e7e7;
+  --color-project-board-bg: #fefbfb;
+  --color-caret: #1f1212;
+  --color-reaction-bg: #1f12120f;
+  --color-reaction-hover-bg: #c502204d;
+  --color-reaction-active-bg: #c5022033;
+  --color-tooltip-text: #faf3f3;
+  --color-tooltip-bg: #1f1212;
+  --color-nav-bg: #fefbfb;
+  --color-nav-hover-bg: #f0e7e7;
+  --color-nav-text: #674a47;
+  --color-secondary-nav-bg: #faf3f3;
+  --color-label-text: #1f1212;
+  --color-label-bg: #674a4740;
+  --color-label-hover-bg: #674a4773;
+  --color-label-active-bg: #674a47a6;
+  --color-accent: #c50220;
+  --color-small-accent: var(--color-primary-light-5);
+  --color-highlight-fg: #974c12;
+  --color-highlight-bg: #e6cdc2;
+  --color-overlay-backdrop: #1f1212bf;
+  --border-radius: 0;
+  --border-radius-medium: 0;
+  --fonts-proportional: "JetBrains Mono", ui-monospace, monospace;
+  --fonts-override: "JetBrains Mono", ui-monospace, monospace;
+  --fonts-monospace: "JetBrains Mono", ui-monospace, monospace, var(--fonts-emoji);
+  --bh-face-display: "Silkscreen", monospace;
+  accent-color: var(--color-accent);
+  color-scheme: light;
+}
+
+@font-face {
+  font-family: "Silkscreen";
+  src: url("/assets/fonts/batlehub/silkscreen-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Silkscreen";
+  src: url("/assets/fonts/batlehub/silkscreen-700.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/assets/fonts/batlehub/jetbrainsmono-latin.woff2") format("woff2");
+  font-weight: 100 800;
+  font-display: swap;
+}
+
+/* Component rules shared by both renditions. `batlehub` is replaced by the theme
+   name at build time; @font-face and the per-rendition rules are generated. */
+
+/* ── Shape: zero radius everywhere, radios excepted (they must stay readable
+      as radios, not checkboxes) ─────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+input[type="radio"],
+.ui.radio.checkbox label::before,
+.ui.radio.checkbox label::after {
+  border-radius: 50% !important;
+}
+
+/* ── The Flat-At-Rest Rule: no shadow, floats are a 1px frame ───────────── */
+.ui.segment,
+.ui.card,
+.ui.cards > .card,
+.ui.menu,
+.ui.button,
+.ui.modal,
+.ui.popup,
+.ui.dropdown .menu,
+.ui.dropdown > .menu,
+.tippy-box,
+#navbar {
+  box-shadow: none !important;
+}
+.ui.modal,
+.ui.popup,
+.ui.dropdown .menu,
+.tippy-box {
+  border: 1px solid var(--bh-rule-strong) !important;
+}
+
+/* ── Focus: the amber ring, never suppressed ────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--bh-focus) !important;
+  outline-offset: 2px;
+}
+
+/* ── Type ───────────────────────────────────────────────────────────────── */
+body {
+  font-variant-numeric: tabular-nums;
+}
+.ui.table > thead > tr > th {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bh-ink-dim);
+  border-bottom: 1px solid var(--bh-rule-strong);
+}
+/* The bitmap face only at integer multiples of 8px (The Integer Em Rule). */
+.ui.primary.button,
+.ui.primary.buttons .button,
+.user-setting-content h4.ui.top.attached.header,
+.repo-setting-content h4.ui.top.attached.header,
+.admin-setting-content h4.ui.top.attached.header,
+.ui.modal > .header,
+.repo-header .flex-item-title,
+.repo-header .repo-title {
+  font-family: var(--bh-face-display);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+.repo-header .flex-item-title,
+.repo-header .flex-item-title a,
+.repo-header .repo-title,
+.repo-header .repo-title a,
+.page-content.user.profile .profile-avatar-name .header,
+.page-content.organization #org-info .ui.header {
+  font-family: var(--bh-face-display);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+}
+
+/* ── Home: the specimen head and its sheet ──────────────────────────────── */
+.bh-home {
+  margin-top: 0 !important;
+  padding: 0 !important;
+}
+.bh-specimen,
+.bh-sheet {
+  margin: 0 !important;
+}
+.bh-specimen {
+  position: relative;
+  overflow: hidden;
+  padding: 40px 24px;
+  border-bottom: 1px solid var(--bh-rule-soft);
+}
+.bh-plate {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(52%, 620px);
+  pointer-events: none;
+  background: transparent;
+  -webkit-mask: url("/assets/img/batlehub/halftone-plate.png") right center / cover no-repeat;
+  mask: url("/assets/img/batlehub/halftone-plate.png") right center / cover no-repeat;
+  transform: scaleX(-1);
+}
+.bh-label {
+  margin: 0 0 16px;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bh-ink-dim);
+}
+.bh-display {
+  position: relative;
+  margin: 0;
+  font-family: var(--bh-face-display);
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 0.92;
+  letter-spacing: 0.02em;
+  color: var(--bh-ink);
+  overflow-wrap: anywhere;
+}
+.bh-caption {
+  position: relative;
+  max-width: 72ch;
+  margin: 24px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--bh-ink-dim);
+}
+.bh-actions {
+  position: relative;
+  margin: 24px 0 0;
+}
+.bh-row {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: baseline;
+  padding: 12px 24px;
+  border-bottom: 1px dashed var(--bh-rule-soft);
+  color: var(--bh-ink-dim) !important;
+  text-decoration: none !important;
+}
+.bh-row:hover {
+  background: var(--bh-raised);
+  border-bottom: 1px solid var(--bh-rule-strong);
+  color: var(--bh-ink) !important;
+}
+.bh-row-name {
+  font-family: var(--bh-face-display);
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  color: var(--bh-ink);
+}
+.bh-row:hover .bh-row-name {
+  color: var(--bh-accent);
+}
+.bh-row-note {
+  font-size: 15px;
+  line-height: 1.6;
+}
+.bh-row-go {
+  font-size: 12px;
+}
+.bh-row-meta {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.bh-row-name,
+.bh-row-note {
+  overflow-wrap: anywhere;
+}
+.bh-section {
+  margin: 0;
+  padding: 24px 24px 8px;
+  font-family: var(--fonts-regular);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bh-ink-dim);
+  border-bottom: 1px solid var(--bh-rule-strong);
+}
+/* The one authored motion: a row resolving coarse -> crisp as it arrives. */
+.bh-resolve {
+  animation: bh-resolve 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes bh-resolve {
+  from {
+    filter: blur(2.5px) contrast(1.7);
+    opacity: 0.55;
+  }
+  to {
+    filter: none;
+    opacity: 1;
+  }
+}
+@media (min-width: 640px) {
+  .bh-display {
+    font-size: 72px;
+  }
+}
+@media (max-width: 900px) {
+  .bh-specimen {
+    padding: 40px 16px;
+  }
+  .bh-plate {
+    width: 64%;
+  }
+  .bh-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 16px;
+    padding: 12px 16px;
+  }
+  .bh-row-note {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .bh-row-meta {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+  .bh-section {
+    padding: 24px 16px 8px;
+  }
+}
+
+/* ── Navigation: current cell reverses to an ink block ──────────────────── */
+#navbar .item {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+#navbar .item.active {
+  background: var(--bh-ink) !important;
+  color: var(--bh-ground) !important;
+  font-weight: 700;
+}
+#navbar {
+  border-bottom: 1px solid var(--bh-rule-soft);
+}
+
+/* ── The one filled action ──────────────────────────────────────────────── */
+.ui.primary.button,
+.ui.primary.buttons .button {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+}
+.ui.primary.button:hover:not(.disabled):not(:disabled) {
+  background: var(--bh-accent) !important;
+  box-shadow: 0 0 0 2px var(--bh-ground), 0 0 0 3px var(--bh-accent) !important;
+}
+.ui.primary.button.disabled,
+.ui.primary.button:disabled {
+  background: transparent !important;
+  color: var(--bh-ink-dim) !important;
+  border: 1px solid var(--bh-rule-strong) !important;
+  opacity: 1 !important;
+}
+
+/* ── Rows: dashed at rest, solid when engaged ───────────────────────────── */
+.flex-list > .flex-item + .flex-item {
+  border-top: 1px dashed var(--bh-rule-soft);
+}
+.flex-list > .flex-item:hover + .flex-item,
+.flex-list > .flex-item + .flex-item:hover {
+  border-top: 1px solid var(--bh-rule-strong);
+}
+
+/* ── One Motion Rule: nothing here animates; honour reduced motion fully ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ── Rendition-specific: the plate's ink, and the navbar logo file ──────── */
+.bh-plate { opacity: 0.2; }
+@supports ((mask-image: url("x.png")) or (-webkit-mask-image: url("x.png"))) {
+  .bh-plate { background: var(--bh-ink); }
+}
+@media (max-width: 900px) { .bh-plate { opacity: 0.2; } }
+#navbar-logo img,
+#navbar .navbar-left > .item img[src$="/assets/img/logo.svg"] {
+  content: url("/assets/img/batlehub/logo-ink.svg");
+}

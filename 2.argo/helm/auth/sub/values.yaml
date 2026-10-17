@@ -643,6 +643,42 @@ applications:
           - matchingMode: strict
             url: "https://pkg.weebo.poc/api/v1/auth/oidc/callback"
 
+  # Forgejo (2.argo/helm/forgejo). A new application, not an adoption: nothing
+  # to import. Forgejo runs the authorization-code flow itself as a
+  # confidential client, reading the credentials the operator writes to
+  # mv/forgejo/auth.
+  #
+  # The redirect path carries the AUTH SOURCE name -- forgejo.oidc.name in
+  # that chart, `authentik` -- so renaming the source is an edit here too.
+  # `weebo groups` is what feeds Forgejo's `groupClaimName: groups`, from
+  # which a weebo_admin becomes a site admin at every login.
+  forgejo:
+    enabled: false
+    slug: forgejo
+    name: forgejo
+    metaIcon: "https://maxleriche.net/public/media/techno/forgejo.png"
+    accessGroup: weebo_moderator
+    secretTargets:
+      - backend: vault
+        path: forgejo/auth
+    provider:
+      kind: oauth2
+      oauth2:
+        clientId: forgejo
+        authorizationFlow: default-provider-authorization-implicit-consent
+        invalidationFlow: default-provider-invalidation-flow
+        signingKey: "authentik Self-signed Certificate"
+        grantTypes: ["authorization_code", "refresh_token"]
+        propertyMappings:
+          - "weebo email"
+          - "weebo groups"
+          - "authentik default OAuth Mapping: OpenID 'profile'"
+          - "authentik default OAuth Mapping: OpenID 'openid'"
+          - "authentik default OAuth Mapping: OpenID 'offline_access'"
+        allowedRedirectUris:
+          - matchingMode: strict
+            url: "https://git.weebo.poc/user/oauth2/authentik/callback"
+
   # weebo-si-hardening's endpoint-gateway (2.argo/helm/che/main/templates/
   # endpoint-gateway.yaml): signs developers in before a Che workspace
   # endpoint answers. A new application, not an adoption: nothing to import.

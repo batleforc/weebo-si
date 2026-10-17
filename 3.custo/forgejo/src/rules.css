@@ -1,0 +1,287 @@
+/* Component rules shared by both renditions. `__NAME__` is replaced by the theme
+   name at build time; @font-face and the per-rendition rules are generated. */
+
+/* ── Shape: zero radius everywhere, radios excepted (they must stay readable
+      as radios, not checkboxes) ─────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+input[type="radio"],
+.ui.radio.checkbox label::before,
+.ui.radio.checkbox label::after {
+  border-radius: 50% !important;
+}
+
+/* ── The Flat-At-Rest Rule: no shadow, floats are a 1px frame ───────────── */
+.ui.segment,
+.ui.card,
+.ui.cards > .card,
+.ui.menu,
+.ui.button,
+.ui.modal,
+.ui.popup,
+.ui.dropdown .menu,
+.ui.dropdown > .menu,
+.tippy-box,
+#navbar {
+  box-shadow: none !important;
+}
+.ui.modal,
+.ui.popup,
+.ui.dropdown .menu,
+.tippy-box {
+  border: 1px solid var(--bh-rule-strong) !important;
+}
+
+/* ── Focus: the amber ring, never suppressed ────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--bh-focus) !important;
+  outline-offset: 2px;
+}
+
+/* ── Type ───────────────────────────────────────────────────────────────── */
+body {
+  font-variant-numeric: tabular-nums;
+}
+.ui.table > thead > tr > th {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bh-ink-dim);
+  border-bottom: 1px solid var(--bh-rule-strong);
+}
+/* The bitmap face only at integer multiples of 8px (The Integer Em Rule). */
+.ui.primary.button,
+.ui.primary.buttons .button,
+.user-setting-content h4.ui.top.attached.header,
+.repo-setting-content h4.ui.top.attached.header,
+.admin-setting-content h4.ui.top.attached.header,
+.ui.modal > .header,
+.repo-header .flex-item-title,
+.repo-header .repo-title {
+  font-family: var(--bh-face-display);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+.repo-header .flex-item-title,
+.repo-header .flex-item-title a,
+.repo-header .repo-title,
+.repo-header .repo-title a,
+.page-content.user.profile .profile-avatar-name .header,
+.page-content.organization #org-info .ui.header {
+  font-family: var(--bh-face-display);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+}
+
+/* ── Home: the specimen head and its sheet ──────────────────────────────── */
+.bh-home {
+  margin-top: 0 !important;
+  padding: 0 !important;
+}
+.bh-specimen,
+.bh-sheet {
+  margin: 0 !important;
+}
+.bh-specimen {
+  position: relative;
+  overflow: hidden;
+  padding: 40px 24px;
+  border-bottom: 1px solid var(--bh-rule-soft);
+}
+.bh-plate {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(52%, 620px);
+  pointer-events: none;
+  background: transparent;
+  -webkit-mask: url("/assets/img/__NAME__/halftone-plate.png") right center / cover no-repeat;
+  mask: url("/assets/img/__NAME__/halftone-plate.png") right center / cover no-repeat;
+  transform: scaleX(-1);
+}
+.bh-label {
+  margin: 0 0 16px;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bh-ink-dim);
+}
+.bh-display {
+  position: relative;
+  margin: 0;
+  font-family: var(--bh-face-display);
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 0.92;
+  letter-spacing: 0.02em;
+  color: var(--bh-ink);
+  overflow-wrap: anywhere;
+}
+.bh-caption {
+  position: relative;
+  max-width: 72ch;
+  margin: 24px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--bh-ink-dim);
+}
+.bh-actions {
+  position: relative;
+  margin: 24px 0 0;
+}
+.bh-row {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: baseline;
+  padding: 12px 24px;
+  border-bottom: 1px dashed var(--bh-rule-soft);
+  color: var(--bh-ink-dim) !important;
+  text-decoration: none !important;
+}
+.bh-row:hover {
+  background: var(--bh-raised);
+  border-bottom: 1px solid var(--bh-rule-strong);
+  color: var(--bh-ink) !important;
+}
+.bh-row-name {
+  font-family: var(--bh-face-display);
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  color: var(--bh-ink);
+}
+.bh-row:hover .bh-row-name {
+  color: var(--bh-accent);
+}
+.bh-row-note {
+  font-size: 15px;
+  line-height: 1.6;
+}
+.bh-row-go {
+  font-size: 12px;
+}
+.bh-row-meta {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.bh-row-name,
+.bh-row-note {
+  overflow-wrap: anywhere;
+}
+.bh-section {
+  margin: 0;
+  padding: 24px 24px 8px;
+  font-family: var(--fonts-regular);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bh-ink-dim);
+  border-bottom: 1px solid var(--bh-rule-strong);
+}
+/* The one authored motion: a row resolving coarse -> crisp as it arrives. */
+.bh-resolve {
+  animation: bh-resolve 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes bh-resolve {
+  from {
+    filter: blur(2.5px) contrast(1.7);
+    opacity: 0.55;
+  }
+  to {
+    filter: none;
+    opacity: 1;
+  }
+}
+@media (min-width: 640px) {
+  .bh-display {
+    font-size: 72px;
+  }
+}
+@media (max-width: 900px) {
+  .bh-specimen {
+    padding: 40px 16px;
+  }
+  .bh-plate {
+    width: 64%;
+  }
+  .bh-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 16px;
+    padding: 12px 16px;
+  }
+  .bh-row-note {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .bh-row-meta {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+  .bh-section {
+    padding: 24px 16px 8px;
+  }
+}
+
+/* ── Navigation: current cell reverses to an ink block ──────────────────── */
+#navbar .item {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+#navbar .item.active {
+  background: var(--bh-ink) !important;
+  color: var(--bh-ground) !important;
+  font-weight: 700;
+}
+#navbar {
+  border-bottom: 1px solid var(--bh-rule-soft);
+}
+
+/* ── The one filled action ──────────────────────────────────────────────── */
+.ui.primary.button,
+.ui.primary.buttons .button {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+}
+.ui.primary.button:hover:not(.disabled):not(:disabled) {
+  background: var(--bh-accent) !important;
+  box-shadow: 0 0 0 2px var(--bh-ground), 0 0 0 3px var(--bh-accent) !important;
+}
+.ui.primary.button.disabled,
+.ui.primary.button:disabled {
+  background: transparent !important;
+  color: var(--bh-ink-dim) !important;
+  border: 1px solid var(--bh-rule-strong) !important;
+  opacity: 1 !important;
+}
+
+/* ── Rows: dashed at rest, solid when engaged ───────────────────────────── */
+.flex-list > .flex-item + .flex-item {
+  border-top: 1px dashed var(--bh-rule-soft);
+}
+.flex-list > .flex-item:hover + .flex-item,
+.flex-list > .flex-item + .flex-item:hover {
+  border-top: 1px solid var(--bh-rule-strong);
+}
+
+/* ── One Motion Rule: nothing here animates; honour reduced motion fully ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

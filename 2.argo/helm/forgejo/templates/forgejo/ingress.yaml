@@ -1,0 +1,32 @@
+{{- if .Values.forgejo.enabled -}}
+---
+# HTTP(S) only. git over SSH does not go through Traefik: the chart's
+# `forgejo-ssh` Service is a LoadBalancer sharing Traefik's IP (values.yaml,
+# forgejo.ssh).
+#
+# Wave 3, with the Application that creates `forgejo-http`: a router pointing
+# at a Service that does not exist yet is Traefik logging an error every few
+# seconds for as long as the first sync takes.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: forgejo
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: forgejo
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.forgejo.dns }}`)
+      priority: 10
+      services:
+        - name: forgejo-http
+          namespace: {{ .Release.Namespace }}
+          port: 3000
+  tls:
+    secretName: forgejo-tls
+{{- end -}}

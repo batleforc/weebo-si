@@ -62,6 +62,10 @@ authentik:
       # mv/weebo-si-hardening/endpoint-gateway.
       endpoint-gateway:
         enabled: true
+      # New, not adopted: 2.argo/helm/forgejo reads its client from
+      # mv/forgejo/auth.
+      forgejo:
+        enabled: true
       vault:
         enabled: false
 

@@ -1,0 +1,14 @@
+{
+  "name": "forgejo-theme-batlehub",
+  "version": "0.1.0",
+  "description": "BatleHub design system as a Forgejo theme: tokens in, CSS / templates / deploy manifests out.",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "node src/build.mjs",
+    "check": "node src/build.mjs --check",
+    "watch": "node --watch-path=src --watch-path=assets --watch-path=theme.config.mjs src/build.mjs",
+    "test": "node --test"
+  }
+}

@@ -1,0 +1,526 @@
+/* batlehub theme for Forgejo — dark rendition. Generated; edit theme.config.mjs or src/ and rebuild. */
+@import "./theme-forgejo-dark.css";
+
+:root {
+  --is-dark-theme: true;
+  --bh-ground: #030001;
+  --bh-raised: #140809;
+  --bh-sunk: #010000;
+  --bh-ink: #f4e4e2;
+  --bh-ink-dim: #a07c76;
+  --bh-rule-soft: #463230;
+  --bh-rule-strong: #885b57;
+  --bh-accent: #ff343d;
+  --bh-accent-ink: #080202;
+  --bh-copper: #e8894a;
+  --bh-focus: #fdc436;
+  --color-primary: #ff343d;
+  --color-primary-contrast: #080202;
+  --color-primary-dark-1: #ff5251;
+  --color-primary-dark-2: #ff6863;
+  --color-primary-dark-3: #ff7a73;
+  --color-primary-dark-4: #ff8b83;
+  --color-primary-dark-5: #ffa9a2;
+  --color-primary-dark-6: #fcc7c1;
+  --color-primary-dark-7: #f7dad6;
+  --color-primary-light-1: #e12d35;
+  --color-primary-light-2: #c4272e;
+  --color-primary-light-3: #a72126;
+  --color-primary-light-4: #8c1a1f;
+  --color-primary-light-5: #580e11;
+  --color-primary-light-6: #280406;
+  --color-primary-light-7: #0e0102;
+  --color-primary-alpha-10: #ff343d1a;
+  --color-primary-alpha-20: #ff343d33;
+  --color-primary-alpha-30: #ff343d4d;
+  --color-primary-alpha-40: #ff343d66;
+  --color-primary-alpha-50: #ff343d80;
+  --color-primary-alpha-60: #ff343d99;
+  --color-primary-alpha-70: #ff343db3;
+  --color-primary-alpha-80: #ff343dcc;
+  --color-primary-alpha-90: #ff343de6;
+  --color-primary-hover: var(--color-primary-dark-1);
+  --color-primary-active: var(--color-primary-dark-2);
+  --color-secondary: #463230;
+  --color-secondary-dark-1: #513c3a;
+  --color-secondary-dark-2: #5b4745;
+  --color-secondary-dark-3: #665250;
+  --color-secondary-dark-4: #715d5b;
+  --color-secondary-dark-5: #7c6866;
+  --color-secondary-dark-6: #887472;
+  --color-secondary-dark-7: #937f7d;
+  --color-secondary-dark-8: #9f8b89;
+  --color-secondary-dark-9: #aa9795;
+  --color-secondary-dark-10: #b6a4a2;
+  --color-secondary-dark-11: #c2b0ae;
+  --color-secondary-dark-12: #cfbdbb;
+  --color-secondary-dark-13: #dbcac8;
+  --color-secondary-light-1: #372524;
+  --color-secondary-light-2: #281918;
+  --color-secondary-light-3: #1a0d0d;
+  --color-secondary-light-4: #0d0404;
+  --color-secondary-alpha-10: #4632301a;
+  --color-secondary-alpha-20: #46323033;
+  --color-secondary-alpha-30: #4632304d;
+  --color-secondary-alpha-40: #46323066;
+  --color-secondary-alpha-50: #46323080;
+  --color-secondary-alpha-60: #46323099;
+  --color-secondary-alpha-70: #463230b3;
+  --color-secondary-alpha-80: #463230cc;
+  --color-secondary-alpha-90: #463230e6;
+  --color-secondary-button: #885b57;
+  --color-secondary-hover: #a07c76;
+  --color-secondary-active: #a07c76;
+  --color-console-fg: #f4e4e2;
+  --color-console-fg-subtle: #a07c76;
+  --color-console-bg: #010000;
+  --color-console-border: #463230;
+  --color-console-hover-bg: #140809;
+  --color-console-active-bg: #140809;
+  --color-console-menu-bg: #030001;
+  --color-console-menu-border: #885b57;
+  --color-red: #ff343d;
+  --color-red-light: #ff635f;
+  --color-red-dark-1: #ec172d;
+  --color-red-dark-2: #d50022;
+  --color-orange: #e8894a;
+  --color-orange-light: #fa995a;
+  --color-orange-dark-1: #d77939;
+  --color-orange-dark-2: #c66a28;
+  --color-yellow: #d79628;
+  --color-yellow-light: #e8a63d;
+  --color-yellow-dark-1: #c78707;
+  --color-yellow-dark-2: #b37900;
+  --color-green: #69c27e;
+  --color-green-light: #79d28d;
+  --color-green-dark-1: #59b26f;
+  --color-green-dark-2: #48a260;
+  --color-brown: #bb7b52;
+  --color-brown-light: #cc8a61;
+  --color-brown-dark-1: #ab6c44;
+  --color-brown-dark-2: #9b5d35;
+  --color-gold: #e8894a;
+  --color-git: #ff343d;
+  --color-ansi-red: #ff343d;
+  --color-ansi-green: #69c27e;
+  --color-ansi-yellow: #e8894a;
+  --color-grey: #463230;
+  --color-grey-light: #a07c76;
+  --color-diff-added-linenum-bg: #181c10;
+  --color-diff-added-row-bg: #0f0c07;
+  --color-diff-added-row-border: #212a1a;
+  --color-diff-added-word-bg: #273521;
+  --color-diff-removed-linenum-bg: #310607;
+  --color-diff-removed-row-bg: #1c0303;
+  --color-diff-removed-row-border: #440a0c;
+  --color-diff-removed-word-bg: #580e11;
+  --color-diff-moved-row-bg: #2f150a;
+  --color-diff-moved-row-border: #e8894a;
+  --color-diff-inactive: #140809;
+  --color-error-border: #ff343d;
+  --color-error-bg: #170203;
+  --color-error-bg-active: #360708;
+  --color-error-bg-hover: #260405;
+  --color-error-text: #ff837b;
+  --color-success-border: #69c27e;
+  --color-success-bg: #0c0804;
+  --color-success-text: #69c27e;
+  --color-warning-border: #e8894a;
+  --color-warning-bg: #120403;
+  --color-warning-text: #e8894a;
+  --color-info-border: #885b57;
+  --color-info-bg: #140809;
+  --color-info-text: #f4e4e2;
+  --color-red-badge: #ff343d;
+  --color-red-badge-bg: #ff343d1a;
+  --color-red-badge-hover-bg: #ff343d4d;
+  --color-green-badge: #69c27e;
+  --color-green-badge-bg: #69c27e1a;
+  --color-green-badge-hover-bg: #69c27e4d;
+  --color-yellow-badge: #e8894a;
+  --color-yellow-badge-bg: #e8894a1a;
+  --color-yellow-badge-hover-bg: #e8894a4d;
+  --color-orange-badge: #e8894a;
+  --color-orange-badge-bg: #e8894a1a;
+  --color-orange-badge-hover-bg: #e8894a4d;
+  --color-body: #030001;
+  --color-box-header: #010000;
+  --color-box-body: #030001;
+  --color-box-body-highlight: #140809;
+  --color-header-wrapper: #030001;
+  --color-text-dark: #f4e4e2;
+  --color-text: #f4e4e2;
+  --color-text-light: #d6bebb;
+  --color-text-light-1: #b99a95;
+  --color-text-light-2: #a07c76;
+  --color-text-light-3: #a07c76;
+  --color-footer: var(--color-nav-bg);
+  --color-timeline: #463230;
+  --color-input-text: #f4e4e2;
+  --color-input-background: #010000;
+  --color-input-toggle-background: #463230;
+  --color-input-border: #885b57;
+  --color-input-border-hover: #a07c76;
+  --color-light: #f4e4e20f;
+  --color-light-border: #f4e4e229;
+  --color-hover: #f4e4e214;
+  --color-active: #f4e4e21f;
+  --color-menu: #010000;
+  --color-card: #030001;
+  --color-button: #030001;
+  --color-markup-table-row: #f4e4e20d;
+  --color-markup-code-block: #f4e4e20f;
+  --color-markup-code-inline: #f4e4e221;
+  --color-code-bg: #010000;
+  --color-shadow: #00000000;
+  --color-secondary-bg: #140809;
+  --color-expand-button: #140809;
+  --color-placeholder-text: #a07c76;
+  --color-editor-line-highlight: #140809;
+  --color-project-board-bg: #010000;
+  --color-caret: #f4e4e2;
+  --color-reaction-bg: #f4e4e20f;
+  --color-reaction-hover-bg: #ff343d4d;
+  --color-reaction-active-bg: #ff343d33;
+  --color-tooltip-text: #030001;
+  --color-tooltip-bg: #f4e4e2;
+  --color-nav-bg: #010000;
+  --color-nav-hover-bg: #140809;
+  --color-nav-text: #a07c76;
+  --color-secondary-nav-bg: #030001;
+  --color-label-text: #f4e4e2;
+  --color-label-bg: #a07c7640;
+  --color-label-hover-bg: #a07c7673;
+  --color-label-active-bg: #a07c76a6;
+  --color-accent: #ff343d;
+  --color-small-accent: var(--color-primary-light-5);
+  --color-highlight-fg: #e8894a;
+  --color-highlight-bg: #291108;
+  --color-overlay-backdrop: #010000bf;
+  --border-radius: 0;
+  --border-radius-medium: 0;
+  --fonts-proportional: "JetBrains Mono", ui-monospace, monospace;
+  --fonts-override: "JetBrains Mono", ui-monospace, monospace;
+  --fonts-monospace: "JetBrains Mono", ui-monospace, monospace, var(--fonts-emoji);
+  --bh-face-display: "Silkscreen", monospace;
+  accent-color: var(--color-accent);
+  color-scheme: dark;
+}
+
+@font-face {
+  font-family: "Silkscreen";
+  src: url("/assets/fonts/batlehub/silkscreen-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Silkscreen";
+  src: url("/assets/fonts/batlehub/silkscreen-700.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/assets/fonts/batlehub/jetbrainsmono-latin.woff2") format("woff2");
+  font-weight: 100 800;
+  font-display: swap;
+}
+
+/* Component rules shared by both renditions. `batlehub` is replaced by the theme
+   name at build time; @font-face and the per-rendition rules are generated. */
+
+/* ── Shape: zero radius everywhere, radios excepted (they must stay readable
+      as radios, not checkboxes) ─────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+input[type="radio"],
+.ui.radio.checkbox label::before,
+.ui.radio.checkbox label::after {
+  border-radius: 50% !important;
+}
+
+/* ── The Flat-At-Rest Rule: no shadow, floats are a 1px frame ───────────── */
+.ui.segment,
+.ui.card,
+.ui.cards > .card,
+.ui.menu,
+.ui.button,
+.ui.modal,
+.ui.popup,
+.ui.dropdown .menu,
+.ui.dropdown > .menu,
+.tippy-box,
+#navbar {
+  box-shadow: none !important;
+}
+.ui.modal,
+.ui.popup,
+.ui.dropdown .menu,
+.tippy-box {
+  border: 1px solid var(--bh-rule-strong) !important;
+}
+
+/* ── Focus: the amber ring, never suppressed ────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--bh-focus) !important;
+  outline-offset: 2px;
+}
+
+/* ── Type ───────────────────────────────────────────────────────────────── */
+body {
+  font-variant-numeric: tabular-nums;
+}
+.ui.table > thead > tr > th {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bh-ink-dim);
+  border-bottom: 1px solid var(--bh-rule-strong);
+}
+/* The bitmap face only at integer multiples of 8px (The Integer Em Rule). */
+.ui.primary.button,
+.ui.primary.buttons .button,
+.user-setting-content h4.ui.top.attached.header,
+.repo-setting-content h4.ui.top.attached.header,
+.admin-setting-content h4.ui.top.attached.header,
+.ui.modal > .header,
+.repo-header .flex-item-title,
+.repo-header .repo-title {
+  font-family: var(--bh-face-display);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+.repo-header .flex-item-title,
+.repo-header .flex-item-title a,
+.repo-header .repo-title,
+.repo-header .repo-title a,
+.page-content.user.profile .profile-avatar-name .header,
+.page-content.organization #org-info .ui.header {
+  font-family: var(--bh-face-display);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+}
+
+/* ── Home: the specimen head and its sheet ──────────────────────────────── */
+.bh-home {
+  margin-top: 0 !important;
+  padding: 0 !important;
+}
+.bh-specimen,
+.bh-sheet {
+  margin: 0 !important;
+}
+.bh-specimen {
+  position: relative;
+  overflow: hidden;
+  padding: 40px 24px;
+  border-bottom: 1px solid var(--bh-rule-soft);
+}
+.bh-plate {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(52%, 620px);
+  pointer-events: none;
+  background: transparent;
+  -webkit-mask: url("/assets/img/batlehub/halftone-plate.png") right center / cover no-repeat;
+  mask: url("/assets/img/batlehub/halftone-plate.png") right center / cover no-repeat;
+  transform: scaleX(-1);
+}
+.bh-label {
+  margin: 0 0 16px;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bh-ink-dim);
+}
+.bh-display {
+  position: relative;
+  margin: 0;
+  font-family: var(--bh-face-display);
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 0.92;
+  letter-spacing: 0.02em;
+  color: var(--bh-ink);
+  overflow-wrap: anywhere;
+}
+.bh-caption {
+  position: relative;
+  max-width: 72ch;
+  margin: 24px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--bh-ink-dim);
+}
+.bh-actions {
+  position: relative;
+  margin: 24px 0 0;
+}
+.bh-row {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: baseline;
+  padding: 12px 24px;
+  border-bottom: 1px dashed var(--bh-rule-soft);
+  color: var(--bh-ink-dim) !important;
+  text-decoration: none !important;
+}
+.bh-row:hover {
+  background: var(--bh-raised);
+  border-bottom: 1px solid var(--bh-rule-strong);
+  color: var(--bh-ink) !important;
+}
+.bh-row-name {
+  font-family: var(--bh-face-display);
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  color: var(--bh-ink);
+}
+.bh-row:hover .bh-row-name {
+  color: var(--bh-accent);
+}
+.bh-row-note {
+  font-size: 15px;
+  line-height: 1.6;
+}
+.bh-row-go {
+  font-size: 12px;
+}
+.bh-row-meta {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.bh-row-name,
+.bh-row-note {
+  overflow-wrap: anywhere;
+}
+.bh-section {
+  margin: 0;
+  padding: 24px 24px 8px;
+  font-family: var(--fonts-regular);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bh-ink-dim);
+  border-bottom: 1px solid var(--bh-rule-strong);
+}
+/* The one authored motion: a row resolving coarse -> crisp as it arrives. */
+.bh-resolve {
+  animation: bh-resolve 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes bh-resolve {
+  from {
+    filter: blur(2.5px) contrast(1.7);
+    opacity: 0.55;
+  }
+  to {
+    filter: none;
+    opacity: 1;
+  }
+}
+@media (min-width: 640px) {
+  .bh-display {
+    font-size: 72px;
+  }
+}
+@media (max-width: 900px) {
+  .bh-specimen {
+    padding: 40px 16px;
+  }
+  .bh-plate {
+    width: 64%;
+  }
+  .bh-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 16px;
+    padding: 12px 16px;
+  }
+  .bh-row-note {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .bh-row-meta {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+  .bh-section {
+    padding: 24px 16px 8px;
+  }
+}
+
+/* ── Navigation: current cell reverses to an ink block ──────────────────── */
+#navbar .item {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+#navbar .item.active {
+  background: var(--bh-ink) !important;
+  color: var(--bh-ground) !important;
+  font-weight: 700;
+}
+#navbar {
+  border-bottom: 1px solid var(--bh-rule-soft);
+}
+
+/* ── The one filled action ──────────────────────────────────────────────── */
+.ui.primary.button,
+.ui.primary.buttons .button {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+}
+.ui.primary.button:hover:not(.disabled):not(:disabled) {
+  background: var(--bh-accent) !important;
+  box-shadow: 0 0 0 2px var(--bh-ground), 0 0 0 3px var(--bh-accent) !important;
+}
+.ui.primary.button.disabled,
+.ui.primary.button:disabled {
+  background: transparent !important;
+  color: var(--bh-ink-dim) !important;
+  border: 1px solid var(--bh-rule-strong) !important;
+  opacity: 1 !important;
+}
+
+/* ── Rows: dashed at rest, solid when engaged ───────────────────────────── */
+.flex-list > .flex-item + .flex-item {
+  border-top: 1px dashed var(--bh-rule-soft);
+}
+.flex-list > .flex-item:hover + .flex-item,
+.flex-list > .flex-item + .flex-item:hover {
+  border-top: 1px solid var(--bh-rule-strong);
+}
+
+/* ── One Motion Rule: nothing here animates; honour reduced motion fully ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ── Rendition-specific: the plate's ink, and the navbar logo file ──────── */
+.bh-plate { opacity: 0.34; }
+@supports ((mask-image: url("x.png")) or (-webkit-mask-image: url("x.png"))) {
+  .bh-plate { background: var(--bh-copper); }
+}
+@media (max-width: 900px) { .bh-plate { opacity: 0.26; } }
+#navbar-logo img,
+#navbar .navbar-left > .item img[src$="/assets/img/logo.svg"] {
+  content: url("/assets/img/batlehub/logo-cream.svg");
+}

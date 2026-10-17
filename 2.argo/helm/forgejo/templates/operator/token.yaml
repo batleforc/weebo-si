@@ -1,0 +1,193 @@
+{{- $o := .Values.operator -}}
+{{- if and .Values.forgejo.enabled $o.enabled -}}
+{{- $name := "forgejo-operator-token" -}}
+---
+# Mints the site-admin token the ForgejoInstance authenticates with, and keeps
+# it valid. Two runs of the same pod (`forgejo.operator.tokenPod` below):
+#
+#   - a PostSync hook, after every sync of this Application -- which is what
+#     creates the token on a fresh install, and re-checks it whenever the
+#     chart changes. It waits for Forgejo first: the nested Application's
+#     pod may not be up yet when the hook starts;
+#   - a daily CronJob, for what happens between syncs (a token revoked in the
+#     UI, a Secret deleted, a restored database).
+#
+# Neither is watched: a failure shows on the ForgejoInstance, whose Ready
+# condition turns False (TokenSecretNotFound, or ForgejoApiError for a
+# refused token) and stops every CR bound to it. Forgejo cannot be handed a token at install, and the operator
+# needs one before it can do anything, so this closes that loop with what is
+# already in Vault: the local admin's password (mv/forgejo/admin).
+#
+# Each run:
+#   1. reads the token from the Secret, if there is one, and stops there when
+#      Forgejo still accepts it (GET /api/v1/user) -- the usual case;
+#   2. otherwise deletes any token of the same name on the admin account (a
+#      half-finished earlier run, a Secret deleted by hand) and creates a new
+#      one with every scope, through basic auth: the only way the API lets a
+#      token be created;
+#   3. writes it to the Secret, which the operator re-reads on every call.
+#
+# Plain curl against both APIs, so the image is the 10 MB curl one and the
+# ServiceAccount below can only touch that one Secret. In-cluster HTTP to
+# Forgejo's Service: no Traefik, no CA in the way.
+#
+# The Secret is created at run time and so is not in the Application: Argo
+# neither diffs nor prunes it.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+rules:
+  # `create` cannot be narrowed by name (the object does not exist yet);
+  # everything else can.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: [{{ $o.token.secretName | quote }}]
+    verbs: ["get", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}-sync
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    # Replaced at the next sync, not deleted on success: the last run's logs
+    # stay readable until then.
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: {{ add $o.token.syncWaitSeconds 120 }}
+  template:
+    spec:
+      {{- include "forgejo.operator.tokenPod" (dict "ctx" . "wait" $o.token.syncWaitSeconds) | nindent 6 }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  schedule: {{ $o.token.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 180
+      template:
+        spec:
+          {{- include "forgejo.operator.tokenPod" (dict "ctx" . "wait" 60) | nindent 10 }}
+{{- end -}}
+
+{{- define "forgejo.operator.tokenPod" -}}
+{{- $o := .ctx.Values.operator -}}
+{{- $wait := .wait -}}
+{{- with .ctx -}}
+serviceAccountName: forgejo-operator-token
+automountServiceAccountToken: true
+restartPolicy: Never
+securityContext:
+  runAsNonRoot: true
+  # The image's `curl_user`, by uid: runAsNonRoot cannot check a
+  # user given by name.
+  runAsUser: 100
+  seccompProfile:
+    type: RuntimeDefault
+containers:
+  - name: token
+    image: "{{ $o.token.image.repository }}:{{ $o.token.image.tag }}"
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]
+    env:
+      - name: FORGEJO_API
+        value: "http://forgejo-http.{{ .Release.Namespace }}.svc:3000/api/v1"
+      - name: TOKEN_NAME
+        value: {{ $o.token.name | quote }}
+      - name: SECRET_NAME
+        value: {{ $o.token.secretName | quote }}
+      - name: NAMESPACE
+        value: {{ .Release.Namespace }}
+      # How long to wait for Forgejo to answer before giving up: the PostSync
+      # hook can start before the nested Application has rolled the pod out.
+      - name: WAIT_SECONDS
+        value: {{ $wait | quote }}
+      - name: ADMIN_USER
+        valueFrom:
+          secretKeyRef:
+            name: forgejo-admin
+            key: username
+      - name: ADMIN_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: forgejo-admin
+            key: password
+    command: ["/bin/sh", "-ec"]
+    args:
+      - |
+        sa=/var/run/secrets/kubernetes.io/serviceaccount
+        k8s="https://kubernetes.default.svc/api/v1/namespaces/$NAMESPACE/secrets"
+        kube() { curl -sS --cacert "$sa/ca.crt" -H "Authorization: Bearer $(cat "$sa/token")" "$@"; }
+
+        # 0. Forgejo up?
+        deadline=$(( $(date +%s) + WAIT_SECONDS ))
+        until curl -sf -o /dev/null "${FORGEJO_API%/api/v1}/api/healthz"; do
+          [ "$(date +%s)" -lt "$deadline" ] || { echo "Forgejo not answering after ${WAIT_SECONDS}s"; exit 1; }
+          sleep 10
+        done
+
+        # 1. Still valid?
+        current=$(kube "$k8s/$SECRET_NAME" | sed -n 's/.*"token": *"\([^"]*\)".*/\1/p' | base64 -d 2>/dev/null || true)
+        if [ -n "$current" ]; then
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -H "Authorization: token $current" "$FORGEJO_API/user")
+          if [ "$code" = 200 ]; then echo "token valid"; exit 0; fi
+          echo "stored token refused ($code), replacing it"
+        fi
+
+        # 2. A fresh one. Forgejo refuses a second token of the same
+        # name, so drop the old one first (404 when there is none).
+        curl -sS -o /dev/null -u "$ADMIN_USER:$ADMIN_PASSWORD" -X DELETE "$FORGEJO_API/users/$ADMIN_USER/tokens/$TOKEN_NAME"
+        token=$(curl -sSf -u "$ADMIN_USER:$ADMIN_PASSWORD" -H 'Content-Type: application/json' \
+          -d "{\"name\":\"$TOKEN_NAME\",\"scopes\":[\"all\"]}" "$FORGEJO_API/users/$ADMIN_USER/tokens" \
+          | sed -n 's/.*"sha1": *"\([^"]*\)".*/\1/p')
+        [ -n "$token" ] || { echo "Forgejo returned no token"; exit 1; }
+
+        # 3. Into the Secret: replaced whole, created when missing.
+        body=$(printf '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"%s","namespace":"%s","labels":{"app.kubernetes.io/managed-by":"%s"}},"type":"Opaque","stringData":{"token":"%s"}}' \
+          "$SECRET_NAME" "$NAMESPACE" "$SECRET_NAME" "$token")
+        code=$(kube -o /dev/null -w '%{http_code}' -X PUT -H 'Content-Type: application/json' -d "$body" "$k8s/$SECRET_NAME")
+        if [ "$code" = 404 ]; then
+          code=$(kube -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d "$body" "$k8s")
+        fi
+        case "$code" in 2??) echo "token written to $SECRET_NAME" ;; *) echo "writing $SECRET_NAME failed ($code)"; exit 1 ;; esac
+{{- end -}}
+{{- end -}}

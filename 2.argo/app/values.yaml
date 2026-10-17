@@ -41,6 +41,10 @@ batlehub:
   enabled: true
   project: dev-base
 
+forgejo:
+  enabled: true
+  project: dev-base
+
 che:
   enabled: true
   project: dev
@@ -180,6 +184,8 @@ project:
     includeBaseRepo: true
     sourceRepo:
       - oci://ghcr.io/batlehub/batlehub/charts/batlehub
+      - oci://code.forgejo.org/forgejo-helm/forgejo
+      - oci://ghcr.io/batleforc/charts/weebo-forgejo
     dest:
       # batlehub's chart renders an Application of its own -- the upstream
       # chart, pulled from the OCI repo above -- and an Application lives in
@@ -190,6 +196,11 @@ project:
         namespace: "angos"
       - server: https://kubernetes.default.svc
         namespace: "batlehub"
+      - server: https://kubernetes.default.svc
+        namespace: "forgejo"
+      # The weebo-forgejo operator (2.argo/helm/forgejo, operator.*).
+      - server: https://kubernetes.default.svc
+        namespace: "weebo-forgejo"
       # The angos chart's one node-level object, kept out of `angos` so the
       # Pod Security exception it needs covers nothing else.
       - server: https://kubernetes.default.svc
@@ -207,6 +218,16 @@ project:
         kind: "ClusterSecretStore"
       - group: "external-secrets.io"
         kind: "ClusterExternalSecret"
+      # weebo-forgejo: its CRDs, its admission webhook, and the cluster-scoped
+      # kinds of its API that 2.argo/helm/forgejo declares.
+      - group: "apiextensions.k8s.io"
+        kind: "CustomResourceDefinition"
+      - group: "admissionregistration.k8s.io"
+        kind: "ValidatingWebhookConfiguration"
+      - group: "forgejo.weebo.io"
+        kind: "ForgejoInstance"
+      - group: "forgejo.weebo.io"
+        kind: "ForgejoNamespacePolicy"
   - name: dev
     includeBaseRepo: true
     sourceRepo:

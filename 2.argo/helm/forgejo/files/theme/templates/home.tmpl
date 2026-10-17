@@ -1,0 +1,79 @@
+{{template "base/head" .}}
+<div role="main" aria-label="Home" class="page-content home bh-home">
+	<section class="bh-specimen">
+		<div class="bh-plate" aria-hidden="true"></div>
+		<p class="bh-label">Source forge</p>
+		<h1 class="bh-display">{{AppName}}</h1>
+		<p class="bh-caption">Repositories, reviews, pipelines and packages, held in one place and served from your own ground. Every line here separates two real things.</p>
+		{{if not .IsSigned}}
+		<p class="bh-actions">
+			<a class="ui primary button" href="{{AppSubUrl}}/user/login">Sign in</a>
+		</p>
+		{{end}}
+	</section>
+	<section class="bh-sheet bh-featured" id="bh-featured" aria-labelledby="bh-featured-label" hidden>
+		<h2 class="bh-section" id="bh-featured-label">Featured</h2>
+		<div id="bh-featured-rows"></div>
+	</section>
+	<section class="bh-sheet" aria-labelledby="bh-browse-label">
+		<h2 class="bh-section" id="bh-browse-label">Browse</h2>
+		<a class="bh-row" href="{{AppSubUrl}}/explore/repos">
+			<span class="bh-row-name">Repositories</span>
+			<span class="bh-row-note">Everything public on this instance, most recently updated first.</span>
+			<span class="bh-row-go" aria-hidden="true">-&gt;</span>
+		</a>
+		<a class="bh-row" href="{{AppSubUrl}}/explore/organizations">
+			<span class="bh-row-name">Organizations</span>
+			<span class="bh-row-note">Teams and the projects they own.</span>
+			<span class="bh-row-go" aria-hidden="true">-&gt;</span>
+		</a>
+		<a class="bh-row" href="{{AppSubUrl}}/explore/users">
+			<span class="bh-row-name">People</span>
+			<span class="bh-row-note">Who commits here.</span>
+			<span class="bh-row-go" aria-hidden="true">-&gt;</span>
+		</a>
+		<a class="bh-row" href="{{AppSubUrl}}/api/swagger">
+			<span class="bh-row-name">API</span>
+			<span class="bh-row-note">The same forge, without the pages.</span>
+			<span class="bh-row-go" aria-hidden="true">-&gt;</span>
+		</a>
+	</section>
+</div>
+<script>
+// Featured projects: every public repository carrying the topic below.
+// On any failure the section simply stays hidden.
+(function () {
+	const TOPIC = "featured";
+	const LIMIT = 6;
+	const section = document.getElementById('bh-featured');
+	const rows = document.getElementById('bh-featured-rows');
+	if (!section || !rows) return;
+	const span = function (cls, text) {
+		const el = document.createElement('span');
+		el.className = cls;
+		el.textContent = text;
+		return el;
+	};
+	const url = '{{AppSubUrl}}/api/v1/repos/search?topic=true&q=' + encodeURIComponent(TOPIC) +
+		'&sort=updated&order=desc&limit=' + LIMIT;
+	fetch(url, {headers: {Accept: 'application/json'}})
+		.then(function (res) { return res.ok ? res.json() : null; })
+		.then(function (body) {
+			const repos = body && Array.isArray(body.data) ? body.data : [];
+			if (!repos.length) return;
+			for (const repo of repos) {
+				const row = document.createElement('a');
+				row.className = 'bh-row bh-resolve';
+				row.href = '{{AppSubUrl}}/' + repo.full_name.split('/').map(encodeURIComponent).join('/');
+				row.append(span('bh-row-name', repo.name));
+				row.append(span('bh-row-note', repo.description || repo.full_name));
+				const meta = [repo.owner && repo.owner.login, repo.language, repo.stars_count + ' ★'].filter(Boolean);
+				row.append(span('bh-row-go bh-row-meta', meta.join(' · ')));
+				rows.append(row);
+			}
+			section.hidden = false;
+		})
+		.catch(function () {});
+})();
+</script>
+{{template "base/footer" .}}
