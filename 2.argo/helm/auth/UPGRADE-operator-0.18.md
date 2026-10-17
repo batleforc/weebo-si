@@ -93,7 +93,7 @@ helm template auth-app 2.argo/helm/auth/sub -n auth -f /tmp/sub-values.yaml
 ## Étape 3 -- pousser et resynchroniser dans l'ordre
 
 - [x] Commit + push (`develop` @ d8089e8a).
-- [x] Sync `authentik-operator` (CRDs déjà là, déploiement v0.18.1) : sync partiel d'`auth`' sur la seule Application `authentik-operator`, webhook revenu en `Fail`.
+- [x] Sync `authentik-operator` (CRDs déjà là, déploiement v0.18.1) : sync partiel d'`auth` sur la seule Application `authentik-operator`, webhook revenu en `Fail`.
 - [x] Sync `auth-app` (même méthode) : l'instance (wave 2) reçoit les `pathGrants` avant
       les applications (wave 5).
 
@@ -105,7 +105,7 @@ helm template auth-app 2.argo/helm/auth/sub -n auth -f /tmp/sub-values.yaml
 - [x] Les 8 chemins KV identiques à la sauvegarde, versions inchangées, `owner` posé sur chacun.
 - [ ] Un login OIDC (argo ou che) et un login proxy (clickstack,
       `forward_single`).
-- [x] Réactiver l'auto-sync (`main`, `auth` ; les deux autres via le sync d'`auth`').
+- [x] Réactiver l'auto-sync (`main`, `auth` ; les deux autres via le sync d'`auth`).
 
 ## Reste ouvert
 
