@@ -33,7 +33,7 @@ authentik:
         memory: 1Gi
   operator:
     enabled: true
-    version: 0.18.1
+    version: 0.18.2
     replicaCount: 1
   sub:
     enabled: true
