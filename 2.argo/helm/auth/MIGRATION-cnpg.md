@@ -36,9 +36,13 @@ export KUBECONFIG=$PWD/0.config/kubeconfig.yaml
   - Cluster `authentik-pg` (wave -1, 1 instance, 10 Gi Longhorn), avec
     `bootstrap.initdb.import` (type `microservice`) depuis
     `authentik-postgresql.auth.svc`.
-- `main/templates/authentik/authentik.yaml` : `authentik.postgresql.host:
-  authentik-pg-rw`, `postgresql.enabled` piloté par
-  `authentik.legacyPostgres.enabled` (encore `true`), bloc `redis` retiré.
+- `main/templates/authentik/authentik.yaml` :
+  - `AUTHENTIK_POSTGRESQL__HOST=authentik-pg-rw` en `global.env`, et non
+    dans le Secret du chart (*Journal d'exécution*) ;
+  - `ApplyOutOfSyncOnly=true` ;
+  - `postgresql.enabled` piloté par `authentik.legacyPostgres.enabled`
+    (encore `true`) ;
+  - bloc `redis` retiré.
 - `main/values.yaml` : `authentik.postgres` et `authentik.legacyPostgres`.
 
 **Argo CD n'attend pas l'import.** Il n'a pas de health check pour les
@@ -166,7 +170,44 @@ bascule, et le retour arrière est immédiat (*Retour arrière*, cas 1).
    intacte, dans l'état du gel : ce qui a été écrit depuis la bascule est
    perdu (sessions, événements, et toute modification faite entre-temps).
 
+## Journal d'exécution (2026-10-18)
+
+- 12:00:28 gel (auto-sync coupé, server et worker à 0). Push de `0a36354a`.
+- 12:03–12:07 premier import : 3 Go, dont 6,36 M lignes de `tasklog`. Les
+  volumes sont identiques des deux côtés, en PostgreSQL 18.4, et le rôle
+  `authentik` possède les 230 tables.
+- 12:09 la bascule **échoue sans bruit** : Authentik repart, mais sur
+  l'ancienne base.
+  - Le chart porte `Replace=true`, donc Argo CD remplace chaque objet à
+    chaque sync, y compris les deux Secrets qui contiennent des références
+    `vault:`.
+  - vault-secrets-webhook intercepte ces écritures, tente de joindre Vault à
+    `https://vault:8200`, un nom qui ne résout plus, et les refuse
+    (`failurePolicy: Fail`).
+  - Les Deployments sont passés, mais pas le Secret `authentik` qui portait
+    le nouvel hôte.
+  - Ce n'est pas lié à la migration : depuis que le webhook ne joint plus
+    Vault, aucun sync de l'Application `authentik` ne peut réussir.
+- 12:12 nouveau gel. Correctif :
+  - l'hôte passe par `global.env` (`AUTHENTIK_POSTGRESQL__HOST`, qui
+    l'emporte sur l'`envFrom` du Secret), et le Secret reste identique à
+    celui en place ;
+  - `ApplyOutOfSyncOnly=true` sur l'Application, pour ne plus remplacer
+    les objets inchangés.
+
+  Le Cluster est supprimé, puis l'import refait, pour reprendre les
+  écritures faites entre 12:09 et 12:12 dans l'ancienne base.
+
 ## Hors migration, vu pendant la préparation
+
+- **vault-secrets-webhook ne sait plus muter un Secret.** Sans les
+  annotations `vault.security.banzaicloud.io/*` sur le Secret, il se rabat
+  sur l'adresse `https://vault:8200`, qui ne résout plus. Toute écriture d'un
+  Secret qui contient des références `vault:` est donc refusée, dans tous
+  les namespaces sauf ceux exclus. Les pods ne sont pas touchés : ils portent
+  l'adresse d'OpenBao en annotation. À corriger dans la config du webhook
+  (adresse par défaut), en vérifiant d'abord ce que la mutation des Secrets
+  produirait.
 
 - `authentik-server` a redémarré 22 fois en 39 jours, la dernière le
   2026-10-18 à 11:03. Sur ce dernier arrêt, le seul dont on a les logs, le

@@ -17,6 +17,12 @@ spec:
     syncOptions:
     - CreateNamespace=true
     - Replace=true
+    # Without it, Replace=true re-PUTs every object on every sync, the two
+    # Secrets carrying `vault:` references included. vault-secrets-webhook
+    # intercepts those and, unable to reach Vault for a Secret (it falls back
+    # to https://vault:8200, which no longer resolves), rejects the write:
+    # the whole sync failed even with nothing to change in them.
+    - ApplyOutOfSyncOnly=true
   destination:
     namespace: auth
     server: https://kubernetes.default.svc
@@ -32,6 +38,16 @@ spec:
           env:
             - name: POSTGRES_PASSWORD
               value: "vault:mv/data/main-config#AUTHENTIK_POSTGRES_USER_PASSWORD"
+          {{- if .Values.authentik.postgres.enabled }}
+            # CNPG's read-write Service, which follows the primary. Set here
+            # and not as authentik.postgresql.host: that one lands in the
+            # chart's `authentik` Secret, which vault-secrets-webhook refuses
+            # to let anyone update (see ApplyOutOfSyncOnly above). An explicit
+            # env wins over the Secret's envFrom. User and database keep the
+            # chart defaults (authentik/authentik).
+            - name: AUTHENTIK_POSTGRESQL__HOST
+              value: authentik-pg-rw
+          {{- end }}
           podAnnotations:
             inject-certs: "enabled"
             vault.security.banzaicloud.io/vault-addr: "https://openbao.vault:8200"
@@ -44,13 +60,6 @@ spec:
           secret_key: "vault:mv/data/main-config#AUTHENTIK_SECRET_KEY"
           error_reporting:
             enabled: true
-          {{- if .Values.authentik.postgres.enabled }}
-          # CNPG's read-write Service, which follows the primary. User and
-          # database keep the chart defaults (authentik/authentik); the
-          # password still comes from POSTGRES_PASSWORD above.
-          postgresql:
-            host: authentik-pg-rw
-          {{- end }}
 
         server:
           ingress:
