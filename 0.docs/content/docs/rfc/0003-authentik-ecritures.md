@@ -248,9 +248,9 @@ c'est toujours des écritures inutiles.
 | --- | --- | --- |
 | Q1 | Authentik renvoie-t-il `access_token_validity` (et les autres durées) exactement sous la forme écrite (`hours=1`), ou normalisée ? | non (sinon : normaliser des deux côtés) |
 | Q2 | L'ordre des `redirect_uris` et des `property_mappings` a-t-il un sens pour Authentik ? Proposé : non, ce sont des ensembles. | non |
-| Q3 | Le basculement de brand par défaut (#16) a-t-il besoin d'écrire à chaque passage, ou seulement quand la brand par défaut diffère ? | non |
+| Q3 | ~~Le basculement de brand par défaut (#16) a-t-il besoin d'écrire à chaque passage ?~~ **Tranchée :** non. `toggle_default` réécrivait `default: true` sur une brand déjà par défaut ; corrigé, il n'écrit plus que si la brand par défaut est une autre. | ~~non~~ |
 | Q4 | Faut-il un Event `DriftCorrected` par champ, ou un seul par objet avec la liste ? Proposé : un par objet. | non |
-| Q5 | Pourquoi les proxy providers et la brand sont-ils écrits deux fois par cycle ? Si c'est un double chemin d'écriture, le supprimer en même temps. | non |
+| Q5 | Pourquoi les proxy providers et la brand sont-ils écrits deux fois par cycle ? **Brand : tranchée**, c'est `update_brand` puis `set_brand_default` (Q3). **Proxy provider :** l'opérateur ne l'écrit qu'une fois par cycle (un seul `upsert_proxy_provider`) ; la seconde écriture comptée viendrait d'Authentik lui-même, qui sauvegarderait deux fois le provider. Non vérifié, et sans objet une fois le PATCH évité. | non |
 
 ## Plan d'implémentation
 
@@ -262,16 +262,24 @@ c'est toujours des écritures inutiles.
 - [ ] template `reconcile_object` : lire, comparer, écrire si dérive ; test
       « reste silencieux » ; doc du template
 
-**weebo-authentik**
+**weebo-authentik** (branche `fix/write-only-what-drifts`, commit `0b865d9`, 2026-10-18)
 
-- [ ] un `get_*` par kind dans `RemoteGateway` (déjà présent pour
-      l'Application)
-- [ ] use-cases : comparer puis PATCH des seuls champs dérivés, Event
-      `DriftCorrected`, compteur. Dans l'ordre du gain :
-      PolicyBinding, Application, OAuth2Provider, ProxyProvider, Group,
-      ScopeMapping, Brand, User, Flow, Outpost
-- [ ] pour chaque kind, un test `creates_then_stays_quiet_until_drift`
-      (aucun appel en écriture au second passage) et un test de dérive
+- [x] lire, comparer et PATCHer les seuls champs dérivés, pour les 10
+      kinds. Choix d'implémentation : la comparaison se fait dans
+      l'adaptateur, après la résolution des références qu'il fait déjà
+      (flows, mappings, certificats, groupes), avec les helpers purs de
+      `domain::drift` (`Drift`, `same_set`, `same_subset`). Les ports et
+      les use-cases ne changent pas, sauf la brand.
+- [x] brand : plus de réécriture de `default: true` (Q3)
+- [x] tests : `domain::drift` (8), contrat wiremock (groupe inchangé et
+      dérivé, OAuth2 et proxy inchangés), use-case brand (2). Mocks des
+      suites envtest ajustés, avec une assertion « binding inchangé
+      jamais PATCHé ». Verts : `domain`, `application` (87), contrat
+      (41), clippy `-D warnings`. **Non lancés** (machine chargée) : les
+      suites envtest (`task test:all`) et `task perf`.
+- [ ] Event `DriftCorrected` et compteur `remote_writes_total` (D4, D6) :
+      il faut que `ReconcileOutcome` porte la dérive. En attendant, chaque
+      correction est journalisée (`drift corrected`, avec les champs).
 - [ ] test de contrat contre un Authentik 2026.8 : deux réconciliations,
       zéro événement `model_updated` au second passage
 
@@ -302,3 +310,4 @@ c'est toujours des écritures inutiles.
 | Date | Changement |
 | --- | --- |
 | 2026-10-18 | Brouillon initial, après la mesure faite pendant la migration CNPG d'Authentik |
+| 2026-10-18 | Implémenté dans weebo-authentik (branche `fix/write-only-what-drifts`) : comparaison dans l'adaptateur, brand corrigée ; Event et compteur reportés ; Q3 et Q5 (brand) tranchées |
