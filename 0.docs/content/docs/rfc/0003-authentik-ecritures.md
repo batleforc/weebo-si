@@ -381,8 +381,9 @@ c'est toujours des écritures inutiles.
       jamais PATCHé ». Verts en CI : `test:all` (envtest compris), e2e
       (kind + vrai Authentik, les deux images), `task perf` (dans le
       budget, 6 appels API par objet en rafale).
-- [ ] `expression` des ScopeMappings : dérive à chaque cycle depuis
-      v0.18.2 (voir *La normalisation du serveur*)
+- [x] `expression` des ScopeMappings : dérivait à chaque cycle en
+      v0.18.2 (voir *La normalisation du serveur*). Corrigé en v0.18.3
+      avec un `same_trimmed` local (PR #19), à remplacer par celui du kit
 - [ ] Event `DriftCorrected` et compteur `remote_writes_total` (D4, D6) :
       il faut que `ReconcileOutcome` porte la dérive. En attendant, chaque
       correction est journalisée (`drift corrected`, avec les champs).
@@ -394,7 +395,23 @@ c'est toujours des écritures inutiles.
 - [x] montée de version de l'opérateur en 0.18.2 (`44f873e5`). Premier
       constat : les 16 CR sont Ready, aucune erreur, et seuls les 3
       ScopeMappings sont réécrits à chaque cycle
-- [ ] validation complète (*Exploitation*), une fois `expression` corrigée
+- [x] 0.18.3 (`same_trimmed` sur `expression` et `description` des
+      ScopeMappings, PR #19), déployée à 18:28:50 (`2f35ffbf`)
+- [x] validation (*Exploitation*), le 2026-10-18 sur l'heure 18:30 – 19:30 :
+
+  | Critère | Avant | Après (0.18.3) |
+  | --- | --- | --- |
+  | `model_updated` signés par l'opérateur | ~480 / h | **0** |
+  | `model_created` / `model_deleted` de l'opérateur (permissions recréées) | ~48 / h chacun | **0** |
+  | Événements d'Authentik, tous auteurs | ~555 / h (13 328 / jour, *Motivation*) | **0** |
+  | « Provider changed… » de l'outpost embarqué | 6 à 10 / 10 min | **0** depuis 17:20 (0.18.2) |
+  | `drift corrected` dans les logs de l'opérateur | — | **0** ; 28/28 CR Ready, ni erreur ni warning |
+
+  Étape intermédiaire : en 0.18.2, seuls les 3 ScopeMappings étaient encore
+  écrits, une fois par cycle chacun (36 / h).
+- [ ] test de dérive (*Exploitation*) : renommer une Application dans
+      l'UI, elle revient sous 5 minutes. À faire à la main, sans Event
+      tant que D4 n'est pas livré : la trace est le log `drift corrected`
 - [ ] décider du sort des palliatifs ; left-todo à jour
 
 ## Références
@@ -424,3 +441,4 @@ c'est toujours des écritures inutiles.
 | 2026-10-18 | Brouillon initial, après la mesure faite pendant la migration CNPG d'Authentik |
 | 2026-10-18 | Implémenté dans weebo-authentik (branche `fix/write-only-what-drifts`) : comparaison dans l'adaptateur, brand corrigée ; Event et compteur reportés ; Q3 et Q5 (brand) tranchées |
 | 2026-10-18 | v0.18.2 déployée. Le kit reprend l'API livrée (`Drift::keep*`, `same_set`, `same_subset`) au lieu des `differs*` proposés, et y ajoute `Drift::note` et `same_trimmed`. Nouvelle section *La normalisation du serveur*, après la dérive permanente des `expression` de ScopeMapping ; alerte proposée ; plan découpé en kit puis opérateurs |
+| 2026-10-18 | 0.18.3 déployée et validée : 0 événement d'Authentik sur l'heure 18:30 – 19:30, contre ~480 `model_updated` / h avant. Reste le test de dérive à la main |
