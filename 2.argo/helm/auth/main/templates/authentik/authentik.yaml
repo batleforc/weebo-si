@@ -72,35 +72,10 @@ spec:
             - secretName: {{ .Values.dns.certificate.name }}
               hosts:
               - {{ .Values.dns.domain }}
+        # The database is CNPG's (templates/authentik/postgres.yaml), not the
+        # chart's bundled Bitnami PostgreSQL -- off upstream by default, and
+        # stated here so a chart bump can't bring it back.
         postgresql:
-          enabled: {{ .Values.authentik.legacyPostgres.enabled }}
-          primary:
-            automountServiceAccountToken: true
-            extraEnvVars:
-              - name: POSTGRES_PASSWORD
-                value: "vault:mv/data/main-config#AUTHENTIK_POSTGRES_USER_PASSWORD"
-            podAnnotations:
-              vault.security.banzaicloud.io/vault-addr: "https://openbao.vault:8200"
-              vault.security.banzaicloud.io/vault-role: "auth"
-              vault.security.banzaicloud.io/vault-path: "kubernetes"
-              vault.security.banzaicloud.io/vault-tls-secret: "openbao-tls"
-          auth:
-            usePasswordFiles: false
-            existingSecret: ""
-            #existingSecret: "authentik-postgresql-auth"
-            # secretKeys:
-            #   adminPasswordKey: "password-admin"
-          serviceAccount:
-            name: authentik
-            create: false
-        additionalObjects:
-          - apiVersion: v1
-            kind: Secret
-            metadata:
-              name: authentik-postgresql-auth
-              namespace: auth
-            type: Opaque
-            data:
-              password-admin: {{ "vault:mv/data/main-config#AUTHENTIK_POSTGRES_PASSWORD" | b64enc }}
+          enabled: false
 
 {{- end -}}

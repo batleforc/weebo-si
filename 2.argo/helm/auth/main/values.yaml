@@ -31,16 +31,6 @@ authentik:
         memory: 256Mi
       limits:
         memory: 1Gi
-    # One-shot copy from the chart's old PostgreSQL when the Cluster is
-    # created. Turn off, with legacyPostgres, once the migration is behind us.
-    import:
-      enabled: true
-      host: authentik-postgresql.auth.svc
-  # The chart's bundled Bitnami PostgreSQL (off by default upstream since
-  # 2026.x). Kept running only as the import source and the way back; its
-  # PVC data-authentik-postgresql-0 outlives it and is deleted by hand.
-  legacyPostgres:
-    enabled: true
   operator:
     enabled: true
     version: 0.18.1

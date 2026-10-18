@@ -62,8 +62,12 @@ spec:
 # No `imageName`, as for forgejo and batlehub: the operator picks the image
 # matching its own version. Wave -1 orders the creation only: Argo CD (as
 # installed by 1.pulu-conf) has no health check for postgresql.cnpg.io
-# Clusters, so it does NOT wait for the import to finish before moving on to
-# the `authentik` Application. The migration waits by hand.
+# Clusters, so it does not wait for the database to be up before the
+# `authentik` Application; Authentik's pods retry until it is.
+#
+# Bootstrapped on 2026-10-18 by importing the chart's old PostgreSQL
+# (bootstrap.initdb.import, since removed -- CNPG only reads `bootstrap` when
+# it creates the Cluster). Recreated from scratch, this is an empty database.
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -86,28 +90,4 @@ spec:
       owner: {{ $pg.owner }}
       secret:
         name: authentik-pg-cred
-      {{- if $pg.import.enabled }}
-      # One-shot copy of the chart's old PostgreSQL (pg_dump/pg_restore of
-      # one database, so the major version can move up). CNPG only reads
-      # `bootstrap` when it creates the Cluster: switching this off afterwards
-      # changes nothing on the running database.
-      import:
-        type: microservice
-        databases:
-          - {{ $pg.database }}
-        source:
-          externalCluster: authentik-legacy
-      {{- end }}
-  {{- if $pg.import.enabled }}
-  externalClusters:
-    - name: authentik-legacy
-      connectionParameters:
-        host: {{ $pg.import.host }}
-        user: {{ $pg.owner }}
-        dbname: {{ $pg.database }}
-        sslmode: disable
-      password:
-        name: authentik-pg-cred
-        key: password
-  {{- end }}
 {{- end -}}

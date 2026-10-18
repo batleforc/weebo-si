@@ -7,12 +7,19 @@ description: "What's left to do ?"
 
 ## Bone of the project
 
-- [ ] Remplacer le setup actuel d'Authentik avec l'opérateur [Weebo-Authentik](https://github.com/batleforc/weebo-authentik)
-  - [ ] Migrer Authentik vers CNPG
+- [x] Remplacer le setup actuel d'Authentik avec l'opérateur [Weebo-Authentik](https://github.com/batleforc/weebo-authentik)
+  - [x] Migrer Authentik vers CNPG le 2026-10-18 : Cluster `auth/authentik-pg` (PostgreSQL 18.4, 3 Go), importé depuis la PostgreSQL du chart, désormais retirée. Plus de Redis : Authentik n'en utilise plus
   - [x] Opérateur passé en 0.18.1 le 2026-10-17 (`instanceRef` structuré, `pathGrants`)
   - [x] Métriques de l'opérateur (port 9090) scrapées par otel-node, via les annotations de discovery sur le pod
   - [x] Migrer les utilisateurs et groupes existants vers l'opérateur
   - [x] Migrer les applications existantes vers l'opérateur
+- [ ] Suites de la migration CNPG d'Authentik
+  - [ ] vault-secrets-webhook ne sait plus muter un Secret : sans annotations `vault.security.banzaicloud.io/*` sur le Secret, il cherche Vault à `https://vault:8200`, qui ne résout plus, et refuse toute écriture d'un Secret à références `vault:` (`failurePolicy: Fail`). Contourné pour Authentik par `ApplyOutOfSyncOnly=true` et l'hôte de la base en env ; à corriger dans la config du webhook, en vérifiant d'abord ce que la mutation des Secrets produirait
+  - [ ] Sauvegardes CNPG vers RustFS (plugin barman-cloud + `ScheduledBackup`) pour `authentik-pg`, `forgejo-pg` et `batlehub-pg` : aucune n'en a. Authentik y garde aussi ses sessions et sa file de tâches
+  - [ ] Rétention de `authentik_tasks_tasklog` : 6,3 M lignes, l'essentiel des 3 Go de la base
+  - [ ] Health check Argo CD pour `postgresql.cnpg.io/Cluster` dans `1.pulu-conf`, pour que les sync-waves attendent les bases
+  - [ ] `authentik-server` redémarre souvent (22 fois en 39 jours) : le dernier arrêt observé est un SIGBUS (`unix_wait_status(7)`) pendant les migrations Django au démarrage. Piste : `/dev/shm`
+  - [ ] Vérifier que l'auto-sync de l'Application racine `main` avait `prune` avant le gel du 2026-10-18 : il a été remis à `selfHeal: true` seul
 - [ ] [ProxyAuthK8S](https://github.com/batleforc/ProxyAuthK8S) - Will wait for 0.2.0 - Ouroboros
   - [ ] Point d'accés externe au cluster Kubernetes pour l'authentification OIDC
   - [ ] Rejeter toutes requêtes qui ne viendrais pas de ProxyAuthK8S ?
