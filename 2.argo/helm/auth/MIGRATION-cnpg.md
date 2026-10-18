@@ -67,7 +67,7 @@ bascule, et le retour arrière est immédiat (*Retour arrière*, cas 1).
 
 ## Étape 1 -- geler
 
-- [ ] Couper l'auto-sync de `main`, puis d'`auth` et d'`authentik`, dans cet
+- [x] Couper l'auto-sync de `main`, puis d'`auth` et d'`authentik`, dans cet
       ordre : `main` réécrit la spec d'`auth`, et `auth` celle d'`authentik`.
       ```sh
       for app in main auth authentik; do
@@ -75,7 +75,7 @@ bascule, et le retour arrière est immédiat (*Retour arrière*, cas 1).
           -p '{"spec":{"syncPolicy":{"automated":null}}}'
       done
       ```
-- [ ] Arrêter les écritures. L'ancienne PostgreSQL reste allumée, c'est la
+- [x] Arrêter les écritures. L'ancienne PostgreSQL reste allumée, c'est la
       source de l'import :
       ```sh
       kubectl -n auth scale deploy/authentik-server deploy/authentik-worker --replicas=0
@@ -85,25 +85,25 @@ bascule, et le retour arrière est immédiat (*Retour arrière*, cas 1).
 
 ## Étape 2 -- pousser
 
-- [ ] Commit et push sur `develop`. L'auto-sync étant coupé, rien ne bouge.
+- [x] Commit et push sur `develop`. L'auto-sync étant coupé, rien ne bouge.
 
 ## Étape 3 -- créer la base et attendre l'import
 
-- [ ] Sync partiel d'`auth` sur les trois nouveaux objets seulement :
+- [x] Sync partiel d'`auth` sur les trois nouveaux objets seulement :
       ```sh
       kubectl -n argocd patch application auth --type merge -p '{"operation":{"initiatedBy":{"username":"runbook-cnpg"},"sync":{"resources":[
         {"group":"external-secrets.io","kind":"SecretStore","name":"authentik-db","namespace":"auth"},
         {"group":"external-secrets.io","kind":"ExternalSecret","name":"authentik-pg-cred","namespace":"auth"},
         {"group":"postgresql.cnpg.io","kind":"Cluster","name":"authentik-pg","namespace":"auth"}]}}}'
       ```
-- [ ] Le Secret existe (`kubectl -n auth get secret authentik-pg-cred`),
+- [x] Le Secret existe (`kubectl -n auth get secret authentik-pg-cred`),
       puis l'import se termine :
       ```sh
       kubectl -n auth get pods -l cnpg.io/cluster=authentik-pg -w
       kubectl -n auth logs -l cnpg.io/cluster=authentik-pg,cnpg.io/jobRole=import --tail=-1 | grep -iE "error|fatal|warn" || true
       kubectl -n auth wait cluster.postgresql.cnpg.io/authentik-pg --for=condition=Ready --timeout=15m
       ```
-- [ ] Comparer quelques volumes entre l'ancienne base et la nouvelle :
+- [x] Comparer quelques volumes entre l'ancienne base et la nouvelle :
       ```sh
       Q="select (select count(*) from authentik_core_user), (select count(*) from authentik_core_application), (select count(*) from authentik_core_group), (select count(*) from authentik_flows_flow)"
       kubectl -n auth exec authentik-postgresql-0 -c postgresql -- /vault/vault-env sh -c \
@@ -114,34 +114,36 @@ bascule, et le retour arrière est immédiat (*Retour arrière*, cas 1).
 
 ## Étape 4 -- basculer
 
-- [ ] Sync partiel d'`auth` sur l'Application `authentik`, puis sync
+- [x] Sync partiel d'`auth` sur l'Application `authentik`, puis sync
       d'`authentik`. Le chart remet les replicas, avec le nouvel hôte :
       ```sh
       kubectl -n argocd patch application auth --type merge -p '{"operation":{"initiatedBy":{"username":"runbook-cnpg"},"sync":{"resources":[
         {"group":"argoproj.io","kind":"Application","name":"authentik","namespace":"argocd"}]}}}'
       kubectl -n argocd patch application authentik --type merge -p '{"operation":{"initiatedBy":{"username":"runbook-cnpg"},"sync":{}}}'
       ```
-- [ ] Server et worker `Running`, sans erreur de base dans les logs
+- [x] Server et worker `Running`, sans erreur de base dans les logs
       (`kubectl -n auth logs deploy/authentik-server | grep -i postgres`).
       **Fin de la coupure SSO.**
 
 ## Étape 5 -- vérifier
 
-- [ ] Authentik est bien sur la nouvelle base, et plus personne sur
+- [x] Authentik est bien sur la nouvelle base, et plus personne sur
       l'ancienne :
       ```sh
       kubectl -n auth exec authentik-pg-1 -c postgres -- psql -U postgres -tAc \
         "select count(*) from pg_stat_activity where datname='authentik' and usename='authentik'"
       ```
       Ce nombre doit être supérieur à 0.
-- [ ] Tous les CR weebo-authentik `Ready: True` (29/29) :
+- [x] Tous les CR weebo-authentik `Ready: True` (29/29) :
       ```sh
       kubectl get authentikapplications,authentikaccesspolicies,authentikgroups,authentikusers,authentikbrands,authentikflows,authentikscopemappings -A \
         -o custom-columns=KIND:.kind,NAME:.metadata.name,READY:.status.conditions[0].status
       ```
 - [ ] Un login OIDC (Argo CD ou Che) et un login proxy (ClickStack,
-      `forward_single`).
-- [ ] Sync complet d'`auth` (rien ne doit plus changer), puis réactiver
+      `forward_single`), dans un navigateur. Vérifié sans navigateur
+      seulement : `/-/health/ready/` et la discovery OIDC répondent 200, et
+      ClickStack redirige (302) vers `authorize` d'Authentik.
+- [x] Sync complet d'`auth` (rien ne doit plus changer), puis réactiver
       l'auto-sync de `main`, ce qui réactive celui d'`auth` et d'`authentik`.
 
 ## Étape 6 -- nettoyage (quelques jours plus tard)
@@ -196,7 +198,19 @@ bascule, et le retour arrière est immédiat (*Retour arrière*, cas 1).
     les objets inchangés.
 
   Le Cluster est supprimé, puis l'import refait, pour reprendre les
-  écritures faites entre 12:09 et 12:12 dans l'ancienne base.
+  écritures faites entre 12:09 et 12:12 dans l'ancienne base. Push de
+  `92726ca3`.
+- 12:15–12:19 second import. Volumes identiques, jusqu'au dernier événement
+  (12:09:51).
+- 12:20:27 bascule réussie : 8 connexions sur `authentik-pg`, 0 sur
+  l'ancienne base. Logs sans erreur, 29/29 CR `Ready`, health et discovery
+  OIDC en 200, redirection du proxy ClickStack correcte. L'Application
+  `authentik` est `Synced`, Secrets compris.
+- Coupure SSO totale : 12:00:28–12:09:37, puis 12:12:10–12:20:27, soit environ
+  17 minutes.
+- Auto-sync rétabli. `main` est remise à `selfHeal: true`, la valeur
+  observée avant le gel ; `prune` n'avait pas été relevé et n'est pas
+  activé. Pulumi (`1.pulu-conf`) la crée avec `automated: {}`.
 
 ## Hors migration, vu pendant la préparation
 
