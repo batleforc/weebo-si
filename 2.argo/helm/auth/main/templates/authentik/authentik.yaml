@@ -39,6 +39,15 @@ spec:
           env:
             - name: POSTGRES_PASSWORD
               value: "vault:mv/data/main-config#AUTHENTIK_POSTGRES_USER_PASSWORD"
+            # Task history (authentik_tasks_task + _tasklog) kept 7 days
+            # instead of 30. ~65k tasks a day here, 94% event triggers fired
+            # by the weebo-authentik operator re-writing unchanged objects
+            # every reconcile: 2.4 GB of the database's 3 GB on 2026-10-18.
+            # The worker purges daily (worker.task_purge_interval). Event
+            # retention itself is a tenant setting, not an env: set to
+            # days=90 in the database the same day (see left-todo).
+            - name: AUTHENTIK_WORKER__TASK_EXPIRATION
+              value: "days=7"
           {{- if .Values.authentik.postgres.enabled }}
             # CNPG's read-write Service, which follows the primary. Set here
             # and not as authentik.postgresql.host because, at the migration,
