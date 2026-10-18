@@ -44,6 +44,13 @@ spec:
           secret_key: "vault:mv/data/main-config#AUTHENTIK_SECRET_KEY"
           error_reporting:
             enabled: true
+          {{- if .Values.authentik.postgres.enabled }}
+          # CNPG's read-write Service, which follows the primary. User and
+          # database keep the chart defaults (authentik/authentik); the
+          # password still comes from POSTGRES_PASSWORD above.
+          postgresql:
+            host: authentik-pg-rw
+          {{- end }}
 
         server:
           ingress:
@@ -57,7 +64,7 @@ spec:
               hosts:
               - {{ .Values.dns.domain }}
         postgresql:
-          enabled: true
+          enabled: {{ .Values.authentik.legacyPostgres.enabled }}
           primary:
             automountServiceAccountToken: true
             extraEnvVars:
@@ -77,8 +84,6 @@ spec:
           serviceAccount:
             name: authentik
             create: false
-        redis:
-          enabled: true
         additionalObjects:
           - apiVersion: v1
             kind: Secret
