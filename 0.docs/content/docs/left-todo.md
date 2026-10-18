@@ -18,7 +18,7 @@ description: "What's left to do ?"
   - [ ] Sauvegardes CNPG vers RustFS (plugin barman-cloud + `ScheduledBackup`) pour `authentik-pg`, `forgejo-pg` et `batlehub-pg` : aucune n'en a. Authentik y garde aussi ses sessions et sa file de tâches
   - [ ] Rétention de `authentik_tasks_tasklog` : 6,3 M lignes, l'essentiel des 3 Go de la base
   - [ ] Health check Argo CD pour `postgresql.cnpg.io/Cluster` dans `1.pulu-conf`, pour que les sync-waves attendent les bases
-  - [ ] `authentik-server` redémarre souvent (22 fois en 39 jours) : le dernier arrêt observé est un SIGBUS (`unix_wait_status(7)`) pendant les migrations Django au démarrage. Piste : `/dev/shm`
+  - [x] Redémarrages d'`authentik-server` : fuite dans `/dev/shm`, qui a déclenché une boucle de SIGBUS le 2026-10-18 de 07:59 à 12:00. À chaque recyclage gunicorn, des fichiers Prometheus multiprocess indexés par PID restent derrière ; 64 Mi se remplissent en ~39 jours. Ralenti (`AUTHENTIK_WEB__MAX_REQUESTS=10000`, `/dev/shm` en `emptyDir` Memory de 256 Mi), pas corrigé : la fuite est dans le `gunicorn.conf.py` d'Authentik. Détail dans `2.argo/helm/auth/main/templates/authentik/authentik.yaml`
   - [ ] Vérifier que l'auto-sync de l'Application racine `main` avait `prune` avant le gel du 2026-10-18 : il a été remis à `selfHeal: true` seul
 - [ ] [ProxyAuthK8S](https://github.com/batleforc/ProxyAuthK8S) - Will wait for 0.2.0 - Ouroboros
   - [ ] Point d'accés externe au cluster Kubernetes pour l'authentification OIDC

@@ -74,6 +74,32 @@ spec:
             - secretName: {{ .Values.dns.certificate.name }}
               hosts:
               - {{ .Values.dns.domain }}
+          # /dev/shm leak, which crash-looped the server on 2026-10-18 from
+          # 07:59 to 12:00 (4978 gunicorn workers killed by SIGBUS). gunicorn
+          # recycles a worker every `web.max_requests` (1000, ~62 a day here).
+          # Each new worker writes prometheus multiprocess files keyed by its
+          # PID (counter_/gauge_all_/histogram_<pid>.db, ~28 KiB) into
+          # /dev/shm/authentik_prometheus_tmp, and gunicorn.conf.py's
+          # worker_exit only clears the files keyed by worker number. /dev/shm
+          # is the pod's (64 MiB by default) and outlives container restarts,
+          # so ~1.7 MiB a day fills it in ~39 days -- the old pod's exact age
+          # -- and every worker then dies on its first mmap write.
+          # Both settings below only slow it down; a new pod starts empty.
+          env:
+            - name: AUTHENTIK_WEB__MAX_REQUESTS
+              # ~6 recycles a day instead of ~62. Server RSS was 734Mi of its
+              # 2Gi limit with 1000.
+              value: "10000"
+          volumes:
+            - name: dshm
+              emptyDir:
+                # tmpfs, counted against the pod's memory only for what is
+                # actually written.
+                medium: Memory
+                sizeLimit: 256Mi
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
         # The database is CNPG's (templates/authentik/postgres.yaml), not the
         # chart's bundled Bitnami PostgreSQL -- off upstream by default, and
         # stated here so a chart bump can't bring it back.
