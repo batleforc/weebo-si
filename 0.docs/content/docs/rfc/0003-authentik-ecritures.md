@@ -133,7 +133,7 @@ résout déjà avant chaque écriture. On compare donc des pk avec des pk.
 | Group | `name`, `is_superuser`, `parent`, `attributes` | `attributes` comparés comme sous-ensemble : seules les clés de la spec, en égalité profonde |
 | User | `username`, `name`, `email`, `is_active`, `groups` (ensemble) | |
 | Brand | `domain`, `default`, flows, `attributes`… | brand par défaut : le basculement existant (#16) reste tel quel |
-| Flow, ScopeMapping, Outpost | champs de la spec ; providers de l'outpost en ensemble | `expression` d'un ScopeMapping comparée octet pour octet |
+| Flow, ScopeMapping, Outpost | champs de la spec ; providers de l'outpost en ensemble | `expression` d'un ScopeMapping comparée aux espaces de début et de fin près (`same_trimmed`) : comparée octet pour octet en v0.18.2, elle dérive à chaque passage (voir *La normalisation du serveur*) |
 
 Le principe : **une liste dont l'ordre n'a pas de sens pour Authentik se
 compare comme un ensemble**. Une liste ordonnée se compare telle quelle. Si
@@ -141,17 +141,103 @@ le doute subsiste pour un champ, il le dit dans son test.
 
 ### Dans le kit (règle des deux opérateurs)
 
-weebo-forgejo a ses `differs()` et `differs_flag()` dans
-`crates/application/src/use_cases/mod.rs`. weebo-authentik en aurait besoin
-à son tour : ils passent dans `weebo-kit-domain`, dans un module `drift`.
+Deux opérateurs comparent déjà avant d'écrire, chacun à sa façon :
 
-- `differs(desired: &Option<T>, remote: &T)` : `None` vaut « pas d'avis » ;
-- `differs_set(desired: &Option<impl IntoIterator>, remote: …)` : ensembles,
-  ordre ignoré ;
-- `differs_subset(desired: &Option<Map>, remote: &Map)` : les clés voulues
-  seulement, en égalité profonde ;
-- `Drift`, la liste des champs qui diffèrent, que le use-case passe à
-  l'Event et au PATCH.
+- **weebo-forgejo** (`crates/application/src/use_cases/mod.rs`) : des
+  prédicats `differs(&Option<String>, &str)` et
+  `differs_flag(Option<bool>, bool)`, combinés en `organization_differs()`
+  ou `hook_differs()`. Une dérive envoie le PATCH complet, et le nom du
+  champ dérivé n'est conservé nulle part.
+- **weebo-authentik** v0.18.2 (`crates/domain/src/drift.rs`, ~80 lignes
+  hors tests) : `Drift` nettoie le PATCH lui-même. Chaque champ égal au
+  distant passe à `None`, et sort donc de la requête. Chaque champ qui
+  diffère est noté. Cette version est en production et a passé l'e2e
+  contre un vrai Authentik.
+
+**Le kit reprend l'API de weebo-authentik**, dans `weebo-kit-domain::drift`.
+Elle couvre ce que fait forgejo et ajoute ce qui lui manque : le PATCH réduit
+aux seuls champs dérivés (D3) et la liste des champs pour l'Event (D4). Le
+module est pur : pas de `tracing`, pas de `kube`, aucune dépendance hors
+`std`.
+
+```rust
+/// Champs dont la valeur voulue diffère du distant, dans l'ordre des appels.
+pub struct Drift(Vec<&'static str>);
+
+impl Drift {
+    pub fn is_empty(&self) -> bool;
+    pub fn fields(&self) -> &[&'static str];
+
+    /// `desired` : le champ du PATCH (`None` = pas envoyé, pas d'avis).
+    /// Égal : `desired` passe à `None`, le champ sort du PATCH.
+    /// Différent : il reste, et `field` est noté.
+    pub fn keep<T: PartialEq>(&mut self, field: &'static str,
+                              desired: &mut Option<T>, remote: &T);
+    /// Distant que le serveur peut laisser vide : `None` distant ≠ voulu.
+    pub fn keep_opt<T: PartialEq>(&mut self, field: &'static str,
+                                  desired: &mut Option<T>, remote: &Option<T>);
+    /// Égalité fournie par l'appelant : ensemble, sous-ensemble, type
+    /// distant différent du type de requête, normalisation du serveur.
+    pub fn keep_with<T, R>(&mut self, field: &'static str,
+                           desired: &mut Option<T>, remote: &R,
+                           same: impl FnOnce(&T, &R) -> bool);
+    /// Pour l'appelant qui n'a pas de PATCH en `Option` (forgejo) : noter
+    /// un champ à partir d'un prédicat déjà calculé.
+    pub fn note(&mut self, field: &'static str, differs: bool);
+}
+
+/// Mêmes éléments, ordre ignoré, doublons comptés (`PartialEq` seul).
+pub fn same_set<T: PartialEq>(a: &[T], b: &[T]) -> bool;
+/// Chaque clé voulue a la valeur voulue ; les autres clés distantes
+/// (défauts ajoutés par le serveur) sont ignorées.
+pub fn same_subset<K, V, S1, S2>(desired: &HashMap<K, V, S1>,
+                                 remote: &HashMap<K, V, S2>) -> bool;
+/// Égales aux espaces de début et de fin près (voir plus bas).
+pub fn same_trimmed(desired: &str, remote: &str) -> bool;
+```
+
+Par rapport à `domain::drift` de weebo-authentik, deux ajouts : `note`, pour
+que forgejo y bascule sans réécrire ses PATCH, et `same_trimmed`, après la
+mise en production (voir ci-dessous). Les 8 tests de weebo-authentik
+partent avec le module.
+
+**Ce qui reste dans chaque opérateur :** l'appel aux helpers, champ par
+champ, dans l'adaptateur sortant (après la résolution des références) ou
+dans le use-case, selon l'endroit où l'opérateur construit son PATCH. Le
+journal `drift corrected` (aujourd'hui `must_write()` dans l'adaptateur de
+weebo-authentik) reste lui aussi dans l'opérateur, en attendant l'Event.
+
+#### La normalisation du serveur
+
+Comparer le PATCH au distant suppose que le serveur renvoie ce qu'on lui a
+écrit. Ce n'est pas toujours le cas, et chaque écart produit une dérive
+permanente : une écriture à chaque passage, c'est-à-dire le bug
+d'origine, sur un seul champ.
+
+Cas observé à la mise en production de v0.18.2 (2026-10-18) : les 3
+`AuthentikScopeMapping` sont corrigés sur `expression` à chaque cycle
+(`drift corrected fields=["expression"]` à 17:21 puis 17:26, sans
+changement de CR). Leur spec est un bloc YAML `|`, qui finit donc par
+`\n`. La cause la plus probable est qu'Authentik retire les espaces de
+début et de fin, comme le fait par défaut un `CharField` de Django REST
+Framework (`trim_whitespace=True`). Ce n'est pas encore vérifié côté base.
+
+La règle pour le kit et pour les opérateurs :
+
+1. **On compare à la forme que le serveur stocke**, pas à celle qu'on
+   envoie. Quand le serveur normalise (espaces retirés, casse, durées
+   réécrites, défauts ajoutés dans une map), la comparaison applique la même
+   normalisation via `keep_with` (`same_trimmed`, `same_subset`…). On
+   n'envoie pas une valeur normalisée à la place de celle de la spec.
+2. **Chaque normalisation a son test de contrat** : le distant renvoyé
+   normalisé, et aucun PATCH attendu.
+3. **Le test « reste silencieux » du template s'exécute contre le vrai
+   serveur** quand l'opérateur a un e2e. Un faux distant qui renvoie ce
+   qu'on lui écrit ne voit pas ce cas : les tests wiremock de
+   weebo-authentik étaient verts.
+4. **Une dérive qui revient au cycle suivant sur le même champ est un bug
+   de comparaison**, pas une dérive. Le compteur `remote_writes_total`
+   (D6) et l'alerte proposée dans *Exploitation* servent à la repérer.
 
 Le template `templates/operator` change de modèle.
 `reconcile_object.rs` décrit aujourd'hui « created or updated on every
@@ -204,7 +290,12 @@ c'est toujours des écritures inutiles.
     changement de CR ;
   - les logs de l'outpost ne doivent plus montrer « Provider changed… »
     toutes les 2 minutes ;
-  - `remote_writes_total{cause="drift"}` doit être à 0 au repos.
+  - `remote_writes_total{cause="drift"}` doit être à 0 au repos ;
+  - en attendant le compteur, aucun log `drift corrected` ne doit revenir
+    sur le même objet et le même champ d'un cycle à l'autre.
+- **Alerte proposée :** `increase(<prefix>_remote_writes_total{cause="drift"}[30m]) > 3`
+  pour un même `kind`. Une vraie dérive se corrige en un passage, une
+  comparaison fausse écrit à chaque cycle (six fois en 30 minutes).
 - **Test de dérive :** modifier à la main un champ possédé (le nom d'une
   Application dans l'interface). Il doit revenir sous 5 minutes, avec un
   Event `DriftCorrected` qui le nomme.
@@ -237,10 +328,12 @@ c'est toujours des écritures inutiles.
   les montées de version d'Authentik : un champ renommé ou renormalisé
   produirait une « dérive » permanente. Le compteur `drift` et l'Event la
   rendent visible tout de suite, au lieu de la laisser tourner en silence.
-- **Une normalisation ratée** (un ensemble comparé comme une liste, par
-  exemple) produit une dérive à chaque passage, donc le comportement
-  d'aujourd'hui, mais visible. Le test « reste silencieux » de chaque kind
-  l'attrape avant la release.
+- **Une normalisation ratée** (un ensemble comparé comme une liste, un
+  texte dont le serveur retire les espaces…) produit une dérive à chaque
+  passage. On retrouve le comportement d'avant, sur un champ, mais visible.
+  Le test « reste silencieux » l'attrape seulement s'il tourne contre le
+  vrai serveur : celui de v0.18.2, sur wiremock, est passé à côté de
+  `expression`.
 
 ## Questions ouvertes
 
@@ -256,13 +349,24 @@ c'est toujours des écritures inutiles.
 
 **weebo-operator-kit**
 
-- [ ] `weebo-kit-domain::drift` : `differs`, `differs_set`, `differs_subset`,
-      `Drift` ; weebo-forgejo y bascule ses helpers
+- [ ] `weebo-kit-domain::drift` : l'API de *Dans le kit*, reprise de
+      `weebo-authentik/crates/domain/src/drift.rs` avec ses 8 tests, plus
+      `Drift::note` et `same_trimmed` (et leurs tests)
 - [ ] `ReconcileMetrics` : `remote_writes_total{kind, cause}`
-- [ ] template `reconcile_object` : lire, comparer, écrire si dérive ; test
-      « reste silencieux » ; doc du template
+- [ ] template `reconcile_object` : lire, comparer avec `Drift`, PATCH des
+      seuls champs dérivés ; test « reste silencieux » ; doc du template,
+      avec la règle de *La normalisation du serveur*
+- [ ] release du kit
 
-**weebo-authentik** (branche `fix/write-only-what-drifts`, commit `0b865d9`, 2026-10-18)
+**Ensuite, dans les opérateurs**
+
+- [ ] weebo-authentik : remplacer `domain::drift` par celui du kit ;
+      comparer `expression` (ScopeMapping) avec `same_trimmed`, test de
+      contrat avec une expression renvoyée sans `\n` final
+- [ ] weebo-forgejo : `differs` / `differs_flag` remplacés par
+      `Drift::note` (ou `keep`), pour avoir les champs dans l'Event
+
+**weebo-authentik** (PR #18, release v0.18.2, 2026-10-18)
 
 - [x] lire, comparer et PATCHer les seuls champs dérivés, pour les 10
       kinds. Choix d'implémentation : la comparaison se fait dans
@@ -274,9 +378,11 @@ c'est toujours des écritures inutiles.
 - [x] tests : `domain::drift` (8), contrat wiremock (groupe inchangé et
       dérivé, OAuth2 et proxy inchangés), use-case brand (2). Mocks des
       suites envtest ajustés, avec une assertion « binding inchangé
-      jamais PATCHé ». Verts : `domain`, `application` (87), contrat
-      (41), clippy `-D warnings`. **Non lancés** (machine chargée) : les
-      suites envtest (`task test:all`) et `task perf`.
+      jamais PATCHé ». Verts en CI : `test:all` (envtest compris), e2e
+      (kind + vrai Authentik, les deux images), `task perf` (dans le
+      budget, 6 appels API par objet en rafale).
+- [ ] `expression` des ScopeMappings : dérive à chaque cycle depuis
+      v0.18.2 (voir *La normalisation du serveur*)
 - [ ] Event `DriftCorrected` et compteur `remote_writes_total` (D4, D6) :
       il faut que `ReconcileOutcome` porte la dérive. En attendant, chaque
       correction est journalisée (`drift corrected`, avec les champs).
@@ -285,7 +391,10 @@ c'est toujours des écritures inutiles.
 
 **weebo-si**
 
-- [ ] montée de version de l'opérateur ; validation (*Exploitation*)
+- [x] montée de version de l'opérateur en 0.18.2 (`44f873e5`). Premier
+      constat : les 16 CR sont Ready, aucune erreur, et seuls les 3
+      ScopeMappings sont réécrits à chaque cycle
+- [ ] validation complète (*Exploitation*), une fois `expression` corrigée
 - [ ] décider du sort des palliatifs ; left-todo à jour
 
 ## Références
@@ -299,6 +408,9 @@ c'est toujours des écritures inutiles.
 - weebo-operator-kit v0.17.0 :
   `templates/operator/crates/application/src/use_cases/reconcile_object.rs`,
   `crates/weebo-kit-runtime/src/controller.rs` (`STEADY_REQUEUE_SECS`)
+- weebo-authentik v0.18.2 : `crates/domain/src/drift.rs` (l'API reprise par
+  le kit), `crates/adapters-outbound/src/authentik_http/shared.rs`
+  (`must_write`)
 - Authentik 2026.8 : `/authentik/lib/default.yml` (`worker.task_expiration`),
   `django_dramatiq_postgres/broker.py` (`_auto_purge`), table
   `authentik_tenants_tenant.event_retention`
@@ -311,3 +423,4 @@ c'est toujours des écritures inutiles.
 | --- | --- |
 | 2026-10-18 | Brouillon initial, après la mesure faite pendant la migration CNPG d'Authentik |
 | 2026-10-18 | Implémenté dans weebo-authentik (branche `fix/write-only-what-drifts`) : comparaison dans l'adaptateur, brand corrigée ; Event et compteur reportés ; Q3 et Q5 (brand) tranchées |
+| 2026-10-18 | v0.18.2 déployée. Le kit reprend l'API livrée (`Drift::keep*`, `same_set`, `same_subset`) au lieu des `differs*` proposés, et y ajoute `Drift::note` et `same_trimmed`. Nouvelle section *La normalisation du serveur*, après la dérive permanente des `expression` de ScopeMapping ; alerte proposée ; plan découpé en kit puis opérateurs |
