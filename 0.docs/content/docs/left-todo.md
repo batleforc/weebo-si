@@ -9,6 +9,8 @@ description: "What's left to do ?"
 
 - [ ] Remplacer le setup actuel d'Authentik avec l'opérateur [Weebo-Authentik](https://github.com/batleforc/weebo-authentik)
   - [ ] Migrer Authentik vers CNPG
+  - [x] Opérateur passé en 0.18.1 le 2026-10-17 (`instanceRef` structuré, `pathGrants`)
+  - [x] Métriques de l'opérateur (port 9090) scrapées par otel-node, via les annotations de discovery sur le pod
   - [x] Migrer les utilisateurs et groupes existants vers l'opérateur
   - [x] Migrer les applications existantes vers l'opérateur
 - [ ] [ProxyAuthK8S](https://github.com/batleforc/ProxyAuthK8S) - Will wait for 0.2.0 - Ouroboros
@@ -21,6 +23,8 @@ description: "What's left to do ?"
   - [x] Operator officielle
   - [x] Expo : s3-main.weebo.poc
 - [ ] [Angos](https://angos.dev/docs/how-to/deploy-kubernetes#prerequisites)
+  - [x] Pull-through caches (dont quay.io), workspaces Che tirés via angos
+  - [ ] Job d'import de mes images ([skopeo](https://github.com/podman-container-tools/skopeo))
   - [x] [OIDC user](https://angos.dev/docs/how-to/configure-generic-oidc) : Allow users to login with OIDC
   - [x] [OIDC Kube](https://angos.dev/docs/how-to/configure-kubernetes-oidc) : Allow Kubernetes to authenticate with OIDC (e.g. Create a Dockerconfigjson from service account that can be used to pull images from a private registry)
     - [x] Cote angos : `[auth.oidc.kube]` sur l'issuer du cluster, ServiceAccount dedie + ClusterRoleBinding pour lire la JWKS, et une policy en lecture seule pour ce provider. Un pod qui presente son propre jeton projete (audience `angos`) est authentifie
@@ -32,7 +36,9 @@ description: "What's left to do ?"
     - [ ] Verifie en local (podman) de bout en bout le 2026-09-13 : push -> job -> rapport. Reste a activer sur le cluster
     - [ ] grype ne recoit pas les credentials de `[scanner.registry]` en 1.8.0 et pull en anonyme ; contourne par `GRYPE_REGISTRY_AUTH_*` dans le chart, a retirer quand upstream corrige
   - [x] Expo : registry.pkg.weebo.poc
-- [x] [Batlehub](https://batleforc.git.batleforc.fr/batlehub/) - Blockage, waiting for 1.3.0 release
+- [x] [Batlehub](https://batleforc.git.batleforc.fr/batlehub/) - en 1.7.0
+  - [x] Opérateur weebo-batlehub en mode external, config gérée par l'opérateur, registres en `BatleHubRegistry`
+  - [x] npm, cargo et go en hybride, namespaces de batleforc
   - [x] [OIDC](https://batleforc.git.batleforc.fr/batlehub/guide/admin-config.html#auth) : Allow users to login with OIDC
   - [x] [OIDC Kube](https://batleforc.git.batleforc.fr/batlehub/guide/admin-config.html#kubernetes-service-accounts) : Allow Kubernetes to authenticate with OIDC (e.g. Create a configuration in pod from service account that can be used to pull artifacts from a private registry)
   - [x] [OIDC CI](https://batleforc.git.batleforc.fr/batlehub/guide/admin-config.html#github-actions) : Directly push artifacts to batlehub registry from GitHub Actions using OIDC (Like VsCode Extension or other)
@@ -44,10 +50,10 @@ description: "What's left to do ?"
 - [ ] [Kloak](https://une-tasse-de.cafe/blog/kloak/)
 - [ ] [Weebo Si Hardening](https://github.com/batleforc/weebo-si-hardening)
   - [x] NetPolicy (networkProfiles, Enforce)
-  - [ ] NetPolicy guard (policyGuard, DryRun)
-  - [ ] DWOC restrictions (dwocPin, DryRun)
+  - [ ] NetPolicy guard (policyGuard, activé en DryRun, passer en Enforce)
+  - [ ] DWOC restrictions (dwocPin, activé en DryRun, passer en Enforce)
   - [ ] Image Pull Policy
-  - [ ] Image Registry (imagePolicy, DryRun)
+  - [x] Image Registry (imagePolicy, Enforce, via angos + egress direct vers les registres coupé)
   - [ ] Package Registry (registryConfig)
   - [x] Endpoint auth (endpointAuth, Enforce)
   - [ ] KubeArmor policies (kubearmorPolicy, needs KubeArmor)
@@ -55,16 +61,22 @@ description: "What's left to do ?"
   - [x] Expo : cde.dev.weebo.poc && \*.cde.dev.weebo.poc
   - [x] Deploy App
   - [x] Deploy User through Weebo-Si-Hardening (identity)
+  - [x] IDEs pilotés par `che.editors` (éditeurs maison)
+  - [ ] Autres IDEs : [openchamber](https://github.com/openchamber/openchamber) (derrière l'auth Che), [abcdesktop](https://www.abcdesktop.io/compare/overview/) avec un JetBrains ?
 - [ ] Properly apply a CiliumNetworkPolicy with default deny for all
-- [ ] Setup [Stalwart](https://stalw.art/) as an internal mail system for the cluster and connect every app to it (prevent mail to go outside the cluster)
+- [ ] Setup [Stalwart](https://stalw.art/) as an internal mail system for the cluster and connect every app to it (prevent mail to go outside the cluster) - [RFC 0001](/docs/rfc/0001-stalwart) (opérateur weebo-stalwart sur weebo-operator-kit)
   - [ ] Weebo.poc for internal messaging (entre les apps du cluster et les utilisateurs du cluster ou user <-> user)
   - [ ] weebo.[fr/net/untruc] for external messaging si nécessaire plus tard
   - [ ] Mettre en place un script de provisioning, si un objet authentik user a une annotations stalwart/email, alors créer le mail dans stalwart et le lier à l'utilisateur authentik https://stalw.art/docs/auth/backend/oidc/
   - [ ] Idem, si un user n'existe plus dans Authentik, verouiller le mail dans Stalwart
+  - ces deux points relèvent de la brique de liaison ([RFC 0002](/docs/rfc/0002-liaison) : en-tête `link.weebo.io/stalwart` + contrôleur weebo-link, sans Kyverno), pas de weebo-stalwart, qui n'expose que des `StalwartAccount` (`state: Locked`)
 - [ ] Mise en place d'un forgejo pour assurer que le code source est toujours la (préviens les indispo github)
+  - [x] Expo : git.weebo.poc, CNPG + RustFS, OIDC Authentik
+  - [x] [Opérateur forgejo](https://batleforc.github.io/weebo-forgejo/) pour gérer les projets et les utilisateurs (org batleforc-org, groupe Authentik batleforc → team Owners)
+  - [x] Che reconnaît Forgejo comme git service (lecture anonyme des devfiles, PAT pour le privé)
+  - [ ] Che : « sign in with Forgejo » (`che.forgejo.oauth`, app OAuth2 + `mv/eclipse-che/forgejo`)
   - [ ] Fork auto des projets github lister ?
   - [ ] Couper github pour eclipse che pour inciter les devs a utiliser le forgejo interne
-  - [ ] [Opérateur forgejo](https://batleforc.github.io/weebo-forgejo/) pour gérer les projets et les utilisateurs
 - [ ] Plateforme engineering
   - [ ] Git provider Integration ?
   - [ ] podman build/run ?
@@ -117,13 +129,13 @@ description: "What's left to do ?"
     - [ ] [RustFS Operator](https://github.com/rustfs/operator)
     - [ ] [OIDC](https://github.com/rustfs/operator/issues/207)
 - [ ] Monitoring
-  - [ ] ClickStack
+  - [ ] ClickStack (dashboards existants : weebo-si-hardening, Probe health)
   - [ ] OpenTelemetry eBPF Instrumentation
   - [ ] Otel Collector
 - [ ] Registry
   - [ ] Batlehub
     - [x] Mode d'authentification (OIDC / KUBE / ETC)
-    - [ ] Gestion des registres
+    - [ ] Gestion des registres (`BatleHubRegistry`, hybride npm/cargo/go)
     - [ ] Analyse de sécurité des packages
     - [ ] Exposition des registres (pkg.weebo.poc, npm.pkg.weebo.poc, \*.pkg.weebo.poc)
     - [ ] D-2 ?
