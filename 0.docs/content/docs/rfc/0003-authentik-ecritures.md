@@ -349,21 +349,28 @@ c'est toujours des écritures inutiles.
 
 **weebo-operator-kit**
 
-- [ ] `weebo-kit-domain::drift` : l'API de *Dans le kit*, reprise de
+- [x] `weebo-kit-domain::drift` : l'API de *Dans le kit*, reprise de
       `weebo-authentik/crates/domain/src/drift.rs` avec ses 8 tests, plus
       `Drift::note` et `same_trimmed` (et leurs tests)
-- [ ] `ReconcileMetrics` : `remote_writes_total{kind, cause}`
-- [ ] template `reconcile_object` : lire, comparer avec `Drift`, PATCH des
+- [x] `ReconcileMetrics` : `remote_writes_total{kind, cause}`, et l'alerte
+      `RepeatedDrift` dans le `PrometheusRule` du chart (plus de 3 écritures
+      `drift` d'un même kind en 30 min)
+- [x] template `reconcile_object` : lire, comparer avec `Drift`, PATCH des
       seuls champs dérivés ; test « reste silencieux » ; doc du template,
       avec la règle de *La normalisation du serveur*
-- [ ] release du kit
+- [x] secrets : un store laissait déjà intacte une valeur inchangée ; sans
+      droit de lecture sur la metadata KV, Vault ne réenregistre plus non plus
+      l'owner à chaque passage (tests de contrat « valeur inchangée, aucune
+      écriture »)
+- [x] weebo-operator-kit#7 mergée (2026-10-18)
+- [ ] release du kit (v0.18.0, cassante : `VaultSecretStore::write_path`)
 
 **Ensuite, dans les opérateurs**
 
-- [ ] weebo-authentik : remplacer `domain::drift` par celui du kit ;
+- [x] weebo-authentik (#20, en attente du tag) : remplacer `domain::drift` par celui du kit ;
       comparer `expression` (ScopeMapping) avec `same_trimmed`, test de
       contrat avec une expression renvoyée sans `\n` final
-- [ ] weebo-forgejo : `differs` / `differs_flag` remplacés par
+- [x] weebo-forgejo (#15, en attente du tag) : `differs` / `differs_flag` remplacés par
       `Drift::note` (ou `keep`), pour avoir les champs dans l'Event
 
 **weebo-authentik** (PR #18, release v0.18.2, 2026-10-18)
@@ -384,7 +391,11 @@ c'est toujours des écritures inutiles.
 - [x] `expression` des ScopeMappings : dérivait à chaque cycle en
       v0.18.2 (voir *La normalisation du serveur*). Corrigé en v0.18.3
       avec un `same_trimmed` local (PR #19), à remplacer par celui du kit
-- [ ] Event `DriftCorrected` et compteur `remote_writes_total` (D4, D6) :
+- [x] Event `DriftCorrected` et compteur `remote_writes_total` (D4, D6),
+      weebo-authentik#20 : le gateway, construit à chaque réconciliation,
+      note ses écritures (`take_writes`), le controller les compte et publie
+      un Event par CR nommant objets et champs, sauf sur un changement de
+      spec. Avant :
       il faut que `ReconcileOutcome` porte la dérive. En attendant, chaque
       correction est journalisée (`drift corrected`, avec les champs).
 - [ ] test de contrat contre un Authentik 2026.8 : deux réconciliations,
@@ -442,3 +453,4 @@ c'est toujours des écritures inutiles.
 | 2026-10-18 | Implémenté dans weebo-authentik (branche `fix/write-only-what-drifts`) : comparaison dans l'adaptateur, brand corrigée ; Event et compteur reportés ; Q3 et Q5 (brand) tranchées |
 | 2026-10-18 | v0.18.2 déployée. Le kit reprend l'API livrée (`Drift::keep*`, `same_set`, `same_subset`) au lieu des `differs*` proposés, et y ajoute `Drift::note` et `same_trimmed`. Nouvelle section *La normalisation du serveur*, après la dérive permanente des `expression` de ScopeMapping ; alerte proposée ; plan découpé en kit puis opérateurs |
 | 2026-10-18 | 0.18.3 déployée et validée : 0 événement d'Authentik sur l'heure 18:30 – 19:30, contre ~480 `model_updated` / h avant. Reste le test de dérive à la main |
+| 2026-10-18 | Kit : `drift`, `remote_writes_total`, alerte `RepeatedDrift`, `announce_drift`, template « lire, comparer, n'écrire que la dérive » (weebo-operator-kit#7, mergée). weebo-authentik#20 (Event `DriftCorrected`, compteur) et weebo-forgejo#15 (PATCH des seuls champs dérivés ; le secret d'un webhook n'est plus jamais renvoyé ; la rotation du client secret OAuth2 imposée par Forgejo est signalée dans l'Event), en attente du tag v0.18.0 |
