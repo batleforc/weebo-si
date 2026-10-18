@@ -49,6 +49,17 @@ spec:
         # Re-enable alongside replicaCount > 1.
         podDisruptionBudget:
           enabled: false
+        # Opts the operator into otel-node's annotation discovery. The chart
+        # serves Prometheus metrics on the `metrics` container port (9090,
+        # metrics.prometheus, on by default); the key is port-suffixed so the
+        # webhook port is never scraped.
+        podAnnotations:
+          io.opentelemetry.discovery.metrics.9090/enabled: "true"
+          io.opentelemetry.discovery.metrics.9090/scraper: "prometheus_simple"
+          io.opentelemetry.discovery.metrics.9090/config: |
+            collection_interval: "30s"
+            endpoint: "`endpoint`"
+            metrics_path: "/metrics"
 
 
 {{- end -}}
