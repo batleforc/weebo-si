@@ -45,11 +45,27 @@ spec:
         # is exempt, so the Deployment can be rescheduled, and everything else
         # unblocks behind it.
         #
-        # Both mutations are load-bearing here -- pods for the env refs above,
-        # secrets for authentik's `secret_key`, which the chart renders into a
-        # Secret and this webhook resolves.
         podsFailurePolicy: Fail
-        secretsFailurePolicy: Fail
+        # Only pod mutation is used. Secret mutation is off: it was never what
+        # resolved anything, and it had become a cluster-wide write block.
+        #   - The one Secret carrying `vault:` refs (auth/authentik, from the
+        #     authentik chart: bootstrap password/token, secret_key) was never
+        #     mutated -- it still holds the refs. Its values reach the processes
+        #     through vault-env, which resolves `envFrom` like `env`: checked on
+        #     2026-10-18 in /proc/<pid>/environ of the server and worker, where
+        #     AUTHENTIK_SECRET_KEY is the resolved 24-character value.
+        #   - A Secret carries no vault.security.banzaicloud.io/* annotations,
+        #     so this webhook fell back to its default address,
+        #     https://vault:8200, which stopped resolving with the move to
+        #     openbao. Under failurePolicy: Fail every CREATE/UPDATE of such a
+        #     Secret was rejected -- authentik's sync failed on it, and so did
+        #     the garbage collector removing a foregroundDeletion finalizer.
+        #   - Turning it back on with a working address would write the
+        #     resolved values into the Secret (persisted in etcd), and Argo CD
+        #     would then fight the webhook forever over git's `vault:` ref.
+        # With it off the chart drops the `secrets` webhook rule and the
+        # `update` verb on secrets; `get` stays.
+        secretsMutation: false
         # Hand the serving cert to cert-manager so it renews itself. The chart's
         # own `certificate.generate` path mints a 1-year self-signed cert once at
         # install and never touches it again -- and ArgoCD's ignoreDifferences on

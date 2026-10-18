@@ -17,11 +17,12 @@ spec:
     syncOptions:
     - CreateNamespace=true
     - Replace=true
-    # Without it, Replace=true re-PUTs every object on every sync, the two
-    # Secrets carrying `vault:` references included. vault-secrets-webhook
-    # intercepts those and, unable to reach Vault for a Secret (it falls back
-    # to https://vault:8200, which no longer resolves), rejects the write:
-    # the whole sync failed even with nothing to change in them.
+    # Without it, Replace=true re-PUTs every object on every sync. Added on
+    # 2026-10-18 when vault-secrets-webhook still mutated Secrets and rejected
+    # every write of the `authentik` Secret (its `vault:` refs, an address
+    # that no longer resolved); secret mutation is now off
+    # (2.argo/helm/vault/main/templates/hook/hook.yaml). Kept: re-PUTting
+    # unchanged objects buys nothing.
     - ApplyOutOfSyncOnly=true
   destination:
     namespace: auth
@@ -40,11 +41,12 @@ spec:
               value: "vault:mv/data/main-config#AUTHENTIK_POSTGRES_USER_PASSWORD"
           {{- if .Values.authentik.postgres.enabled }}
             # CNPG's read-write Service, which follows the primary. Set here
-            # and not as authentik.postgresql.host: that one lands in the
-            # chart's `authentik` Secret, which vault-secrets-webhook refuses
-            # to let anyone update (see ApplyOutOfSyncOnly above). An explicit
-            # env wins over the Secret's envFrom. User and database keep the
-            # chart defaults (authentik/authentik).
+            # and not as authentik.postgresql.host because, at the migration,
+            # the chart's `authentik` Secret could not be updated (see
+            # ApplyOutOfSyncOnly above). An explicit env wins over the
+            # Secret's envFrom, so the Secret's stale AUTHENTIK_POSTGRESQL__HOST
+            # is never read. User and database keep the chart defaults
+            # (authentik/authentik).
             - name: AUTHENTIK_POSTGRESQL__HOST
               value: authentik-pg-rw
           {{- end }}
