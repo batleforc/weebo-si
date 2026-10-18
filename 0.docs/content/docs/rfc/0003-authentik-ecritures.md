@@ -1,0 +1,304 @@
+---
+title: "RFC 0003 — weebo-authentik n'écrit que ce qui diffère"
+description: "L'opérateur réécrit chaque objet Authentik toutes les 5 minutes sans rien changer ; il doit comparer avant d'écrire, comme weebo-forgejo"
+rfc: 0003
+status: Draft
+authors: [batleforc]
+created: 2026-10-18
+updated: 2026-10-18
+decided:
+brick: github.com/batleforc/weebo-authentik, github.com/batleforc/weebo-operator-kit
+supersedes: []
+superseded-by: []
+---
+
+# RFC 0003 — weebo-authentik n'écrit que ce qui diffère
+
+- **Dépôts :** `weebo-authentik` (le correctif), `weebo-operator-kit` (helpers
+  de comparaison et template), weebo-si (rien à changer, sinon retirer les
+  palliatifs)
+- **Base :** weebo-authentik v0.18.1 (kit v0.16.0), Authentik 2026.8.0
+- **Constaté le :** 2026-10-18, pendant la migration CNPG d'Authentik
+
+## Résumé
+
+À chaque réconciliation, soit toutes les 5 minutes (`STEADY_REQUEUE_SECS` du
+kit), weebo-authentik envoie un PATCH pour chaque objet qu'il gère, même
+quand rien n'a changé. Authentik enregistre chacun de ces PATCH comme un
+événement `model_updated`. Chaque événement déclenche des tâches, et chaque
+sauvegarde de provider reconstruit les permissions de l'outpost et lui pousse
+une mise à jour. Sur un cluster où aucun CR n'avait changé en 24 heures, ça
+représente environ 13 300 événements par jour (99,96 % des événements
+d'Authentik), 65 000 tâches par jour, et 3 Go de base en un mois.
+
+La correction : pour chaque kind, lire l'objet distant, le comparer à l'état
+voulu, et n'écrire que s'il diffère. C'est déjà ce que fait weebo-forgejo
+(`differs`, test `creates_then_stays_quiet_until_drift`). Les helpers de
+comparaison passent dans le kit, puisque deux opérateurs en ont besoin, et
+le template cesse de présenter « on écrit à chaque fois » comme le modèle.
+
+## Motivation
+
+### Ce qu'on a mesuré (2026-10-18, sur 24 h)
+
+Aucun des 28 CR de weebo-authentik n'avait vu sa spec ou ses métadonnées
+modifiées. Les événements `model_*` produits dans le même temps par
+`akadmin` avec l'agent `OpenAPI-Generator/2026.5.4/rust` (le client de
+l'opérateur) :
+
+| Objet Authentik | `model_updated` / jour | Objets | Une écriture par objet toutes les |
+| --- | --- | --- | --- |
+| `policybinding` | 2 504 | 9 | 5,2 min |
+| `application` | 2 491 | 9 | 5,2 min |
+| `oauth2provider` | 1 938 | 7 | 5,2 min |
+| `proxyprovider` | 1 106 | 2 | 2,6 min |
+| `group` | 1 080 | 4 | 5,3 min |
+| `scopemapping` | 848 | 3 | 5,1 min |
+| `brand` | 558 | 1 | 2,6 min |
+| `user` | 283 | 1 | 5,1 min |
+| `flow` | 277 | 1 | 5,2 min |
+| `outpost` | 63 | 1 | 23 min |
+
+S'y ajoutent environ 1 100 `rolemodelpermission` supprimées puis recréées
+par jour, autant que de sauvegardes de `proxyprovider`. Au total, sur la
+fenêtre mesurée (17 octobre 11:00 – 18 octobre 11:00), **13 323 des 13 328
+événements d'Authentik (99,96 %)** sont des écritures de l'opérateur.
+
+Le rythme d'environ 5,2 min correspond au requeue de 300 s du kit. Il reste
+à expliquer pourquoi les proxy providers et la brand sont réécrits deux fois
+par cycle. La piste la plus probable : un second chemin les écrit, par
+exemple la réconciliation de l'Application en plus de la leur.
+
+Ce que ça coûte :
+
+- **Base de données :** 94 % des tâches sont des `event_trigger_handler` ou
+  `event_trigger_dispatch` lancées par ces événements. Sur 30 jours, cela
+  donne 2 M de tâches et 6,3 M de lignes de log (2,4 Go), plus 537 000
+  événements (538 Mo), sur une base de 3 Go. Avant l'opérateur, en juin,
+  juillet et août, il y avait une centaine d'événements par mois.
+- **Outpost :** « Provider changed, rebuilding permissions and sending
+  update » toutes les 2 minutes dans les logs. Le proxy embarqué recharge sa
+  config sans raison, et Authentik supprime puis recrée les permissions de
+  ses rôles.
+- **Audit :** les événements utiles (logins, autorisations, changements de
+  mot de passe, une dizaine par jour) sont noyés dans le bruit.
+
+### Palliatifs déjà posés dans weebo-si (2026-10-18)
+
+- `AUTHENTIK_WORKER__TASK_EXPIRATION=days=7` au lieu de 30.
+- `event_retention` du tenant à `days=90` au lieu de 365, posé en base.
+
+Ils bornent la taille, sans réduire le volume. Une fois cette RFC
+implémentée, les deux peuvent revenir à leurs valeurs par défaut.
+
+### Une fois en place
+
+- Une réconciliation sans changement fait des lectures, et **aucune
+  écriture**.
+- Le nombre d'événements `model_*` signés par l'opérateur suit le nombre de
+  changements réels. Au repos, il tombe à zéro.
+- La dérive est toujours corrigée : un objet modifié à la main dans
+  l'interface d'Authentik est remis en état au passage suivant, avec un
+  Event Kubernetes qui le signale.
+
+## Design
+
+### Le principe, par kind
+
+Pour chaque objet :
+
+1. Construire l'état voulu depuis la spec. C'est déjà fait : c'est le corps
+   des requêtes actuelles.
+2. Lire l'objet distant. Il y a déjà un GET pour l'Application, il en faut
+   un par kind.
+3. Comparer **seulement les champs que l'opérateur possède**. Un champ que
+   la spec ne renseigne pas (`None`) n'est « pas d'avis », comme
+   `differs()` chez forgejo, et ne force jamais d'écriture.
+4. S'il y a une différence, envoyer un PATCH **de ces seuls champs**, et
+   émettre un Event `Normal` `DriftCorrected` qui liste les champs
+   concernés. Sinon, aucun appel en écriture.
+
+Les références sont comparées une fois résolues. Les flows sont résolus par
+slug, les property mappings et les certificats par nom, et l'opérateur les
+résout déjà avant chaque écriture. On compare donc des pk avec des pk.
+
+### Les comparaisons délicates
+
+| Kind | Champs comparés | Attention |
+| --- | --- | --- |
+| Application | `name`, `slug`, `provider`, `meta_icon` | `meta_icon` `None` = pas d'avis |
+| OAuth2Provider | `name`, flows (pk), `property_mappings` (ensemble de pk), `client_type`, `grant_types` (ensemble), `client_id`, `access_token_validity`, `signing_key` (pk), `redirect_uris` (ensemble de `(matching_mode, url)`) | ordre non significatif pour les listes ; `access_token_validity` comparée telle qu'Authentik la renvoie, sinon la normaliser des deux côtés ; `client_secret` jamais lu ni écrit ici |
+| ProxyProvider | comme OAuth2 pour les flows et mappings, plus `mode`, `external_host`, `internal_host`… | c'est la sauvegarde qui reconstruit les `rolemodelpermission` : une écriture évitée ici en évite trois |
+| PolicyBinding | `group` (pk), `target`, `order`, `negate`, `enabled` | la résolution du groupe par nom et de l'Application cible reste une lecture |
+| Group | `name`, `is_superuser`, `parent`, `attributes` | `attributes` comparés comme sous-ensemble : seules les clés de la spec, en égalité profonde |
+| User | `username`, `name`, `email`, `is_active`, `groups` (ensemble) | |
+| Brand | `domain`, `default`, flows, `attributes`… | brand par défaut : le basculement existant (#16) reste tel quel |
+| Flow, ScopeMapping, Outpost | champs de la spec ; providers de l'outpost en ensemble | `expression` d'un ScopeMapping comparée octet pour octet |
+
+Le principe : **une liste dont l'ordre n'a pas de sens pour Authentik se
+compare comme un ensemble**. Une liste ordonnée se compare telle quelle. Si
+le doute subsiste pour un champ, il le dit dans son test.
+
+### Dans le kit (règle des deux opérateurs)
+
+weebo-forgejo a ses `differs()` et `differs_flag()` dans
+`crates/application/src/use_cases/mod.rs`. weebo-authentik en aurait besoin
+à son tour : ils passent dans `weebo-kit-domain`, dans un module `drift`.
+
+- `differs(desired: &Option<T>, remote: &T)` : `None` vaut « pas d'avis » ;
+- `differs_set(desired: &Option<impl IntoIterator>, remote: …)` : ensembles,
+  ordre ignoré ;
+- `differs_subset(desired: &Option<Map>, remote: &Map)` : les clés voulues
+  seulement, en égalité profonde ;
+- `Drift`, la liste des champs qui diffèrent, que le use-case passe à
+  l'Event et au PATCH.
+
+Le template `templates/operator` change de modèle.
+`reconcile_object.rs` décrit aujourd'hui « created or updated on every
+reconcile (the gateway's `ensure` is idempotent) ». Il devient « lire,
+comparer, écrire seulement en cas de dérive », et son test reprend
+`creates_then_stays_quiet_until_drift` : une seconde réconciliation sur un
+faux distant inchangé ne fait **aucun** appel en écriture. Les opérateurs
+déjà générés ne sont pas touchés, mais un nouvel opérateur, Stalwart
+compris (RFC 0001), part du bon modèle.
+
+`ReconcileMetrics` gagne un compteur
+`<prefix>_remote_writes_total{kind, cause}`, avec `cause` valant `created`,
+`drift` ou `deleted`. Une écriture au repos devient ainsi visible dans les
+métriques, au lieu de se découvrir dans la taille d'une base.
+
+### Le requeue
+
+Les 300 s du kit restent. Le correctif ramène une réconciliation au repos à
+quelques GET par objet, ce qui est négligeable. Rendre le requeue
+configurable ne réglerait pas le problème : moins d'écritures inutiles,
+c'est toujours des écritures inutiles.
+
+### Décisions
+
+| # | Décision | Pourquoi |
+| --- | --- | --- |
+| D1 | Comparer avant d'écrire, pour tous les kinds | C'est la cause. Ralentir le requeue ou purger plus vite ne fait que réduire le symptôme. |
+| D2 | `None` dans la spec = pas d'avis | Comme forgejo. Sinon un champ jamais renseigné forcerait un PATCH à chaque passage, ou écraserait un réglage fait à la main. |
+| D3 | PATCH des seuls champs qui diffèrent | Un PATCH complet sur un seul champ dérivé réécrit le reste, et peut déclencher les mêmes effets de bord, comme la reconstruction des permissions. |
+| D4 | Un Event `DriftCorrected` à chaque correction | Une dérive corrigée sans trace cache une modification manuelle, ou une incompatibilité avec une version d'Authentik. |
+| D5 | Helpers et template dans le kit | Deux opérateurs en ont besoin (forgejo l'a déjà, authentik en aurait besoin) : c'est la règle d'entrée dans le kit. |
+| D6 | Un compteur `remote_writes_total` | Le bug a tourné six semaines sans se voir. Il se lit maintenant dans un panneau. |
+
+## Sécurité
+
+- **Pas de nouveau droit :** l'opérateur fait déjà des GET sur ces objets
+  (Application, résolution des flows, groupes, mappings, certificats).
+- **Moins de surface :** moins d'écritures, et l'audit Authentik redevient
+  lisible.
+- **La dérive reste corrigée.** Un champ possédé modifié à la main est
+  réécrit au passage suivant, comme aujourd'hui, mais avec un Event. Un
+  champ que la spec ne renseigne pas n'est plus réécrit (D2). Ce n'est pas
+  une régression : il n'était déjà pas dans le corps des requêtes.
+
+## Exploitation
+
+- **Validation dans weebo-si :**
+  - après déploiement, la requête du tableau de *Motivation* sur une heure
+    doit renvoyer 0 événement `model_updated` signé par l'opérateur, hors
+    changement de CR ;
+  - les logs de l'outpost ne doivent plus montrer « Provider changed… »
+    toutes les 2 minutes ;
+  - `remote_writes_total{cause="drift"}` doit être à 0 au repos.
+- **Test de dérive :** modifier à la main un champ possédé (le nom d'une
+  Application dans l'interface). Il doit revenir sous 5 minutes, avec un
+  Event `DriftCorrected` qui le nomme.
+- **Rollback :** revenir à la version précédente de l'opérateur, qui
+  réécrit tout à chaque fois. C'est sans risque pour les données, on
+  retrouve seulement le bruit.
+- **Après stabilisation :** retirer les palliatifs de weebo-si
+  (`AUTHENTIK_WORKER__TASK_EXPIRATION`), ou les garder comme valeurs
+  raisonnables. `event_retention` à 90 jours peut rester un choix d'audit.
+
+## Alternatives considérées
+
+1. **Ralentir le requeue** (30 min au lieu de 5). Ça divise le bruit par
+   six sans le supprimer, et la dérive est corrigée six fois plus tard.
+2. **Ne réconcilier que sur changement de CR** (pas de requeue au repos).
+   Une modification faite dans l'interface d'Authentik ne serait plus jamais
+   corrigée, ce qui casse le contrat GitOps de l'opérateur.
+3. **Comparer un hash de l'état voulu** gardé dans le status. Ça évite le
+   GET, mais ne voit pas une dérive côté Authentik : c'est l'alternative 2
+   avec un détour.
+4. **Filtrer les événements côté Authentik** (désactiver l'enregistrement
+   des `model_updated`). Authentik ne le permet pas finement, on perdrait
+   l'audit des vraies modifications, et l'outpost continuerait de recharger.
+5. **Rester avec les palliatifs.** Ils bornent la base, mais l'outpost
+   recharge toujours toutes les 2 minutes et l'audit reste noyé.
+
+## Inconvénients et risques
+
+- **Des comparaisons à écrire et à maintenir pour chaque kind,** en suivant
+  les montées de version d'Authentik : un champ renommé ou renormalisé
+  produirait une « dérive » permanente. Le compteur `drift` et l'Event la
+  rendent visible tout de suite, au lieu de la laisser tourner en silence.
+- **Une normalisation ratée** (un ensemble comparé comme une liste, par
+  exemple) produit une dérive à chaque passage, donc le comportement
+  d'aujourd'hui, mais visible. Le test « reste silencieux » de chaque kind
+  l'attrape avant la release.
+
+## Questions ouvertes
+
+| # | Question | Bloquant |
+| --- | --- | --- |
+| Q1 | Authentik renvoie-t-il `access_token_validity` (et les autres durées) exactement sous la forme écrite (`hours=1`), ou normalisée ? | non (sinon : normaliser des deux côtés) |
+| Q2 | L'ordre des `redirect_uris` et des `property_mappings` a-t-il un sens pour Authentik ? Proposé : non, ce sont des ensembles. | non |
+| Q3 | Le basculement de brand par défaut (#16) a-t-il besoin d'écrire à chaque passage, ou seulement quand la brand par défaut diffère ? | non |
+| Q4 | Faut-il un Event `DriftCorrected` par champ, ou un seul par objet avec la liste ? Proposé : un par objet. | non |
+| Q5 | Pourquoi les proxy providers et la brand sont-ils écrits deux fois par cycle ? Si c'est un double chemin d'écriture, le supprimer en même temps. | non |
+
+## Plan d'implémentation
+
+**weebo-operator-kit**
+
+- [ ] `weebo-kit-domain::drift` : `differs`, `differs_set`, `differs_subset`,
+      `Drift` ; weebo-forgejo y bascule ses helpers
+- [ ] `ReconcileMetrics` : `remote_writes_total{kind, cause}`
+- [ ] template `reconcile_object` : lire, comparer, écrire si dérive ; test
+      « reste silencieux » ; doc du template
+
+**weebo-authentik**
+
+- [ ] un `get_*` par kind dans `RemoteGateway` (déjà présent pour
+      l'Application)
+- [ ] use-cases : comparer puis PATCH des seuls champs dérivés, Event
+      `DriftCorrected`, compteur. Dans l'ordre du gain :
+      PolicyBinding, Application, OAuth2Provider, ProxyProvider, Group,
+      ScopeMapping, Brand, User, Flow, Outpost
+- [ ] pour chaque kind, un test `creates_then_stays_quiet_until_drift`
+      (aucun appel en écriture au second passage) et un test de dérive
+- [ ] test de contrat contre un Authentik 2026.8 : deux réconciliations,
+      zéro événement `model_updated` au second passage
+
+**weebo-si**
+
+- [ ] montée de version de l'opérateur ; validation (*Exploitation*)
+- [ ] décider du sort des palliatifs ; left-todo à jour
+
+## Références
+
+- weebo-authentik v0.18.1 :
+  `crates/adapters-outbound/src/authentik_http/{applications,providers,policy_bindings,groups,users,brands,flows,scope_mappings,outposts}.rs`
+  (PATCH sans comparaison), `crates/application/src/use_cases/reconcile_application.rs`
+- weebo-forgejo : `crates/application/src/use_cases/mod.rs` (`differs`,
+  `differs_flag`), `reconcile_organization.rs`
+  (`creates_then_stays_quiet_until_drift`)
+- weebo-operator-kit v0.17.0 :
+  `templates/operator/crates/application/src/use_cases/reconcile_object.rs`,
+  `crates/weebo-kit-runtime/src/controller.rs` (`STEADY_REQUEUE_SECS`)
+- Authentik 2026.8 : `/authentik/lib/default.yml` (`worker.task_expiration`),
+  `django_dramatiq_postgres/broker.py` (`_auto_purge`), table
+  `authentik_tenants_tenant.event_retention`
+- [RFC 0001](/docs/rfc/0001-stalwart) : la réconciliation des comptes
+  Stalwart suit ce modèle
+
+## Changelog
+
+| Date | Changement |
+| --- | --- |
+| 2026-10-18 | Brouillon initial, après la mesure faite pendant la migration CNPG d'Authentik |
