@@ -51,7 +51,7 @@ mail:
   project: dev-base
 
 che:
-  enabled: true
+  enabled: false
   project: dev
 
 repo: ""
