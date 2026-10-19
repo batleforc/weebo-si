@@ -101,6 +101,10 @@ data "vault_pki_secret_backend_issuer" "intermediate" {
   issuer_ref = keys({ for k, v in data.vault_pki_secret_backend_issuers.pki_intermediate_issuers.key_info : k => k if jsondecode(v).is_default == true })[0]
 }
 
+# `mail.svc.cluster.local` : le Service `stalwart` du namespace `mail`
+# (2.argo/helm/mail), que les apps joignent en SMTP/IMAP sous ce nom. Un
+# `*.weebo.poc` ne convient pas : CoreDNS le renvoie sur Traefik, qui ne
+# porte que le HTTPS. Borne au namespace `mail`, pas a tout `svc.cluster.local`.
 resource "vault_pki_secret_backend_role" "intermediate_role" {
   backend = vault_mount.pki_int.path
   # The literal "default", not a UUID resolved at apply time. Pinning the id of
@@ -115,7 +119,7 @@ resource "vault_pki_secret_backend_role" "intermediate_role" {
   allow_ip_sans    = true
   key_type         = "rsa"
   key_bits         = 4096
-  allowed_domains  = ["weebo.poc"]
+  allowed_domains  = ["weebo.poc", "mail.svc.cluster.local"]
   allow_subdomains = true
   require_cn = false
 }

@@ -1,0 +1,154 @@
+{{- $s := .Values.stalwart -}}
+---
+# One replica (RFC 0001: one node, no Stalwart cluster). Disposable: the data
+# is in Postgres (DataStore) and RustFS (BlobStore), so the pod has no volume
+# claim -- /var/lib/stalwart and the log directory are emptyDirs.
+#
+# Stalwart listens on its defaults (25, 465, 993, 995, 4190, 443, 8080) plus
+# the 587 the bootstrap plan adds; only 587, 993, 443 and 8080 have a Service
+# port, and the CiliumNetworkPolicy decides who reaches them.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: stalwart
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: stalwart
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  serviceName: stalwart
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: stalwart
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: stalwart
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/stalwart/config.yaml") . | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        # The image's `stalwart` user and group.
+        runAsUser: 2000
+        runAsGroup: 2000
+        fsGroup: 2000
+        seccompProfile:
+          type: RuntimeDefault
+        # The image grants the binary cap_net_bind_service as a FILE
+        # capability, which no_new_privs (allowPrivilegeEscalation: false)
+        # drops. Ports below 1024 are opened to unprivileged users instead.
+        sysctls:
+          - name: net.ipv4.ip_unprivileged_port_start
+            value: "0"
+      containers:
+        - name: stalwart
+          image: "{{ $s.image.repository }}:{{ $s.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          args: ["--config", "/etc/stalwart/config.json"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: STALWART_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: stalwart-pg-cred
+                  key: password
+            # The break-glass admin, `<user>:<password>`; also what the
+            # bootstrap Job authenticates as.
+            - name: STALWART_RECOVERY_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: stalwart-admin
+                  key: recovery
+            # Read by the BlobStore (`EnvironmentVariable` secrets of the plan).
+            - name: STALWART_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stalwart-s3-cred
+                  key: accesskey
+            - name: STALWART_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stalwart-s3-cred
+                  key: secretkey
+            # The public base URL (OAuth/OIDC metadata, links), not the pod's.
+            - name: STALWART_PUBLIC_URL
+              value: "https://{{ $s.dns }}"
+            - name: SSL_CERT_FILE
+              value: {{ printf "%s/%s" $s.caTrust.mountPath $s.caTrust.key | quote }}
+          ports:
+            - name: submission
+              containerPort: 587
+            - name: imaps
+              containerPort: 993
+            - name: https
+              containerPort: 443
+            - name: http
+              containerPort: 8080
+          startupProbe:
+            httpGet:
+              path: /healthz/live
+              port: http
+            periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /healthz/live
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /healthz/ready
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml $s.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/stalwart
+              readOnly: true
+            # Pointed at by the plan's `x:Certificate` (File variant).
+            - name: tls
+              mountPath: /etc/stalwart-tls
+              readOnly: true
+            - name: weebo-ca
+              mountPath: {{ $s.caTrust.mountPath }}
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/stalwart
+            - name: logs
+              mountPath: /var/log/stalwart
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          secret:
+            secretName: stalwart-config
+            defaultMode: 0440
+        - name: tls
+          secret:
+            secretName: stalwart-tls
+            defaultMode: 0440
+        - name: weebo-ca
+          configMap:
+            name: {{ $s.caTrust.configMap }}
+            items:
+              - key: {{ $s.caTrust.key }}
+                path: {{ $s.caTrust.key }}
+        - name: data
+          emptyDir: {}
+        - name: logs
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: tmp
+          emptyDir: {}

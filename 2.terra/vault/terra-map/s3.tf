@@ -102,3 +102,26 @@ resource "vault_kv_secret_v2" "main-s3" {
     }
   )
 }
+# Le BlobStore S3 de Stalwart (2.argo/helm/mail) : bucket, user et policy
+# `mail` de l'entree `- name: mail` de 2.argo/helm/database/sub
+# (s3.mainInstance.creds), lue par le tenant ET par le StatefulSet stalwart.
+resource "random_string" "mail-accessKey" {
+  length  = 42
+  special = false
+}
+
+resource "random_string" "mail-secretKey" {
+  length  = 42
+  special = false
+}
+
+resource "vault_kv_secret_v2" "mail-s3" {
+  mount = "mv"
+  name  = "mail/s3"
+  data_json = jsonencode(
+    {
+      accesskey = random_string.mail-accessKey.result
+      secretkey = random_string.mail-secretKey.result
+    }
+  )
+}

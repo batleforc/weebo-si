@@ -1,0 +1,44 @@
+{{- $s := .Values.stalwart -}}
+---
+# The listeners' certificate (587 STARTTLS, 993, 443), from the internal CA.
+#
+#   - `stalwart.<ns>.svc[.cluster.local]`: the name apps submit to (the `host`
+#     of mv/<app>/smtp). The PKI role (2.terra/vault/terra-map/pki.tf) allows
+#     `mail.svc.cluster.local` for that. Not mail.weebo.internal: nothing
+#     resolves it, and *.weebo.poc goes to Traefik.
+#   - `<dns>`: Traefik's side of the HTTPS route, and the name Traefik checks
+#     on the way to the backend (stalwart/ingress.yaml).
+#
+# Stalwart reads the mounted files through an `x:Certificate` in `File`
+# variant (bootstrap plan). Whether it re-reads them on renewal is RFC 0001
+# Q5: until then, a renewal wants a restart of the pod.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: stalwart-tls
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  secretName: stalwart-tls
+  commonName: {{ $s.dns }}
+  dnsNames:
+    - {{ $s.dns }}
+    - stalwart.{{ .Release.Namespace }}.svc
+    - stalwart.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    name: vault-issuer
+    kind: ClusterIssuer
+  privateKey:
+    algorithm: RSA
+    size: 4096
+    encoding: PKCS8
+  subject:
+    organizationalUnits:
+      - Infra
+    organizations:
+      - WeeboSI
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth

@@ -1,0 +1,36 @@
+{{- if .Values.mail.enabled -}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mail
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: {{ .Values.mail.project }}
+  source:
+    repoURL: '{{ .Values.repo }}'
+    path: '2.argo/helm/mail'
+    targetRevision: '{{ .Values.branch }}'
+    helm:
+      releaseName: mail
+      valuesObject:
+        project: "{{ .Values.mail.project }}"
+        repo: "{{ .Values.repo }}"
+        branch: "{{ .Values.branch }}"
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'mail'
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}
