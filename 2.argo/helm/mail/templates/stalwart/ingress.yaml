@@ -1,0 +1,41 @@
+{{- $s := .Values.stalwart -}}
+---
+# HTTPS only (WebUI, JMAP): submission and IMAP are not routed by Traefik.
+# Traefik re-encrypts to Stalwart's 443 and checks its certificate against the
+# internal CA, under the in-cluster name.
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: stalwart
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  serverName: stalwart.{{ .Release.Namespace }}.svc.cluster.local
+  rootCAs:
+    - secret: stalwart-tls
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: stalwart
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: stalwart
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ $s.dns }}`)
+      priority: 10
+      services:
+        - name: stalwart
+          namespace: {{ .Release.Namespace }}
+          port: 443
+          scheme: https
+          serversTransport: stalwart
+  tls:
+    secretName: stalwart-tls

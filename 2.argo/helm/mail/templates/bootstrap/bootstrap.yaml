@@ -1,0 +1,395 @@
+{{- $b := .Values.bootstrap -}}
+{{- $name := "stalwart-bootstrap" -}}
+---
+# Configures Stalwart and mints the two API keys weebo-stalwart will
+# authenticate with (RFC 0001, D17, D24), on the model of forgejo's
+# operator/token.yaml. Two runs of the same pod (`mail.bootstrapPod` below):
+#
+#   - a PostSync hook, after every sync of this Application -- what configures
+#     a fresh install, and re-applies the plan whenever the chart changes. It
+#     waits for Stalwart first;
+#   - a daily CronJob, for what happens between syncs (a key revoked, the
+#     Secret deleted, a restored database, a setting changed by hand).
+#
+# Neither is watched. In phase 1 a failure shows on the StalwartInstance
+# (TokenSecretMissing, InstanceUnauthorized). Each run, as the recovery admin
+# (mv/mail/admin):
+#
+#   1. `prepare` waits for /healthz/ready, notes whether the 587 listener and
+#      the S3 BlobStore already exist, and renders the plan (_plan.tpl) with
+#      the secrets of its environment;
+#   2. `apply` runs `stalwart-cli apply` on it (upserts: a second run changes
+#      nothing that matters);
+#   3. `finish` restarts the StatefulSet once if step 1 found the listener or
+#      the BlobStore missing (Stalwart binds listeners and opens the blob
+#      store at start only), then, for each of the two keys of the Secret,
+#      keeps it while Stalwart accepts it (an authenticated GET /jmap/session:
+#      both hold `authenticate`) -- the usual case; otherwise deletes the
+#      operator account's keys of the same name (a half-finished run, a
+#      Secret deleted by hand), creates a new one (`permissions: Replace`)
+#      and finally rewrites the Secret with both:
+#        - `token`: files/operator-api-key-permissions.json, what a key needs
+#          to create `User` accounts, nothing of the server's settings, no
+#          `impersonate`;
+#        - `appPasswordToken`: files/app-password-key-permissions.json, App
+#          Passwords for the sending accounts (D24): `impersonate` (an App
+#          Password of another account), `emailSend`, sysAppPassword*,
+#          nothing else.
+#      Both are created by the recovery admin with the operator account's
+#      `accountId` (ApiKey/set as an `impersonate` holder).
+#
+# The ServiceAccount can create Secrets, get/update that one, and get/patch
+# the `stalwart` StatefulSet; no Vault write (`mail-read` is enough). The
+# Secret is created at run time, outside the Application: Argo neither diffs
+# nor prunes it.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+rules:
+  # `create` cannot be narrowed by name (the object does not exist yet);
+  # everything else can.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: [{{ $b.token.secretName | quote }}]
+    verbs: ["get", "update"]
+  # The restart that binds a new listener / opens the S3 BlobStore.
+  - apiGroups: ["apps"]
+    resources: ["statefulsets"]
+    resourceNames: ["stalwart"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+data:
+  plan.ndjson: |
+    {{- include "mail.plan" . | nindent 4 }}
+  operator-api-key-permissions.json: |
+    {{- .Files.Get "files/operator-api-key-permissions.json" | nindent 4 }}
+  app-password-key-permissions.json: |
+    {{- .Files.Get "files/app-password-key-permissions.json" | nindent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}-sync
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    # Replaced at the next sync, not deleted on success: the last run's logs
+    # stay readable until then.
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: {{ add $b.token.syncWaitSeconds 600 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $name }}
+    spec:
+      {{- include "mail.bootstrapPod" (dict "ctx" . "wait" $b.token.syncWaitSeconds) | nindent 6 }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  schedule: {{ $b.token.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: {{ $name }}
+        spec:
+          {{- include "mail.bootstrapPod" (dict "ctx" . "wait" 60) | nindent 10 }}
+
+{{- define "mail.bootstrapPod" -}}
+{{- $b := .ctx.Values.bootstrap -}}
+{{- $wait := .wait -}}
+{{- with .ctx -}}
+serviceAccountName: stalwart-bootstrap
+automountServiceAccountToken: true
+restartPolicy: Never
+enableServiceLinks: false
+securityContext:
+  runAsNonRoot: true
+  # Distroless' `nonroot` (the CLI image); the curl image runs as any uid.
+  # By uid: runAsNonRoot cannot check a user given by name.
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+initContainers:
+  - name: prepare
+    image: "{{ $b.image.repository }}:{{ $b.image.tag }}"
+    securityContext:
+      {{- include "mail.restrictedContainer" . | nindent 6 }}
+    env:
+      {{- include "mail.bootstrapEnv" . | nindent 6 }}
+      - name: WAIT_SECONDS
+        value: {{ $wait | quote }}
+      - name: OIDC_ISSUER
+        valueFrom:
+          secretKeyRef:
+            name: stalwart-oidc
+            key: issuer
+      - name: OIDC_CLIENT_ID
+        valueFrom:
+          secretKeyRef:
+            name: stalwart-oidc
+            key: clientId
+      {{- /* The passwords only while the plan sends them (oidc.default false). */}}
+      {{- $passwords := ternary (list) $b.serviceAccounts .Values.oidc.default }}
+      {{- range $passwords }}
+      - name: {{ include "mail.passwordVar" .name }}
+        valueFrom:
+          secretKeyRef:
+            name: stalwart-accounts
+            key: {{ .name }}
+      {{- end }}
+      - name: PLAN_VARS
+        value: "OIDC_ISSUER OIDC_CLIENT_ID{{ range $passwords }} {{ include "mail.passwordVar" .name }}{{ end }}"
+    command: ["/bin/sh", "-ec"]
+    args:
+      - |
+        jmap() { # <method> <arguments>
+          curl -sSf -u "$ADMIN_USER:$ADMIN_PASSWORD" -H 'Content-Type: application/json' "$STALWART_URL/jmap" \
+            -d "{\"using\":[\"urn:ietf:params:jmap:core\",\"urn:stalwart:jmap\"],\"methodCalls\":[[\"$1\",$2,\"0\"]]}"
+        }
+
+        # 1. Stalwart up? The hook can start before CNPG and the pod are.
+        deadline=$(( $(date +%s) + WAIT_SECONDS ))
+        until curl -sf -o /dev/null "$STALWART_URL/healthz/ready"; do
+          [ "$(date +%s)" -lt "$deadline" ] || { echo "Stalwart not ready after ${WAIT_SECONDS}s"; exit 1; }
+          sleep 10
+        done
+
+        # What only a restart picks up, BEFORE the plan creates it.
+        : > /work/restart
+        jmap x:NetworkListener/get '{"ids":null,"properties":["name"]}' | grep -Eq '"name": *"submission"' \
+          || echo "submission listener" >> /work/restart
+        jmap x:BlobStore/get '{"ids":["singleton"]}' | grep -Eq '"@type": *"S3"' \
+          || echo "S3 blob store" >> /work/restart
+
+        # The plan, with its secrets (alphanumeric, or URLs: no `|`, `&` or
+        # `\` to escape).
+        cp /plan/plan.ndjson /work/plan.ndjson
+        for v in $PLAN_VARS; do
+          value=$(printenv "$v") || { echo "$v is not set"; exit 1; }
+          sed -i "s|\${$v}|$value|g" /work/plan.ndjson
+        done
+        if grep -q '\${' /work/plan.ndjson; then echo "unfilled placeholder in the plan"; exit 1; fi
+        mkdir -p /work/cache
+    volumeMounts:
+      - name: plan
+        mountPath: /plan
+        readOnly: true
+      - name: work
+        mountPath: /work
+  - name: apply
+    image: "{{ $b.cli.repository }}:{{ $b.cli.tag }}"
+    securityContext:
+      {{- include "mail.restrictedContainer" . | nindent 6 }}
+    env:
+      - name: STALWART_URL
+        value: "http://stalwart.{{ .Release.Namespace }}.svc:8080"
+      - name: STALWART_USER
+        valueFrom:
+          secretKeyRef:
+            name: stalwart-admin
+            key: username
+      - name: STALWART_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: stalwart-admin
+            key: password
+      # The CLI caches the server's schema under the user cache directory.
+      - name: XDG_CACHE_HOME
+        value: /work/cache
+      - name: HOME
+        value: /work
+    args: ["apply", "--file", "/work/plan.ndjson", "--no-color"]
+    volumeMounts:
+      - name: work
+        mountPath: /work
+containers:
+  - name: finish
+    image: "{{ $b.image.repository }}:{{ $b.image.tag }}"
+    securityContext:
+      {{- include "mail.restrictedContainer" . | nindent 6 }}
+    env:
+      {{- include "mail.bootstrapEnv" . | nindent 6 }}
+      - name: OPERATOR_ACCOUNT
+        value: {{ $b.operatorAccount | quote }}
+      - name: TOKEN_NAME
+        value: {{ $b.token.name | quote }}
+      - name: APP_PASSWORD_TOKEN_NAME
+        value: {{ $b.token.appPasswordName | quote }}
+      - name: SECRET_NAME
+        value: {{ $b.token.secretName | quote }}
+      - name: NAMESPACE
+        value: {{ .Release.Namespace }}
+      - name: WAIT_SECONDS
+        value: {{ $wait | quote }}
+    command: ["/bin/sh", "-ec"]
+    args:
+      - |
+        sa=/var/run/secrets/kubernetes.io/serviceaccount
+        kapi="https://kubernetes.default.svc"
+        secrets="$kapi/api/v1/namespaces/$NAMESPACE/secrets"
+        sts="$kapi/apis/apps/v1/namespaces/$NAMESPACE/statefulsets/stalwart"
+        kube() { curl -sS --cacert "$sa/ca.crt" -H "Authorization: Bearer $(cat "$sa/token")" "$@"; }
+        jmap() { # <method> <arguments>
+          curl -sSf -u "$ADMIN_USER:$ADMIN_PASSWORD" -H 'Content-Type: application/json' "$STALWART_URL/jmap" \
+            -d "{\"using\":[\"urn:ietf:params:jmap:core\",\"urn:stalwart:jmap\"],\"methodCalls\":[[\"$1\",$2,\"0\"]]}"
+        }
+        field() { sed -n "s/.*\"$1\": *\"\([^\"]*\)\".*/\1/p"; }
+        wait_ready() {
+          deadline=$(( $(date +%s) + WAIT_SECONDS + 300 ))
+          until curl -sf -o /dev/null "$STALWART_URL/healthz/ready"; do
+            [ "$(date +%s)" -lt "$deadline" ] || { echo "Stalwart not ready"; exit 1; }
+            sleep 5
+          done
+        }
+
+        # 3a. One restart, when the plan created what Stalwart reads at start.
+        if [ -s /work/restart ]; then
+          echo "restarting stalwart for: $(tr '\n' ',' < /work/restart)"
+          now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          code=$(kube -o /dev/null -w '%{http_code}' -X PATCH -H 'Content-Type: application/strategic-merge-patch+json' \
+            -d "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"kubectl.kubernetes.io/restartedAt\":\"$now\"}}}}}" "$sts")
+          case "$code" in 2??) ;; *) echo "restarting the StatefulSet failed ($code)"; exit 1 ;; esac
+          # Rolled out: the update revision is current and the pod ready.
+          deadline=$(( $(date +%s) + WAIT_SECONDS + 300 ))
+          while :; do
+            sleep 5
+            status=$(kube "$sts" | tr -d ' \n')
+            current=$(echo "$status" | field currentRevision)
+            update=$(echo "$status" | field updateRevision)
+            ready=$(echo "$status" | sed -n 's/.*"readyReplicas":\([0-9]*\).*/\1/p')
+            [ -n "$update" ] && [ "$current" = "$update" ] && [ "${ready:-0}" -ge 1 ] && break
+            [ "$(date +%s)" -lt "$deadline" ] || { echo "stalwart did not come back"; exit 1; }
+          done
+        fi
+        wait_ready
+
+        # 3b. Still valid? Each key of the Secret, checked on its own.
+        stored=$(kube "$secrets/$SECRET_NAME" || true)
+        valid() { # <secret key> -> the stored key, or nothing when refused/missing
+          v=$(echo "$stored" | field "$1" | base64 -d 2>/dev/null || true)
+          [ -n "$v" ] || { echo "no $1 in $SECRET_NAME" >&2; return 0; }
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $v" "$STALWART_URL/jmap/session")
+          if [ "$code" = 200 ]; then printf '%s' "$v"; else echo "stored $1 refused ($code), replacing it" >&2; fi
+        }
+        token=$(valid token)
+        app_token=$(valid appPasswordToken)
+        if [ -n "$token" ] && [ -n "$app_token" ]; then echo "tokens valid"; exit 0; fi
+
+        # 4. Fresh ones, on the operator's account (created by the plan).
+        ids=$(jmap x:Account/query "{\"filter\":{\"name\":\"$OPERATOR_ACCOUNT\"}}" \
+          | sed -n 's/.*"ids": *\[\([^]]*\)\].*/\1/p' | tr -d '" ')
+        case "$ids" in ""|*,*) echo "expected one account named $OPERATOR_ACCOUNT, got [$ids]"; exit 1 ;; esac
+        account=$ids
+        mint() { # <description> <permissions file> -> the new key
+          # Stalwart refuses nothing here, but two keys of the same name would
+          # leave the old one valid: drop them first.
+          old=$(jmap x:ApiKey/get "{\"accountId\":\"$account\",\"ids\":null,\"properties\":[\"id\",\"description\"]}" \
+            | tr -d ' \n' | awk -v RS='{' -v d="\"description\":\"$1\"" \
+                'index($0, d) && match($0, /"id":"[^"]*"/) { printf "%s%s", (n++ ? "," : ""), substr($0, RSTART + 5, RLENGTH - 5) }')
+          if [ -n "$old" ]; then
+            jmap x:ApiKey/set "{\"accountId\":\"$account\",\"destroy\":[$old]}" | grep -q '"destroyed"' \
+              || { echo "deleting the old $1 keys failed" >&2; return 1; }
+          fi
+          perms=$(tr -d ' \n' < "$2")
+          new=$(jmap x:ApiKey/set "{\"accountId\":\"$account\",\"create\":{\"k\":{\"description\":\"$1\",\"permissions\":{\"@type\":\"Replace\",\"permissions\":$perms}}}}" \
+            | field secret)
+          [ -n "$new" ] || { echo "Stalwart returned no $1 key" >&2; return 1; }
+          printf '%s' "$new"
+        }
+        if [ -z "$token" ]; then
+          token=$(mint "$TOKEN_NAME" /plan/operator-api-key-permissions.json) || exit 1
+        fi
+        if [ -z "$app_token" ]; then
+          app_token=$(mint "$APP_PASSWORD_TOKEN_NAME" /plan/app-password-key-permissions.json) || exit 1
+        fi
+
+        # 5. Into the Secret, both keys: replaced whole, created when missing.
+        body=$(printf '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"%s","namespace":"%s","labels":{"app.kubernetes.io/managed-by":"%s"}},"type":"Opaque","stringData":{"token":"%s","appPasswordToken":"%s"}}' \
+          "$SECRET_NAME" "$NAMESPACE" "stalwart-bootstrap" "$token" "$app_token")
+        code=$(kube -o /dev/null -w '%{http_code}' -X PUT -H 'Content-Type: application/json' -d "$body" "$secrets/$SECRET_NAME")
+        if [ "$code" = 404 ]; then
+          code=$(kube -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d "$body" "$secrets")
+        fi
+        case "$code" in 2??) echo "tokens written to $SECRET_NAME" ;; *) echo "writing $SECRET_NAME failed ($code)"; exit 1 ;; esac
+    volumeMounts:
+      - name: plan
+        mountPath: /plan
+        readOnly: true
+      - name: work
+        mountPath: /work
+volumes:
+  - name: plan
+    configMap:
+      name: stalwart-bootstrap
+  - name: work
+    emptyDir: {}
+{{- end -}}
+{{- end -}}
+
+{{- define "mail.bootstrapEnv" -}}
+- name: STALWART_URL
+  value: "http://stalwart.{{ .Release.Namespace }}.svc:8080"
+- name: ADMIN_USER
+  valueFrom:
+    secretKeyRef:
+      name: stalwart-admin
+      key: username
+- name: ADMIN_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: stalwart-admin
+      key: password
+{{- end -}}
+
+{{- define "mail.restrictedContainer" -}}
+allowPrivilegeEscalation: false
+readOnlyRootFilesystem: true
+capabilities:
+  drop: ["ALL"]
+{{- end -}}

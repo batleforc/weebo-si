@@ -26,3 +26,4 @@ configMapGenerator:
       - ./terra-map/angos.tf
       - ./terra-map/batlehub.tf
       - ./terra-map/forgejo.tf
+      - ./terra-map/mail.tf

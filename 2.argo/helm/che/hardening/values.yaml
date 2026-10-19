@@ -509,7 +509,8 @@ users:
     # into dev-ws-<username> and writes as the namespace owner.
     username: batleforc
     # The RoleBindings use the apiserver identity, "labsso:" + this email.
-    email: max@weebo.poc
+    # Same value as the AuthentikUser's email (auth/sub, identity.users).
+    email: max@weebo.internal
     team: weebo
     active: true
     # authentik: { mode: Ensure, groupRefs: [] } would have the operator

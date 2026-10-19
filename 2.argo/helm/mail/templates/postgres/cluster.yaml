@@ -1,0 +1,24 @@
+---
+# Stalwart's DataStore, reached at `stalwart-rw.<ns>.svc:5432` -- CNPG's
+# read-write Service. No `imageName`, as for forgejo: the operator picks the
+# image matching its own version. Stalwart creates its schema itself.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: stalwart
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  instances: {{ .Values.postgres.instances }}
+  storage:
+    size: {{ .Values.postgres.storage.size }}
+    storageClass: {{ .Values.postgres.storage.storageClassName }}
+  bootstrap:
+    initdb:
+      database: {{ .Values.postgres.database }}
+      owner: {{ .Values.postgres.owner }}
+      # Written from Vault by secret/pg-cred.yaml; naming it also stops CNPG
+      # from generating a `stalwart-app` Secret of its own.
+      secret:
+        name: stalwart-pg-cred

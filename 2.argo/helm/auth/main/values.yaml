@@ -82,6 +82,9 @@ authentik:
       # mv/forgejo/auth.
       forgejo:
         enabled: true
+      # New, not adopted: 2.argo/helm/mail reads its client from mv/mail/auth.
+      stalwart:
+        enabled: true
       vault:
         enabled: false
 

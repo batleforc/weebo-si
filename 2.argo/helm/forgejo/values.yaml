@@ -47,6 +47,8 @@ forgejo:
   #   mv/forgejo/admin   <- idem
   #   mv/forgejo/s3      <- 2.terra/vault/terra-map/s3.tf
   #   mv/forgejo/auth    <- written by the authentik operator (auth/sub)
+  #   mv/forgejo/smtp    <- 2.terra/vault/terra-map/mail.tf (phase 0 of
+  #                         RFC 0001), then weebo-stalwart
 
   # ── Repositories ───────────────────────────────────────────────────────────
   # The git repositories themselves, plus app.ini and the queues: what has to
@@ -94,8 +96,20 @@ forgejo:
   # resets the password to the Vault one on every pod start, so Vault stays
   # the only place it is written. The chart refuses `admin` as a username.
   admin:
-    email: forgejo-admin@weebo.poc
+    email: forgejo-admin@weebo.internal
     passwordMode: keepUpdated
+
+  # ── Mail ───────────────────────────────────────────────────────────────────
+  # Notifications and password resets, through Stalwart (2.argo/helm/mail,
+  # RFC 0001): submission on 587 with STARTTLS, as the `forgejo@weebo.internal`
+  # sending account, `From: noreply@weebo.internal` (one of its aliases).
+  # host, port, username, password and from all come from mv/forgejo/smtp
+  # (templates/secret/smtp-cred.yaml) -- written by Terraform in phase 0
+  # (2.terra/vault/terra-map/mail.tf), by weebo-stalwart from phase 1 on. The
+  # server's certificate (stalwart.mail.svc.cluster.local, internal CA) is
+  # verified against the caTrust bundle below.
+  mailer:
+    enabled: true
 
   # ── SSO ────────────────────────────────────────────────────────────────────
   # Authentik, through the `forgejo` application declared in

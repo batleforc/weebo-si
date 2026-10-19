@@ -1,0 +1,28 @@
+---
+# config.json holds the DataStore and nothing else: everything else lives in
+# that store and is set by the bootstrap plan. A Secret only for symmetry
+# with the rest -- the password is not in it, Stalwart reads it from its
+# environment.
+#
+# TLS without verification, as forgejo's `SSL_MODE: require`: CNPG serves a
+# self-signed CA.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: stalwart-config
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+type: Opaque
+stringData:
+  config.json: |
+    {{- dict
+        "@type" "PostgreSql"
+        "host" (printf "stalwart-rw.%s.svc" .Release.Namespace)
+        "port" 5432
+        "database" .Values.postgres.database
+        "authUsername" .Values.postgres.owner
+        "authSecret" (dict "@type" "EnvironmentVariable" "variableName" "STALWART_DB_PASSWORD")
+        "useTls" true
+        "allowInvalidCerts" true
+      | toPrettyJson | nindent 4 }}

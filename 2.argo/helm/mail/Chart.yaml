@@ -1,0 +1,6 @@
+apiVersion: v2
+name: mail
+description: Stalwart, the cluster's internal mail server (RFC 0001, phase 0)
+type: application
+version: 0.1.0
+appVersion: "v0.16.27"

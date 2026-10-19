@@ -1,0 +1,135 @@
+{{- $np := .Values.networkPolicy -}}
+---
+# "Nothing leaves the cluster" does not depend on Stalwart's configuration
+# (RFC 0001, D12): the server's egress is cut at the Cilium level.
+#
+# Scoped to the Stalwart pod, not the whole namespace: the CNPG instances
+# beside it talk to the apiserver and are not Stalwart. The bootstrap pods
+# have their own policy, below.
+#
+# Egress: DNS, the database, and Traefik -- auth.weebo.poc (OIDC discovery,
+# JWKS) and s3-main.weebo.poc (BlobStore) both resolve to Traefik inside the
+# cluster (CoreDNS rewrite). If the `traefik-ingress` policy
+# (2.argo/helm/ingress/sub), off today (`fromWholeCluster`), is ever
+# restricted, `mail` has to be in it. Nothing else: no MX lookup that
+# matters, no relay, no WebUI or GeoIP download from GitHub (Stalwart logs
+# those failures).
+#
+# Ingress: 587/993 from the listed namespaces only, 443 from Traefik, 8080
+# from the operator and from this namespace (the bootstrap), and the kubelet
+# probes.
+#
+# Cilium matches L4 after the Service translation: the ports below are the
+# pods' ports (Traefik's websecure listens on 8443 behind its 443).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: stalwart
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: stalwart
+  ingress:
+    - fromEndpoints:
+        {{- range $np.mailClients }}
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: {{ . | quote }}
+        {{- end }}
+      toPorts:
+        - ports:
+            - port: "587"
+              protocol: TCP
+            - port: "993"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: {{ $np.operatorNamespace | quote }}
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: {{ .Release.Namespace | quote }}
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    # kubelet probes (/healthz/* on 8080).
+    - fromEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: stalwart
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: traefik
+            app.kubernetes.io/name: traefik
+      toPorts:
+        - ports:
+            - port: "8443"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
+---
+# The bootstrap Job and CronJob pods: Stalwart's management port, and the
+# apiserver (the operator's token Secret, the restart of the StatefulSet).
+# Nothing outside the cluster either.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: stalwart-bootstrap
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: stalwart-bootstrap
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: stalwart
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver

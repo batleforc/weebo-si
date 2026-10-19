@@ -45,6 +45,11 @@ forgejo:
   enabled: true
   project: dev-base
 
+# Stalwart, the internal mail server (2.argo/helm/mail, RFC 0001).
+mail:
+  enabled: true
+  project: dev-base
+
 che:
   enabled: true
   project: dev
@@ -187,6 +192,8 @@ project:
       - oci://code.forgejo.org/forgejo-helm/forgejo
       - oci://ghcr.io/batleforc/charts/weebo-forgejo
       - oci://ghcr.io/batleforc/charts/weebo-batlehub
+      # Phase 1 of RFC 0001: the operator is not deployed yet.
+      - oci://ghcr.io/batleforc/charts/weebo-stalwart
     dest:
       # batlehub's chart renders an Application of its own -- the upstream
       # chart, pulled from the OCI repo above -- and an Application lives in
@@ -209,6 +216,12 @@ project:
       # Pod Security exception it needs covers nothing else.
       - server: https://kubernetes.default.svc
         namespace: "angos-node"
+      # Stalwart (2.argo/helm/mail), and its operator weebo-stalwart
+      # (phase 1 of RFC 0001, not deployed yet).
+      - server: https://kubernetes.default.svc
+        namespace: "mail"
+      - server: https://kubernetes.default.svc
+        namespace: "weebo-stalwart"
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"
@@ -233,6 +246,13 @@ project:
         kind: "ForgejoInstance"
       - group: "forgejo.weebo.io"
         kind: "ForgejoNamespacePolicy"
+      # weebo-stalwart's cluster-scoped kinds (phase 1 of RFC 0001).
+      - group: "stalwart.weebo.io"
+        kind: "StalwartInstance"
+      - group: "stalwart.weebo.io"
+        kind: "StalwartNamespacePolicy"
+      - group: "stalwart.weebo.io"
+        kind: "StalwartDomain"
   - name: dev
     includeBaseRepo: true
     sourceRepo:

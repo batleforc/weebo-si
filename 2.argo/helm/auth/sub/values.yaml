@@ -192,7 +192,11 @@ identity:
       - crName: batleforc
         username: batleforc
         name: max
-        email: max@weebo.poc
+        # The mail domain is weebo.internal (Stalwart refuses .poc, RFC 0001
+        # D23); HTTP names stay *.weebo.poc. It is also the apiserver identity
+        # (`labsso:` + email, 1.pulu-init): che/hardening's users.*.email
+        # must say the same.
+        email: max@weebo.internal
         isActive: true
         # Authentik group names, like parentRef above -- NOT the crName of the
         # AuthentikGroup CRs.
@@ -687,6 +691,53 @@ applications:
         allowedRedirectUris:
           - matchingMode: strict
             url: "https://git.weebo.poc/user/oauth2/authentik/callback"
+
+  # Stalwart, the internal mail server (2.argo/helm/mail, RFC 0001 -- in
+  # weebo-operator-kit, docs/rfc-0001-stalwart.md). A new application, not an
+  # adoption: nothing to import.
+  #
+  # PUBLIC client: the Stalwart WebUI runs the authorization-code flow (PKCE)
+  # in the browser against this provider, and Stalwart's `Oidc` directory then
+  # validates the bearer tokens it is handed -- the issuer is
+  # `<url>/application/o/stalwart/`, so `slug: stalwart` is load-bearing, and
+  # Authentik puts the client id in `aud`, which is the directory's
+  # `requireAudience`. 2.argo/helm/mail reads both from mv/mail/auth.
+  #
+  # `weebo groups` feeds the directory's `claimGroups: groups`;
+  # `preferred_username` (profile) is the mailbox local part, completed with
+  # `@weebo.internal`. Every weebo user gets a mailbox, hence weebo_user.
+  #
+  # The redirect URI is the WebUI's own origin: Stalwart serves it on
+  # mail.weebo.poc (urlPrefix /admin and /account). Check the exact callback
+  # path against the WebUI on the first login and pin it strict.
+  stalwart:
+    enabled: false
+    slug: stalwart
+    name: stalwart
+    metaIcon: "https://maxleriche.net/public/media/application/stalwart.png"
+    accessGroup: weebo_user
+    secretTargets:
+      - backend: vault
+        path: mail/auth
+    provider:
+      kind: oauth2
+      oauth2:
+        clientType: public
+        # Also the `aud` of its tokens: the Oidc directory's requireAudience.
+        clientId: stalwart
+        authorizationFlow: default-provider-authorization-implicit-consent
+        invalidationFlow: default-provider-invalidation-flow
+        signingKey: "authentik Self-signed Certificate"
+        grantTypes: ["authorization_code", "refresh_token"]
+        propertyMappings:
+          - "weebo email"
+          - "weebo groups"
+          - "authentik default OAuth Mapping: OpenID 'profile'"
+          - "authentik default OAuth Mapping: OpenID 'openid'"
+          - "authentik default OAuth Mapping: OpenID 'offline_access'"
+        allowedRedirectUris:
+          - matchingMode: regex
+            url: "https://mail\\.weebo\\.poc/.*"
 
   # weebo-si-hardening's endpoint-gateway (2.argo/helm/che/main/templates/
   # endpoint-gateway.yaml): signs developers in before a Che workspace

@@ -185,6 +185,33 @@ spec:
                   name: forgejo-s3-cred
                   key: secretkey
             {{- end }}
+            {{- if $f.mailer.enabled }}
+            - name: FORGEJO__MAILER__SMTP_ADDR
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-smtp
+                  key: host
+            - name: FORGEJO__MAILER__SMTP_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-smtp
+                  key: port
+            - name: FORGEJO__MAILER__USER
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-smtp
+                  key: username
+            - name: FORGEJO__MAILER__PASSWD
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-smtp
+                  key: password
+            - name: FORGEJO__MAILER__FROM
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-smtp
+                  key: from
+            {{- end }}
 
           config:
             APP_NAME: {{ $f.appName | quote }}
@@ -218,6 +245,12 @@ spec:
               MINIO_BUCKET: {{ $f.s3.bucket }}
               MINIO_LOCATION: {{ $f.s3.region }}
               MINIO_BUCKET_LOOKUP_TYPE: {{ $f.s3.bucketLookup }}
+            {{- end }}
+            {{- if $f.mailer.enabled }}
+            # Address, port and credentials from mv/forgejo/smtp, above.
+            mailer:
+              ENABLED: true
+              PROTOCOL: smtp+starttls
             {{- end }}
             # In Postgres rather than the chart's `memory`: every theme change
             # restarts the pod, and memory sessions would sign everyone out.

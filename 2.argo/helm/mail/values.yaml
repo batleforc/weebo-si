@@ -1,0 +1,181 @@
+repo: ""
+project: ""
+branch: ""
+
+# Stalwart, the cluster's only mail server, for the internal domain
+# `weebo.internal` (RFC 0001, which lives in weebo-operator-kit:
+# docs/rfc-0001-stalwart.md). Nothing leaves the cluster: no MX, no relay, and
+# the CiliumNetworkPolicy (templates/stalwart/network-policy.yaml) cuts the
+# egress whatever Stalwart's own configuration says.
+#
+# This is PHASE 0: Stalwart, its bootstrap and a plan (`stalwart-cli apply`)
+# that creates the domain, the apps' sending accounts and the account of the
+# future operator. weebo-stalwart itself (phase 1) is not deployed here yet.
+#
+# Waves, as for forgejo: SecretStore (none), ExternalSecrets and Certificate
+# (1), CNPG (2), StatefulSet, Services, IngressRoute, policies (3), then the
+# PostSync Job `stalwart-bootstrap` and its daily CronJob.
+#
+# ── Secrets ──────────────────────────────────────────────────────────────────
+# None of them are in this file. All come from Vault through External Secrets
+# (templates/secret/), with the `mail-read` role (mv/mail/* only):
+#
+#   mv/mail/pg        <- 2.terra/vault/terra-map/mail.tf
+#   mv/mail/admin     <- idem (recovery admin, the bootstrap's identity)
+#   mv/mail/accounts  <- idem (phase-0 sending accounts' passwords)
+#   mv/mail/s3        <- 2.terra/vault/terra-map/s3.tf
+#   mv/mail/auth      <- written by the authentik operator (auth/sub, `stalwart`)
+
+stalwart:
+  image:
+    repository: docker.io/stalwartlabs/stalwart
+    # Pinned to the patch: a patch that changes the JMAP schema needs an
+    # operator release first (RFC 0001, D13).
+    # renovate: datasource=docker depName=docker.io/stalwartlabs/stalwart
+    tag: v0.16.27
+
+  # The mail domain. Stalwart refuses `weebo.poc` (its domain validator only
+  # takes a Public Suffix List suffix or a reserved one), hence `.internal`
+  # (RFC 0001, D23). Only mail addresses use it: HTTP names stay *.weebo.poc.
+  domain: weebo.internal
+  # SystemSettings.defaultHostname: EHLO and banners. Same validator.
+  hostname: mail.weebo.internal
+  # The WebUI and JMAP, through Traefik (HTTPS only).
+  dns: mail.weebo.poc
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+
+  # Stalwart reaches auth.weebo.poc (OIDC discovery, JWKS) and
+  # s3-main.weebo.poc (BlobStore), both signed by the internal CA. The
+  # `weebo.poc` bundle (public roots plus that CA, replicated by
+  # trust-manager) is mounted and named by SSL_CERT_FILE, which the rustls
+  # native-roots loader reads.
+  caTrust:
+    configMap: weebo.poc
+    key: main-ca.crt
+    mountPath: /etc/ssl/weebo
+
+# ── Postgres ─────────────────────────────────────────────────────────────────
+# The DataStore (config.json): everything but the blobs. CNPG, as for forgejo.
+postgres:
+  instances: 1
+  database: stalwart
+  owner: stalwart
+  storage:
+    size: 10Gi
+    storageClassName: longhorn
+
+# ── Blobs ────────────────────────────────────────────────────────────────────
+# The BlobStore singleton, set by the bootstrap plan: messages and files go to
+# the RustFS tenant (bucket, user and policy from `- name: mail` in
+# 2.argo/helm/database/sub). The keys never enter the plan: Stalwart reads
+# them from its own environment (`EnvironmentVariable` secrets).
+s3:
+  endpoint: https://s3-main.weebo.poc
+  bucket: mail
+  # RustFS ignores it, the client wants one.
+  region: weebo
+
+# ── OIDC ─────────────────────────────────────────────────────────────────────
+# The `Oidc` directory, against the `stalwart` application of
+# 2.argo/helm/auth/sub (issuer and client id from mv/mail/auth).
+oidc:
+  # Explicit, though it is Stalwart's default: the login is the Authentik
+  # username, completed with `usernameDomain` (stalwart.domain).
+  claimUsername: preferred_username
+  claimName: name
+  claimGroups: groups
+  # Makes that directory THE authentication directory
+  # (`Authentication.directoryId`, RFC 0001 D24). On the community edition
+  # the default directory serves every domain, and an Oidc one refuses every
+  # Password login ("Unsupported credentials type for OIDC backend") and
+  # every Password credential write ("Cannot set credentials for accounts in
+  # an external directory"). App Passwords and API keys bypass the directory
+  # and keep working: the sending accounts move to App Passwords.
+  #
+  # Rollout -- do not turn it on before step 2:
+  #   0. (now) false: the sending accounts of `bootstrap.serviceAccounts`
+  #      log in on 587 with their Terraform passwords;
+  #   1. phase 1: they leave `bootstrap.serviceAccounts` and Terraform, the
+  #      operator imports them and forces a rotation (D21), which puts an App
+  #      Password on each and publishes it to mv/<namespace>/smtp;
+  #   2. only then true. The old Password credentials become unusable, and
+  #      harmless. With true the plan never sends `credentials` (Stalwart
+  #      would refuse the write and the daily run would fail).
+  default: false
+
+# ── Network ──────────────────────────────────────────────────────────────────
+# Submission (587, STARTTLS) and IMAPS (993) are only reachable from these
+# namespaces. HTTPS (443) only from Traefik, management (8080) only from the
+# operator's namespace and this one (the bootstrap Job).
+networkPolicy:
+  mailClients:
+    - forgejo
+    - auth
+    - argocd
+  operatorNamespace: weebo-stalwart
+
+# ── Bootstrap ────────────────────────────────────────────────────────────────
+# templates/bootstrap/: a PostSync Job after every sync, and the same pod as a
+# daily CronJob (RFC 0001, D17). Each run, as the recovery admin:
+#   1. waits for /healthz/ready;
+#   2. `stalwart-cli apply` of an upsert plan (BlobStore, Oidc directory,
+#      system settings, the 587 listener, the certificate, the domain, the
+#      sending accounts below, the operator's account); restarts the
+#      StatefulSet once when that plan just created the listener or switched
+#      the BlobStore, which Stalwart only picks up at start;
+#   3. checks the operator account's two API keys in Secret
+#      `token.secretName` (`token`, `appPasswordToken`) and keeps each one
+#      Stalwart still accepts;
+#   4. for each refused or missing one, deletes the operator account's keys of
+#      its name, creates a new one (permissions: Replace) and rewrites the
+#      Secret with both:
+#        - `token` (`token.name`, files/operator-api-key-permissions.json):
+#          domains, accounts, lists; no `impersonate`, no settings;
+#        - `appPasswordToken` (`token.appPasswordName`,
+#          files/app-password-key-permissions.json): App Passwords of the
+#          sending accounts (D24), so `impersonate` but nothing else.
+bootstrap:
+  # The sending accounts of phase 0, `<name>@<domain>`, their passwords in
+  # mv/mail/accounts (key = name), the same ones Terraform writes to the
+  # app's mv/<namespace>/smtp. They move to StalwartServiceAccount CRs in
+  # phase 1 (removed from here and from Terraform first, D21: while listed
+  # here with `oidc.default: false`, each run resets their `credentials` to
+  # that password, App Passwords included). With `oidc.default: true` they
+  # are upserted without `credentials`.
+  serviceAccounts:
+    - name: forgejo
+      # forgejo's `[mailer] FROM`.
+      aliases: [noreply]
+    - name: authentik
+    - name: argocd
+
+  # The account weebo-stalwart will authenticate as, through an API key. No
+  # password: the bootstrap creates its two keys as the recovery admin.
+  operatorAccount: weebo-stalwart
+
+  token:
+    # Read by the StalwartInstance (tokenSecretRef) in phase 1.
+    secretName: stalwart-operator-token
+    # The API keys' descriptions, the names the bootstrap replaces: the main
+    # key (Secret key `token`) and the App Password one (`appPasswordToken`).
+    name: weebo-stalwart
+    appPasswordName: weebo-stalwart-app-passwords
+    schedule: "30 4 * * *"
+    # First install: CNPG bootstrap and Stalwart's first start come first.
+    syncWaitSeconds: 600
+
+  image:
+    repository: docker.io/curlimages/curl
+    # renovate: datasource=docker depName=docker.io/curlimages/curl
+    tag: "8.23.0"
+  cli:
+    # Distroless: the plan is rendered beside it by the curl container.
+    repository: ghcr.io/stalwartlabs/cli
+    # renovate: datasource=docker depName=ghcr.io/stalwartlabs/cli
+    tag: "1.0.12"
