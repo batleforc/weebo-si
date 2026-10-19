@@ -47,11 +47,11 @@ forgejo:
 
 # Stalwart, the internal mail server (2.argo/helm/mail, RFC 0001).
 mail:
-  enabled: true
+  enabled: false
   project: dev-base
 
 che:
-  enabled: false
+  enabled: true
   project: dev
 
 repo: ""
