@@ -110,6 +110,17 @@
       addLabels: ['needs-revendor'],
     },
     {
+      description: 'Inside the ClickStack fork, the otel-collector subchart constraint and the clickstack-otel-collector tag are upstream choices, taken as-is on re-vendor: the subchart past ~0.146 broke the chart (2026-08-31), and the collector tag is paired with the HyperDX appVersion it was released with',
+      matchFileNames: ['2.helm/clickstack/**'],
+      matchDepNames: ['opentelemetry-collector', 'docker.clickhouse.com/clickhouse/clickstack-otel-collector'],
+      enabled: false,
+    },
+    {
+      description: 'mongodb-kubernetes 1.13+ ships the Ops Manager 9 agent (109.x), which treats MongoDB 5.0 as end of life; ClickStack Mongo is still 5.0. Lift once the MongoDBCommunity runs 6.0 or later.',
+      matchDepNames: ['mongodb-kubernetes'],
+      allowedVersions: '<1.13.0',
+    },
+    {
       description: 'Docs site: one PR for the whole lockfile',
       matchFileNames: ['0.docs/**'],
       groupName: 'docs site',

@@ -2,7 +2,7 @@ bankVault:
   enabled: true
   ns: vault-operator
   # renovate: datasource=docker depName=ghcr.io/bank-vaults/helm-charts/vault-operator
-  version: 1.24.0
+  version: 1.24.1
 
 externalSecrets:
   enabled: true

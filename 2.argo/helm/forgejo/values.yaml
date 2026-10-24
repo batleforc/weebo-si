@@ -26,7 +26,7 @@ forgejo:
     name: forgejo
     repoURL: oci://code.forgejo.org/forgejo-helm/forgejo
     # renovate: datasource=docker depName=code.forgejo.org/forgejo-helm/forgejo
-    version: 17.3.0
+    version: 17.3.1
 
   # The chart runs the 15.x LTS by default (15.0.10 on 17.3.0); the operator
   # below needs v16 or later -- older releases lack the admin token API it

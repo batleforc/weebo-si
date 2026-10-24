@@ -8,7 +8,7 @@ angos:
   image:
     registry: ghcr.io/project-angos/angos
     # renovate: datasource=docker depName=ghcr.io/project-angos/angos
-    tag: 1.12.2
+    tag: 1.12.4
   dns: registry.pkg.weebo.poc
   # `[auth.token_service]`, whose secret_key comes from Vault and whose realm
   # is built from `dns` above. The ceiling angos enforces is 86400.
@@ -249,7 +249,7 @@ angos:
     image:
       registry: quay.io/oauth2-proxy/oauth2-proxy
       # renovate: datasource=docker depName=quay.io/oauth2-proxy/oauth2-proxy
-      tag: v7.15.4
+      tag: v7.15.5
     # The cookie the ingress splits on, so a rename here is a rename in the
     # IngressRoute rule -- they are read from the same value on purpose.
     # oauth2-proxy chunks oversized cookies into `<name>_0`, `<name>_1`, which
