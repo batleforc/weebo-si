@@ -1,0 +1,67 @@
+{{- $o := .Values.operator -}}
+{{- if and .Values.forgejo.enabled $o.enabled -}}
+{{- $m := $o.mirrors -}}
+{{- if $m.githubToken.enabled }}
+---
+# The GitHub token the private mirrors clone with (operator.mirrors.githubToken).
+# Written to Vault by hand; the label is what lets the operator read it.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: github-mirror
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  refreshPolicy: Periodic
+  refreshInterval: 24h
+  secretStoreRef:
+    name: cred-store
+  target:
+    name: github-mirror
+    template:
+      metadata:
+        labels:
+          forgejo.weebo.io/credential: "true"
+      # A `git` migration clones with user:password in the URL; auth_token
+      # only reaches the forge-API services. GitHub takes any user name with
+      # a token as the password.
+      data:
+        username: x-access-token
+        password: "{{ `{{ .token }}` }}"
+  data:
+  - secretKey: token
+    remoteRef:
+      key: {{ $m.githubToken.vaultKey }}
+      property: {{ $m.githubToken.property }}
+{{- end }}
+{{- range $m.repositories }}
+{{- if or (not .private) $m.githubToken.enabled }}
+---
+# Pull mirror of {{ .source | default (printf "github.com/batleforc/%s" .name) }}.
+apiVersion: forgejo.weebo.io/v1alpha1
+kind: ForgejoRepository
+metadata:
+  name: mirror-{{ .name | lower }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  organizationRef:
+    name: {{ $m.organization }}
+  name: {{ .name }}
+  private: {{ .private | default false }}
+  migrate:
+    cloneAddr: {{ .source | default (printf "https://github.com/batleforc/%s.git" .name) | quote }}
+    mirror: true
+    mirrorInterval: {{ $m.interval | quote }}
+    {{- if .private }}
+    authSecretRef:
+      name: github-mirror
+      usernameKey: username
+      passwordKey: password
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end -}}

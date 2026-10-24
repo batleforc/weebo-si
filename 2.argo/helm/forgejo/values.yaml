@@ -247,6 +247,52 @@ operator:
       fullName: batleforc
       visibility: public
 
+  # Pull mirrors of the GitHub repositories (templates/operator/mirrors.yaml),
+  # one ForgejoRepository each in `organization`: what a workspace clones and
+  # fetches from, through git's insteadOf, while pushes keep going to GitHub.
+  # Read-only by nature: Forgejo refuses a push to a pull mirror.
+  # `source` defaults to github.com/batleforc/<name>. A `private` entry needs
+  # the GitHub token and is left out until githubToken.enabled.
+  mirrors:
+    organization: batleforc-org
+    interval: 8h
+    githubToken:
+      enabled: false
+      vaultKey: mv/github/mirror
+      property: token
+    repositories:
+      - name: weebo-si
+      - name: weebo-skillsagent
+      - name: Weebo5GitOps
+      - name: ProxyAuthK8S
+      - name: WeeboDevImage
+      - name: weebo-os
+      - name: weebo-operator-kit
+      - name: weebo-forgejo
+      - name: weebo-stalwart
+      - name: weebo-authentik
+      - name: weebo-angos
+      - name: weebo-batlehub
+      - name: weebo-base
+      - name: weebo-che-project
+      - name: weebo-dotfiles-che
+      - name: weebo-si-hardening
+      - name: dotfiles
+      - name: monofolio-rs
+      # weebo-batlehub's cargo git dependency (github.com/batleforc/batlehub
+      # redirects there).
+      - name: batlehub
+        source: https://github.com/batlehub/batlehub.git
+      - { name: weebo-notify-v2, private: true }
+      - { name: easy-3d-stl, private: true }
+      - { name: rift-of-sym, private: true }
+      - { name: weebo-si-netctx, private: true }
+      - { name: weebo-stream-v2, private: true }
+      - { name: weebo-shiori-web, private: true }
+      - { name: einvar-plus-ultra, private: true }
+      - { name: weebo-runner-v22, private: true }
+      - { name: weebo-che-sidecar, private: true }
+
   # The allow-list (ForgejoNamespacePolicy `weebo-allow`). With NO policy in
   # the cluster every namespace may create every namespaced kind against the
   # shared instance; as soon as one exists the default is deny. This one exists
