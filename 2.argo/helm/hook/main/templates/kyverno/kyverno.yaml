@@ -72,6 +72,15 @@ spec:
             imageVerify: false
             generate: false
         crds:
+          # The post-upgrade migrate-resources Job cannot run under ArgoCD: its
+          # ServiceAccount and RBAC are hooks too, with hook-succeeded, so ArgoCD
+          # deletes them before the Job's pod starts and the CLI gets a 401
+          # (seen on the 3.9.2 bump, 2026-10-24). It only rewrites objects to a
+          # new storage version; on a bump that changes one (check
+          # `.status.storedVersions` on the kyverno CRDs), run `kyverno migrate`
+          # by hand.
+          migration:
+            enabled: false
           groups:
             # Storage for what reportsController wrote. Safe to drop only
             # because the features block above stops anything writing them.
