@@ -44,17 +44,22 @@ spec:
             lbipam.cilium.io/sharing-key: "weebo-gate"
             lbipam.cilium.io/ips: "{{ .Values.traefik.ips }}"
             lbipam.cilium.io/sharing-cross-namespace: "*"
-        logs:
-          general:
-            format: json
-          access:
-            enabled: true
-            format: json
-            fields:
-              headers:
-                defaultMode: keep
-                names:
-                  Authorization: redact
+        log:
+          format: json
+        accessLog:
+          enabled: true
+          format: json
+          fields:
+            # Charts before v41 ignored this defaultMode and rendered drop, so
+            # headers only started reaching the logs with the v42 bump. Every
+            # credential-bearing header has to be listed here: the authentik and
+            # oauth2-proxy session cookies ride in Cookie.
+            headers:
+              defaultMode: keep
+              names:
+                Authorization: redact
+                Proxy-Authorization: redact
+                Cookie: redact
         providers:
           kubernetesCRD:
             enabled: {{ .Values.traefik.kubeCRD.enabled }}
