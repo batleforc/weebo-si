@@ -1,7 +1,7 @@
 longhorn:
   enabled: true
   # renovate: datasource=helm depName=longhorn registryUrl=https://charts.longhorn.io
-  version: 1.12.1
+  version: 1.13.0
   domain: longhorn.weebo.poc
   # Namespace of the otel DaemonSet allowed through longhorn 1.12's
   # manager NetworkPolicy -- see templates/longhorn/network-policy.yaml.
