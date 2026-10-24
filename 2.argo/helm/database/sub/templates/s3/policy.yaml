@@ -1,6 +1,10 @@
 {{ if .Values.s3.enabled }}
 {{ range .Values.s3.mainInstance.creds }}
 ---
+# The multipart actions are what reclaiming an abandoned upload takes: angos'
+# `prune` lists the bucket's in-flight uploads and aborts the stale ones, and
+# without ListBucketMultipartUploads its whole sweep failed on AccessDenied --
+# with exit code 0, so the CronJob read as green.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -17,7 +21,10 @@ data:
             "s3:ListBucket",
             "s3:GetObject",
             "s3:PutObject",
-            "s3:DeleteObject"
+            "s3:DeleteObject",
+            "s3:ListBucketMultipartUploads",
+            "s3:ListMultipartUploadParts",
+            "s3:AbortMultipartUpload"
           ],
           "Resource": [
             "arn:aws:s3:::{{.name}}",
