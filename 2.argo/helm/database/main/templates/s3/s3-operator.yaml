@@ -22,6 +22,12 @@ spec:
     helm:
       releaseName: s3
       valuesObject:
+        # The image defaults to Chart.appVersion, which upstream does not bump
+        # in git: the 0.0.8 tag still says 0.0.6, so deploying from the repo
+        # silently ran the old operator. The console reuses this tag.
+        operator:
+          image:
+            tag: {{ .Values.s3Operator.version | quote }}
         sts:
           tls:
             auto: true
