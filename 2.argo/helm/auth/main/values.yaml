@@ -33,7 +33,8 @@ authentik:
         memory: 1Gi
   operator:
     enabled: true
-    version: 0.18.3
+    # renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-authentik
+    version: 0.21.0
     replicaCount: 1
   sub:
     enabled: true
