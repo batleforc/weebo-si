@@ -6,7 +6,7 @@ s3:
   enabled: true
   namespace: s3
   mainInstance:
-    image: rustfs/rustfs:1.0.0-rc.5
+    image: rustfs/rustfs:1.0.3
     dns: s3-main.weebo.poc
     oidc: true
     # Read by RUSTFS_EXTRA_CA_CERT. The file itself is mounted by the
