@@ -84,7 +84,7 @@ clickstack:
   bootstrap:
     enabled: true
     mongoshImage: "mongo:7"
-    curlImage: "curlimages/curl:8.11.1"
+    curlImage: "curlimages/curl:8.23.0"
 
   preauth:
     enabled: true
@@ -117,7 +117,7 @@ clickstack:
 otel:
   enabled: true
   # renovate: datasource=helm depName=opentelemetry-collector registryUrl=https://open-telemetry.github.io/opentelemetry-helm-charts
-  version: "0.171.1"
+  version: "0.177.0"
   clusterName: weebo-si
   ingestLabel: weebo.io/otel-ingest
   ingestSecret: clickstack-ingest
@@ -187,7 +187,7 @@ otel:
 obi:
   enabled: true
   # renovate: datasource=helm depName=opentelemetry-ebpf-instrumentation registryUrl=https://open-telemetry.github.io/opentelemetry-helm-charts
-  version: "0.13.0"
+  version: "0.15.2"
   # Network flow metrics, on top of the application traces OBI produces by
   # default. IP-level and per-flow, so this is the noisier, more expensive half
   # of OBI -- the flag is the rollback switch that keeps tracing working if the

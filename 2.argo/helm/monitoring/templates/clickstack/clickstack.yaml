@@ -73,6 +73,9 @@ spec:
                     # how a system log table is disabled. The operator uses the
                     # same attribute for tcp_port_secure.
                     "@remove": "1"
+                    # The chart's own default TTL for this table (since 3.4.0)
+                    # would otherwise merge in under the removed element.
+                    ttl: null
                   {{- end }}
               # settings:
               #   defaultUserPassword:
