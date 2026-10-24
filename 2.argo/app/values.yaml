@@ -192,6 +192,7 @@ project:
       - oci://code.forgejo.org/forgejo-helm/forgejo
       - oci://ghcr.io/batleforc/charts/weebo-forgejo
       - oci://ghcr.io/batleforc/charts/weebo-batlehub
+      - oci://ghcr.io/batleforc/charts/weebo-angos
       # Phase 1 of RFC 0001: the operator is not deployed yet.
       - oci://ghcr.io/batleforc/charts/weebo-stalwart
     dest:
@@ -212,6 +213,9 @@ project:
       # The weebo-batlehub operator (2.argo/helm/batlehub, operator.*).
       - server: https://kubernetes.default.svc
         namespace: "weebo-batlehub"
+      # The weebo-angos operator (2.argo/helm/angos, operator.*).
+      - server: https://kubernetes.default.svc
+        namespace: "weebo-angos"
       # The angos chart's one node-level object, kept out of `angos` so the
       # Pod Security exception it needs covers nothing else.
       - server: https://kubernetes.default.svc
@@ -235,7 +239,7 @@ project:
         kind: "ClusterSecretStore"
       - group: "external-secrets.io"
         kind: "ClusterExternalSecret"
-      # weebo-forgejo and weebo-batlehub: their CRDs, their admission
+      # weebo-forgejo, weebo-batlehub and weebo-angos: their CRDs, their admission
       # webhooks, and the cluster-scoped kinds of forgejo's API that
       # 2.argo/helm/forgejo declares (batlehub's API has none).
       - group: "apiextensions.k8s.io"

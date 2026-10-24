@@ -1,4 +1,4 @@
-{{- if and .Values.angos.enabled .Values.angos.maintenance.enabled -}}
+{{- if and .Values.angos.enabled .Values.angos.maintenance.enabled (not .Values.operator.enabled) -}}
 {{- range $command, $job := .Values.angos.maintenance.jobs }}
 {{- if $job.enabled }}
 ---

@@ -1,0 +1,35 @@
+{{- $o := .Values.operator -}}
+{{- if and .Values.angos.enabled $o.enabled .Values.angos.maintenance.enabled -}}
+{{- $jobs := .Values.angos.maintenance.jobs -}}
+{{- range $task := list "scrub" "prune" }}
+{{- $m := index $o.maintenance $task }}
+{{- if (index $jobs $task).enabled }}
+---
+# `angos {{ $task }}` on the chart's schedule, run by the operator instead of
+# a CronJob: one writing task at a time per instance, and the prune held by the
+# prune lock. See `operator.maintenance` for the order they are resumed in.
+apiVersion: angos.weebo.io/v1alpha1
+kind: AngosMaintenance
+metadata:
+  name: {{ $o.instance.name }}-{{ $task }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  instanceRef:
+    name: {{ $o.instance.name }}
+  task: {{ title $task }}
+  schedule: {{ (index $jobs $task).schedule | quote }}
+  suspend: {{ $m.suspend }}
+  params:
+    dryRun: {{ $m.dryRun | default false }}
+    deleteUnknown: false
+    # The importer's window: an upload older than this is a leftover, and one
+    # younger is shielded. Above the longest push expected.
+    uploadTimeout: 24h
+  timeoutSeconds: 3600
+  ttlSecondsAfterFinished: 86400
+{{- end }}
+{{- end }}
+{{- end -}}

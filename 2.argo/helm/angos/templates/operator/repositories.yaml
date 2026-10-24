@@ -1,0 +1,31 @@
+{{- $o := .Values.operator -}}
+{{- if and .Values.angos.enabled $o.enabled -}}
+{{- range $name, $repo := .Values.angos.repositories }}
+---
+# `angos.repositories.{{ $name }}`: same prefix byte for byte, so the operator
+# serves the namespaces the chart's Deployment wrote. Same subject vocabulary
+# as the chart's `access`.
+apiVersion: angos.weebo.io/v1alpha1
+kind: AngosRepository
+metadata:
+  name: {{ $name | replace "/" "-" }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  instanceRef:
+    name: {{ $o.instance.name }}
+  prefix: {{ $name | quote }}
+  {{- with $repo.upstreams }}
+  upstreams:
+    {{- range . }}
+    - url: {{ . | quote }}
+    {{- end }}
+  {{- end }}
+  access:
+    {{- range $verb := list "pull" "browse" "push" "delete" }}
+    {{ $verb }}: {{ index ($repo.access | default dict) $verb | default list | toJson }}
+    {{- end }}
+{{- end }}
+{{- end -}}

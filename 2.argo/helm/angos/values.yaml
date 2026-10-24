@@ -373,7 +373,8 @@ angos:
       binDir: /var/lib/kubelet/credential-providers
       installerImage: "alpine:3.22"
 
-  # Storage maintenance, as two CronJobs. Not optional in practice: a delete
+  # Storage maintenance, as two CronJobs -- or, with `operator.enabled`, as two
+  # AngosMaintenances on the same schedules (templates/operator/). Not optional in practice: a delete
   # answers 202 and removes the RECORD, leaving the blob bytes in the bucket
   # until a scrub sweep reclaims them. Without this the S3 bill only grows.
   #
@@ -427,3 +428,92 @@ angos:
     bundleConfigMap: weebo.poc
     bundleKey: main-ca.crt
     mountPath: /etc/ssl/weebo
+
+# ── weebo-angos ──────────────────────────────────────────────────────────────
+# The operator that runs angos from CRs (https://batleforc.github.io/weebo-angos/):
+# an AngosLocalInstance renders config.toml and runs the registry, one
+# AngosRepository per `angos.repositories` entry, the scrub and prune as
+# AngosMaintenances. Deployed as a nested Application in its own namespace,
+# like weebo-forgejo in 2.argo/helm/forgejo; templates/operator/ renders the
+# CRs from the `angos.*` values above, so there is still one place where a
+# registry is declared.
+#
+# Same store, nothing copied: same bucket, same endpoint, no key prefix, the
+# same token-service key, so no client reconnects. The CRs are what
+# `weebo-angos-importer` prints for this chart's values (the operator's
+# docs: "Migrate from weebo-si's chart"), written as templates.
+#
+# The cutover is staged on `serving`:
+#   false  the chart's Deployment serves; the operator's `registry` runs beside
+#          it on the same store, its maintenances suspended. The chart's
+#          CronJobs are gone as soon as the operator is enabled -- two writers
+#          running scrub and prune on one store is what the migration guide
+#          rules out.
+#   true   the IngressRoute and oauth2-proxy point at the Service `registry`;
+#          the chart's Deployment, Service and config Secrets are removed.
+# Rollback before `serving: true`: `enabled: false` (the repositories need
+# `angos.weebo.io/allow-data-deletion: "true"` to be deleted, and with the
+# prune suspended nothing is erased).
+#
+# What stays in this chart whatever the mode: the IngressRoute and its
+# Certificate, oauth2-proxy and the token page, the ServiceAccount `angos` and
+# its issuer-discovery binding, the kubelet's credential provider, the
+# SecretStore and Valkey.
+operator:
+  enabled: true
+  serving: false
+  namespace: weebo-angos
+  chart:
+    name: weebo-angos
+    repoURL: oci://ghcr.io/batleforc/charts/weebo-angos
+    # renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-angos
+    version: 0.1.0
+  # One replica, as for the other operators: the cluster has one worker, so a
+  # second one buys a webhook that dies with the first. The chart's PDB goes
+  # with it -- against a single replica it blocks every node drain.
+  replicaCount: 1
+
+  instance:
+    # Not `angos`: the chart's Deployment and Service keep that name until the
+    # cutover. The Service of the instance is named after it, port 8000.
+    name: registry
+    # 0.1.0 is tested against angos 1.12.2 and 1.12.3, and refuses any other
+    # tag unless the instance is annotated `angos.weebo.io/approved-upgrade`
+    # with that exact tag. 1.12.4 is what runs today and the store is never
+    # walked back, hence the approval. Keep it equal to `angos.image.tag` when
+    # Renovate bumps that, or the instance goes `Ready=False` on the new tag
+    # instead of rolling -- that is the gate working, not a bug. Empty once
+    # the operator's tested list covers the tag.
+    approvedUpgrade: "1.12.4"
+    # Kept as it is in the chart (`us-east-`, truncated): it identifies the
+    # store. Correcting it is a storage change, for after the cutover.
+    s3Region: us-east-
+    # The ExternalSecret the instance reads its credentials from
+    # (templates/operator/credentials.yaml). Labelled
+    # `angos.weebo.io/credential: "true"`, the only Secrets an instance's
+    # pods may read.
+    credentialsSecret: angos-operator
+    resources:
+      requests:
+        cpu: 100m
+        memory: 150Mi
+      limits:
+        memory: 500Mi
+
+  # The operator's scrub and prune, on `angos.maintenance.jobs.*.schedule`.
+  # Both start suspended and the prune as a dry run. A suspended maintenance
+  # waits even on `run-now`, so resuming goes in this order:
+  #   1. `prune.suspend: false` (still `dryRun: true`), then annotate
+  #      `registry-prune` `angos.weebo.io/run-now=$(date +%s)` and read its
+  #      `status.lastDryRun` / Job log: it must print NO `DRY RUN: would
+  #      delete` line, or a prefix is missing from `angos.repositories` and the
+  #      first real prune would erase it;
+  #   2. `scrub.suspend: false` once `serving: true` -- a scrub with the chart's
+  #      Deployment still writing is two writers on one store;
+  #   3. `prune.dryRun: false` once a clean dry run was read.
+  maintenance:
+    scrub:
+      suspend: true
+    prune:
+      suspend: true
+      dryRun: true

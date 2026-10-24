@@ -1,0 +1,136 @@
+{{- $o := .Values.operator -}}
+{{- $a := .Values.angos -}}
+{{- if and $a.enabled $o.enabled -}}
+{{- if $a.scanner.enabled -}}
+{{- fail "operator.enabled: the scanner is not migrated yet (spec.scan + an AngosIdentity adopting mv/angos/scanner) -- keep angos.scanner.enabled false" -}}
+{{- end -}}
+{{- $creds := $o.instance.credentialsSecret -}}
+---
+# The registry, as the operator runs it. Every field comes from the `angos.*`
+# values the chart's Deployment is rendered from, so the two serve the same
+# configuration until `operator.serving` moves the traffic.
+#
+# Its CRD comes from the weebo-angos Application of the same sync, so the
+# first dry-run cannot know the kind: SkipDryRunOnMissingResource, and the
+# Application's retries, cover the time the CRDs take to land.
+apiVersion: angos.weebo.io/v1alpha1
+kind: AngosLocalInstance
+metadata:
+  name: {{ $o.instance.name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    {{- with $o.instance.approvedUpgrade }}
+    angos.weebo.io/approved-upgrade: {{ . | quote }}
+    {{- end }}
+spec:
+  image:
+    repository: {{ $a.image.registry }}
+    tag: {{ $a.image.tag | quote }}
+  replicas: 1
+  logLevel: info
+  resources:
+    {{- toYaml $o.instance.resources | nindent 4 }}
+  server:
+    port: 8000
+  service:
+    type: ClusterIP
+    port: 8000
+  {{- if $a.kubeOidc.enabled }}
+  # The chart's account (templates/angos/rbac.yaml), bound to
+  # system:service-account-issuer-discovery: the operator does not create it.
+  serviceAccount:
+    create: false
+    name: {{ $a.kubeOidc.serviceAccountName }}
+  {{- end }}
+  storage:
+    s3:
+      endpoint: {{ $a.s3Url | quote }}
+      bucket: angos
+      region: {{ $o.instance.s3Region | quote }}
+      credentialsSecretRef:
+        name: {{ $creds }}
+        accessKeyIdKey: access-key-id
+        secretKeyKey: secret-key
+  cache:
+    redis:
+      keyPrefix: angos-cache-
+      urlSecretRef:
+        name: {{ $creds }}
+        key: redis-url
+  auth:
+    oidc:
+      - name: weebo
+        issuerFrom:
+          name: {{ $creds }}
+          key: AUTHENTIK_URL
+        audienceFrom:
+          name: {{ $creds }}
+          key: AUTHENTIK_CLIENT_ID
+        requiredClaims: ["email"]
+    {{- if $a.kubeOidc.enabled }}
+    kubernetes:
+      name: kube
+      issuer: {{ $a.kubeOidc.issuer | quote }}
+      audience: {{ $a.kubeOidc.audience }}
+    {{- end }}
+    tokenService:
+      realm: "https://{{ $a.dns }}/token"
+      ttlSecs: {{ $a.tokenService.ttlSecs }}
+      keySecretRef:
+        name: {{ $creds }}
+        key: token-key
+  {{- if $a.ui.enabled }}
+  ui:
+    enabled: true
+    name: Weebo Registry
+    {{- if $a.ui.nativeAuth }}
+    oidc:
+      provider: weebo
+      clientIdFrom:
+        name: {{ $creds }}
+        key: AUTHENTIK_CLIENT_ID
+      scopes:
+        {{- toYaml (splitList " " ($a.ui.scope | default "openid email profile offline_access groups")) | nindent 8 }}
+    {{- end }}
+  {{- end }}
+  # `angos.policy`, in the operator's names: `browse` is its `catalog`.
+  # `admin` is also granted in every repository, as the chart's _access.tpl does.
+  global:
+    access:
+      catalog:
+        {{- toYaml $a.policy.browse | nindent 8 }}
+      jobs:
+        {{- toYaml $a.policy.jobs | nindent 8 }}
+      admin:
+        {{- toYaml $a.policy.admin | nindent 8 }}
+  {{- if $a.caTrust.enabled }}
+  # The internal CA beside the system store: s3-main.weebo.poc is signed by it,
+  # the upstreams by public roots, and the Bundle carries both.
+  env:
+    - name: SSL_CERT_FILE
+      value: {{ printf "%s/%s" $a.caTrust.mountPath $a.caTrust.bundleKey | quote }}
+  extraVolumes:
+    - name: weebo-ca
+      configMap:
+        name: {{ $a.caTrust.bundleConfigMap | quote }}
+        items:
+          - key: {{ $a.caTrust.bundleKey | quote }}
+            path: {{ $a.caTrust.bundleKey | quote }}
+  extraVolumeMounts:
+    - name: weebo-ca
+      mountPath: {{ $a.caTrust.mountPath | quote }}
+      readOnly: true
+  {{- end }}
+  # angos hot-reloads its configuration; the operator confirms it in the pod's
+  # logs and only rolls the pods when a key needs a restart.
+  reload:
+    mode: Hot
+    onUnconfirmed: Wait
+    timeoutSeconds: 180
+  # A prune waits this long after a repository appears, so a prefix declared a
+  # moment ago is never read as one nobody owns.
+  pruneLock:
+    windowHours: 24
+{{- end -}}

@@ -47,7 +47,7 @@ spec:
             {{- range .Values.angos.oauth2Proxy.trustedProxyCidrs }}
             - --trusted-proxy-ip={{ . }}
             {{- end }}
-            - --upstream=http://angos.{{ .Release.Namespace }}.svc:8000
+            - --upstream=http://{{ include "angos.backend" . }}.{{ .Release.Namespace }}.svc:8000
             - --redirect-url=https://{{ .Values.angos.dns }}/oauth2/callback
             # Authorization is Authentik's job: the application binds
             # `accessGroup`, and anyone it lets through is a legitimate viewer.
