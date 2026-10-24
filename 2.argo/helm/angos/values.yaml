@@ -467,7 +467,7 @@ operator:
     name: weebo-angos
     repoURL: oci://ghcr.io/batleforc/charts/weebo-angos
     # renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-angos
-    version: 0.1.0
+    version: 0.3.1
   # One replica, as for the other operators: the cluster has one worker, so a
   # second one buys a webhook that dies with the first. The chart's PDB goes
   # with it -- against a single replica it blocks every node drain.
@@ -477,7 +477,7 @@ operator:
     # Not `angos`: the chart's Deployment and Service keep that name until the
     # cutover. The Service of the instance is named after it, port 8000.
     name: registry
-    # 0.1.0 is tested against angos 1.12.2 and 1.12.3, and refuses any other
+    # 0.3.1 is tested against angos 1.12.2 and 1.12.3, and refuses any other
     # tag unless the instance is annotated `angos.weebo.io/approved-upgrade`
     # with that exact tag. 1.12.4 is what runs today and the store is never
     # walked back, hence the approval. Keep it equal to `angos.image.tag` when
