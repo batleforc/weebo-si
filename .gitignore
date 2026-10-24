@@ -207,3 +207,9 @@ popeye.html
 kubescape.html
 import-output
 graphify-out/cache/
+
+# wska links: absolute paths into a local clone (wska skill). wska.toml stays
+# committed so `wska install` re-applies the selection.
+.claude/skills/*
+!.claude/skills/graphify/
+.claude/agents/
