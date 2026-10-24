@@ -102,3 +102,21 @@ auth:
         user_id: weebo-batlehub-operator
   {{- end }}
 {{- end }}
+
+{{/*
+batlehub.registries, as YAML, for the same two readers. Adds the `github`
+registries' upstream auth when batlehub.githubToken is on, so the env var it
+names and the block that reads it cannot be out of step.
+*/}}
+{{- define "batlehub.registries" -}}
+{{- $b := .Values.batlehub -}}
+{{- $out := list -}}
+{{- range $b.registries -}}
+{{- $r := deepCopy . -}}
+{{- if and (eq $r.type "github") $b.githubToken.enabled -}}
+{{- $_ := set $r "upstream_auth" (dict "type" "bearer" "token" "${GITHUB_TOKEN}") -}}
+{{- end -}}
+{{- $out = append $out $r -}}
+{{- end -}}
+{{- toYaml $out -}}
+{{- end -}}

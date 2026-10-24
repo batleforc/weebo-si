@@ -374,6 +374,62 @@ batlehub:
     - type: openvsx
       name: vsx
       rbac: *readRbac
+    # What a dev workspace downloads outside a package manager:
+    # mise's github/aqua/ubi tools, Taskfile remote includes and devfile
+    # `parent.uri`s (raw files), then the toolchains. All proxy-only kinds.
+    # Without batlehub.githubToken the `github` registry is anonymous to
+    # api.github.com: 60 requests an hour, and each new ref spends one or two.
+    - type: github
+      name: github
+      raw:
+        enabled: true
+      rbac: *readRbac
+    # RUSTUP_DIST_SERVER / RUSTUP_UPDATE_ROOT (RFC 0024).
+    - type: rustup
+      name: rustup
+      rbac: *readRbac
+    # NODEJS_ORG_MIRROR, and mise's node downloads.
+    - type: nodedist
+      name: node
+      rbac: *readRbac
+    # Plain file trees mise's core tools download from. `generic` has no
+    # default upstream and needs `path_allow`; each host is dedicated to its
+    # tool, so the whole tree is allowed.
+    - type: generic
+      name: go-dist
+      upstreams:
+        - https://dl.google.com/go
+      path_allow: ["**"]
+      rbac: *readRbac
+    - type: generic
+      name: helm-dist
+      upstreams:
+        - https://get.helm.sh
+      path_allow: ["**"]
+      rbac: *readRbac
+    - type: generic
+      name: k8s-dist
+      upstreams:
+        - https://dl.k8s.io
+      path_allow: ["**"]
+      rbac: *readRbac
+    # Che's Get Started samples (registry.devfile.io, RFC 0035). Its own host,
+    # devfile.pkg.weebo.poc through subdomain routing: registry-library asks
+    # for the OCI layers at the host root. Neither client sends a credential,
+    # so anonymous read is required, not a choice.
+    - type: devfile
+      name: devfile
+      rbac: *readRbac
+
+  # A GitHub token for the `github` registry's upstream requests (5000 an hour
+  # instead of 60), as `[registries.upstream_auth]`. Off until the token is in
+  # Vault: batlehub exits on an unset ${GITHUB_TOKEN}, so the env var and the
+  # auth block appear together. A fine-grained token with public read only is
+  # enough; the same Vault entry feeds Forgejo's private mirrors.
+  githubToken:
+    enabled: false
+    vaultKey: mv/github/mirror
+    property: token
 
   # ── The pod ────────────────────────────────────────────────────────────────
   # One replica. S3 storage is the backend several replicas could share, so the

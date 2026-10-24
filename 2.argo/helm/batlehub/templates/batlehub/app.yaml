@@ -73,7 +73,7 @@ spec:
         config:
         {{- include "batlehub.serverConfig" $ | nindent 10 }}
           registries:
-            {{- toYaml $b.registries | nindent 12 }}
+            {{- include "batlehub.registries" $ | nindent 12 }}
 
         env:
           - name: DB_PASSWORD
@@ -119,6 +119,13 @@ spec:
               secretKeyRef:
                 name: batlehub-s3-cred
                 key: AWS_SECRET_ACCESS_KEY
+          {{- end }}
+          {{- if $b.githubToken.enabled }}
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: batlehub-github
+                key: token
           {{- end }}
           {{- if .Values.operator.enabled }}
           - name: OPERATOR_TOKEN_HASH

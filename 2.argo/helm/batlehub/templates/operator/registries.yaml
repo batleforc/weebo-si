@@ -1,6 +1,6 @@
 {{- $o := .Values.operator -}}
 {{- if and .Values.batlehub.enabled $o.enabled $o.manageConfig -}}
-{{- range .Values.batlehub.registries }}
+{{- range (include "batlehub.registries" $ | fromYamlArray) }}
 ---
 # One `[[registries]]` entry of batlehub.registries, as its own object: the
 # operator renders it after the instance's spec.config and pushes the result.
