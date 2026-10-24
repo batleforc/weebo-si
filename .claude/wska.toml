@@ -1,0 +1,4 @@
+# Written by `wska install`. Run `wska install` or `wska update` with no
+# --profile/--item to re-apply it; commit it so other machines can.
+profiles = ["base"]
+items = []
