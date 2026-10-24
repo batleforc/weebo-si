@@ -461,7 +461,7 @@ angos:
 # SecretStore and Valkey.
 operator:
   enabled: true
-  serving: false
+  serving: true
   namespace: weebo-angos
   chart:
     name: weebo-angos
