@@ -100,6 +100,39 @@ angos:
       access:
         pull: ["provider:weebo", "provider:kube"]
         browse: ["provider:weebo"]
+    # The base images of the weebo operators (registry.access.redhat.com/hi/*)
+    # and of notify-v2 / si-hardening (gcr.io/distroless), for a build in a
+    # workspace with no Internet.
+    redhat:
+      scan: false
+      upstreams:
+        - "https://registry.access.redhat.com"
+      access:
+        pull: ["provider:weebo", "provider:kube"]
+        browse: ["provider:weebo"]
+    gcr:
+      scan: false
+      upstreams:
+        - "https://gcr.io"
+      access:
+        pull: ["provider:weebo", "provider:kube"]
+        browse: ["provider:weebo"]
+    # Forgejo's Helm chart (oci://code.forgejo.org/forgejo-helm) and the
+    # devfile images published on Codeberg.
+    forgejo:
+      scan: false
+      upstreams:
+        - "https://code.forgejo.org"
+      access:
+        pull: ["provider:weebo", "provider:kube"]
+        browse: ["provider:weebo"]
+    codeberg:
+      scan: false
+      upstreams:
+        - "https://codeberg.org"
+      access:
+        pull: ["provider:weebo", "provider:kube"]
+        browse: ["provider:weebo"]
     # The local one: what this cluster builds and pushes. Workloads pull it
     # with their own service-account token, humans push it, and only an admin
     # removes anything.
@@ -416,6 +449,28 @@ angos:
         enabled: true
         schedule: "30 3 * * *"
         args: []
+
+  # Pulls a list of images through angos every night, so the caches hold them
+  # before a workspace asks and after an upstream goes away
+  # (templates/angos/precache.yaml). crane runs with a projected
+  # service-account token, the `provider:kube` identity every cache grants
+  # `pull`; its own image comes through the gcr cache like any other pod's.
+  precache:
+    enabled: true
+    # After the 03:00 maintenance, so a prune never runs right behind it.
+    schedule: "30 3 * * *"
+    platform: linux/amd64
+    # gcr.io publishes crane's busybox build under `debug` only: pinned by
+    # digest.
+    image: registry.pkg.weebo.poc/gcr/go-containerregistry/crane:debug@sha256:e78770b31258a3846f878036d9c1f63fbe4c871f9f56990bf77fd95c013e3c1b
+    images:
+      # The workspace images (WeeboDevImage), and what Che adds to each pod
+      # (che.workspaceImages in 2.argo/helm/che/sub).
+      - registry.pkg.weebo.poc/ghcr/batleforc/weebodevimage/che-min-mise:main
+      - registry.pkg.weebo.poc/ghcr/batleforc/weebodevimage/che-browser:main
+      - registry.pkg.weebo.poc/ghcr/batleforc/weebodevimage/che-desktop:main
+      - registry.pkg.weebo.poc/quay/devfile/project-clone:v0.43.0
+      - registry.pkg.weebo.poc/quay/eclipse/che--traefik:v3.7.13-24841fe2de7304c149343d877d2923b4c8800a38ba015dea9174c23b20e344a0
 
   # The internal CA, mounted beside the system store rather than over
   # /etc/ssl/certs the way the `inject-certs` Kyverno policy does: angos has to

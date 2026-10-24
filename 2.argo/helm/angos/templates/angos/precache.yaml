@@ -1,0 +1,110 @@
+{{- $p := .Values.angos.precache -}}
+{{- if and .Values.angos.enabled $p.enabled $p.images -}}
+---
+# angos.precache: one `crane pull` per image, through angos, written to an
+# emptyDir and dropped. The pull is what fills a pull-through cache; the
+# tarball is not kept. Fails the run, listing them, when any image could not
+# be pulled.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: angos-precache
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: angos
+    app.kubernetes.io/component: precache
+spec:
+  schedule: {{ $p.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: angos-precache
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: precache
+              image: {{ $p.image | quote }}
+              command: ["/busybox/sh", "-c"]
+              args:
+                - |
+                  set -u
+                  crane auth login {{ .Values.angos.dns }} -u kube --password-stdin < /var/run/angos/token || exit 1
+                  failed=""
+                  for img in $IMAGES; do
+                    if crane pull --platform {{ $p.platform }} "$img" /work/image.tar; then
+                      echo "cached $img"
+                    else
+                      failed="$failed $img"
+                    fi
+                    rm -f /work/image.tar
+                  done
+                  [ -z "$failed" ] || { echo "not cached:$failed"; exit 1; }
+              env:
+                - name: IMAGES
+                  value: {{ join " " $p.images | quote }}
+                # crane auth login writes $DOCKER_CONFIG/config.json.
+                - name: DOCKER_CONFIG
+                  value: /work/.docker
+                {{- if .Values.angos.caTrust.enabled }}
+                - name: SSL_CERT_FILE
+                  value: {{ printf "%s/%s" .Values.angos.caTrust.mountPath .Values.angos.caTrust.bundleKey | quote }}
+                {{- end }}
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+                - name: token
+                  mountPath: /var/run/angos
+                  readOnly: true
+                {{- if .Values.angos.caTrust.enabled }}
+                - name: weebo-ca
+                  mountPath: {{ .Values.angos.caTrust.mountPath | quote }}
+                  readOnly: true
+                {{- end }}
+              resources:
+                requests:
+                  memory: "64Mi"
+                  cpu: "50m"
+                  ephemeral-storage: 1Gi
+                limits:
+                  memory: "512Mi"
+                  ephemeral-storage: 8Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+          volumes:
+            # One image at a time: the largest workspace image, not the sum.
+            - name: work
+              emptyDir:
+                sizeLimit: 8Gi
+            - name: token
+              projected:
+                sources:
+                  - serviceAccountToken:
+                      path: token
+                      audience: {{ .Values.angos.kubeOidc.audience | quote }}
+                      expirationSeconds: 3600
+            {{- if .Values.angos.caTrust.enabled }}
+            - name: weebo-ca
+              configMap:
+                name: {{ .Values.angos.caTrust.bundleConfigMap | quote }}
+                items:
+                  - key: {{ .Values.angos.caTrust.bundleKey | quote }}
+                    path: {{ .Values.angos.caTrust.bundleKey | quote }}
+            {{- end }}
+{{- end -}}
