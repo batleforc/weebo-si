@@ -513,7 +513,7 @@ operator:
   #   3. `prune.dryRun: false` once a clean dry run was read.
   maintenance:
     scrub:
-      suspend: true
+      suspend: false
     prune:
       suspend: false
-      dryRun: true
+      dryRun: false
