@@ -93,6 +93,11 @@ spec:
     # /vscode/item and /vscode/unpkg/... itself.
     pluginRegistry:
       openVSXURL: {{ .Values.che.openVSXURL | quote }}
+    {{- with .Values.che.devfileRegistryURL }}
+    devfileRegistry:
+      externalDevfileRegistries:
+        - url: {{ . | quote }}
+    {{- end }}
     cheServer:
       extraProperties:
         CHE_SYSTEM_ADMIN_NAME: "batleforc"

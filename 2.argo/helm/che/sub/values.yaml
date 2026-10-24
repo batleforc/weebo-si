@@ -76,6 +76,10 @@ che:
     gateway: registry.pkg.weebo.poc/quay/eclipse/che--traefik:v3.7.13-24841fe2de7304c149343d877d2923b4c8800a38ba015dea9174c23b20e344a0
   # Read anonymously: the editor cannot authenticate to its gallery.
   openVSXURL: https://pkg.weebo.poc/proxy/vsx
+  # The dashboard's Get Started samples: batlehub's `devfile` registry, a
+  # registry.devfile.io proxy on its own host (registry-library asks for the
+  # OCI layers at the host root). Empty: Che's default, registry.devfile.io.
+  devfileRegistryURL: https://devfile.pkg.weebo.poc/
   # OIDC client the Che gateway authenticates against. Only the client secret
   # is sensitive: it stays in mv/eclipse-che/auth and reaches the CheCluster by
   # Secret name (see templates/oauth-secret.yaml). The client id and secret

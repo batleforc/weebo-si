@@ -30,6 +30,15 @@ cheUser:
     path: "config"
     branch: "HEAD"
 
+# The BatleHub instance workspaces are pointed at (templates/batlehub-client.yaml).
+# Empty: no ConfigMap. Set by the team template.
+batlehub:
+  server: ""
+  # BATLEHUB_SETUP_APPLY=true in the workspace: the parent devfiles' postStart
+  # runs `batlehub setup apply --yes` only when it is set (and the binary is
+  # in the image). Off until batlehub RFC 0038 ships.
+  setupApply: false
+
 # Prefix of Che's own ClusterRoles (the `baseline` level): the namespace
 # che-operator runs in.
 cheNamespace: eclipse-che

@@ -80,6 +80,10 @@ config:
           variants:
             - backend: Cilium
               templateRef: { name: weebo-net-kube-api, namespace: weebo-si-hardening }
+        - key: anthropic
+          variants:
+            - backend: Cilium
+              templateRef: { name: weebo-net-anthropic, namespace: weebo-si-hardening }
       baseline: base
       namespaceSelection:
         annotation: hardening.weebo.io/network-profiles
@@ -205,6 +209,18 @@ config:
           spec:
             egress:
               - toEntities: [world]
+        # Claude Code's API, the one service outside angos/batlehub/the forges
+        # a workspace talks to.
+        weebo-net-anthropic:
+          apiVersion: cilium.io/v2
+          kind: CiliumNetworkPolicy
+          spec:
+            egress:
+              - toFQDNs:
+                  - matchName: api.anthropic.com
+                toPorts:
+                  - ports:
+                      - { port: "443", protocol: TCP }
         # kubectl from the workspace terminal (Che injects a kubeconfig).
         weebo-net-kube-api:
           apiVersion: cilium.io/v2
@@ -424,13 +440,23 @@ teams:
             variants:
               - backend: Cilium
                 templateRef: { name: weebo-net-dev-registries, namespace: weebo-si-hardening }
-          # No `internet`: everything goes through angos/batlehub, and a
-          # devfile asking for it gets the default instead (onNotGranted).
           - key: kube-api
             variants:
               - backend: Cilium
                 templateRef: { name: weebo-net-kube-api, namespace: weebo-si-hardening }
-        default: [dev-registries]
+          - key: anthropic
+            variants:
+              - backend: Cilium
+                templateRef: { name: weebo-net-anthropic, namespace: weebo-si-hardening }
+          # The escape hatch: granted, never a default. A
+          # workspace opts in with the devfile attribute
+          # `hardening.weebo.io/network-profiles: [internet]` (world covers
+          # the forges and the API); the others keep the default.
+          - key: internet
+            variants:
+              - backend: Cilium
+                templateRef: { name: weebo-net-internet, namespace: weebo-si-hardening }
+        default: [dev-registries, anthropic]
       imagePolicy:
         catalog:
           - key: angos
@@ -473,6 +499,9 @@ teams:
           # (objects merge, lists are replaced).
           values:
             project: che-users
+            batlehub:
+              server: https://pkg.weebo.poc
+              setupApply: false
             cheUser:
               username: "{USERNAME}"
               email: "{EMAIL}"

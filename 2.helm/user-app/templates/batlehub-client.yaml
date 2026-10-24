@@ -1,0 +1,20 @@
+{{- with .Values.batlehub.server }}
+# The one piece of package configuration a workspace is given:
+# BATLEHUB_SERVER, as an env var in every workspace container. `batlehub
+# setup apply` derives each client's config from that server's registry list.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: batlehub-client
+  namespace: dev-ws-{{ $.Values.cheUser.username }}
+  labels:
+    controller.devfile.io/mount-to-devworkspace: "true"
+    controller.devfile.io/watch-configmap: "true"
+  annotations:
+    controller.devfile.io/mount-as: env
+data:
+  BATLEHUB_SERVER: {{ . | quote }}
+  {{- if $.Values.batlehub.setupApply }}
+  BATLEHUB_SETUP_APPLY: "true"
+  {{- end }}
+{{- end }}
