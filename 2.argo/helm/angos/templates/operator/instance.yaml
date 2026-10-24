@@ -74,6 +74,10 @@ spec:
       name: kube
       issuer: {{ $a.kubeOidc.issuer | quote }}
       audience: {{ $a.kubeOidc.audience }}
+      # On the issuer's origin: angos sends its bearer token only there, and the
+      # operator's default (kubernetes.default.svc) is not, so the JWKS fetch
+      # went out anonymous and got 401.
+      jwksUri: {{ printf "%s/openid/v1/jwks" $a.kubeOidc.issuer | quote }}
     {{- end }}
     tokenService:
       realm: "https://{{ $a.dns }}/token"
