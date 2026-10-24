@@ -515,5 +515,5 @@ operator:
     scrub:
       suspend: true
     prune:
-      suspend: true
+      suspend: false
       dryRun: true
