@@ -387,8 +387,18 @@ func main() {
 						// tune, not a fact. Talos has --profiling=false, so pprof
 						// cannot attribute the heap; the Go memstats in
 						// `kubectl get --raw /metrics` are the only handle.
+						//
+						// It did climb. Once the 2026-10-24 bumps brought the cluster
+						// to 202 CRDs, live heap reached ~1.15 GiB, with ~0.7 GiB of
+						// non-heap overhead on top (fragmentation, ~10k goroutine
+						// stacks). Go then held the heap goal at the live heap and
+						// collected 5 times a second: GC took nearly all of the ~9
+						// cores the apiserver burned, against ~1.7 for real work
+						// (go_cpu_classes_*_cpu_seconds_total, 2026-10-25). 4000MiB is now only a backstop above the
+						// ~2.5-3 GiB the process reaches unconstrained, and the node
+						// has ~60 GiB. Anything under ~3 GiB thrashes again.
 						"env": map[string]interface{}{
-							"GOMEMLIMIT": "1750MiB",
+							"GOMEMLIMIT": "4000MiB",
 						},
 						"extraArgs": map[string]interface{}{
 							"feature-gates": "UserNamespacesSupport=true",
