@@ -78,7 +78,7 @@ hyperdx:
       create: true
 
     # Image for the k8s-sidecar that watches for labeled ConfigMaps
-    sidecarImage: "kiwigrid/k8s-sidecar:2.10.1"
+    sidecarImage: "kiwigrid/k8s-sidecar:2.14.1"
     sidecarPullPolicy: IfNotPresent
     # Inline dashboard definitions - key is filename, value is exported dashboard JSON
     configMaps: {}
