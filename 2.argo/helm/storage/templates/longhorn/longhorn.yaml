@@ -6,8 +6,15 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "-5"
+  # The two pre-delete finalizers are added by the ArgoCD controller because
+  # the longhorn chart ships a pre-delete hook (its uninstall Job). main-storage
+  # applies this list client-side, which replaces it whole: leaving them out
+  # had main-storage strip them on every selfHeal and the controller put them
+  # back, so main-storage flapped OutOfSync every few minutes.
   finalizers:
   - resources-finalizer.argocd.argoproj.io
+  - pre-delete-finalizer.argocd.argoproj.io
+  - pre-delete-finalizer.argocd.argoproj.io/cleanup
 spec:
   project: {{ .Values.project }}
   syncPolicy:
