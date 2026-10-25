@@ -82,11 +82,18 @@ spec:
           migration:
             enabled: false
           groups:
-            # Storage for what reportsController wrote. Safe to drop only
-            # because the features block above stops anything writing them.
+            # Kept although nothing writes them: kyverno-background-controller
+            # still watches both (apiserver audit log, 2026-10-25), and deleting
+            # a CRD under a live informer leaves it failing in a loop. Setting
+            # them false here only made ArgoCD stop tracking them; the CRDs
+            # stayed, unowned, from 2026-09-05 to 2026-10-25.
             reports:
-              clusterephemeralreports: false
-              ephemeralreports: false
+              clusterephemeralreports: true
+              ephemeralreports: true
+            # Storage for what reportsController wrote. Safe to drop because
+            # the features block above stops anything writing them, and nothing
+            # watches them. ArgoCD does not prune a CRD it stops rendering: the
+            # four below were deleted by hand on 2026-10-25.
             wgpolicyk8s:
               clusterpolicyreports: false
               policyreports: false

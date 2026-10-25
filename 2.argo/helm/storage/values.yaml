@@ -7,6 +7,16 @@ longhorn:
   # manager NetworkPolicy -- see templates/longhorn/network-policy.yaml.
   metricsScraperNamespace: monitoring
 
+# The three snapshot.storage.k8s.io CRDs, which no chart here ships but
+# longhorn's csi-snapshotter/csi-provisioner and the cnpg operator watch. They
+# were left unowned when KubeBlocks (which installed them) was removed. Keep
+# the tag on the external-snapshotter release matching longhorn's csi-snapshotter
+# image (`kubectl -n longhorn get deploy csi-snapshotter`).
+snapshotCrds:
+  enabled: true
+  # renovate: datasource=github-tags depName=kubernetes-csi/external-snapshotter
+  version: v8.6.0
+
 # https://oneuptime.com/blog/post/2026-03-03-set-up-longhorn-storage-on-talos-linux/view
 
 repo: ""

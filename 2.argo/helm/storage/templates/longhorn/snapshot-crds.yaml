@@ -1,0 +1,30 @@
+{{- if .Values.snapshotCrds.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: snapshot-crds
+  namespace: argocd
+  annotations:
+    # Before longhorn (-5), whose CSI sidecars watch these.
+    argocd.argoproj.io/sync-wave: "-6"
+spec:
+  project: {{ .Values.project }}
+  syncPolicy:
+    # No prune: deleting a CRD deletes every snapshot it holds.
+    automated:
+      selfHeal: true
+    syncOptions:
+      # The CRDs are too large for the last-applied annotation.
+      - ServerSideApply=true
+  source:
+    repoURL: https://github.com/kubernetes-csi/external-snapshotter
+    targetRevision: {{ .Values.snapshotCrds.version }}
+    path: client/config/crd
+    # A plain directory, so the kustomization.yaml next to the files is
+    # ignored; it would also install the groupsnapshot.storage.k8s.io CRDs,
+    # which nothing here uses.
+    directory:
+      include: 'snapshot.storage.k8s.io_*.yaml'
+  destination:
+    server: https://kubernetes.default.svc
+{{- end -}}
