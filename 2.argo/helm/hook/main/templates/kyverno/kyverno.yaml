@@ -110,6 +110,25 @@ spec:
               globalcontextentries: true
               policyexceptions: true
 
+        config:
+          webhooks:
+            # Replaces the chart default (kube-system only; kyverno adds its own
+            # namespace, hook, on top). vault-infra is excluded to break an
+            # admission cycle: bank-vaults' pod webhook is failurePolicy Fail
+            # and does not exclude hook, so a new kyverno pod needs
+            # vault-webhook up, while a new vault-webhook pod went through this
+            # Fail webhook and needed kyverno up. With both pods gone (a stuck
+            # drain, an etcd restore), no pod could be created outside a few
+            # namespaces. Costs nothing: the only pod there, vault-webhook, was
+            # already running without the CA mount (checked 2026-10-25).
+            namespaceSelector:
+              matchExpressions:
+                - key: kubernetes.io/metadata.name
+                  operator: NotIn
+                  values:
+                    - kube-system
+                    - vault-infra
+
         # NOT attempted: dropping the policies.kyverno.io group (11 CRDs,
         # 1308 KiB, 17.1% of every CRD schema in this cluster, zero objects --
         # it is the newer CEL policy API and everything here uses the classic
