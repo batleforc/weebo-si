@@ -24,8 +24,27 @@ cgroup:
     enabled: false
   hostRoot: /sys/fs/cgroup
 k8sServicePort: 6443
+# The agent, the operator and cilium-envoy all run on the host network, and
+# this node has no host firewall: a metrics port on 0.0.0.0 is a metrics port
+# on the internet (9963/9964/9965 all answered from outside, 2026-10-25). The
+# chart hardcodes ":<port>" for these listeners, so the address is moved with a
+# flag instead -- Cilium binds every option to viper with BindPFlag and reads
+# the ConfigMap as viper's config layer, which an explicit flag outranks.
+# otel-controlplane (2.argo/helm/monitoring), itself on the host network, then
+# scrapes both on loopback.
+extraArgs:
+  - --hubble-metrics-server=127.0.0.1:9965
 operator:
   replicas: 1
+  extraArgs:
+    - --operator-prometheus-serve-addr=127.0.0.1:9963
+# cilium-envoy proxies nothing here (no L7 policy, no Cilium Ingress or Gateway
+# API: its ingress/egress clusters had served 0 requests in 46 days), so its
+# metrics only described itself -- while 9964 was being probed from outside.
+# Turn back on, behind a firewall, if L7 policies arrive.
+envoy:
+  prometheus:
+    enabled: false
 rollOutCiliumPods: true
 k8s:
   requireIPv4PodCIDR: true
@@ -43,7 +62,8 @@ commonLabels:
 # completes an exchange, so it produces no span at all.
 #
 # Feeds the Hubble half of the "Network drops" dashboard
-# (2.argo/helm/monitoring/dashboards/network.json). The label names below are
+# (2.argo/helm/monitoring/dashboards/network.json), scraped on 127.0.0.1:9965
+# by otel-controlplane (see extraArgs above). The label names below are
 # what its queries read: sourceContext/destinationContext become `source` and
 # `destination`, labelsContext adds `source_namespace`/`destination_namespace`.
 hubble:
@@ -56,15 +76,3 @@ hubble:
       # also the cardinality risk on this list; drop the option if the DNS
       # series count ever gets out of hand.
       - "dns:query;ignoreAAAA;labelsContext=source_namespace"
-# Opts cilium-agent into otel-node's annotation discovery, the same mechanism
-# every other scraped workload here uses. The port suffix must match the
-# container port the chart opens for hubble.metrics.port (9965), and the
-# annotations only do anything once hubble.metrics.enabled above is non-empty --
-# that is what makes the chart declare the port at all.
-podAnnotations:
-  io.opentelemetry.discovery.metrics.9965/enabled: "true"
-  io.opentelemetry.discovery.metrics.9965/scraper: "prometheus_simple"
-  io.opentelemetry.discovery.metrics.9965/config: |
-    collection_interval: "30s"
-    endpoint: "`endpoint`"
-    metrics_path: "/metrics"

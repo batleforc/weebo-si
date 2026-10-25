@@ -345,6 +345,18 @@ func main() {
 					"proxy": map[string]interface{}{
 						"disabled": true,
 					},
+					// Plain-HTTP /metrics for otel-controlplane (2.argo/helm/monitoring),
+					// which runs on the host network. Loopback only: this node has no
+					// host firewall, so 0.0.0.0 would publish it on the internet, and
+					// the client port's /metrics needs an etcd client cert, i.e. full
+					// read/write on etcd. Talos 1.14 keeps a customised value instead
+					// of moving metrics to its new mTLS listener on 2383.
+					// Changing it restarts etcd, so the API blinks on `pulumi up`.
+					"etcd": map[string]interface{}{
+						"extraArgs": map[string]interface{}{
+							"listen-metrics-urls": "http://127.0.0.1:2381",
+						},
+					},
 					"apiServer": map[string]interface{}{
 						"certSANs": []string{
 							serverNetwork.Routing.Ipv4.Ip,
