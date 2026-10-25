@@ -45,6 +45,10 @@ Pourquoi cet ordre :
 Avec le hostDNS de Talos (`forwardKubeDNSToHost`, actif par défaut), `bpf.masquerade: true` casse la résolution DNS externe de CoreDNS ([doc Sidero](https://docs.siderolabs.com/kubernetes-guides/cni/deploying-cilium)). Ça a été constaté sur ce cluster : github ne répondait plus, mais les noms internes oui. On reste en masquerading iptables.
 </Callout>
 
+<Callout type="error" title="Toujours --drain=false sur talosctl upgrade">
+`talosctl upgrade` draine le nœud par défaut, contrairement à `talosctl reboot`. Il installe d'abord la nouvelle image, puis draine, avec un délai de 5 minutes. Or sept PDB n'autorisent aucune interruption sur un nœud unique : les trois primaires cnpg (`*-pg-primary`), `csi-attacher` et `csi-provisioner` de Longhorn, et ses deux instance-managers. Le drain échoue donc toujours. talosctl s'arrête alors en erreur : **nœud cordonné, une partie des pods déjà évincée, pas de redémarrage**. Il n'y a de toute façon aucun autre nœud où déplacer les pods : on passe `--drain=false`, et le kubelet arrête les pods proprement au redémarrage (vu dans le code de talosctl 1.14.2, `cmd/talosctl/cmd/talos/upgrade.go`). Si un drain est quand même lancé et reste bloqué : `task k-o -- uncordon talos-r2k-rp0`.
+</Callout>
+
 Autres points à connaître :
 
 - **Le provider `pulumi-cilium` n'est plus maintenu** (dernière version v0.2.1, juillet 2025, basée sur cilium-cli 1.18). Il télécharge le chart de la version demandée, mais sa logique n'a jamais été testée avec 1.19 ou 1.20, y compris l'étape séparée `NewHubble`. On compare donc toujours le rendu avec `helm template` avant d'appliquer.
@@ -73,6 +77,20 @@ Autres points à connaître :
    task k-o -- -n kube-system get cm cilium-config -o yaml > .tmp/backup/$(date +%F)/cilium-config.yaml
    ```
    Plus une sauvegarde Longhorn des volumes importants, depuis l'UI Longhorn.
+5. **Vérifier qu'aucun webhook bloquant ne pointe dans le vide.** Un webhook en `failurePolicy: Fail` dont le Service n'existe plus refuse toutes les requêtes qu'il intercepte. Après le redémarrage, si ce sont des créations de pods, plus aucun pod ne démarre. La commande suivante ne doit rien afficher :
+   ```bash
+   task k-o -- get validatingwebhookconfigurations,mutatingwebhookconfigurations -o json | jq -r '
+     .items[] | .metadata.name as $n | .webhooks[]
+     | select((.failurePolicy // "Fail") == "Fail" and .clientConfig.service != null)
+     | "\(.clientConfig.service.namespace) \(.clientConfig.service.name) \($n)"' | sort -u |
+   while read ns svc wh; do
+     task k-o -- -n "$ns" get svc "$svc" >/dev/null 2>&1 || echo "MORT: $wh -> $ns/$svc"
+   done
+   ```
+   Contrôler aussi que kyverno exclut toujours `vault-infra` de ses webhooks. Sans cette exclusion, kyverno et le webhook Vault se bloquent mutuellement : chacun a besoin de l'autre pour recréer son pod (voir `2.argo/helm/hook/main/templates/kyverno/kyverno.yaml`).
+   ```bash
+   task k-o -- get mutatingwebhookconfiguration kyverno-resource-mutating-webhook-cfg -o jsonpath='{.webhooks[0].namespaceSelector}' | grep -q vault-infra && echo OK
+   ```
 
 ## Vérifications après chaque étape
 
@@ -128,9 +146,15 @@ Mise à jour patch : noyau 6.18.36 → 6.18.54, containerd 2.2.9, CoreDNS 1.14.7
    ```bash
    task pulunit:up
    task pulunit:base -- stack output schematicUpdateId
-   task t -- -n 37.187.255.5 upgrade --image factory.talos.dev/installer/<schematicUpdateId>:v1.13.11
+   task t -- -n 37.187.255.5 upgrade --drain=false --image factory.talos.dev/installer/<schematicUpdateId>:v1.13.11
    ```
    Le nœud redémarre : le cluster est indisponible pendant quelques minutes.
+
+   C'est aussi le premier redémarrage depuis que `cluster.etcd.extraArgs.listen-metrics-urls` est passé à `http://127.0.0.1:2381`. Talos ne relance pas etcd quand sa spec change, donc ce réglage attendait ce redémarrage. Vérifier que les métriques etcd arrivent :
+   ```bash
+   task t -- -n 37.187.255.5 netstat -l -t | grep 127.0.0.1:2381
+   # et dans le dashboard ClickStack « Control plane », « Components down » doit revenir à 0
+   ```
 5. Vérifications après chaque étape.
 
 **Retour arrière** : `task t -- -n 37.187.255.5 rollback`, puis remettre `talosVersion: v1.13.5` dans Pulumi.
@@ -195,7 +219,7 @@ Ce qui change pour ce cluster :
 
 - **Format de config** : tous les champs utilisés ici sont dépréciés mais toujours supportés (`machine.sysctls`, `machine.files`, `machine.kubelet.extraArgs`/`extraMounts`, `cluster.apiServer`, `features.hostDNS`…). On **garde** le format v1alpha1. Le nouveau format multi-documents n'a plus `kubelet.extraMounts` ni les `extraVolumes` de l'apiserver, or on utilise les deux : `/var/local-path-provisioner` et `/var/lib/apiserver`, pour la config OIDC.
 - **`talosVersion` est aussi passé à `GetConfigurationOutput`** (`main.go`). Si le provider Pulumi génère alors une config au format 1.14, c'est le diff du `preview` qui le montrera : **c'est le point à lire en priorité**.
-- **etcd passe en 3.7** : métriques et santé sur le port 2383. Le retour en 1.13 n'est sûr qu'avec le snapshot.
+- **etcd passe en 3.7** : par défaut, métriques et santé passent sur le port 2383, en mTLS. Ici, `listen-metrics-urls` est personnalisé (`http://127.0.0.1:2381`, lu par otel-controlplane), et les notes de version indiquent qu'une valeur personnalisée ne bouge pas. Après l'étape, vérifier que `127.0.0.1:2381` écoute toujours. Le retour en 1.13 n'est sûr qu'avec le snapshot.
 - **TLS 1.3 minimum** pour kube-apiserver et etcd. Les clients anciens (scripts, outils) doivent le supporter.
 - **`send_redirects=0`** par défaut, et NRI activé dans containerd.
 - **L'isolation des workloads (sandboxd) reste désactivée** sur un cluster mis à jour. Ne pas l'activer : elle casse le plugin iSCSI dont Longhorn a besoin.
@@ -203,7 +227,7 @@ Ce qui change pour ce cluster :
 
 1. Sauvegardes, **snapshot etcd obligatoire**.
 2. `talosVersion: v1.14.2`, puis `task pulunit:base -- preview --diff`. Lire le diff de la config machine ligne par ligne. Si `extraMounts`, `extraVolumes` ou les `sysctls` disparaissent, on s'arrête.
-3. `task pulunit:up`, puis `task t -- -n 37.187.255.5 upgrade --image factory.talos.dev/installer/<schematicUpdateId>:v1.14.2`.
+3. `task pulunit:up`, puis `task t -- -n 37.187.255.5 upgrade --drain=false --image factory.talos.dev/installer/<schematicUpdateId>:v1.14.2`.
 4. Vérifications après chaque étape, plus :
    ```bash
    # l'apiserver accepte toujours les tokens OIDC (dex)
