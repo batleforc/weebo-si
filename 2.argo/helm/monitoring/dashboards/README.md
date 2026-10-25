@@ -322,9 +322,12 @@ from HyperDX 2.32.
   so an idle cluster shows an empty chart instead of a legend full of flat
   zeroes.
 
-  The `Hubble ·` half stays empty until `hubble.metrics.enabled` is set in
-  `1.pulu-init/cilium-values.yaml` and scraped — which is a Pulumi change
-  (`task pulunit:up`), not an ArgoCD sync. It is the only source here for
+  The `Hubble ·` half comes from `hubble.metrics.enabled` in
+  `1.pulu-init/cilium-values.yaml` — a Pulumi change (`task pulunit:up`), not
+  an ArgoCD sync. The agent serves it on 127.0.0.1:9965 only (it is on the
+  host network and the node has no firewall), so otel-controlplane scrapes it,
+  not otel-node's annotation discovery; only the metric labels and
+  `k8s.node.name` are read. It is the only source here for
   *policy* drops and DNS failures: OBI never sees them, because a denied or
   unresolved connection completes no protocol exchange and so produces no span.
   `action = 'dropped'` is the denial (Hubble lowercases the flow verdict).
@@ -434,6 +437,36 @@ from HyperDX 2.32.
   stalls of 2026-10-17 the node was mostly idle with disks under 1 % busy, and
   kube-scheduler times out on `localhost` too — so the cause is not CPU, disk
   or the pod network; read the stall table against kubelet and host logs.
+
+- `control-plane.json` — etcd, kube-apiserver, kube-scheduler and
+  kube-controller-manager: whether each is scraped, etcd leader, DB size
+  against quota, fragmentation (what a defrag would give back), WAL fsync and
+  backend commit p99, leader changes, failed proposals, API 5xx ratio,
+  unschedulable pods, the deepest controller queue, then a row per component
+  (uptime, restarts, memory, CPU) and the trends behind each number.
+
+  Fed by **otel-controlplane** (`templates/otel/controlplane-collector.yaml`),
+  a host-network collector that reads all four on 127.0.0.1. It is written as
+  plain manifests, not the collector chart: the chart binds `health_check` to
+  the pod IP, which on the host network is the node's public address, and
+  this node has no firewall. etcd only answers once `1.pulu-init` sets
+  `listen-metrics-urls` (a `pulumi up` that restarts etcd); until then
+  *Components down* reads 1 and the etcd tiles stay empty.
+
+  Each scrape job keeps a short list of metric names: the apiserver alone
+  serves ~135k series, 35k of them `apiserver_request_duration_seconds`
+  buckets, so API latency is deliberately not collected and disk latency is
+  read on the etcd side instead. A metric missing from a keep list never
+  reaches ClickHouse: add it there before charting it.
+
+  Histogram percentiles diff each series' buckets over the range (last minus
+  first, clamped at 0 across a restart) and interpolate inside the bucket,
+  like Prometheus' `histogram_quantile`. Restarts combine
+  `k8s.container.restarts` for the three static pods, which catches crashes
+  faster than the 30 s scrape, with new `process_start_time_seconds` values
+  for etcd, which is a Talos service and not a pod. klog error lines reach
+  ClickHouse labelled `info`, so the error tiles match the `E`/`F` prefix of
+  the line itself.
 
 ## Round trip: build it in the UI, then commit it
 

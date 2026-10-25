@@ -57,6 +57,12 @@ spec:
               endpoint: {{ .Values.otel.endpoint.grpc | quote }}
             otel_metrics_export:
               endpoint: {{ .Values.otel.endpoint.http | quote }}
+            # The chart adds a Prometheus exporter on 9090 by default. OBI runs
+            # on the host network and this node has no firewall, so it served
+            # the cluster's whole call graph to the internet; metrics already
+            # leave by OTLP above and nothing scraped it. The chart's
+            # removeNulls drops the key, and with it the containerPort.
+            prometheus_export: null
             {{- if .Values.obi.networkFlows }}
             # `enable`, not `enabled`: OBI parses this file with a plain
             # yaml.Unmarshal, so a misspelt key is dropped without a warning and

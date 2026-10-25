@@ -1,0 +1,246 @@
+{{- if and .Values.otel.enabled .Values.otel.controlPlane.enabled -}}
+# Control-plane metrics: etcd, kube-apiserver, kube-scheduler and
+# kube-controller-manager, plus Hubble and cilium-operator, whose metrics
+# Cilium serves on loopback for the same reason. Written as plain manifests rather than a third
+# release of the opentelemetry-collector chart because this pod runs on the
+# host network -- the scheduler and controller-manager listen on 127.0.0.1
+# only, and so does etcd's metrics endpoint (see 1.pulu-init/main.go). The
+# chart binds health_check to the pod IP and its probes take no `host`, so on
+# the host network it would publish 13133 on the node's public address, which
+# has no firewall in front of it. Here every listener stays on loopback.
+#
+# shortcut: one replica sees one node's control plane, which is the whole of
+# it on this single-node cluster; with several control-plane nodes, make this
+# a DaemonSet on them.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: otel-controlplane
+  namespace: {{ .Release.Namespace }}
+---
+# The scheduler and controller-manager delegate /metrics to a
+# SubjectAccessReview on this non-resource URL; the apiserver checks it too.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-controlplane
+rules:
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-controlplane
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-controlplane
+subjects:
+  - kind: ServiceAccount
+    name: otel-controlplane
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-controlplane
+  namespace: {{ .Release.Namespace }}
+data:
+  # Each job keeps a short list of metrics: the apiserver alone serves ~135k
+  # series, 35k of them apiserver_request_duration_seconds buckets. A name
+  # absent from a keep list never reaches ClickHouse -- add it here before
+  # charting it. `up` is synthesised by the receiver and is always kept.
+  config.yaml: |
+    {{- include "monitoring.otelControlplaneConfig" . | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-controlplane
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: otel-controlplane
+spec:
+  replicas: 1
+  # A surge pod would collide with the old one on 127.0.0.1:13133.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: otel-controlplane
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: otel-controlplane
+      annotations:
+        checksum/config: {{ include "monitoring.otelControlplaneConfig" . | sha256sum }}
+    spec:
+      serviceAccountName: otel-controlplane
+      hostNetwork: true
+      # Still resolves clickstack-otel-collector.monitoring from the host network.
+      dnsPolicy: ClusterFirstWithHostNet
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: otel-collector
+          image: "{{ .Values.otel.controlPlane.image.repository }}:{{ .Values.otel.controlPlane.image.tag }}"
+          args: ["--config=/conf/config.yaml"]
+          env:
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: INGESTION_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.otel.ingestSecret }}
+                  key: INGESTION_API_KEY
+          # kubelet probes from the host, so loopback reaches the extension.
+          livenessProbe:
+            httpGet:
+              host: 127.0.0.1
+              port: 13133
+              path: /
+          readinessProbe:
+            httpGet:
+              host: 127.0.0.1
+              port: 13133
+              path: /
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              cpu: 20m
+              memory: 64Mi
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+      volumes:
+        - name: config
+          configMap:
+            name: otel-controlplane
+{{- end }}
+
+{{- define "monitoring.otelControlplaneConfig" -}}
+extensions:
+  health_check:
+    endpoint: 127.0.0.1:13133
+receivers:
+  prometheus:
+    config:
+      global:
+        scrape_interval: 30s
+      scrape_configs:
+        - job_name: etcd
+          static_configs:
+            - targets: [127.0.0.1:2381]
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: etcd_server_(has_leader|is_leader|leader_changes_seen_total|proposals_failed_total|proposals_pending|slow_apply_total|slow_read_indexes_total|heartbeat_send_failures_total|quota_backend_bytes)|etcd_mvcc_db_total_size(_in_use)?_in_bytes|etcd_debugging_mvcc_keys_total|etcd_disk_(wal_fsync|backend_commit)_duration_seconds_(bucket|sum|count)|etcd_disk_defrag_inflight|process_(resident_memory_bytes|cpu_seconds_total|start_time_seconds)
+              action: keep
+        - job_name: kube-apiserver
+          scrape_interval: 60s
+          scheme: https
+          authorization:
+            credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+          tls_config:
+            ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          static_configs:
+            - targets: [127.0.0.1:6443]
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: apiserver_request_total|apiserver_current_inflight_requests|apiserver_flowcontrol_(rejected_requests_total|current_inqueue_requests)|apiserver_storage_size_bytes|apiserver_resource_objects|go_memstats_heap_alloc_bytes|process_(resident_memory_bytes|cpu_seconds_total|start_time_seconds)
+              action: keep
+        {{- /* Self-signed serving certs, read over loopback only. */}}
+        - job_name: kube-scheduler
+          scheme: https
+          authorization:
+            credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+          tls_config:
+            insecure_skip_verify: true
+          static_configs:
+            - targets: [127.0.0.1:10259]
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: scheduler_(pending_pods|schedule_attempts_total)|leader_election_master_status|rest_client_requests_total|process_(resident_memory_bytes|cpu_seconds_total|start_time_seconds)
+              action: keep
+        - job_name: kube-controller-manager
+          scheme: https
+          authorization:
+            credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+          tls_config:
+            insecure_skip_verify: true
+          static_configs:
+            - targets: [127.0.0.1:10257]
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: workqueue_(depth|retries_total)|leader_election_master_status|rest_client_requests_total|process_(resident_memory_bytes|cpu_seconds_total|start_time_seconds)
+              action: keep
+        {{- /* Cilium moves both to loopback with extraArgs in
+        1.pulu-init/cilium-values.yaml. Hubble feeds dashboards/network.json,
+        which reads only the metric labels and k8s.node.name. */}}
+        - job_name: hubble
+          static_configs:
+            - targets: [127.0.0.1:9965]
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: hubble_.*
+              action: keep
+        {{- /* Out of ~540 series, the ones that say something: a LoadBalancer
+        Service LB-IPAM could not serve (the pool is the node's own two IPs),
+        logged errors, module health and identity count. */}}
+        - job_name: cilium-operator
+          static_configs:
+            - targets: [127.0.0.1:9963]
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: cilium_operator_(lbipam_(services_unsatisfied|services_matching|conflicting_pools|ips_used|ips_available)|errors_warnings_total|unmanaged_pods|identity_gc_entries|process_resident_memory_bytes)|cilium_hive_status
+              action: keep
+processors:
+  memory_limiter:
+    check_interval: 5s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+  resource/cluster:
+    attributes:
+      - key: k8s.cluster.name
+        value: {{ .Values.otel.clusterName }}
+        action: upsert
+      - key: k8s.node.name
+        value: ${env:K8S_NODE_NAME}
+        action: upsert
+  batch: {}
+exporters:
+  otlphttp/hyperdx:
+    endpoint: {{ .Values.otel.endpoint.http }}
+    headers:
+      authorization: ${env:INGESTION_API_KEY}
+service:
+  extensions: [health_check]
+  {{- /* Off rather than moved: its Prometheus reader would bind a port on the
+  host network, and nothing scrapes it. */}}
+  telemetry:
+    metrics:
+      level: none
+  pipelines:
+    metrics:
+      receivers: [prometheus]
+      processors: [memory_limiter, resource/cluster, batch]
+      exporters: [otlphttp/hyperdx]
+{{- end -}}

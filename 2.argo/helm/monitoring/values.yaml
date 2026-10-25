@@ -183,6 +183,16 @@ otel:
     # service discovery on that one namespace instead. Empty = no scrape.
     # Feeds dashboards/hardening.json.
     hardeningNamespace: weebo-si-hardening
+  # Deployment on the host network: etcd, kube-apiserver, kube-scheduler and
+  # kube-controller-manager metrics, read on 127.0.0.1. Feeds
+  # dashboards/control-plane.json. etcd's endpoint only exists once
+  # 1.pulu-init sets listen-metrics-urls; until then that one job reads up=0.
+  controlPlane:
+    enabled: true
+    image:
+      repository: otel/opentelemetry-collector-k8s
+      # renovate: datasource=docker depName=otel/opentelemetry-collector-k8s
+      tag: "0.158.0"
 
 obi:
   enabled: true

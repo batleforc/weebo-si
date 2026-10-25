@@ -1,0 +1,607 @@
+{
+  "name": "Control plane",
+  "tags": [],
+  "tiles": [
+    {
+      "id": "legend",
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 6,
+      "config": {
+        "name": "How to read this",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "**Is the control plane healthy?** etcd, kube-apiserver, kube-scheduler and kube-controller-manager, scraped on the node's loopback by **otel-controlplane** (`templates/otel/controlplane-collector.yaml`). Amber is \"look at it\", red is \"act\".\n\n**Read *Components down* first.** It counts the four scrape targets whose last `up` is not 1 \u2014 if one is down, its tiles below are stale or empty, not healthy. etcd needs `listen-metrics-urls` from `1.pulu-init` before it reports anything.\n\n**Defrag.** *DB vs quota* is the etcd file against `quota-backend-bytes`: at 100&nbsp;% etcd raises a NOSPACE alarm and goes read-only, which takes the cluster down. *Fragmentation* is the share of that file compaction freed but the file still holds. High fragmentation on a small DB costs nothing; it matters when *DB vs quota* climbs too, and then `task t -- -n 37.187.255.5 etcd defrag` gives the space back. On this single node a defrag blocks every write until it ends, so run it in a quiet moment.\n\n**Disk.** etcd waits for an fsync before it acknowledges any write. *WAL fsync p99* above 10&nbsp;ms or *backend commit p99* above 25&nbsp;ms (the etcd project's own guidance) means the disk is slowing the whole cluster down \u2014 leader changes and apiserver timeouts follow. Both are over the selected range.\n\n**Crashes.** *Restarts in range* counts container restarts of the three static pods (crashes the 30&nbsp;s scrape could miss included) plus etcd process restarts, seen as a new `process_start_time_seconds`. On a single node, every *leader change* is etcd restarting. *Errors* are klog `E`/`F` lines, matched on the line itself, since the gateway labels them `info`."
+      }
+    },
+    {
+      "id": "down",
+      "x": 0,
+      "y": 6,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Components down",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(4 - countIf(up = 1)) AS \"Components down\"\nFROM (\n  SELECT ServiceName, argMax(Value, TimeUnix) AS up\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'up' AND ServiceName IN ('etcd', 'kube-apiserver', 'kube-scheduler', 'kube-controller-manager') AND $__timeFilter(TimeUnix)\n  GROUP BY ServiceName\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "no-leader",
+      "x": 4,
+      "y": 6,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "etcd without leader",
+        "configType": "sql",
+        "sqlTemplate": "SELECT if(count() = 0, NULL, toUInt8(argMax(Value, TimeUnix) != 1)) AS \"No leader\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'etcd_server_has_leader' AND ServiceName = 'etcd' AND $__timeFilter(TimeUnix)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "db-quota",
+      "x": 8,
+      "y": 6,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "etcd DB vs quota",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(100 * argMaxIf(Value, TimeUnix, MetricName = 'etcd_mvcc_db_total_size_in_bytes')\n  / nullIf(argMaxIf(Value, TimeUnix, MetricName = 'etcd_server_quota_backend_bytes'), 0), 1) AS \"DB / quota %\"\nFROM default.otel_metrics_gauge\nWHERE MetricName IN ('etcd_mvcc_db_total_size_in_bytes', 'etcd_server_quota_backend_bytes')\n  AND ServiceName = 'etcd' AND $__timeFilter(TimeUnix)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 1
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 60,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 80,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "frag",
+      "x": 12,
+      "y": 6,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "etcd fragmentation",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(100 * (1 - argMaxIf(Value, TimeUnix, MetricName = 'etcd_mvcc_db_total_size_in_use_in_bytes')\n  / nullIf(argMaxIf(Value, TimeUnix, MetricName = 'etcd_mvcc_db_total_size_in_bytes'), 0)), 1) AS \"Fragmented %\"\nFROM default.otel_metrics_gauge\nWHERE MetricName IN ('etcd_mvcc_db_total_size_in_bytes', 'etcd_mvcc_db_total_size_in_use_in_bytes')\n  AND ServiceName = 'etcd' AND $__timeFilter(TimeUnix)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 1
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 50,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 75,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fsync",
+      "x": 16,
+      "y": 6,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "WAL fsync p99",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(1000 * if(arraySum(counts) = 0, NULL, if(i > length(bounds), bounds[length(bounds)], if(i = 1, 0, bounds[i - 1]) + (bounds[i] - if(i = 1, 0, bounds[i - 1])) * ((arraySum(counts) * 0.99) - if(i = 1, 0, arrayCumSum(counts)[i - 1])) / counts[i])), 1) AS \"p99 (ms)\"\nFROM (\n  SELECT bounds, counts, arrayFirstIndex(c -> c >= (arraySum(counts) * 0.99), arrayCumSum(counts)) AS i\n  FROM (\n    SELECT any(b) AS bounds, sumForEach(d) AS counts\n    FROM (\n      SELECT any(ExplicitBounds) AS b, arrayMap((a, b) -> greatest(0, toInt64(a) - toInt64(b)), argMax(BucketCounts, TimeUnix), argMin(BucketCounts, TimeUnix)) AS d\n      FROM default.otel_metrics_histogram\n      WHERE MetricName = 'etcd_disk_wal_fsync_duration_seconds' AND ServiceName = 'etcd' AND $__timeFilter(TimeUnix)\n      GROUP BY toString(Attributes)\n    )\n  )\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "unit": "ms",
+          "mantissa": 1
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 10,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 25,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "commit",
+      "x": 20,
+      "y": 6,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Backend commit p99",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(1000 * if(arraySum(counts) = 0, NULL, if(i > length(bounds), bounds[length(bounds)], if(i = 1, 0, bounds[i - 1]) + (bounds[i] - if(i = 1, 0, bounds[i - 1])) * ((arraySum(counts) * 0.99) - if(i = 1, 0, arrayCumSum(counts)[i - 1])) / counts[i])), 1) AS \"p99 (ms)\"\nFROM (\n  SELECT bounds, counts, arrayFirstIndex(c -> c >= (arraySum(counts) * 0.99), arrayCumSum(counts)) AS i\n  FROM (\n    SELECT any(b) AS bounds, sumForEach(d) AS counts\n    FROM (\n      SELECT any(ExplicitBounds) AS b, arrayMap((a, b) -> greatest(0, toInt64(a) - toInt64(b)), argMax(BucketCounts, TimeUnix), argMin(BucketCounts, TimeUnix)) AS d\n      FROM default.otel_metrics_histogram\n      WHERE MetricName = 'etcd_disk_backend_commit_duration_seconds' AND ServiceName = 'etcd' AND $__timeFilter(TimeUnix)\n      GROUP BY toString(Attributes)\n    )\n  )\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "unit": "ms",
+          "mantissa": 1
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 25,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 50,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "restarts",
+      "x": 0,
+      "y": 9,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Restarts in range",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(sum(restarts)) AS \"Restarts in range\"\nFROM (\nSELECT\n  if(c = 'etcd', greatest(0, toInt64(e.starts) - 1), toInt64(p.restarts)) AS restarts, c\nFROM (SELECT arrayJoin(['etcd', 'kube-apiserver', 'kube-scheduler', 'kube-controller-manager']) AS c) AS comp\nLEFT JOIN (\n  SELECT ServiceName AS c, uniqExact(Value) AS starts\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'process_start_time_seconds' AND ServiceName = 'etcd' AND $__timeFilter(TimeUnix)\n  GROUP BY c\n) AS e USING (c)\nLEFT JOIN (\n  SELECT container AS c, sum(d) AS restarts\n  FROM (\n    SELECT ResourceAttributes['k8s.container.name'] AS container, greatest(0, max(Value) - min(Value)) AS d\n    FROM default.otel_metrics_gauge\n    WHERE MetricName = 'k8s.container.restarts'\n      AND ResourceAttributes['k8s.namespace.name'] = 'kube-system'\n      AND ResourceAttributes['k8s.container.name'] IN ('kube-apiserver', 'kube-scheduler', 'kube-controller-manager')\n      AND $__timeFilter(TimeUnix)\n    GROUP BY ResourceAttributes['k8s.pod.uid'], container\n  )\n  GROUP BY c\n) AS p USING (c)\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 3,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "leader-changes",
+      "x": 4,
+      "y": 9,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "etcd leader changes",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(sum(d)) AS \"Leader changes\"\nFROM (\n  SELECT greatest(0, max(Value) - min(Value)) AS d\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'etcd_server_leader_changes_seen_total' AND ServiceName = 'etcd' AND $__timeFilter(TimeUnix)\n  GROUP BY toString(Attributes)\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "proposals-failed",
+      "x": 8,
+      "y": 9,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "etcd failed proposals",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(sum(d)) AS \"Failed proposals\"\nFROM (\n  SELECT greatest(0, max(Value) - min(Value)) AS d\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'etcd_server_proposals_failed_total' AND ServiceName = 'etcd' AND $__timeFilter(TimeUnix)\n  GROUP BY toString(Attributes)\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "api-5xx",
+      "x": 12,
+      "y": 9,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "API 5xx ratio",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(100 * sumIf(d, startsWith(code, '5')) / nullIf(sum(d), 0), 2) AS \"5xx %\"\nFROM (\n  SELECT Attributes['code'] AS code, greatest(0, max(Value) - min(Value)) AS d\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'apiserver_request_total' AND ServiceName = 'kube-apiserver' AND $__timeFilter(TimeUnix)\n  GROUP BY toString(Attributes), code\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "unit": "%",
+          "mantissa": 2
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 1,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 5,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "unschedulable",
+      "x": 16,
+      "y": 9,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Unschedulable pods",
+        "configType": "sql",
+        "sqlTemplate": "SELECT if(count() = 0, NULL, toUInt32(argMax(Value, TimeUnix))) AS \"Unschedulable\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'scheduler_pending_pods' AND ServiceName = 'kube-scheduler'\n  AND Attributes['queue'] = 'unschedulable' AND $__timeFilter(TimeUnix)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "workqueue-max",
+      "x": 20,
+      "y": 9,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Deepest controller queue",
+        "configType": "sql",
+        "sqlTemplate": "SELECT if(count() = 0, NULL, toUInt32(max(depth))) AS \"Max depth\"\nFROM (\n  SELECT Attributes['name'] AS q, argMax(Value, TimeUnix) AS depth\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'workqueue_depth' AND ServiceName = 'kube-controller-manager' AND $__timeFilter(TimeUnix)\n  GROUP BY q\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 50,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 200,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "components",
+      "x": 0,
+      "y": 12,
+      "w": 24,
+      "h": 6,
+      "config": {
+        "name": "Components",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  comp.c AS \"Component\",\n  multiIf(u.seen = 0, 'no data', u.up = 1, 'up', 'DOWN') AS \"Scrape\",\n  if(st.start = 0, '', formatReadableTimeDelta(toUnixTimestamp(now()) - st.start, 'days', 'minutes')) AS \"Uptime\",\n  r.restarts AS \"Restarts in range\",\n  if(m.rss = 0, NULL, round(m.rss / 1048576)) AS \"Memory (MiB)\",\n  if(cpu.c = '', NULL, round(cpu.cores, 3)) AS \"CPU (cores)\"\nFROM (SELECT arrayJoin(['etcd', 'kube-apiserver', 'kube-scheduler', 'kube-controller-manager']) AS c) AS comp\nLEFT JOIN (\n  SELECT ServiceName AS c, argMax(Value, TimeUnix) AS up, 1 AS seen\n  FROM default.otel_metrics_gauge WHERE MetricName = 'up' AND ServiceName IN ('etcd', 'kube-apiserver', 'kube-scheduler', 'kube-controller-manager') AND $__timeFilter(TimeUnix) GROUP BY c\n) AS u ON u.c = comp.c\nLEFT JOIN (\n  SELECT ServiceName AS c, argMax(Value, TimeUnix) AS start\n  FROM default.otel_metrics_gauge WHERE MetricName = 'process_start_time_seconds' AND ServiceName IN ('etcd', 'kube-apiserver', 'kube-scheduler', 'kube-controller-manager') AND $__timeFilter(TimeUnix) GROUP BY c\n) AS st ON st.c = comp.c\nLEFT JOIN (\n  SELECT ServiceName AS c, argMax(Value, TimeUnix) AS rss\n  FROM default.otel_metrics_gauge WHERE MetricName = 'process_resident_memory_bytes' AND ServiceName IN ('etcd', 'kube-apiserver', 'kube-scheduler', 'kube-controller-manager') AND $__timeFilter(TimeUnix) GROUP BY c\n) AS m ON m.c = comp.c\nLEFT JOIN (\n  SELECT ServiceName AS c,\n    greatest(0, argMax(Value, TimeUnix) - argMin(Value, TimeUnix))\n      / nullIf(dateDiff('second', min(TimeUnix), max(TimeUnix)), 0) AS cores\n  FROM default.otel_metrics_sum WHERE MetricName = 'process_cpu_seconds_total' AND ServiceName IN ('etcd', 'kube-apiserver', 'kube-scheduler', 'kube-controller-manager') AND $__timeFilter(TimeUnix) GROUP BY c\n) AS cpu ON cpu.c = comp.c\nLEFT JOIN (SELECT\n  if(c = 'etcd', greatest(0, toInt64(e.starts) - 1), toInt64(p.restarts)) AS restarts, c\nFROM (SELECT arrayJoin(['etcd', 'kube-apiserver', 'kube-scheduler', 'kube-controller-manager']) AS c) AS comp\nLEFT JOIN (\n  SELECT ServiceName AS c, uniqExact(Value) AS starts\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'process_start_time_seconds' AND ServiceName = 'etcd' AND $__timeFilter(TimeUnix)\n  GROUP BY c\n) AS e USING (c)\nLEFT JOIN (\n  SELECT container AS c, sum(d) AS restarts\n  FROM (\n    SELECT ResourceAttributes['k8s.container.name'] AS container, greatest(0, max(Value) - min(Value)) AS d\n    FROM default.otel_metrics_gauge\n    WHERE MetricName = 'k8s.container.restarts'\n      AND ResourceAttributes['k8s.namespace.name'] = 'kube-system'\n      AND ResourceAttributes['k8s.container.name'] IN ('kube-apiserver', 'kube-scheduler', 'kube-controller-manager')\n      AND $__timeFilter(TimeUnix)\n    GROUP BY ResourceAttributes['k8s.pod.uid'], container\n  )\n  GROUP BY c\n) AS p USING (c)\n) AS r ON r.c = comp.c\nORDER BY comp.c",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table"
+      }
+    },
+    {
+      "id": "db-size",
+      "x": 0,
+      "y": 18,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "etcd DB size",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  if(MetricName = 'etcd_mvcc_db_total_size_in_bytes', 'File (allocated)', 'In use') AS \"Size\",\n  max(Value) AS \"Bytes\"\nFROM default.otel_metrics_gauge\nWHERE MetricName IN ('etcd_mvcc_db_total_size_in_bytes', 'etcd_mvcc_db_total_size_in_use_in_bytes')\n  AND ServiceName = 'etcd' AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Size\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "byte",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "disk-latency",
+      "x": 12,
+      "y": 18,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "etcd disk latency p99",
+        "configType": "sql",
+        "sqlTemplate": "SELECT ts, metric AS \"Operation\", round(1000 * if(arraySum(counts) = 0, NULL, if(i > length(bounds), bounds[length(bounds)], if(i = 1, 0, bounds[i - 1]) + (bounds[i] - if(i = 1, 0, bounds[i - 1])) * ((arraySum(counts) * 0.99) - if(i = 1, 0, arrayCumSum(counts)[i - 1])) / counts[i])), 2) AS \"p99 (ms)\"\nFROM (\n  SELECT ts, metric, bounds, counts, arrayFirstIndex(c -> c >= (arraySum(counts) * 0.99), arrayCumSum(counts)) AS i\n  FROM (\n    SELECT ts, metric, any(b) AS bounds, sumForEach(d) AS counts\n    FROM (\n      SELECT\n        $__timeInterval(TimeUnix) AS ts,\n        if(MetricName = 'etcd_disk_wal_fsync_duration_seconds', 'WAL fsync', 'Backend commit') AS metric,\n        any(ExplicitBounds) AS b,\n        arrayMap((a, b) -> greatest(0, toInt64(a) - toInt64(b)), argMax(BucketCounts, TimeUnix), argMin(BucketCounts, TimeUnix)) AS d\n      FROM default.otel_metrics_histogram\n      WHERE MetricName IN ('etcd_disk_wal_fsync_duration_seconds', 'etcd_disk_backend_commit_duration_seconds')\n        AND ServiceName = 'etcd' AND $__timeFilter(TimeUnix)\n      GROUP BY ts, metric, toString(Attributes)\n    )\n    GROUP BY ts, metric\n  )\n)\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "unit": "ms",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "api-requests",
+      "x": 0,
+      "y": 24,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "API requests by status class",
+        "configType": "sql",
+        "sqlTemplate": "SELECT ts, series AS \"Status\", sum(d) / $__interval_s AS \"per second\"\nFROM (\n  SELECT\n    ts, series,\n    greatest(0, v - lagInFrame(v) OVER (PARTITION BY s ORDER BY ts)) AS d,\n    row_number() OVER (PARTITION BY s ORDER BY ts) AS rn\n  FROM (\n    SELECT\n      $__timeInterval(TimeUnix) AS ts,\n      toString(Attributes) AS s,\n      concat(substring(Attributes['code'], 1, 1), 'xx') AS series,\n      argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'apiserver_request_total' AND ServiceName = 'kube-apiserver' AND $__timeFilter(TimeUnix)\n    GROUP BY ts, s, series\n  )\n)\nWHERE rn > 1\nGROUP BY ts, series\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "api-inflight",
+      "x": 12,
+      "y": 24,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "API in-flight and queued",
+        "configType": "sql",
+        "sqlTemplate": "SELECT ts, series AS \"Requests\", max(v) AS \"Count\"\nFROM (\n  SELECT\n    $__timeInterval(TimeUnix) AS ts,\n    TimeUnix,\n    if(MetricName = 'apiserver_current_inflight_requests',\n       concat('in flight, ', Attributes['request_kind']), 'queued (APF)') AS series,\n    sum(Value) AS v\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('apiserver_current_inflight_requests', 'apiserver_flowcontrol_current_inqueue_requests')\n    AND ServiceName = 'kube-apiserver' AND $__timeFilter(TimeUnix)\n  GROUP BY ts, TimeUnix, series\n)\nGROUP BY ts, series\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "sched-attempts",
+      "x": 0,
+      "y": 30,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Scheduling attempts by result",
+        "configType": "sql",
+        "sqlTemplate": "SELECT ts, series AS \"Result\", sum(d) / $__interval_s AS \"per second\"\nFROM (\n  SELECT\n    ts, series,\n    greatest(0, v - lagInFrame(v) OVER (PARTITION BY s ORDER BY ts)) AS d,\n    row_number() OVER (PARTITION BY s ORDER BY ts) AS rn\n  FROM (\n    SELECT\n      $__timeInterval(TimeUnix) AS ts,\n      toString(Attributes) AS s,\n      Attributes['result'] AS series,\n      argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'scheduler_schedule_attempts_total' AND ServiceName = 'kube-scheduler' AND $__timeFilter(TimeUnix)\n    GROUP BY ts, s, series\n  )\n)\nWHERE rn > 1\nGROUP BY ts, series\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "workqueue",
+      "x": 8,
+      "y": 30,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Controller queues (non-empty)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, Attributes['name'] AS \"Queue\", max(Value) AS \"Depth\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'workqueue_depth' AND ServiceName = 'kube-controller-manager' AND $__timeFilter(TimeUnix)\n  AND Attributes['name'] IN (\n    SELECT Attributes['name']\n    FROM default.otel_metrics_gauge\n    WHERE MetricName = 'workqueue_depth' AND ServiceName = 'kube-controller-manager' AND $__timeFilter(TimeUnix)\n    GROUP BY Attributes['name']\n    HAVING max(Value) > 0\n    ORDER BY max(Value) DESC\n    LIMIT 8\n  )\nGROUP BY ts, \"Queue\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "client-errors",
+      "x": 16,
+      "y": 30,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Failed calls to the API",
+        "configType": "sql",
+        "sqlTemplate": "SELECT ts, series AS \"Caller\", sum(d) / $__interval_s AS \"per second\"\nFROM (\n  SELECT\n    ts, series,\n    greatest(0, v - lagInFrame(v) OVER (PARTITION BY s ORDER BY ts)) AS d,\n    row_number() OVER (PARTITION BY s ORDER BY ts) AS rn\n  FROM (\n    SELECT\n      $__timeInterval(TimeUnix) AS ts,\n      toString(Attributes) AS s,\n      concat(ServiceName, ' ', Attributes['code']) AS series,\n      argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'rest_client_requests_total' AND ServiceName IN ('kube-scheduler', 'kube-controller-manager') AND $__timeFilter(TimeUnix)\n      AND NOT startsWith(Attributes['code'], '2')\n    GROUP BY ts, s, series\n  )\n)\nWHERE rn > 1\nGROUP BY ts, series\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 2
+        }
+      }
+    },
+    {
+      "id": "memory",
+      "x": 0,
+      "y": 36,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Memory (RSS)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, ServiceName AS \"Component\", max(Value) AS \"Bytes\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'process_resident_memory_bytes' AND ServiceName IN ('etcd', 'kube-apiserver', 'kube-scheduler', 'kube-controller-manager') AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Component\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "byte",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "restarts-over-time",
+      "x": 8,
+      "y": 36,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Static pod restarts",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, ResourceAttributes['k8s.container.name'] AS \"Component\", max(Value) AS \"Restarts\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'k8s.container.restarts'\n  AND ResourceAttributes['k8s.namespace.name'] = 'kube-system'\n  AND ResourceAttributes['k8s.container.name'] IN ('kube-apiserver', 'kube-scheduler', 'kube-controller-manager')\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Component\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "errors-over-time",
+      "x": 16,
+      "y": 36,
+      "w": 8,
+      "h": 6,
+      "config": {
+        "name": "Errors by component",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(Timestamp) AS ts, ResourceAttributes['k8s.container.name'] AS \"Component\", count() AS \"Errors\"\nFROM default.otel_logs\nWHERE ResourceAttributes['k8s.namespace.name'] = 'kube-system'\n  AND ResourceAttributes['k8s.container.name'] IN ('kube-apiserver', 'kube-scheduler', 'kube-controller-manager')\n  AND match(Body, '^[EF][0-9]{4} ')\n  AND $__timeFilter(Timestamp)\nGROUP BY ts, \"Component\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "logs",
+      "x": 0,
+      "y": 42,
+      "w": 24,
+      "h": 8,
+      "config": {
+        "name": "Control-plane errors",
+        "source": "Logs",
+        "displayType": "search",
+        "select": "Timestamp, ResourceAttributes['k8s.container.name'] AS component, Body",
+        "where": "ResourceAttributes['k8s.namespace.name'] = 'kube-system' AND ResourceAttributes['k8s.container.name'] IN ('kube-apiserver', 'kube-scheduler', 'kube-controller-manager') AND match(Body, '^[EF][0-9]{4} ')",
+        "whereLanguage": "sql",
+        "orderBy": "Timestamp DESC"
+      }
+    }
+  ]
+}
