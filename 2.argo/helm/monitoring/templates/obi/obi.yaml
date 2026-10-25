@@ -26,7 +26,11 @@ spec:
     targetRevision: {{ .Values.obi.version }}
     helm:
       releaseName: obi
-      valuesObject:
+      {{- /* A string, not valuesObject: prometheus_export below must reach
+      Helm as an explicit null, and ArgoCD drops nulls from valuesObject when
+      it copies the source into a sync operation -- the comparison kept the
+      null, the sync did not, and the app looped OutOfSync re-applying 9090. */}}
+      values: |
         volumes:
           - name: bpffs
             hostPath:
