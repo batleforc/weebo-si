@@ -388,7 +388,7 @@ angos:
       # the same `[auth.oidc]` section names, and upstream calls this contrib
       # binary experimental, so drifting them apart buys nothing.
       # renovate: datasource=github-releases depName=project-angos/angos
-      version: v1.8.0
+      version: v1.12.4
       # sha256 of the release asset, checked against the cosign bundle
       # published beside it (keyless, identity project-angos/angos): the
       # installer refuses to write a binary it cannot match.
