@@ -33,9 +33,12 @@ http:
   middlewares:
     trust-none: { plugin: { requestid: { headerName: X-Request-Id, trustedIPs: [] } } }
     trust-all: { plugin: { requestid: { headerName: X-Request-Id, trustedIPs: ["0.0.0.0/0", "::/0"] } } }
+    # Stands in for a backend answering with its own id (RustFS does).
+    own-id: { headers: { customResponseHeaders: { X-Request-Id: backend-own-id } } }
   routers:
     untrusted: { rule: "Host(`untrusted.test`)", service: echo, middlewares: [trust-none] }
     trusted: { rule: "Host(`trusted.test`)", service: echo, middlewares: [trust-all] }
+    own: { rule: "Host(`own.test`)", service: echo, middlewares: [trust-none, own-id] }
   services:
     echo: { loadBalancer: { servers: [{ url: "http://echo:80" }] } }
 EOF
@@ -70,6 +73,7 @@ check() {
   backend=$(printf '%s\n' "$body" | awk -F': ' 'tolower($1) == "x-request-id" { print $2 }' | tr -d '\r')
   response=$(awk -F': ' 'tolower($1) == "x-request-id" { print $2 }' "$work/headers" | tr -d '\r')
   local ok=1
+  [ "$(grep -ci '^x-request-id:' "$work/headers")" = 1 ] || ok=0
   [ "$backend" = "$response" ] || ok=0
   if [ "$want" = uuid ]; then [[ $backend =~ $uuid ]] || ok=0; else [ "$backend" = "$want" ] || ok=0; fi
   if [ $ok = 1 ]; then echo "ok    $name"; else echo "FAIL  $name: backend '$backend', response '$response'"; fail=1; fi
@@ -80,4 +84,17 @@ check "untrusted client cannot choose it" untrusted.test uuid i-picked-this
 check "trusted proxy keeps its id" trusted.test edge-7f3a:01 edge-7f3a:01
 check "trusted but malformed is replaced" trusted.test uuid '<script>'
 check "trusted but too long is replaced" trusted.test uuid "$(printf 'a%.0s' $(seq 129))"
+
+# The backend's own id is the one the client gets, alone; the backend still saw ours.
+body=$(curl -s -D "$work/headers" -H 'Host: own.test' "http://127.0.0.1:$port/")
+sent=$(printf '%s\n' "$body" | awk -F': ' 'tolower($1) == "x-request-id" { print $2 }' | tr -d '\r')
+got=$(awk -F': ' 'tolower($1) == "x-request-id" { print $2 }' "$work/headers" | tr -d '\r' | paste -sd,)
+if [ "$got" = backend-own-id ] && [[ $sent =~ $uuid ]]; then echo "ok    backend's own id is kept"
+else echo "FAIL  backend's own id is kept: response '$got', backend saw '$sent'"; fail=1; fi
+
+# A WebSocket upgrade goes through the plugin's response writer (Hijack).
+status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 -H 'Host: untrusted.test' \
+  -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H 'Sec-WebSocket-Version: 13' \
+  -H "Sec-WebSocket-Key: $(head -c 16 /dev/urandom | base64)" "http://127.0.0.1:$port/echo" || true)
+if [ "$status" = 101 ]; then echo "ok    websocket upgrade"; else echo "FAIL  websocket upgrade: HTTP $status"; fail=1; fi
 exit $fail

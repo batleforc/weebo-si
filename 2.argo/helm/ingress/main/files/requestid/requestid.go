@@ -2,12 +2,14 @@
 // arrived with only when the sender is a trusted proxy and the value looks like an id;
 // anyone else gets a fresh one, so a client cannot pick the id its request is logged
 // under. The id is set on the request (backends, access log, error pages) and on the
-// response (the client can quote it).
+// response (the client can quote it) -- unless the backend answered with an id of its own
+// (RustFS does): that one is kept, and the access log has both, request_ and downstream_.
 //
 // Traefik runs this through its Yaegi interpreter: standard library only.
 package requestid
 
 import (
+	"bufio"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -59,9 +61,61 @@ func (r *requestID) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		req.Header.Del(r.header)
 	} else {
 		req.Header.Set(r.header, id)
-		rw.Header().Set(r.header, id)
+		rw = &writer{ResponseWriter: rw, header: r.header, id: id}
 	}
 	r.next.ServeHTTP(rw, req)
+}
+
+// writer adds the id to the response when the headers go out, if the backend set none.
+// It passes Flush (streaming) and Hijack (WebSocket upgrades) through to Traefik's writer.
+type writer struct {
+	http.ResponseWriter
+	header, id string
+	done       bool
+}
+
+func (w *writer) fill() {
+	if w.done {
+		return
+	}
+	w.done = true
+	if w.ResponseWriter.Header().Get(w.header) == "" {
+		w.ResponseWriter.Header().Set(w.header, w.id)
+	}
+}
+
+func (w *writer) WriteHeader(code int) {
+	// 1xx (100 Continue, 103 Early Hints) are not the response: the final headers come later.
+	if code >= 200 {
+		w.fill()
+	}
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *writer) Write(b []byte) (int, error) {
+	w.fill()
+	return w.ResponseWriter.Write(b)
+}
+
+func (w *writer) Flush() {
+	w.fill()
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+func (w *writer) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := w.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("requestid: %T cannot hijack", w.ResponseWriter)
+	}
+	w.fill()
+	return h.Hijack()
+}
+
+// Unwrap lets http.ResponseController reach Traefik's writer.
+func (w *writer) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
 }
 
 // fromTrusted checks the peer address itself: X-Forwarded-For is the client's to write.

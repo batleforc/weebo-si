@@ -1,7 +1,9 @@
 package requestid
 
 import (
+	"bufio"
 	"context"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -10,21 +12,28 @@ import (
 
 var uuid = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`)
 
+func middleware(t *testing.T, next http.HandlerFunc) http.Handler {
+	t.Helper()
+	cfg := CreateConfig()
+	cfg.TrustedIPs = []string{"10.244.0.0/16", "fd00:10:244::/56"}
+	h, err := New(context.Background(), next, cfg, "requestid")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return h
+}
+
 // run sends one request from `remote` carrying `sent` (if any) and returns the id the
 // backend saw and the one the client got back.
 func run(t *testing.T, remote string, sent ...string) (backend, response string) {
 	t.Helper()
-	cfg := CreateConfig()
-	cfg.TrustedIPs = []string{"10.244.0.0/16", "fd00:10:244::/56"}
-	h, err := New(context.Background(), http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+	h := middleware(t, func(w http.ResponseWriter, r *http.Request) {
 		backend = r.Header.Get("X-Request-Id")
 		if n := len(r.Header.Values("X-Request-Id")); n != 1 {
 			t.Errorf("backend got %d X-Request-Id headers", n)
 		}
-	}), cfg, "requestid")
-	if err != nil {
-		t.Fatal(err)
-	}
+		_, _ = w.Write([]byte("ok"))
+	})
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.RemoteAddr = remote
 	for _, v := range sent {
@@ -32,6 +41,9 @@ func run(t *testing.T, remote string, sent ...string) (backend, response string)
 	}
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
+	if n := len(rec.Header().Values("X-Request-Id")); n != 1 {
+		t.Errorf("response has %d X-Request-Id headers", n)
+	}
 	return backend, rec.Header().Get("X-Request-Id")
 }
 
@@ -74,5 +86,68 @@ func TestBadCIDRFailsAtLoad(t *testing.T) {
 	cfg.TrustedIPs = []string{"not-a-cidr"}
 	if _, err := New(context.Background(), http.NotFoundHandler(), cfg, "requestid"); err == nil {
 		t.Fatal("expected an error")
+	}
+}
+
+func TestBackendsOwnIDWins(t *testing.T) {
+	h := middleware(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Add("X-Request-Id", "rustfs-31f4")
+		w.WriteHeader(http.StatusOK)
+	})
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	if got := rec.Header().Values("X-Request-Id"); len(got) != 1 || got[0] != "rustfs-31f4" {
+		t.Fatalf("response ids %q", got)
+	}
+}
+
+func TestIDBeforeEarlyHintsIsNotFinal(t *testing.T) {
+	h := middleware(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusEarlyHints)
+		w.Header().Set("X-Request-Id", "set-after-103")
+		w.WriteHeader(http.StatusOK)
+	})
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	if got := rec.Header().Values("X-Request-Id"); len(got) != 1 || got[0] != "set-after-103" {
+		t.Fatalf("response ids %q", got)
+	}
+}
+
+func TestStreamingFlushesThrough(t *testing.T) {
+	h := middleware(t, func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("chunk"))
+		if err := http.NewResponseController(w).Flush(); err != nil {
+			t.Errorf("flush: %v", err)
+		}
+	})
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	if !rec.Flushed || !uuid.MatchString(rec.Header().Get("X-Request-Id")) {
+		t.Fatalf("flushed %v, id %q", rec.Flushed, rec.Header().Get("X-Request-Id"))
+	}
+}
+
+// hijackable is a ResponseWriter that can be taken over, like Traefik's for an upgrade.
+type hijackable struct {
+	*httptest.ResponseRecorder
+	hijacked bool
+}
+
+func (h *hijackable) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h.hijacked = true
+	return nil, nil, nil
+}
+
+func TestWebSocketUpgradeHijacksThrough(t *testing.T) {
+	h := middleware(t, func(w http.ResponseWriter, _ *http.Request) {
+		if _, _, err := http.NewResponseController(w).Hijack(); err != nil {
+			t.Errorf("hijack: %v", err)
+		}
+	})
+	w := &hijackable{ResponseRecorder: httptest.NewRecorder()}
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/", nil))
+	if !w.hijacked {
+		t.Fatal("the upgrade did not reach the underlying writer")
 	}
 }
