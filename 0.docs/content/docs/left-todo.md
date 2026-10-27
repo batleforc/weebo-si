@@ -14,7 +14,7 @@ description: "What's left to do ?"
   - [x] Migrer les utilisateurs et groupes existants vers l'opérateur
   - [x] Migrer les applications existantes vers l'opérateur
 - [ ] Suites de la migration CNPG d'Authentik
-  - [x] Mutation des Secrets de vault-secrets-webhook coupée le 2026-10-18 (`secretsMutation: false`) : aucun Secret ne s'en servait (seul `auth/authentik` porte des références `vault:`, jamais mutées, résolues par vault-env dans les pods), elle ne faisait que bloquer. Le constat d'origine : sans annotations `vault.security.banzaicloud.io/*` sur le Secret, il cherche Vault à `https://vault:8200`, qui ne résout plus, et refuse toute écriture d'un Secret à références `vault:` (`failurePolicy: Fail`). Ça bloque aussi leur suppression en foreground : le garbage collector ne peut pas retirer le finalizer `foregroundDeletion` (cas d'`authentik-postgresql-auth`, retiré à la main le 2026-10-18 en remplaçant la référence dans le même patch). Contourné pour Authentik par `ApplyOutOfSyncOnly=true` et l'hôte de la base en env 
+  - [x] Mutation des Secrets de vault-secrets-webhook coupée le 2026-10-18 (`secretsMutation: false`) : aucun Secret ne s'en servait (seul `auth/authentik` porte des références `vault:`, jamais mutées, résolues par vault-env dans les pods), elle ne faisait que bloquer. Le constat d'origine : sans annotations `vault.security.banzaicloud.io/*` sur le Secret, il cherche Vault à `https://vault:8200`, qui ne résout plus, et refuse toute écriture d'un Secret à références `vault:` (`failurePolicy: Fail`). Ça bloque aussi leur suppression en foreground : le garbage collector ne peut pas retirer le finalizer `foregroundDeletion` (cas d'`authentik-postgresql-auth`, retiré à la main le 2026-10-18 en remplaçant la référence dans le même patch). Contourné pour Authentik par `ApplyOutOfSyncOnly=true` et l'hôte de la base en env
   - [ ] Sauvegardes CNPG vers RustFS (plugin barman-cloud + `ScheduledBackup`) pour `authentik-pg`, `forgejo-pg` et `batlehub-pg` : aucune n'en a. Authentik y garde aussi ses sessions et sa file de tâches
   - [x] Rétention bornée le 2026-10-18 : tâches gardées 7 jours (`AUTHENTIK_WORKER__TASK_EXPIRATION`, chart), événements 90 jours (`event_retention` du tenant, **réglé en base, pas dans Git** : à reposer si la base repart de zéro, et les `expires` existants ont été ramenés à 90 jours). `tasklog` et `task` faisaient 2,4 Go des 3 Go
   - [x] Cause du volume : l'opérateur weebo-authentik réécrivait chaque objet à chaque réconciliation, 99,96 % des événements d'Authentik. Corrigé en weebo-authentik 0.18.3 et validé le 2026-10-18 : 0 événement sur l'heure 18:30-19:30, contre ~480 `model_updated` par heure avant - [RFC 0003](/docs/rfc/0003-authentik-ecritures)
@@ -106,7 +106,10 @@ description: "What's left to do ?"
 
 - [ ] Macro Infra
   - [ ] Kubernetes/Talos
-  - [ ] Cilium
+  - [ ] Cilium / Networking
+    - [ ] Inbound
+    - [ ] Outbound
+    - [ ] Envoyer vers Traefik
   - [ ] Authentification
     - [ ] Authentik
       - [ ] Weebo-Authentik Operator
@@ -121,7 +124,15 @@ description: "What's left to do ?"
     - [ ] Bonne pratique GitOps
     - [ ] Segmentation des applications
   - [ ] Cert-Manager / Trust Manager
-  - [ ] Ingress / Traefik
+  - [ ] Ingress / Traefik (RFC 0006, docs/rfc/0006-ingress-public-interne, Draft)
+    - [ ] Error Pages
+      - [ ] Internal
+      - [ ] External
+    - [ ] Weebo.poc
+    - [ ] VPN or internal only endpoint
+    - [ ] Maintenance Page
+    - [ ] Request ID
+    - [ ] WAF ?
   - [ ] Hook / Kyverno
   - [ ] Storage
     - [ ] Longhorn

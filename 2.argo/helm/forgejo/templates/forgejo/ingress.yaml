@@ -1,8 +1,8 @@
 {{- if .Values.forgejo.enabled -}}
 ---
-# HTTP(S) only. git over SSH does not go through Traefik: the chart's
-# `forgejo-ssh` Service is a LoadBalancer sharing Traefik's IP (values.yaml,
-# forgejo.ssh).
+# HTTP(S) only. git over SSH does not go through Traefik: with forgejo.ssh on,
+# the chart's `forgejo-ssh` Service is a LoadBalancer sharing Traefik's IP
+# (values.yaml, forgejo.ssh, off for now).
 #
 # Wave 3, with the Application that creates `forgejo-http`: a router pointing
 # at a Service that does not exist yet is Traefik logging an error every few

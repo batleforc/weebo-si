@@ -165,8 +165,12 @@ forgejo:
   # `git@git.weebo.poc:org/repo.git` works with nothing but the DNS that
   # already points *.weebo.poc at Traefik. The rootless image listens on 2222
   # inside the pod; 22 is only the Service port.
+  #
+  # Off: that shared IP is the public one, so port 22 answered the whole
+  # internet. Comes back behind the internal Traefik or an SSH proxy (RFC 0006,
+  # decision 7). Off also means a ClusterIP Service and DISABLE_SSH.
   ssh:
-    enabled: true
+    enabled: false
     port: 22
     sharingKey: weebo-gate
 
