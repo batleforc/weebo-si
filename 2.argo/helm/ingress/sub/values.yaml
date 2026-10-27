@@ -91,7 +91,8 @@ errorPages:
   maintenance:
     # Hosts that answer the maintenance page (503) instead of their app, e.g.
     # [git.weebo.poc]. Empty: no maintenance route.
-    hosts: []
+    hosts:
+      - truc.weebo.poc
 
 repo: ""
 project: ""
