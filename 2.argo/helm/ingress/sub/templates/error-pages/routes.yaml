@@ -1,24 +1,29 @@
 {{- if and .Values.traefik.enabled .Values.errorPages.enabled -}}
 {{- $domain := .Values.errorPages.internalDomain -}}
 {{- $internalHost := printf "^(.+\\.)?%s$" (regexQuoteMeta $domain) -}}
+{{- /* One IngressRoute per entrypoint: a route with a `tls` section only
+       matches TLS, so plain HTTP needs its own (`-web`). */ -}}
+{{- $entryPoints := list (list "websecure" "") (list "web" "-web") }}
+{{- range $ep := $entryPoints }}
 ---
-# "There is nothing to see here": any host no other router claims. Priority 2
-# and 1 lose to every real route. Without these Traefik answers its own
-# plain-text `404 page not found`. TLS is served with Traefik's default
-# certificate: there is no name to issue one for.
+# "There is nothing to see here": any host no other router claims, over HTTPS
+# and over plain HTTP. Priority 2 and 1 lose to every real route. Without
+# these Traefik answers its own plain-text `404 page not found`. HTTP is
+# answered as is, not redirected: there is no name to issue a certificate
+# for, so HTTPS would only add Traefik's default one and a browser warning.
 #
 # Internal hosts get the page that lists the tools, behind vpn-only: a client
 # outside the allow-list naming an internal host gets a 403, not the list.
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: error-pages-catch-all
+  name: error-pages-catch-all{{ index $ep 1 }}
   namespace: traefik
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
   entryPoints:
-    - websecure
+    - {{ index $ep 0 }}
   routes:
     - kind: Rule
       match: HostRegexp(`{{ $internalHost }}`)
@@ -37,7 +42,10 @@ spec:
       services:
         - name: error-pages-external
           port: 8080
+  {{- if eq (index $ep 0) "websecure" }}
   tls: {}
+  {{- end }}
+{{- end }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -47,25 +55,27 @@ metadata:
 spec:
   replacePath:
     path: /404
-{{- with .Values.errorPages.maintenance.hosts }}
+{{- with $hosts := .Values.errorPages.maintenance.hosts }}
+{{- range $ep := $entryPoints }}
 ---
 # Maintenance: every listed host answers 503 + Retry-After with the maintenance
-# page, ahead of its own route (priority well above any rule length), from the
-# variant its domain calls for -- behind vpn-only when internal, as above. ACME
-# HTTP-01 challenges still go through so a renewal is not lost meanwhile. The
+# page, over HTTPS and HTTP, ahead of its own routes (priority well above any
+# rule length, so also ahead of an HTTP -> HTTPS redirect), from the variant
+# its domain calls for -- behind vpn-only when internal, as above. ACME HTTP-01
+# challenges still go through so a renewal is not lost meanwhile. The
 # certificate is picked by SNI from the host's own route, which stays in place.
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: error-pages-maintenance
+  name: error-pages-maintenance{{ index $ep 1 }}
   namespace: traefik
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
   entryPoints:
-    - websecure
+    - {{ index $ep 0 }}
   routes:
-    {{- range $host := . }}
+    {{- range $host := $hosts }}
     - kind: Rule
       match: Host(`{{ $host }}`) && !PathPrefix(`/.well-known/acme-challenge/`)
       priority: 10000
@@ -79,7 +89,10 @@ spec:
         - name: error-pages-{{ $internal | ternary "internal" "external" }}
           port: 8080
     {{- end }}
+  {{- if eq (index $ep 0) "websecure" }}
   tls: {}
+  {{- end }}
+{{- end }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
