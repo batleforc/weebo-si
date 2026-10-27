@@ -36,11 +36,11 @@ traefik:
   # error pages.
   requestId:
     enabled: true
-    # Put it on the web and websecure entrypoints. A second step, once the
-    # `request-id` Middleware exists (ingress-app synced, plugin loaded): an
-    # entrypoint naming a missing or broken middleware takes every route on it
-    # down.
-    attach: false
+    # Put it on the web and websecure entrypoints. Only once the `request-id`
+    # Middleware exists (ingress-app synced, plugin loaded): an entrypoint
+    # naming a missing or broken middleware takes every route on it down. Turn
+    # this off first if requestId is ever disabled.
+    attach: true
     # Peers whose X-Request-Id is kept: proxies in front of Traefik that set
     # their own. Matched on the connection's address, not X-Forwarded-For.
     # Empty: every request gets a fresh id.
