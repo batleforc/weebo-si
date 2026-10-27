@@ -1,0 +1,93 @@
+{{- if and .Values.traefik.enabled .Values.errorPages.enabled -}}
+{{- $domain := .Values.errorPages.internalDomain -}}
+{{- $internalHost := printf "^(.+\\.)?%s$" (regexQuoteMeta $domain) -}}
+---
+# "There is nothing to see here": any host no other router claims. Priority 2
+# and 1 lose to every real route. Without these Traefik answers its own
+# plain-text `404 page not found`. TLS is served with Traefik's default
+# certificate: there is no name to issue one for.
+#
+# Internal hosts get the page that lists the tools, behind vpn-only: a client
+# outside the allow-list naming an internal host gets a 403, not the list.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: error-pages-catch-all
+  namespace: traefik
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: HostRegexp(`{{ $internalHost }}`)
+      priority: 2
+      middlewares:
+        - name: vpn-only
+        - name: error-pages-404
+      services:
+        - name: error-pages-internal
+          port: 8080
+    - kind: Rule
+      match: HostRegexp(`.+`)
+      priority: 1
+      middlewares:
+        - name: error-pages-404
+      services:
+        - name: error-pages-external
+          port: 8080
+  tls: {}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: error-pages-404
+  namespace: traefik
+spec:
+  replacePath:
+    path: /404
+{{- with .Values.errorPages.maintenance.hosts }}
+---
+# Maintenance: every listed host answers 503 + Retry-After with the maintenance
+# page, ahead of its own route (priority well above any rule length), from the
+# variant its domain calls for -- behind vpn-only when internal, as above. ACME
+# HTTP-01 challenges still go through so a renewal is not lost meanwhile. The
+# certificate is picked by SNI from the host's own route, which stays in place.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: error-pages-maintenance
+  namespace: traefik
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    {{- range $host := . }}
+    - kind: Rule
+      match: Host(`{{ $host }}`) && !PathPrefix(`/.well-known/acme-challenge/`)
+      priority: 10000
+      {{- $internal := regexMatch $internalHost $host }}
+      middlewares:
+        {{- if $internal }}
+        - name: vpn-only
+        {{- end }}
+        - name: error-pages-503
+      services:
+        - name: error-pages-{{ $internal | ternary "internal" "external" }}
+          port: 8080
+    {{- end }}
+  tls: {}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: error-pages-503
+  namespace: traefik
+spec:
+  replacePath:
+    path: /503
+{{- end }}
+{{- end -}}

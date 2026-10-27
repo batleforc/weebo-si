@@ -99,6 +99,61 @@ export default {
     },
   },
 
+  // Error pages: the templates github.com/tarampampam/error-pages renders for the hosts
+  // Traefik serves (dist/errors-{internal,external}.html, previews in dist/errors/).
+  // Codes listed under `pages` get their own copy; any other code shows error-pages'
+  // message and description. `scene` is what the crab is up to, one of src/scenes.mjs.
+  // Set `errors: false` to skip.
+  errors: {
+    pages: {
+      400: { label: "400 · Bad request", title: "That made no sense", scene: "garbled",
+        caption: "The request arrived garbled. Check what was sent, then try again." },
+      401: { label: "401 · Unauthorized", title: "Who goes there?", scene: "door",
+        caption: "This door wants to know who you are. Sign in first." },
+      403: { label: "403 · Forbidden", title: "Not past this line", scene: "gate",
+        caption: "You are known here, but this is not yours to open." },
+      // What the catch-all routes answer for a host nothing else serves.
+      404: { label: "404 · Not found", title: "There is nothing to see here", scene: "lost",
+        caption: "No page answers at this address. It may have moved, or it was never here." },
+      408: { label: "408 · Request timeout", title: "Fell asleep waiting", scene: "sleep",
+        caption: "The request took too long to arrive. Send it again." },
+      410: { label: "410 · Gone", title: "Long gone", scene: "gone",
+        caption: "Something lived here once. It has been removed for good." },
+      413: { label: "413 · Payload too large", title: "That will not fit", scene: "box",
+        caption: "What you sent is bigger than this server accepts." },
+      418: { label: "418 · I'm a teapot", title: "Short and stout", scene: "coffee",
+        caption: "This server is a teapot and will not brew coffee. The crab is making it anyway." },
+      429: { label: "429 · Too many requests", title: "Slow down", scene: "rush",
+        caption: "Too many requests in too little time. Wait a moment, then try again." },
+      500: { label: "500 · Server error", title: "Something broke inside", scene: "smoke",
+        caption: "The server hit an error it did not expect. Try again shortly; if it keeps happening, tell an admin." },
+      502: { label: "502 · Bad gateway", title: "Knocked over", scene: "dazed",
+        caption: "The service behind this address answered with nonsense, or not at all." },
+      // What a host under maintenance answers (and a backend with no pod left to serve it).
+      503: { label: "503 · Maintenance", title: "Back shortly", scene: "work",
+        caption: "This service is down for planned work. Nothing is lost; try again in a few minutes." },
+      504: { label: "504 · Gateway timeout", title: "Still waiting", scene: "wait",
+        caption: "The service behind this address did not answer in time." },
+    },
+    scene: "dazed",
+    // The internal variant (hosts under weebo.poc) lists these; the external one shows
+    // the page head only, so nothing about the inside leaks out.
+    internal: {
+      heading: "Tools",
+      links: [
+        { name: "Forgejo", note: "Repositories, reviews, pipelines.", href: "https://git.weebo.poc" },
+        { name: "BatleHub", note: "Packages and their releases.", href: "https://pkg.weebo.poc" },
+        { name: "Registry", note: "Container images (angos).", href: "https://registry.pkg.weebo.poc" },
+        { name: "Workspaces", note: "Eclipse Che dev environments.", href: "https://cde.dev.weebo.poc" },
+        { name: "Argo CD", note: "What is deployed, and why not.", href: "https://argo.weebo.poc" },
+        { name: "ClickStack", note: "Logs, traces, metrics.", href: "https://clickstack.weebo.poc" },
+        { name: "Longhorn", note: "Volumes and backups.", href: "https://longhorn.weebo.poc" },
+        { name: "OpenBao", note: "Secrets.", href: "https://vault.weebo.poc" },
+        { name: "Authentik", note: "Accounts and sign-in.", href: "https://auth.weebo.poc" },
+      ],
+    },
+  },
+
   // Deploy manifests written to dist/deploy/.
   deploy: {
     namespace: "forgejo",
@@ -111,5 +166,8 @@ export default {
     // [ui] settings), relative to this file. The weebo-si Forgejo chart builds its
     // ConfigMap from that copy, so it is committed. `null` to skip.
     chartDir: "../../2.argo/helm/forgejo/files/theme",
+    // Where the build also copies errors-{internal,external}.html, for the error-pages
+    // releases in the ingress chart. `null` to skip.
+    errorsDir: "../../2.argo/helm/ingress/sub/files/error-pages",
   },
 };

@@ -3,12 +3,13 @@
 //   node src/build.mjs          build (fails if a contrast floor is broken)
 //   node src/build.mjs --check  contrast report only, nothing written
 import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { contrast, hex, parseOklch } from "./color.mjs";
 import { variables } from "./variables.mjs";
 import { renderHome } from "./home.mjs";
+import { renderErrors, VARIANTS } from "./errors.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = join(root, "dist");
@@ -42,20 +43,22 @@ if (process.argv.includes("--check")) process.exit(0);
 
 // ── CSS ─────────────────────────────────────────────────────────────────────
 const assets = `/assets`;
-const fontFaces = Object.values(cfg.fonts)
+const faces = (src) => Object.values(cfg.fonts)
   .flatMap((face) =>
     face.files.map(
       (f) => `@font-face {
   font-family: "${face.family}";
-  src: url("${assets}/fonts/${name}/${f.file}") format("woff2");
+  src: url("${src(f.file)}") format("woff2");
   font-weight: ${f.weight};
   font-display: swap;
 }`,
     ),
   )
   .join("\n");
+const fontFaces = faces((file) => `${assets}/fonts/${name}/${file}`);
 
-const rules = (await readFile(join(root, "src/rules.css"), "utf8")).replaceAll("__NAME__", name);
+const homeCss = await readFile(join(root, "src/home.css"), "utf8");
+const rules = (await readFile(join(root, "src/rules.css"), "utf8") + "\n" + homeCss).replaceAll("__NAME__", name);
 const logoFor = { dark: "logo-cream.svg", light: "logo-ink.svg" };
 const perRendition = (r) => {
   const p = cfg.plate[r];
@@ -113,6 +116,35 @@ for (const face of Object.values(cfg.fonts))
 if (cfg.home) {
   await mkdir(join(dist, "templates"), { recursive: true });
   await writeFile(join(dist, "templates/home.tmpl"), renderHome(cfg.home));
+}
+
+// ── Error pages (error-pages template, served off-Forgejo: inlines everything) ─
+let errorsHtml = null; // variant -> template
+if (cfg.errors) {
+  const fontData = (file) => `data:font/woff2;base64,${readFileSync(join(root, "assets/fonts", file)).toString("base64")}`;
+  const bhVars = (r) => variables(r, tokens[r], cfg.fonts).filter(([k]) => k.startsWith("--bh-")).map(([k, v]) => `  ${k}: ${v};`).join("\n");
+  const css = `${faces(fontData)}
+:root {
+${bhVars("light")}
+  --fonts-regular: "${cfg.fonts.text.family}", ${cfg.fonts.text.fallback};
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+:root {
+${bhVars("dark")}
+}
+}
+${homeCss}
+${await readFile(join(root, "src/errors.css"), "utf8")}`;
+  const logo = await readFile(join(root, "assets/img/theme/logo-ink.svg"), "utf8");
+  errorsHtml = {};
+  await mkdir(join(dist, "errors"));
+  for (const variant of VARIANTS) {
+    errorsHtml[variant] = renderErrors(cfg.errors, { css, logo }, { variant });
+    await writeFile(join(dist, `errors-${variant}.html`), errorsHtml[variant]);
+    for (const code of [...Object.keys(cfg.errors.pages), "599"])
+      await writeFile(join(dist, "errors", `${variant}-${code}.html`), renderErrors(cfg.errors, { css, logo }, { variant, preview: Number(code) }));
+  }
 }
 
 // ── Deploy manifests ────────────────────────────────────────────────────────
@@ -188,6 +220,12 @@ defaultTheme: ${d.defaultTheme}
 `,
   );
 }
+if (errorsHtml && d.errorsDir) {
+  const dir = join(root, d.errorsDir);
+  await rm(dir, { recursive: true, force: true });
+  await mkdir(dir, { recursive: true });
+  for (const [variant, html] of Object.entries(errorsHtml)) await writeFile(join(dir, `errors-${variant}.html`), html);
+}
 
 // ── Preview (no Forgejo needed) ─────────────────────────────────────────────
 const local = (text) => text.replace(/@import[^;]+;\n/g, "").replaceAll('"/assets/', '"./public/assets/');
@@ -255,4 +293,4 @@ ${home}
   );
 }
 
-console.log(`\nbuilt dist/${d.chartDir ? ` and ${d.chartDir}` : ""} — ${files.length} files, themes: ${["auto", "light", "dark"].map((r) => `${name}-${r}`).join(", ")}`);
+console.log(`\nbuilt dist/${d.chartDir ? ` and ${d.chartDir}` : ""}${errorsHtml && d.errorsDir ? ` and ${d.errorsDir}` : ""} — ${files.length} files, themes: ${["auto", "light", "dark"].map((r) => `${name}-${r}`).join(", ")}`);

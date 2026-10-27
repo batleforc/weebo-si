@@ -308,6 +308,62 @@ body {
   letter-spacing: 0.04em;
 }
 
+/* ── Navigation: current cell reverses to an ink block ──────────────────── */
+#navbar .item {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+#navbar .item.active {
+  background: var(--bh-ink) !important;
+  color: var(--bh-ground) !important;
+  font-weight: 700;
+}
+#navbar {
+  border-bottom: 1px solid var(--bh-rule-soft);
+}
+
+/* ── The one filled action ──────────────────────────────────────────────── */
+.ui.primary.button,
+.ui.primary.buttons .button {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+}
+.ui.primary.button:hover:not(.disabled):not(:disabled) {
+  background: var(--bh-accent) !important;
+  box-shadow: 0 0 0 2px var(--bh-ground), 0 0 0 3px var(--bh-accent) !important;
+}
+.ui.primary.button.disabled,
+.ui.primary.button:disabled {
+  background: transparent !important;
+  color: var(--bh-ink-dim) !important;
+  border: 1px solid var(--bh-rule-strong) !important;
+  opacity: 1 !important;
+}
+
+/* ── Rows: dashed at rest, solid when engaged ───────────────────────────── */
+.flex-list > .flex-item + .flex-item {
+  border-top: 1px dashed var(--bh-rule-soft);
+}
+.flex-list > .flex-item:hover + .flex-item,
+.flex-list > .flex-item + .flex-item:hover {
+  border-top: 1px solid var(--bh-rule-strong);
+}
+
+/* ── One Motion Rule: nothing here animates; honour reduced motion fully ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* The home page head and its rows. Concatenated after rules.css into the theme, and
+   inlined into the error pages, so both share one look. */
+
 /* ── Home: the specimen head and its sheet ──────────────────────────────── */
 .bh-home {
   margin-top: 0 !important;
@@ -461,58 +517,6 @@ body {
   }
 }
 
-/* ── Navigation: current cell reverses to an ink block ──────────────────── */
-#navbar .item {
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-#navbar .item.active {
-  background: var(--bh-ink) !important;
-  color: var(--bh-ground) !important;
-  font-weight: 700;
-}
-#navbar {
-  border-bottom: 1px solid var(--bh-rule-soft);
-}
-
-/* ── The one filled action ──────────────────────────────────────────────── */
-.ui.primary.button,
-.ui.primary.buttons .button {
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 8px 16px;
-}
-.ui.primary.button:hover:not(.disabled):not(:disabled) {
-  background: var(--bh-accent) !important;
-  box-shadow: 0 0 0 2px var(--bh-ground), 0 0 0 3px var(--bh-accent) !important;
-}
-.ui.primary.button.disabled,
-.ui.primary.button:disabled {
-  background: transparent !important;
-  color: var(--bh-ink-dim) !important;
-  border: 1px solid var(--bh-rule-strong) !important;
-  opacity: 1 !important;
-}
-
-/* ── Rows: dashed at rest, solid when engaged ───────────────────────────── */
-.flex-list > .flex-item + .flex-item {
-  border-top: 1px dashed var(--bh-rule-soft);
-}
-.flex-list > .flex-item:hover + .flex-item,
-.flex-list > .flex-item + .flex-item:hover {
-  border-top: 1px solid var(--bh-rule-strong);
-}
-
-/* ── One Motion Rule: nothing here animates; honour reduced motion fully ── */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    transition: none !important;
-    animation: none !important;
-  }
-}
 
 /* ── Rendition-specific: the plate's ink, and the navbar logo file ──────── */
 .bh-plate { opacity: 0.34; }

@@ -23,6 +23,13 @@ spec:
     - kind: Rule
       match: Host(`{{ .Values.forgejo.dns }}`)
       priority: 10
+      {{- if .Values.forgejo.errorPages }}
+      # 502-504 (pod restarting, not ready) get the themed page; see
+      # 2.argo/helm/ingress/sub/templates/error-pages.
+      middlewares:
+        - name: error-pages-internal
+          namespace: traefik
+      {{- end }}
       services:
         - name: forgejo-http
           namespace: {{ .Release.Namespace }}

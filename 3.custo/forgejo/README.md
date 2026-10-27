@@ -19,13 +19,18 @@ contrast ratios, a few controls) without a running Forgejo.
 | ------------------------------------------------- | ---------------------------- |
 | Colours, contrast floors, fonts, theme name       | `theme.config.mjs`           |
 | Home page copy, rows, featured topic / limit      | `theme.config.mjs` → `home`  |
+| Error pages: copy, crab scene, internal tools     | `theme.config.mjs` → `errors`|
 | Namespace, ConfigMap name, default theme, chart  | `theme.config.mjs` → `deploy`|
 | Logo, favicon (replace Forgejo's own)             | `assets/img/`                |
 | Navbar logo per rendition, halftone plate         | `assets/img/theme/`          |
 | Font files                                        | `assets/fonts/`              |
 | Which Forgejo variable a token feeds              | `src/variables.mjs`          |
-| Component rules (radius, focus ring, rows, home…) | `src/rules.css`              |
+| Component rules (radius, focus ring, navbar…)     | `src/rules.css`              |
+| Home page and error page rules                    | `src/home.css`               |
+| Crab scenes: props as ASCII sprites, positions    | `src/scenes.mjs`             |
+| Error page base and crab animations               | `src/errors.css`             |
 | Home page markup                                  | `src/home.mjs`               |
+| Error page markup                                 | `src/errors.mjs`             |
 
 Colours are written as OKLCH and converted to sRGB hex at build time; a value outside the
 sRGB gamut has its chroma reduced until it fits. The build fails if a pair listed under
@@ -46,10 +51,14 @@ dist/
   kustomization.yaml                  ConfigMap generator for everything above
   values.forgejo.yaml                 Helm values: [ui] themes, volume, mounts
   preview.html
+  errors-{internal,external}.html     error-pages templates (Go text/template, self-contained)
+  errors/<variant>-{404,503,502}.html the same, rendered, to open in a browser
 
 <deploy.chartDir>/                    (2.argo/helm/forgejo/files/theme, committed)
   public/…  templates/…               same files as dist/
   theme.yaml                          name, THEMES, DEFAULT_THEME
+
+<deploy.errorsDir>/errors-*.html      (2.argo/helm/ingress/sub/files/error-pages, committed)
 ```
 
 Each rendition imports the stock `theme-<base>-{dark,light}.css` and overrides it, so any
@@ -79,5 +88,14 @@ Notes:
 - The home page is styled by these themes only: keep one of them as `DEFAULT_THEME`.
 - Featured projects are fetched client-side from `/api/v1/repos/search`; the section stays
   hidden when nothing carries the topic or the API is not readable anonymously.
+- Error pages: [error-pages](https://github.com/tarampampam/error-pages) renders them for
+  every host behind Traefik, in two variants: `internal` (hosts under the ingress chart's
+  `errorPages.internalDomain`, behind vpn-only, lists `errors.internal.links`) and `external`
+  (everything else, page head only). 404 and 503 have their own copy ("There is nothing to
+  see here" for hosts no route claims, "Maintenance" for hosts listed in
+  `errorPages.maintenance.hosts`); other codes show error-pages' message. Each page has a
+  crab scene (`src/scenes.mjs`, one per code: lost, door, coffee…), CSS-only, still under
+  reduced motion. Fonts and sprites are inlined, so a page loads nothing (~85 KB). Wiring:
+  `2.argo/helm/ingress/sub/templates/error-pages`.
 - `home.tmpl` relies on `base/head`, `base/footer`, `AppName`, `AppSubUrl`, `.IsSigned`;
   re-check it after a major Forgejo upgrade.

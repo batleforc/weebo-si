@@ -1,5 +1,6 @@
 # Le theme Forgejo (3.custo/forgejo) est construit en local et sa sortie est
-# commitee dans le chart (2.argo/helm/forgejo/files/theme) : ArgoCD ne lance
+# commitee dans les charts (2.argo/helm/forgejo/files/theme, et le template
+# error-pages dans 2.argo/helm/ingress/sub/files/error-pages) : ArgoCD ne lance
 # pas node. Ce job verifie que les deux n'ont pas diverge -- une source
 # modifiee sans `npm run build`, ou une copie retouchee a la main.
 name: Forgejo theme
@@ -10,11 +11,13 @@ on:
     paths:
       - "3.custo/forgejo/**"
       - "2.argo/helm/forgejo/files/**"
+      - "2.argo/helm/ingress/sub/files/**"
       - ".github/workflows/forgejo-theme.yml"
   pull_request:
     paths:
       - "3.custo/forgejo/**"
       - "2.argo/helm/forgejo/files/**"
+      - "2.argo/helm/ingress/sub/files/**"
       - ".github/workflows/forgejo-theme.yml"
   workflow_dispatch:
 
@@ -40,8 +43,8 @@ jobs:
         run: npm run build
       - name: Chart copy is up to date
         run: |
-          if [ -n "$(git status --porcelain -- ../../2.argo/helm/forgejo/files)" ]; then
-            git status --short -- ../../2.argo/helm/forgejo/files
-            echo "::error::2.argo/helm/forgejo/files/theme is stale: run 'npm run build' in 3.custo/forgejo and commit the result."
+          if [ -n "$(git status --porcelain -- ../../2.argo/helm/forgejo/files ../../2.argo/helm/ingress/sub/files)" ]; then
+            git status --short -- ../../2.argo/helm/forgejo/files ../../2.argo/helm/ingress/sub/files
+            echo "::error::2.argo/helm/{forgejo,ingress/sub}/files is stale: run 'npm run build' in 3.custo/forgejo and commit the result."
             exit 1
           fi

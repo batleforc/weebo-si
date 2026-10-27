@@ -1,0 +1,89 @@
+{{- if and .Values.traefik.enabled .Values.errorPages.enabled -}}
+{{- range $variant := list "internal" "external" }}
+{{- $template := $.Files.Get (printf "files/error-pages/errors-%s.html" $variant) -}}
+{{- if not $template }}
+{{- fail (printf "errorPages.enabled but files/error-pages/errors-%s.html is missing: run `npm run build` in 3.custo/forgejo" $variant) }}
+{{- end }}
+---
+# Server-side apply: the template is close to the 256 KiB a client-side apply
+# can keep in its last-applied-configuration annotation.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: error-pages-{{ $variant }}-template
+  namespace: traefik
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+data:
+  errors.html: {{ toJson $template }}
+---
+# github.com/tarampampam/error-pages, with the BatleHub template built by
+# 3.custo/forgejo. One release per variant: `internal` (hosts under
+# errorPages.internalDomain, lists the tools) and `external` (everything else,
+# page head only). A release rather than a Host test in one template: the Host
+# header is the client's to choose.
+#
+# The template is mounted from a ConfigMap: at ~110 KB it would sit right under
+# the 128 KiB a single environment variable may hold (HTML_TEMPLATE inline).
+# Its checksum is a pod annotation, so the pod rolls when it changes --
+# error-pages parses its template once, at start-up.
+#
+# Each release also creates an errors Middleware, `error-pages-<variant>`, for
+# routes that opt in (statusCodes below). The catch-all and maintenance routes
+# are in routes.yaml.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: error-pages-{{ $variant }}
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ $.Values.project }}
+  syncPolicy:
+    automated:
+      selfHeal: true
+  source:
+    chart: error-pages
+    repoURL: oci://ghcr.io/tarampampam/error-pages/charts/error-pages
+    targetRevision: {{ $.Values.errorPages.version }}
+    helm:
+      releaseName: error-pages-{{ $variant }}
+      valuesObject:
+        fullnameOverride: error-pages-{{ $variant }}
+        deployment:
+          podAnnotations:
+            checksum/template: {{ sha256sum $template | quote }}
+          volumes:
+            - name: template
+              configMap:
+                name: error-pages-{{ $variant }}-template
+          volumeMounts:
+            - name: template
+              mountPath: /opt/error-pages
+              readOnly: true
+        traefikMiddleware:
+          enabled: true
+          # Only what a backend cannot answer itself. Forgejo's own 4xx/500
+          # carry its API's JSON and git's error bodies; replacing those would
+          # break clients, not help them.
+          statusCodes: {{ toJson $.Values.errorPages.statusCodes }}
+        config:
+          log:
+            format: json
+          # The catch-all and maintenance routes call it directly: the response
+          # has to carry the code it renders. Through the Middleware, Traefik
+          # keeps the backend's status whatever error-pages answers.
+          sendSameHttpCode: true
+          # The copy is English only, like the Forgejo home page.
+          disableL10n: true
+          htmlTemplate:
+            custom: /opt/error-pages/errors.html
+  destination:
+    name: "in-cluster"
+    namespace: traefik
+{{- end }}
+{{- end -}}

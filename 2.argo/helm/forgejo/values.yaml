@@ -38,6 +38,9 @@ forgejo:
 
   dns: git.weebo.poc
   appName: "Weebo Forge"
+  # Route through the `error-pages-internal` Middleware (ingress chart). Turn off if
+  # errorPages is disabled there: a router naming a missing Middleware 404s.
+  errorPages: true
 
   # ── Secrets ────────────────────────────────────────────────────────────────
   # None of them are in this file. All come from Vault through External

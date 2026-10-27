@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "bounce-easing",
+        "value": "bh-jiggle",
+        "createdAt": "2026-10-27T19:46:13.094Z",
+        "reason": "Claude: bh-jiggle is a steps(1) 1px pixel-art shake keyframe (claws holding a shaking paper), no bounce/elastic timing curve; flagged by name only"
+      }
+    ]
+  }
+}
