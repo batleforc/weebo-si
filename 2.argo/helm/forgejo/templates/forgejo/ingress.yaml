@@ -36,4 +36,30 @@ spec:
           port: 3000
   tls:
     secretName: forgejo-tls
+---
+# http://<dns> -> https://<dns>, permanent. Without it plain HTTP falls through
+# to the error-pages catch-all (ingress chart) and answers 404. The service is
+# never reached; a route needs one.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: forgejo-http
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: forgejo
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.forgejo.dns }}`)
+      middlewares:
+        - name: redirect-to-https
+          namespace: traefik
+      services:
+        - name: forgejo-http
+          namespace: {{ .Release.Namespace }}
+          port: 3000
 {{- end -}}
