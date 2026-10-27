@@ -96,6 +96,11 @@ export function renderErrors(errors, { css, logo }, { variant, preview } = {}) {
       : pages.map(([code, p], i) => `{{ ${i ? "else if" : "if"} eq .StatusCode ${code} }}${pick(p)}`).join("") +
         `{{ else }}${pick(fallback)}{{ end }}`;
 
+  // Set by Traefik's request-id plugin; error-pages exposes it with --show-details.
+  const requestId = preview
+    ? `<p class="bh-request">Request ID <code>3f6c1e2a-9b4d-4c8e-a1f0-7d2b5e9c0a14</code></p>`
+    : `{{ if .RequestID }}<p class="bh-request">Request ID <code>{{ .RequestID | escape }}</code></p>{{ end }}`;
+
   // The crab is drawn once; each code only picks its scene, props and spot.
   const props = (list = []) => list.map((p) => sprite(p, logo)).join("");
 
@@ -129,6 +134,7 @@ ${css}
 		${slot((p) => `<p class="bh-label">${p.label}</p>
 		<h1 class="bh-display">${p.title}</h1>
 		<p class="bh-caption">${p.caption}</p>`)}
+		${requestId}
 		<div class="bh-stage bh-scene-${slot((p) => p.scene)}" aria-hidden="true">${slot((p) => props(SCENES[p.scene].behind))}<div class="bh-crab" style="${slot((p) => place(SCENES[p.scene].crab.x, 0))}">${crab(logo)}</div>${slot((p) => props(SCENES[p.scene].front))}</div>
 	</section>
 ${sheet}</main>

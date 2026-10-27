@@ -78,6 +78,9 @@ spec:
           # has to carry the code it renders. Through the Middleware, Traefik
           # keeps the backend's status whatever error-pages answers.
           sendSameHttpCode: true
+          # Exposes X-Request-Id to the template as .RequestID. The template
+          # renders nothing else of these details (host, client IP, service).
+          showDetails: true
           # The copy is English only, like the Forgejo home page.
           disableL10n: true
           htmlTemplate:

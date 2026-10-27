@@ -1,0 +1,46 @@
+# Le plugin request-id de Traefik (2.argo/helm/ingress/main/files/requestid) :
+# tests Go, puis chargement dans le Traefik que le chart epingle (e2e.sh) --
+# Traefik l'interprete avec Yaegi, pas avec le compilateur Go, un code qui passe
+# `go test` peut ne pas se charger. Sur changement du plugin ou de la version de
+# Traefik (main/values.yaml, bumpe par Renovate), et une fois par mois : le
+# runner, Go et les images bougent sans commit ici.
+name: Traefik request-id
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "2.argo/helm/ingress/main/files/requestid/**"
+      - "2.argo/helm/ingress/main/values.yaml"
+      - "2.argo/helm/ingress/main/templates/traefik/traefik.yaml"
+      - ".github/workflows/traefik-request-id.yml"
+  pull_request:
+    paths:
+      - "2.argo/helm/ingress/main/files/requestid/**"
+      - "2.argo/helm/ingress/main/values.yaml"
+      - "2.argo/helm/ingress/main/templates/traefik/traefik.yaml"
+      - ".github/workflows/traefik-request-id.yml"
+  schedule:
+    - cron: "0 5 1 * *" # le 1er du mois, 06:00/07:00 Europe/Paris
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 2.argo/helm/ingress/main/files/requestid
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Go, Docker, helm et curl sont ceux du runner : pas d'action tierce a epingler.
+      - name: Go tests
+        run: |
+          go version
+          go vet ./...
+          go test -race ./...
+      - name: In Traefik (Yaegi)
+        run: ./e2e.sh

@@ -31,6 +31,20 @@ traefik:
     enabled: true
   gatewayAPI:
     enabled: false
+  # X-Request-Id on every request (files/requestid, a local Traefik plugin):
+  # kept as sent from trustedIPs, generated for everyone else. Shown on the
+  # error pages.
+  requestId:
+    enabled: true
+    # Put it on the web and websecure entrypoints. A second step, once the
+    # `request-id` Middleware exists (ingress-app synced, plugin loaded): an
+    # entrypoint naming a missing or broken middleware takes every route on it
+    # down.
+    attach: false
+    # Peers whose X-Request-Id is kept: proxies in front of Traefik that set
+    # their own. Matched on the connection's address, not X-Forwarded-For.
+    # Empty: every request gets a fresh id.
+    trustedIPs: []
 
 authentik:
   enabled: true

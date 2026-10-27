@@ -1,0 +1,19 @@
+{{- if .Values.traefik.enabled -}}
+{{- with .Values.traefik.requestId -}}
+{{- if .enabled -}}
+# Configures the request-id plugin loaded into Traefik by the main chart
+# (files/requestid). Attached to the entrypoints there, as
+# traefik-request-id@kubernetescrd, once traefik.requestId.attach is on.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: request-id
+  namespace: traefik
+spec:
+  plugin:
+    requestid:
+      headerName: X-Request-Id
+      trustedIPs: {{ toJson (.trustedIPs | default list) }}
+{{- end -}}
+{{- end -}}
+{{- end -}}

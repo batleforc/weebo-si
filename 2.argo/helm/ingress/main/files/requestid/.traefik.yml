@@ -1,0 +1,8 @@
+displayName: Request ID
+type: middleware
+import: weebo.poc/requestid
+summary: An X-Request-Id on every request, kept as sent only from trusted proxies.
+testData:
+  headerName: X-Request-Id
+  trustedIPs:
+    - 10.244.0.0/16

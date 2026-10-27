@@ -35,3 +35,7 @@ test("every configured code previews its own scene", () => {
   for (const [code, p] of Object.entries(cfg.errors.pages))
     assert.ok(renderErrors(cfg.errors, parts, { variant: "external", preview: Number(code) }).includes(`bh-scene-${p.scene}"`), code);
 });
+
+test("the request id is shown only when error-pages has one, escaped", () => {
+  assert.ok(renderErrors(cfg.errors, parts, { variant: "external" }).includes("{{ if .RequestID }}<p class=\"bh-request\">Request ID <code>{{ .RequestID | escape }}</code></p>{{ end }}"));
+});

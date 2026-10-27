@@ -1,4 +1,11 @@
 {{- if .Values.traefik.enabled -}}
+{{- $rid := .Values.traefik.requestId -}}
+{{- $ridFiles := dict -}}
+{{- if $rid.enabled }}
+{{- range $f := list ".traefik.yml" "go.mod" "requestid.go" }}
+{{- $_ := set $ridFiles $f ($.Files.Get (printf "files/requestid/%s" $f)) }}
+{{- end }}
+{{- end }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -27,6 +34,33 @@ spec:
           podAnnotations:
             coroot.com/scrape-metrics: 'true'
             coroot.com/metrics-port: '9100'
+            {{- if $rid.enabled }}
+            # Plugins are loaded at start-up: roll the pod when the code changes.
+            checksum/requestid: {{ toJson $ridFiles | sha256sum | quote }}
+            {{- end }}
+        {{- if $rid.enabled }}
+        # files/requestid, a local plugin (no download at start-up). The
+        # `request-id` Middleware that configures it is in the sub chart.
+        experimental:
+          localPlugins:
+            requestid:
+              type: inlinePlugin
+              moduleName: weebo.poc/requestid
+              mountPath: /plugins-local/src/weebo.poc/requestid
+              source:
+                {{- range $f, $content := $ridFiles }}
+                {{ $f | quote }}: {{ toJson $content }}
+                {{- end }}
+        {{- if $rid.attach }}
+        ports:
+          {{- range $ep := list "web" "websecure" }}
+          {{ $ep }}:
+            http:
+              middlewares:
+                - traefik-request-id@kubernetescrd
+          {{- end }}
+        {{- end }}
+        {{- end }}
         ingressRoute:
           dashboard:
             enabled: false

@@ -16,6 +16,24 @@ body {
   outline-offset: 2px;
 }
 
+/* The request id, for a bug report: selectable in one click. */
+.bh-request {
+  position: relative;
+  margin: 16px 0 0;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bh-ink-dim);
+}
+.bh-request code {
+  margin-left: 8px;
+  font: inherit;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--bh-ink);
+  user-select: all;
+}
+
 /* ── Stage: bleeds to the edges, its floor is the head's bottom rule ───── */
 .bh-stage {
   --u: 4px;
