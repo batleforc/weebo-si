@@ -40,7 +40,7 @@ authentik:
   operator:
     enabled: true
     # renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-authentik
-    version: 0.21.0
+    version: 0.22.0
     replicaCount: 1
   sub:
     enabled: true
@@ -64,8 +64,8 @@ authentik:
       enabled: true
       theme:
         enabled: true
-        # Needs operator > 0.21.0 (brandingCustomCss). Flip with the bump.
-        css: false
+        # brandingCustomCss, from operator 0.22.0.
+        css: true
     flows: # phase 2b -- needs operator >= 0.7.0
       deviceCode:
         enabled: true

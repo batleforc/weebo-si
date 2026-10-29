@@ -229,8 +229,8 @@ brand:
   # The BatleHub theme from 3.custo/batlehub-theme: `npm run build` there
   # writes files/brand/ (committed). When enabled, its title, logo, favicon and
   # background replace the four branding* values above, and `css` adds its
-  # stylesheet as brandingCustomCss -- a field the operator only has from the
-  # release after 0.21.0: on an older CRD the apply fails on an unknown field.
+  # stylesheet as brandingCustomCss -- a field the operator only has from
+  # 0.22.0: on an older CRD the apply fails on an unknown field.
   # The logo, favicon and background are served by the server itself, so
   # auth/main's authentik.theme.enabled must be on too.
   theme:
