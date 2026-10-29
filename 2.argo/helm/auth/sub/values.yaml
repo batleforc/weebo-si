@@ -226,6 +226,41 @@ brand:
   brandingLogo: "https://maxleriche.net/assets/web-app-manifest-192x192.png"
   brandingFavicon: "https://maxleriche.net/assets/favicon.svg"
   brandingDefaultFlowBackground: "https://maxleriche.net/assets/home_hero.png"
+  # The BatleHub theme from 3.custo/batlehub-theme: `npm run build` there
+  # writes files/brand/ (committed). When enabled, its title, logo, favicon and
+  # background replace the four branding* values above, and `css` adds its
+  # stylesheet as brandingCustomCss -- a field the operator only has from the
+  # release after 0.21.0: on an older CRD the apply fails on an unknown field.
+  # The logo, favicon and background are served by the server itself, so
+  # auth/main's authentik.theme.enabled must be on too.
+  theme:
+    enabled: false
+    css: false
+    # The flows files/brand/brand.yaml gives a title and a layout, adopted as
+    # AuthentikFlow CRs (templates/brand/flows.yaml). The CRD wants name,
+    # designation and authentication too: these are the live values on
+    # 2026-10-29 (Authentik 2026.8.5, its default blueprints), restated so the
+    # adoption changes nothing but the title and layout.
+    # Turning this on is not enough: the operator creates first and never
+    # adopts by slug, so a CR for a flow that exists ends in
+    # AuthentikObjectAlreadyExists. Adopt them first with the importer
+    # (--apply writes the slug into status.authentikId), keep only these
+    # eleven, then enable. Every CR carries force-orphan, so deleting one
+    # leaves the flow alone.
+    flows:
+      enabled: false
+      builtin:
+        default-authentication-flow: { name: "Welcome to authentik!", designation: authentication, authentication: none }
+        default-source-authentication: { name: "Welcome to authentik!", designation: authentication, authentication: require_unauthenticated }
+        default-source-enrollment: { name: "Welcome to authentik! Please select a username.", designation: enrollment, authentication: none }
+        default-provider-authorization-explicit-consent: { name: "Authorize Application", designation: authorization, authentication: require_authenticated }
+        default-provider-authorization-implicit-consent: { name: "Authorize Application", designation: authorization, authentication: require_authenticated }
+        default-provider-invalidation-flow: { name: "Logged out of application", designation: invalidation, authentication: none }
+        default-password-change: { name: "Change Password", designation: stage_configuration, authentication: require_authenticated }
+        default-authenticator-totp-setup: { name: "default-authenticator-totp-setup", designation: stage_configuration, authentication: require_authenticated }
+        default-authenticator-webauthn-setup: { name: "default-authenticator-webauthn-setup", designation: stage_configuration, authentication: require_authenticated }
+        default-authenticator-static-setup: { name: "default-authenticator-static-setup", designation: stage_configuration, authentication: require_authenticated }
+        default-user-settings-flow: { name: "User settings", designation: stage_configuration, authentication: require_authenticated }
   # Filled in from the live brand by the importer -- flow.tf copies these off
   # the built-in `authentik-default` brand, so do not invent values here.
   flowAuthentication: "default-authentication-flow"

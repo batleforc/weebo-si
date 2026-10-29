@@ -154,6 +154,34 @@ export default {
     },
   },
 
+  // Authentik: the brand's custom CSS (colours, fonts, shapes), its logo / favicon /
+  // flow background, and the copy and layout of the flows people see. Set
+  // `authentik: false` to skip.
+  authentik: {
+    // Browser tab and the sidebar of the user / admin interfaces.
+    title: "Weebo",
+    // Applied to every flow below that does not set its own: stacked, content_left,
+    // content_right, sidebar_left, sidebar_right, sidebar_left_frame_background,
+    // sidebar_right_frame_background.
+    layout: "sidebar_left",
+    // Built-in flows, by slug. Keeps %(app)s where Authentik substitutes the
+    // application's name. device-code-flow is not here: auth/sub already owns it
+    // (values.yaml, flows.deviceCode).
+    flows: {
+      "default-authentication-flow": { title: "Sign in to Weebo" },
+      "default-source-authentication": { title: "Sign in to Weebo" },
+      "default-source-enrollment": { title: "Pick a username" },
+      "default-provider-authorization-explicit-consent": { title: "%(app)s wants to know who you are" },
+      "default-provider-authorization-implicit-consent": { title: "On to %(app)s" },
+      "default-provider-invalidation-flow": { title: "Signed out of %(app)s" },
+      "default-password-change": { title: "Change your password" },
+      "default-authenticator-totp-setup": { title: "Set up an authenticator app" },
+      "default-authenticator-webauthn-setup": { title: "Register a security key" },
+      "default-authenticator-static-setup": { title: "Your recovery codes" },
+      "default-user-settings-flow": { title: "Your details" },
+    },
+  },
+
   // Deploy manifests written to dist/deploy/.
   deploy: {
     namespace: "forgejo",
@@ -169,5 +197,13 @@ export default {
     // Where the build also copies errors-{internal,external}.html, for the error-pages
     // releases in the ingress chart. `null` to skip.
     errorsDir: "../../2.argo/helm/ingress/sub/files/error-pages",
+    // Authentik. The files (fonts, logos, favicon, backgrounds) go to the auth chart,
+    // which mounts them into the server under /web/dist/assets/<name>: Authentik
+    // serves that at `authentikAssets`. The CSS and brand.yaml go to the auth-app
+    // chart, which writes them into the AuthentikBrand and AuthentikFlow CRs.
+    // `null` to skip either.
+    authentikAssets: "/static/dist/assets/batlehub",
+    authentikFilesDir: "../../2.argo/helm/auth/main/files/theme",
+    authentikBrandDir: "../../2.argo/helm/auth/sub/files/brand",
   },
 };

@@ -175,7 +175,7 @@ forgejo:
     sharingKey: weebo-gate
 
   # ── Theme ──────────────────────────────────────────────────────────────────
-  # The BatleHub theme from 3.custo/forgejo. `npm run build` there copies its
+  # The BatleHub theme from 3.custo/batlehub-theme. `npm run build` there copies its
   # output into files/theme/ in this chart (committed); templates/theme/
   # turns it into one ConfigMap mounted over <custom>/public and
   # <custom>/templates, and reads files/theme/theme.yaml for the [ui] THEMES

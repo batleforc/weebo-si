@@ -77,7 +77,7 @@ authentik:
   enabled: true
 
 # Error pages in the BatleHub theme (templates/error-pages). The template is
-# built by 3.custo/forgejo into files/error-pages/.
+# built by 3.custo/batlehub-theme into files/error-pages/.
 errorPages:
   enabled: true
   # renovate: datasource=docker depName=ghcr.io/tarampampam/error-pages/charts/error-pages
@@ -86,7 +86,7 @@ errorPages:
   # use them.
   statusCodes: ["502-504"]
   # Hosts under this domain (and the domain itself) get the internal variant,
-  # which lists the tools (3.custo/forgejo/theme.config.mjs, errors.internal).
+  # which lists the tools (3.custo/batlehub-theme/theme.config.mjs, errors.internal).
   internalDomain: weebo.poc
   maintenance:
     # Hosts that answer the maintenance page (503) instead of their app, e.g.

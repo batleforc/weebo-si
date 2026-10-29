@@ -1,0 +1,55 @@
+# Le theme BatleHub (3.custo/batlehub-theme) est construit en local et sa sortie est
+# commitee dans les charts (2.argo/helm/forgejo/files/theme, le template
+# error-pages dans 2.argo/helm/ingress/sub/files/error-pages, et le brand
+# Authentik dans 2.argo/helm/auth/{main/files/theme,sub/files/brand}) : ArgoCD
+# ne lance pas node. Ce job verifie que les deux n'ont pas diverge -- une source
+# modifiee sans `npm run build`, ou une copie retouchee a la main.
+name: BatleHub theme
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "3.custo/batlehub-theme/**"
+      - "2.argo/helm/forgejo/files/**"
+      - "2.argo/helm/ingress/sub/files/**"
+      - "2.argo/helm/auth/main/files/**"
+      - "2.argo/helm/auth/sub/files/**"
+      - ".github/workflows/batlehub-theme.yml"
+  pull_request:
+    paths:
+      - "3.custo/batlehub-theme/**"
+      - "2.argo/helm/forgejo/files/**"
+      - "2.argo/helm/ingress/sub/files/**"
+      - "2.argo/helm/auth/main/files/**"
+      - "2.argo/helm/auth/sub/files/**"
+      - ".github/workflows/batlehub-theme.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 3.custo/batlehub-theme
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Test
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Chart copy is up to date
+        run: |
+          if [ -n "$(git status --porcelain -- ../../2.argo/helm/forgejo/files ../../2.argo/helm/ingress/sub/files ../../2.argo/helm/auth/main/files ../../2.argo/helm/auth/sub/files)" ]; then
+            git status --short -- ../../2.argo/helm/forgejo/files ../../2.argo/helm/ingress/sub/files ../../2.argo/helm/auth/main/files ../../2.argo/helm/auth/sub/files
+            echo "::error::2.argo/helm/{forgejo,ingress/sub,auth/main,auth/sub}/files is stale: run 'npm run build' in 3.custo/batlehub-theme and commit the result."
+            exit 1
+          fi

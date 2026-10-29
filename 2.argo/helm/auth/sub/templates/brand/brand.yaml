@@ -1,4 +1,12 @@
 {{- if .Values.brand.enabled -}}
+{{- /* The BatleHub theme, built by 3.custo/batlehub-theme into files/brand/. */ -}}
+{{- $theme := dict -}}
+{{- if .Values.brand.theme.enabled -}}
+{{- $theme = .Files.Get "files/brand/brand.yaml" | fromYaml -}}
+{{- if not $theme.title }}
+{{- fail "brand.theme.enabled but files/brand/brand.yaml is missing: run `npm run build` in 3.custo/batlehub-theme" }}
+{{- end }}
+{{- end -}}
 apiVersion: authentik.weebo.io/v1alpha1
 kind: AuthentikBrand
 metadata:
@@ -8,10 +16,23 @@ metadata:
 spec:
   domain: {{ .Values.brand.domain | quote }}
   default: {{ .Values.brand.default }}
+{{- if .Values.brand.theme.enabled }}
+  # Paths under /static are files the auth chart mounts on the server
+  # (auth/main, templates/authentik/theme.yaml). Authentik swaps %(theme)s for
+  # light or dark.
+  brandingTitle: {{ $theme.title | quote }}
+  brandingLogo: {{ $theme.logo | quote }}
+  brandingFavicon: {{ $theme.favicon | quote }}
+  brandingDefaultFlowBackground: {{ $theme.background | quote }}
+{{- if .Values.brand.theme.css }}
+  brandingCustomCss: {{ .Files.Get "files/brand/custom.css" | quote }}
+{{- end }}
+{{- else }}
   brandingTitle: {{ .Values.brand.brandingTitle | quote }}
   brandingLogo: {{ .Values.brand.brandingLogo | quote }}
   brandingFavicon: {{ .Values.brand.brandingFavicon | quote }}
   brandingDefaultFlowBackground: {{ .Values.brand.brandingDefaultFlowBackground | quote }}
+{{- end }}
   # Flow SLUGS. flow.tf copies these off the built-in `authentik-default` brand
   # rather than naming them, so take the values from the importer's output, not
   # from reading flow.tf. An empty value is omitted, which leaves the live

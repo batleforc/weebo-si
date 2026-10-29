@@ -106,9 +106,26 @@ spec:
                 # actually written.
                 medium: Memory
                 sizeLimit: 256Mi
+          {{- if .Values.authentik.theme.enabled }}
+            # The BatleHub brand's files (templates/authentik/theme.yaml),
+            # served as /static/dist/assets/batlehub.
+            - name: theme
+              configMap:
+                name: authentik-theme
+                items:
+                {{- range include "authentik.theme.files" . | trim | splitList "\n" | compact }}
+                  - key: {{ include "authentik.theme.key" . }}
+                    path: {{ trimPrefix "files/theme/" . }}
+                {{- end }}
+          {{- end }}
           volumeMounts:
             - name: dshm
               mountPath: /dev/shm
+          {{- if .Values.authentik.theme.enabled }}
+            - name: theme
+              mountPath: /web/dist/assets/batlehub
+              readOnly: true
+          {{- end }}
         # The database is CNPG's (templates/authentik/postgres.yaml), not the
         # chart's bundled Bitnami PostgreSQL -- off upstream by default, and
         # stated here so a chart bump can't bring it back.

@@ -1,0 +1,41 @@
+{{- if and .Values.authentik.enabled .Values.authentik.theme.enabled -}}
+{{- $files := include "authentik.theme.files" . | trim | splitList "\n" | compact -}}
+{{- if not $files }}
+{{- fail "authentik.theme.enabled but files/theme/ is empty: run `npm run build` in 3.custo/batlehub-theme" }}
+{{- end }}
+---
+# The files the BatleHub brand points at (fonts, logos, favicon, flow
+# backgrounds), keyed by their path under files/theme/ with `/` turned into
+# `_`. authentik.yaml mounts it on the server at /web/dist/assets/batlehub,
+# which Authentik serves as /static/dist/assets/batlehub. The brand CSS and
+# the brand / flow settings that reference them are in auth/sub
+# (files/brand/).
+#
+# A plain directory mount, no subPath: an updated ConfigMap reaches the pod
+# without a restart.
+#
+# Server-side apply: the two backgrounds inline the halftone plate, which puts
+# this past the 256 KiB a client-side apply can store in its
+# last-applied-configuration annotation.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-theme
+  namespace: auth
+  annotations:
+    # Before the authentik Application: its server pod waits on this volume.
+    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+data:
+  {{- range $files }}
+  {{- if regexMatch "\\.(css|svg)$" . }}
+  {{ include "authentik.theme.key" . }}: {{ $.Files.Get . | toJson }}
+  {{- end }}
+  {{- end }}
+binaryData:
+  {{- range $files }}
+  {{- if not (regexMatch "\\.(css|svg)$" .) }}
+  {{ include "authentik.theme.key" . }}: {{ $.Files.Get . | b64enc }}
+  {{- end }}
+  {{- end }}
+{{- end -}}

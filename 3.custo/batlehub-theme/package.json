@@ -1,7 +1,7 @@
 {
-  "name": "forgejo-theme-batlehub",
+  "name": "batlehub-theme",
   "version": "0.1.0",
-  "description": "BatleHub design system as a Forgejo theme: tokens in, CSS / templates / deploy manifests out.",
+  "description": "BatleHub design system for Forgejo, the error pages and Authentik: tokens in, CSS / templates / deploy manifests out.",
   "private": true,
   "type": "module",
   "engines": { "node": ">=20" },

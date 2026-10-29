@@ -1,0 +1,34 @@
+{{- if and .Values.brand.enabled .Values.brand.theme.enabled .Values.brand.theme.flows.enabled -}}
+{{- $theme := .Files.Get "files/brand/brand.yaml" | fromYaml -}}
+{{- range $slug, $copy := $theme.flows }}
+{{- $live := index $.Values.brand.theme.flows.builtin $slug | default dict }}
+{{- if not $live.name }}
+{{- fail (printf "brand.theme.flows.builtin has no entry for %s (files/brand/brand.yaml lists it): add its live name / designation / authentication" $slug) }}
+{{- end }}
+---
+# One of Authentik's built-in flows, adopted for its title and layout only
+# (the BatleHub copy from 3.custo/batlehub-theme). Stages, bindings and
+# policies stay Authentik's. The default blueprints re-apply name and title
+# when an upgrade changes their file; the operator puts this title back on its
+# next reconcile.
+apiVersion: authentik.weebo.io/v1alpha1
+kind: AuthentikFlow
+metadata:
+  # Cluster-scoped. Prefixed so it cannot collide with a CR from `flows`.
+  name: builtin-{{ $slug }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+    # Deleting this CR must not delete the flow: Authentik ships it, and its
+    # brand, providers and stages point at it.
+    authentik.weebo.io/force-orphan: "true"
+spec:
+  slug: {{ $slug | quote }}
+  name: {{ $live.name | quote }}
+  title: {{ $copy.title | quote }}
+  designation: {{ $live.designation | quote }}
+  authentication: {{ $live.authentication | quote }}
+{{- with $copy.layout }}
+  layout: {{ . | quote }}
+{{- end }}
+{{- end }}
+{{- end -}}

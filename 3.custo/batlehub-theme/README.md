@@ -1,7 +1,8 @@
-# forgejo-theme-batlehub
+# batlehub-theme
 
-The BatleHub design system as a Forgejo theme. Tokens and copy go in; CSS, fonts, images,
-the home page template and the deploy manifests come out. Node >= 20, no dependencies.
+The BatleHub design system for Forgejo, the error pages and Authentik. Tokens and copy go
+in; CSS, fonts, images, the Forgejo home page, the error-pages templates, the Authentik
+brand and the deploy manifests come out. Node >= 20, no dependencies.
 
 ```
 npm run build    # contrast check, then write dist/
@@ -31,6 +32,8 @@ contrast ratios, a few controls) without a running Forgejo.
 | Error page base and crab animations               | `src/errors.css`             |
 | Home page markup                                  | `src/home.mjs`               |
 | Error page markup                                 | `src/errors.mjs`             |
+| Authentik: brand title, flow titles and layout    | `theme.config.mjs` → `authentik` |
+| Authentik: which PatternFly variable a token feeds, component rules, flow background | `src/authentik.mjs` |
 
 Colours are written as OKLCH and converted to sRGB hex at build time; a value outside the
 sRGB gamut has its chroma reduced until it fits. The build fails if a pair listed under
@@ -59,6 +62,14 @@ dist/
   theme.yaml                          name, THEMES, DEFAULT_THEME
 
 <deploy.errorsDir>/errors-*.html      (2.argo/helm/ingress/sub/files/error-pages, committed)
+
+dist/authentik/
+  files/fonts/…  logo-{light,dark}.svg  favicon.svg  background-{light,dark}.svg
+  brand/custom.css                    the brand's custom CSS
+  brand/brand.yaml                    title, logo / favicon / background paths, flow copy
+
+<deploy.authentikFilesDir>/           (2.argo/helm/auth/main/files/theme, committed)
+<deploy.authentikBrandDir>/           (2.argo/helm/auth/sub/files/brand, committed)
 ```
 
 Each rendition imports the stock `theme-<base>-{dark,light}.css` and overrides it, so any
@@ -97,5 +108,15 @@ Notes:
   crab scene (`src/scenes.mjs`, one per code: lost, door, coffee…), CSS-only, still under
   reduced motion. Fonts and sprites are inlined, so a page loads nothing (~85 KB). Wiring:
   `2.argo/helm/ingress/sub/templates/error-pages`.
+- Authentik: the files are mounted on the server at `/web/dist/assets/batlehub` (auth/main,
+  `templates/authentik/theme.yaml`) and served as `deploy.authentikAssets`; the brand
+  points its logo and background at `…-%(theme)s.svg`, which Authentik resolves to the
+  light or dark file. `custom.css` becomes the brand's `brandingCustomCss`, which Authentik
+  puts in `<head>` and in every component's shadow root, ahead of its own layered styles. It
+  reaches `<head>` HTML-escaped, so the build refuses `<`, `>` and `&` in it: write
+  descendant selectors, not child ones. The colours go through PatternFly's
+  `--pf-global--*` variables and Authentik's `--ak-*` ones; re-check them after a major
+  Authentik upgrade. A session in safe mode (`?safe_mode`) drops the CSS, which is the way
+  back in if it ever hides the form.
 - `home.tmpl` relies on `base/head`, `base/footer`, `AppName`, `AppSubUrl`, `.IsSigned`;
   re-check it after a major Forgejo upgrade.

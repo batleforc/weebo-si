@@ -1,5 +1,5 @@
 {{/*
-The theme built by 3.custo/forgejo, copied into files/theme/ by its
+The theme built by 3.custo/batlehub-theme, copied into files/theme/ by its
 `npm run build`. Everything but theme.yaml is a file Forgejo serves or renders
 from its custom directory, at the same relative path.
 */}}

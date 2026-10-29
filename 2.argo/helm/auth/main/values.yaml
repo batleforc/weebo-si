@@ -31,6 +31,12 @@ authentik:
         memory: 256Mi
       limits:
         memory: 1Gi
+  # The files of the BatleHub brand (fonts, logos, flow backgrounds), built by
+  # 3.custo/batlehub-theme into files/theme/ and mounted on the server
+  # (templates/authentik/theme.yaml). The brand CSS that uses them is set by
+  # auth/sub (brand).
+  theme:
+    enabled: true
   operator:
     enabled: true
     # renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-authentik
@@ -56,6 +62,10 @@ authentik:
         enabled: true
     brand: # phase 2a
       enabled: true
+      theme:
+        enabled: true
+        # Needs operator > 0.21.0 (brandingCustomCss). Flip with the bump.
+        css: false
     flows: # phase 2b -- needs operator >= 0.7.0
       deviceCode:
         enabled: true

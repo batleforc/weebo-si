@@ -1,7 +1,7 @@
 {{- if and .Values.forgejo.enabled .Values.forgejo.theme.enabled -}}
 {{- $files := include "forgejo.theme.files" . | trim | splitList "\n" | compact -}}
 {{- if not $files }}
-{{- fail "forgejo.theme.enabled but files/theme/ is empty: run `npm run build` in 3.custo/forgejo" }}
+{{- fail "forgejo.theme.enabled but files/theme/ is empty: run `npm run build` in 3.custo/batlehub-theme" }}
 {{- end }}
 ---
 # Every file of the theme, keyed by its path with `/` turned into `_`. The
