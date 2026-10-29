@@ -164,6 +164,9 @@ export default {
     // content_right, sidebar_left, sidebar_right, sidebar_left_frame_background,
     // sidebar_right_frame_background.
     layout: "sidebar_left",
+    // The halftone dots behind the flows: which token inks them, per rendition.
+    // Unset falls back to `plate` (the Forgejo home page's).
+    plateInk: { dark: "accent" },
     // Built-in flows, by slug. Keeps %(app)s where Authentik substitutes the
     // application's name. device-code-flow is not here: auth/sub already owns it
     // (values.yaml, flows.deviceCode).

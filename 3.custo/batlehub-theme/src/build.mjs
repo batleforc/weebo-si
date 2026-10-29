@@ -165,7 +165,7 @@ if (cfg.authentik) {
     const p = cfg.plate[r];
     await writeFile(
       join(files, `background-${r}.svg`),
-      renderBackground({ ground: hex(tokens[r].ground), ink: hex(tokens[r][p.ink]), opacity: p.opacity }, platePng),
+      renderBackground({ ground: hex(tokens[r].ground), ink: hex(tokens[r][cfg.authentik.plateInk?.[r] ?? p.ink]), opacity: p.opacity }, platePng),
     );
   }
   const layout = cfg.authentik.layout;
