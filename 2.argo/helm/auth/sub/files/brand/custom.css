@@ -289,6 +289,13 @@ body,
   color: var(--bh-ink-dim);
 }
 
+/* The flow's logo: Authentik stretches it to most of the form's width, far too much
+   for a 26x41 sprite. Twice its size, an integer scale. */
+.pf-c-login__main-header.pf-c-brand .branding-logo {
+  width: 52px;
+  max-width: none;
+  height: auto;
+}
 /* The logo is pixel art: keep its pixels square. */
 .pf-c-brand,
 .pf-c-login__header img,

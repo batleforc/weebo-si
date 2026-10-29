@@ -66,6 +66,11 @@ authentik:
         enabled: true
         # brandingCustomCss, from operator 0.22.0.
         css: true
+        # The eleven built-in flows' titles and layout. Adopted by hand on
+        # 2026-10-29 (created paused, status.authentikId seeded with the slug,
+        # released), so these CRs already exist bound to their flows.
+        flows:
+          enabled: true
     flows: # phase 2b -- needs operator >= 0.7.0
       deviceCode:
         enabled: true
