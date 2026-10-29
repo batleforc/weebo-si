@@ -170,6 +170,24 @@ body,
   border: 1px solid var(--bh-rule-strong);
 }
 
+/* The login panel, on the rendition's ground (Authentik's default is its dark surface
+   in both modes). In a sidebar layout the panel is the full-height column Authentik
+   paints with .pf-c-login::before: one surface, framed along its inner edge only, so
+   the form must not draw a box of its own in the middle of it. */
+.pf-c-login {
+  --ak-c-login__main--BackgroundColor: var(--pf-global--BackgroundColor--100);
+  --ak-c-login__main--Color: var(--pf-global--Color--100);
+}
+.pf-c-login[data-layout^="sidebar"] .pf-c-login__main {
+  border: 0;
+}
+.pf-c-login[data-layout^="sidebar_left"]::before {
+  border-right: 1px solid var(--bh-rule-strong);
+}
+.pf-c-login[data-layout^="sidebar_right"]::before {
+  border-left: 1px solid var(--bh-rule-strong);
+}
+
 /* Titles: the bitmap face, only at integer multiples of 8px. */
 .pf-c-login__main-header .pf-c-title,
 .pf-c-page__main-section .pf-c-title.pf-m-2xl,
