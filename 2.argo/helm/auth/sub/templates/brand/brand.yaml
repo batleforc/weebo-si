@@ -25,7 +25,9 @@ spec:
   brandingFavicon: {{ $theme.favicon | quote }}
   brandingDefaultFlowBackground: {{ $theme.background | quote }}
 {{- if .Values.brand.theme.css }}
-  brandingCustomCss: {{ .Files.Get "files/brand/custom.css" | quote }}
+  # Trimmed: Authentik strips the ends of the field, so the file's trailing
+  # newline would read as drift on every reconcile.
+  brandingCustomCss: {{ .Files.Get "files/brand/custom.css" | trim | quote }}
 {{- end }}
 {{- else }}
   brandingTitle: {{ .Values.brand.brandingTitle | quote }}
