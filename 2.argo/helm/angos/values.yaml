@@ -395,12 +395,12 @@ angos:
       # the same `[auth.oidc]` section names, and upstream calls this contrib
       # binary experimental, so drifting them apart buys nothing.
       # renovate: datasource=github-releases depName=project-angos/angos
-      version: v1.8.0
+      version: v1.12.4
       # sha256 of the release asset, checked against the cosign bundle
       # published beside it (keyless, identity project-angos/angos): the
       # installer refuses to write a binary it cannot match.
       sha256:
-        amd64: "744bfa7b7556613f0fedfa9bb9b155f2a7bdeb67deff26c9ff8dd7068769f2f9"
+        amd64: "a5d92ac0bcc4a77829112c7454ccb556b0c747841100ea9a75d479ccaa073d31"
         # Left empty on purpose: every node here is amd64, and an unchecked
         # arm64 install would be a download on trust. Fill it before adding an
         # arm64 node, or that node's installer fails loudly.
