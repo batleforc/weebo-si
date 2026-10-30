@@ -54,6 +54,12 @@ che:
   enabled: true
   project: dev
 
+# The BatleHub stylesheet of the Argo CD UI (templates/argocd-theme.yaml), built
+# by 3.custo/batlehub-theme into files/argocd-theme/. ui.cssurl, which loads it,
+# is set where Argo CD is installed (1.pulu-conf).
+argocdTheme:
+  enabled: true
+
 repo: ""
 branch: ""
 

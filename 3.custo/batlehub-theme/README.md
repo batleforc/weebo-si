@@ -1,8 +1,9 @@
 # batlehub-theme
 
-The BatleHub design system for Forgejo, the error pages and Authentik. Tokens and copy go
-in; CSS, fonts, images, the Forgejo home page, the error-pages templates, the Authentik
-brand and the deploy manifests come out. Node >= 20, no dependencies.
+The BatleHub design system for Forgejo, the error pages, Authentik, the Eclipse Che
+dashboard and Argo CD. Tokens and copy go in; CSS, fonts, images, the Forgejo home page,
+the error-pages templates, the Authentik brand, the Che branding, the Argo CD stylesheet
+and the deploy manifests come out. Node >= 20, no dependencies.
 
 ```
 npm run build    # contrast check, then write dist/
@@ -34,6 +35,9 @@ contrast ratios, a few controls) without a running Forgejo.
 | Error page markup                                 | `src/errors.mjs`             |
 | Authentik: brand title, flow titles and layout    | `theme.config.mjs` → `authentik` |
 | Authentik: which PatternFly variable a token feeds, component rules, flow background | `src/authentik.mjs` |
+| Che: product name, help-menu links                | `theme.config.mjs` → `che`   |
+| Che: which PatternFly 6 token a token feeds, logo, loader, favicon | `src/che.mjs` |
+| Argo CD: the rules it overrides, sidebar, login page | `src/argocd.mjs`          |
 
 Colours are written as OKLCH and converted to sRGB hex at build time; a value outside the
 sRGB gamut has its chroma reduced until it fits. The build fails if a pair listed under
@@ -70,6 +74,14 @@ dist/authentik/
 
 <deploy.authentikFilesDir>/           (2.argo/helm/auth/main/files/theme, committed)
 <deploy.authentikBrandDir>/           (2.argo/helm/auth/sub/files/brand, committed)
+
+dist/che/                             branding.css  product.json  manifest.json
+                                      batlehub-logo.svg  loader.svg  favicon.ico
+<deploy.cheDir>/                      (2.argo/helm/che/sub/files/branding, committed)
+
+dist/argocd/                          batlehub.css, and next to it the logos, login
+                                      backgrounds and fonts it names
+<deploy.argocdDir>/                   (2.argo/app/files/argocd-theme, committed)
 ```
 
 Each rendition imports the stock `theme-<base>-{dark,light}.css` and overrides it, so any
@@ -118,5 +130,20 @@ Notes:
   `--pf-global--*` variables and Authentik's `--ak-*` ones; re-check them after a major
   Authentik upgrade. A session in safe mode (`?safe_mode`) drops the CSS, which is the way
   back in if it ever hides the form.
+- Che: the files become the `che-dashboard-customization` Secret (`2.argo/helm/che/sub`,
+  `templates/branding.yaml`), which che-operator mounts file by file over the dashboard's
+  `/public/dashboard/assets/branding`. Those subPath mounts never reload, so the CheCluster
+  carries a checksum of the files in the dashboard's env: a new build rolls it. Three traps
+  of the dashboard: `branding.css` loads *before* PatternFly (hence `html:root` and
+  `html:root.pf-v6-theme-dark`), a file with a `.gz` next to it in the image is served from
+  the `.gz` (hence `batlehub-logo.svg`, not `che-logo.svg`), and product.json is deep-merged
+  over the defaults, arrays by index (hence three links). The logo's shapes carry
+  `outer-fill`, which the dashboard paints in the theme's text colour. Re-check the
+  `--pf-t--global--*` names after a PatternFly major in the dashboard.
+- Argo CD: the files become `argocd-styles-cm` (`2.argo/app`, `templates/argocd-theme.yaml`),
+  which the argo-cd chart mounts at `/shared/app/custom`; `ui.cssurl: ./custom/batlehub.css`
+  is set in `1.pulu-conf` (`task puluconf:up`). Argo CD has no colour variables: the sheet
+  repaints its main surfaces rule by rule, each written plain and under `.theme-dark`. A
+  class renamed by an upgrade falls back to Argo CD's look.
 - `home.tmpl` relies on `base/head`, `base/footer`, `AppName`, `AppSubUrl`, `.IsSigned`;
   re-check it after a major Forgejo upgrade.

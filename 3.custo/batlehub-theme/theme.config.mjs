@@ -185,6 +185,25 @@ export default {
     },
   },
 
+  // Eclipse Che dashboard: its name, the links under the masthead's help menu, the
+  // masthead logo, favicon and page loader, and PatternFly's colours and shapes (its own
+  // faces stay). Set `che: false` to skip.
+  che: {
+    title: "Weebo Workspaces",
+    name: "Weebo Workspaces",
+    shortName: "Workspaces",
+    // Exactly three, or more: the dashboard keeps its own default past the last one.
+    links: [
+      { text: "Documentation", href: "https://eclipse.dev/che/docs/stable/end-user-guide/" },
+      { text: "Forgejo", href: "https://git.weebo.poc" },
+      { text: "Registry", href: "https://registry.pkg.weebo.poc" },
+    ],
+  },
+
+  // Argo CD: the ui.cssurl stylesheet (colours, square shapes, the crab in the sidebar)
+  // and its login page (flow background, the brand's faces). Set `argocd: false` to skip.
+  argocd: true,
+
   // Deploy manifests written to dist/deploy/.
   deploy: {
     namespace: "forgejo",
@@ -208,5 +227,12 @@ export default {
     authentikAssets: "/static/dist/assets/batlehub",
     authentikFilesDir: "../../2.argo/helm/auth/main/files/theme",
     authentikBrandDir: "../../2.argo/helm/auth/sub/files/brand",
+    // Eclipse Che: the chart that holds the CheCluster turns this into the
+    // che-dashboard-customization Secret, mounted over the dashboard's branding
+    // directory, and rolls the dashboard when it changes. `null` to skip.
+    cheDir: "../../2.argo/helm/che/sub/files/branding",
+    // Argo CD: the root chart turns this into argocd-styles-cm, which the argo-cd
+    // chart mounts at /shared/app/custom; ui.cssurl (1.pulu-conf) points at it.
+    argocdDir: "../../2.argo/app/files/argocd-theme",
   },
 };

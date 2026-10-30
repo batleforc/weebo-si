@@ -1,0 +1,19 @@
+{
+  "title": "Weebo Workspaces",
+  "name": "Weebo Workspaces",
+  "logoFile": "batlehub-logo.svg",
+  "links": [
+    {
+      "text": "Documentation",
+      "href": "https://eclipse.dev/che/docs/stable/end-user-guide/"
+    },
+    {
+      "text": "Forgejo",
+      "href": "https://git.weebo.poc"
+    },
+    {
+      "text": "Registry",
+      "href": "https://registry.pkg.weebo.poc"
+    }
+  ]
+}

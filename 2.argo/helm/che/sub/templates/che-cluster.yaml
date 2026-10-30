@@ -133,10 +133,14 @@ spec:
             {{- range (ternary $up.known ($up.hide | default list) $up.hideAll) }}
             {{- if not (has . ($up.show | default list)) }}{{ $hidden = append $hidden . }}{{ end }}
             {{- end }}
-            {{- with $hidden }}
             env:
+              {{- with $hidden }}
               # Read off the CheCluster by the dashboard backend, not the pod.
               - name: CHE_HIDE_EDITORS_BY_ID
                 value: {{ join "," . | quote }}
-            {{- end }}
+              {{- end }}
+              # Read by nothing: a new branding (templates/branding.yaml) changes
+              # the pod template, which is the only way its subPath files reload.
+              - name: BATLEHUB_BRANDING_CHECKSUM
+                value: {{ include "che.branding.checksum" . | quote }}
 {{- end -}}

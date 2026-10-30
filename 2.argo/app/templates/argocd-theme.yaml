@@ -1,0 +1,34 @@
+{{- if .Values.argocdTheme.enabled -}}
+{{- $files := .Files.Glob "files/argocd-theme/*" -}}
+{{- if not $files }}
+{{- fail "argocdTheme.enabled but files/argocd-theme/ is empty: run `npm run build` in 3.custo/batlehub-theme" }}
+{{- end }}
+---
+# The BatleHub theme of the Argo CD UI. The argo-cd chart mounts this
+# ConfigMap, optional, as a plain directory at /shared/app/custom on
+# argocd-server, which serves it as /custom/; ui.cssurl in argocd-cm
+# (1.pulu-conf) points at ./custom/batlehub.css. No subPath: an update reaches
+# the pod without a restart, and a browser on its next load.
+#
+# Server-side apply: the two login backgrounds inline the halftone plate, past
+# the 256 KiB a client-side apply can keep in last-applied-configuration.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-styles-cm
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+data:
+  {{- range $path, $_ := $files }}
+  {{- if regexMatch "\\.(css|svg)$" $path }}
+  {{ base $path }}: {{ $.Files.Get $path | toJson }}
+  {{- end }}
+  {{- end }}
+binaryData:
+  {{- range $path, $_ := $files }}
+  {{- if not (regexMatch "\\.(css|svg)$" $path) }}
+  {{ base $path }}: {{ $.Files.Get $path | b64enc }}
+  {{- end }}
+  {{- end }}
+{{- end -}}

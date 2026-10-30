@@ -1,0 +1,28 @@
+{{- if .Values.che.cluster.enabled -}}
+{{- $files := .Files.Glob "files/branding/*" -}}
+{{- if not $files }}
+{{- fail "files/branding/ is empty: run `npm run build` in 3.custo/batlehub-theme" }}
+{{- end }}
+---
+# The BatleHub branding of the dashboard: che-operator mounts every key of a
+# Secret carrying these labels over /public/dashboard/assets/branding, one
+# subPath per file, so what is not listed here keeps the image's own file.
+# subPath mounts never see an update: che-cluster.yaml puts a checksum of these
+# files in the dashboard's env, which rolls it when one changes.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: che-dashboard-customization
+  namespace: {{ .Values.che.namespace }}
+  annotations:
+    che.eclipse.org/mount-as: subpath
+    che.eclipse.org/mount-path: /public/dashboard/assets/branding
+  labels:
+    app.kubernetes.io/component: che-dashboard-secret
+    app.kubernetes.io/part-of: che.eclipse.org
+type: Opaque
+data:
+  {{- range $path, $_ := $files }}
+  {{ base $path }}: {{ $.Files.Get $path | b64enc }}
+  {{- end }}
+{{- end -}}

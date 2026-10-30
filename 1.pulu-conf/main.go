@@ -197,6 +197,11 @@ connectors:
       userNameKey: sub`),
 						"url":          pulumi.String(fmt.Sprintf("https://%s", argoDNSName)),
 						"exec.enabled": pulumi.Bool(true),
+						// The BatleHub theme: argocd-styles-cm, rendered by the root
+						// app (2.argo/app/templates/argocd-theme.yaml) and mounted by
+						// the chart at /shared/app/custom. Until it exists the UI
+						// keeps its own look.
+						"ui.cssurl": pulumi.String("./custom/batlehub.css"),
 					},
 					"params": pulumi.Map{
 						"server.insecure": pulumi.Bool(deployed),

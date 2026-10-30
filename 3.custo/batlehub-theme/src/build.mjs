@@ -11,6 +11,8 @@ import { variables } from "./variables.mjs";
 import { renderHome } from "./home.mjs";
 import { renderErrors, VARIANTS } from "./errors.mjs";
 import { renderAuthentikCss, renderBackground, renderBrandYaml } from "./authentik.mjs";
+import { icoFromPng, LOGO_FILE, renderCheCss, renderCheLogo, renderManifest, renderProductJson } from "./che.mjs";
+import { CSS_FILE, renderArgoCss } from "./argocd.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = join(root, "dist");
@@ -148,6 +150,13 @@ ${await readFile(join(root, "src/errors.css"), "utf8")}`;
   }
 }
 
+// The page behind Authentik's flows, and Argo CD's login: the ground and the halftone plate.
+const platePng = readFileSync(join(root, "assets/img/theme/halftone-plate.png"));
+const flowBackground = (r) => {
+  const p = cfg.plate[r];
+  return renderBackground({ ground: hex(tokens[r].ground), ink: hex(tokens[r][cfg.authentik?.plateInk?.[r] ?? p.ink]), opacity: p.opacity }, platePng);
+};
+
 // ── Authentik (brand CSS + the files it serves + brand/flow settings) ──────────
 let authentikOut = null; // { files: dir, brand: dir } under dist/authentik
 if (cfg.authentik) {
@@ -160,19 +169,38 @@ if (cfg.authentik) {
   await cp(join(root, "assets/img/theme/logo-ink.svg"), join(files, "logo-light.svg"));
   await cp(join(root, "assets/img/theme/logo-cream.svg"), join(files, "logo-dark.svg"));
   await cp(join(root, "assets/img/favicon.svg"), join(files, "favicon.svg"));
-  const platePng = readFileSync(join(root, "assets/img/theme/halftone-plate.png"));
-  for (const r of RENDITIONS) {
-    const p = cfg.plate[r];
-    await writeFile(
-      join(files, `background-${r}.svg`),
-      renderBackground({ ground: hex(tokens[r].ground), ink: hex(tokens[r][cfg.authentik.plateInk?.[r] ?? p.ink]), opacity: p.opacity }, platePng),
-    );
-  }
+  for (const r of RENDITIONS) await writeFile(join(files, `background-${r}.svg`), flowBackground(r));
   const layout = cfg.authentik.layout;
   const flows = Object.fromEntries(Object.entries(cfg.authentik.flows || {}).map(([slug, f]) => [slug, { layout, ...f }]));
   await writeFile(join(out, "brand", "custom.css"), renderAuthentikCss({ tokens, fonts: cfg.fonts, assets: assetsUrl }));
   await writeFile(join(out, "brand", "brand.yaml"), renderBrandYaml({ ...cfg.authentik, flows }, assetsUrl));
   authentikOut = { files, brand: join(out, "brand") };
+}
+
+// ── Eclipse Che dashboard (the branding directory) ───────────────────────────
+let cheOut = null;
+if (cfg.che) {
+  cheOut = join(dist, "che");
+  await mkdir(cheOut, { recursive: true });
+  await writeFile(join(cheOut, "branding.css"), renderCheCss({ tokens }));
+  await writeFile(join(cheOut, "product.json"), renderProductJson(cfg.che));
+  await writeFile(join(cheOut, "manifest.json"), renderManifest(cfg.che, tokens));
+  await writeFile(join(cheOut, LOGO_FILE), renderCheLogo(await readFile(join(root, "assets/img/theme/logo-ink.svg"), "utf8")));
+  // The page loader, and the install icon: the favicon follows the device's theme.
+  await cp(join(root, "assets/img/favicon.svg"), join(cheOut, "loader.svg"));
+  await writeFile(join(cheOut, "favicon.ico"), icoFromPng(readFileSync(join(root, "assets/img/favicon.png"))));
+}
+
+// ── Argo CD (ui.cssurl and the files it points at, flat) ──────────────────────
+let argocdOut = null;
+if (cfg.argocd) {
+  argocdOut = join(dist, "argocd");
+  await mkdir(argocdOut, { recursive: true });
+  await writeFile(join(argocdOut, CSS_FILE), renderArgoCss({ tokens, fonts: cfg.fonts }));
+  await cp(join(root, "assets/img/theme/logo-ink.svg"), join(argocdOut, "logo-light.svg"));
+  await cp(join(root, "assets/img/theme/logo-cream.svg"), join(argocdOut, "logo-dark.svg"));
+  for (const r of RENDITIONS) await writeFile(join(argocdOut, `background-${r}.svg`), flowBackground(r));
+  for (const f of Object.values(cfg.fonts).flatMap((face) => face.files)) await cp(join(root, "assets/fonts", f.file), join(argocdOut, f.file));
 }
 
 // ── Deploy manifests ────────────────────────────────────────────────────────
@@ -254,12 +282,14 @@ if (errorsHtml && d.errorsDir) {
   await mkdir(dir, { recursive: true });
   for (const [variant, html] of Object.entries(errorsHtml)) await writeFile(join(dir, `errors-${variant}.html`), html);
 }
-if (authentikOut) {
-  for (const [src, to] of [[authentikOut.files, d.authentikFilesDir], [authentikOut.brand, d.authentikBrandDir]]) {
-    if (!to) continue;
-    await rm(join(root, to), { recursive: true, force: true });
-    await cp(src, join(root, to), { recursive: true });
-  }
+for (const [src, to] of [
+  ...(authentikOut ? [[authentikOut.files, d.authentikFilesDir], [authentikOut.brand, d.authentikBrandDir]] : []),
+  [cheOut, d.cheDir],
+  [argocdOut, d.argocdDir],
+]) {
+  if (!src || !to) continue;
+  await rm(join(root, to), { recursive: true, force: true });
+  await cp(src, join(root, to), { recursive: true });
 }
 
 // ── Preview (no Forgejo needed) ─────────────────────────────────────────────
@@ -328,4 +358,4 @@ ${home}
   );
 }
 
-console.log(`\nbuilt dist/${d.chartDir ? ` and ${d.chartDir}` : ""}${errorsHtml && d.errorsDir ? ` and ${d.errorsDir}` : ""}${authentikOut ? ` and ${[d.authentikFilesDir, d.authentikBrandDir].filter(Boolean).join(", ")}` : ""} — ${files.length} files, themes: ${["auto", "light", "dark"].map((r) => `${name}-${r}`).join(", ")}`);
+console.log(`\nbuilt dist/${d.chartDir ? ` and ${d.chartDir}` : ""}${errorsHtml && d.errorsDir ? ` and ${d.errorsDir}` : ""}${authentikOut ? ` and ${[d.authentikFilesDir, d.authentikBrandDir].filter(Boolean).join(", ")}` : ""}${cheOut && d.cheDir ? ` and ${d.cheDir}` : ""}${argocdOut && d.argocdDir ? ` and ${d.argocdDir}` : ""} — ${files.length} files, themes: ${["auto", "light", "dark"].map((r) => `${name}-${r}`).join(", ")}`);
