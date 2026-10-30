@@ -7,6 +7,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
+  image: {{ printf "%s:%s" .Values.batlehub.valkey.image.repository .Values.batlehub.valkey.image.tag | quote }}
   shards: {{ .Values.batlehub.valkey.shards }}
   replicas: {{ .Values.batlehub.valkey.replicas }}
   podDisruptionBudget:

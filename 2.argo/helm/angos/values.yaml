@@ -10,6 +10,13 @@ angos:
     # renovate: datasource=docker depName=ghcr.io/project-angos/angos
     tag: 1.12.4
   dns: registry.pkg.weebo.poc
+  # Pinned: the operator's default (valkey-operator 0.8.0) is 9.0.0, whose
+  # Debian 13.2 base carries 4 critical CVEs fixed in later patches.
+  valkey:
+    image:
+      repository: docker.io/valkey/valkey
+      # renovate: datasource=docker depName=docker.io/valkey/valkey
+      tag: "9.0.7"
   # `[auth.token_service]`, whose secret_key comes from Vault and whose realm
   # is built from `dns` above. The ceiling angos enforces is 86400.
   tokenService:

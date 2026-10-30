@@ -5,6 +5,7 @@ metadata:
   name: angos-valkey
   namespace: {{ .Release.Namespace }}
 spec:
+  image: {{ printf "%s:%s" .Values.angos.valkey.image.repository .Values.angos.valkey.image.tag | quote }}
   shards: 1
   replicas: 0
   podDisruptionBudget:

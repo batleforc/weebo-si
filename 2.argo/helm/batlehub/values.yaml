@@ -165,6 +165,12 @@ batlehub:
   # are already there.
   valkey:
     enabled: true
+    # Pinned: the operator's default (valkey-operator 0.8.0) is 9.0.0, whose
+    # Debian 13.2 base carries 4 critical CVEs fixed in later patches.
+    image:
+      repository: docker.io/valkey/valkey
+      # renovate: datasource=docker depName=docker.io/valkey/valkey
+      tag: "9.0.7"
     shards: 1
     replicas: 0
     storage:
