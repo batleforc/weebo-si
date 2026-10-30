@@ -49,13 +49,13 @@ che:
         - che-incubator/che-code/latest
         - che-incubator/che-code-server/latest
         - che-incubator/che-code-server/next
-        - che-incubator/che-code-sshd/insiders
         - che-incubator/che-code-sshd/next
         - che-incubator/che-goland-server/latest
         - che-incubator/che-goland-server/next
         - che-incubator/che-herdr/latest
         - che-incubator/che-idea-server/latest
         - che-incubator/che-idea-server/next
+        - che-incubator/che-orca/next
         - che-incubator/che-phpstorm-server/latest
         - che-incubator/che-phpstorm-server/next
         - che-incubator/che-pycharm-server/latest
