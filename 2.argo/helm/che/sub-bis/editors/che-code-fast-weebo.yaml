@@ -1,5 +1,7 @@
 schemaVersion: 2.3.0
 metadata:
+  tags:
+    - angos
   name: che-code-fast
   displayName: VS Code - Open Source (weebo-si develop)
   description: che-code built from the develop branch of weebo-si/che-code
@@ -9,6 +11,7 @@ metadata:
       - arm64
       - s390x
       - ppc64le
+    provider: "Images cached by [angos](https://registry.pkg.weebo.poc)"
     publisher: weebo
     version: latest
     title: Microsoft Visual Studio Code - Open Source IDE for Eclipse Che (Weebo-SI)

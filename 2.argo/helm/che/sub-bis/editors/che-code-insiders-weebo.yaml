@@ -124,6 +124,7 @@ metadata:
       </defs>
       </svg>
     iconMediatype: image/svg+xml
+    provider: "Images cached by [angos](https://registry.pkg.weebo.poc)"
     publisher: weebo
     repository: https://github.com/che-incubator/che-code
     title: Microsoft Visual Studio Code - Open Source IDE for Eclipse Che
@@ -136,4 +137,5 @@ metadata:
   tags:
   - weebo
   - Tech-Preview
+  - angos
 schemaVersion: 2.3.0

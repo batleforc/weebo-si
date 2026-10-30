@@ -78,6 +78,8 @@ events:
   preStart:
   - init-container-command
 metadata:
+  tags:
+    - angos
   attributes:
     arch:
     - x86_64
@@ -169,6 +171,7 @@ metadata:
 
       '
     iconMediatype: image/svg+xml
+    provider: "Images cached by [angos](https://registry.pkg.weebo.poc)"
     publisher: weebo
     repository: https://github.com/che-incubator/che-code
     title: Microsoft Visual Studio Code - Open Source IDE for Eclipse Che

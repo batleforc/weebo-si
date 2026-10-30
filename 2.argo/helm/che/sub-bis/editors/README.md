@@ -16,6 +16,11 @@ offered is decided in `2.argo/helm/che/main/values.yaml`, under `che.editors`.
 3. Point every `image:` at angos (`registry.pkg.weebo.poc/<cache>/...`) or at
    `ghcr.io/batleforc/weebodevimage/...`. Anything else is refused by
    imagePolicy when the workspace starts, not when the editor is listed.
+   Then mark it as such: `angos` in `metadata.tags` (machine-readable; the
+   dashboard only shows the tags Tech Preview and Deprecated), and
+   `Images cached by [angos](https://registry.pkg.weebo.poc)` in
+   `metadata.attributes.provider`, which the editor's card does show (after
+   upstream's own credit, separated by ` · `).
 4. Add `<name>: true` under `che.editors.custom`. To make it the preselected
    editor, set `che.editors.default` to its id.
 

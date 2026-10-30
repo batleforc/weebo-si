@@ -81,6 +81,7 @@ metadata:
         </rect>
       </svg>
     iconMediatype: image/svg+xml
+    provider: "Images cached by [angos](https://registry.pkg.weebo.poc)"
     publisher: weebo
     repository: https://github.com/tsl0922/ttyd
     title: Web Terminal for Eclipse Che
@@ -91,4 +92,5 @@ metadata:
   tags:
     - terminal
     - ttyd
+    - angos
 schemaVersion: 2.3.0

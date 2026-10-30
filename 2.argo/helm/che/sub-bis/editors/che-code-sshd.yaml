@@ -196,8 +196,7 @@ metadata:
       </svg>
     iconMediatype: image/svg+xml
     provider: >-
-      Provided by [Microsoft](https://www.microsoft.com/) under
-      [License](https://code.visualstudio.com/License)
+      Provided by [Microsoft](https://www.microsoft.com/) under [License](https://code.visualstudio.com/License) · Images cached by [angos](https://registry.pkg.weebo.poc)
     publisher: weebo
     repository: https://github.com/che-incubator/che-code
     title: Visual Studio Code server for Eclipse Che over SSH - next
@@ -209,4 +208,5 @@ metadata:
     - ssh
     - CLI
     - vscode
+    - angos
 schemaVersion: 2.3.0

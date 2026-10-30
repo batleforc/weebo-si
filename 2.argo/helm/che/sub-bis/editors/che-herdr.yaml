@@ -91,6 +91,7 @@ metadata:
         </g>
       </svg>
     iconMediatype: image/svg+xml
+    provider: "Images cached by [angos](https://registry.pkg.weebo.poc)"
     publisher: weebo
     repository: https://github.com/ogulcancelik/herdr
     title: Herdr for Eclipse Che
@@ -102,4 +103,5 @@ metadata:
     - terminal
     - herdr
     - agents
+    - angos
 schemaVersion: 2.3.0

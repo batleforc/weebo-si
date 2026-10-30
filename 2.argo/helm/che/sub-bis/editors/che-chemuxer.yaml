@@ -79,6 +79,7 @@ metadata:
         </rect>
       </svg>
     iconMediatype: image/svg+xml
+    provider: "Images cached by [angos](https://registry.pkg.weebo.poc)"
     publisher: weebo
     repository: https://github.com/che-incubator/chemuxer
     title: Chemuxer - Terminal Multiplexer for Eclipse Che
@@ -89,4 +90,5 @@ metadata:
   tags:
     - terminal
     - multiplexer
+    - angos
 schemaVersion: 2.3.0
