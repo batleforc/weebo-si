@@ -1,0 +1,24 @@
+# Signs the public names the cluster answers for itself (CoreDNS sends them to
+# Traefik): the `weebo-intercept` role of 2.terra/vault/terra-map/pki.tf, which
+# allows those exact names and nothing under weebo.poc. Same CA as
+# vault-issuer, so a workspace that trusts one trusts both.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: vault-intercept-issuer
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vault:
+    path: pki_int/sign/weebo-intercept
+    server: https://openbao.vault:8200
+    caBundleSecretRef:
+      key: ca.crt
+      name: openbao-tls
+    auth:
+      kubernetes:
+        role: cert-manager
+        mountPath: /v1/auth/kubernetes
+        secretRef:
+          name: vault-issuer
+          key: token

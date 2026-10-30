@@ -419,6 +419,17 @@ batlehub:
         - https://dl.k8s.io
       path_allow: ["**"]
       rbac: *readRbac
+    # mise's version lists (mise-versions.jdx.dev), served to workspaces on
+    # that very name: see `intercept` below. The upstream is the other name
+    # the same Cloudflare Worker answers on (jdx/mise-versions, wrangler.jsonc),
+    # which CoreDNS leaves alone -- with mise-versions.jdx.dev itself, batlehub
+    # would resolve it to Traefik and fetch from itself.
+    - type: generic
+      name: mise-versions
+      upstreams:
+        - https://mise-tools.jdx.dev
+      path_allow: ["**"]
+      rbac: *readRbac
     # Che's Get Started samples (registry.devfile.io, RFC 0035). Its own host,
     # devfile.pkg.weebo.poc through subdomain routing: registry-library asks
     # for the OCI layers at the host root. Neither client sends a credential,
@@ -426,6 +437,18 @@ batlehub:
     - type: devfile
       name: devfile
       rbac: *readRbac
+
+  # Public hosts batlehub answers for in place of their origin, each served by
+  # one registry above at its root. CoreDNS sends `host` to Traefik
+  # (2.argo/app/templates/dns/coredns.yaml); templates/batlehub/intercept.yaml
+  # gives it a certificate from vault-intercept-issuer (the internal CA, which
+  # only Che workspaces trust) and a route that hands the request to
+  # `registry` as if it had come in on <registry>.<dns>. Both lists move
+  # together: a host here without its CoreDNS rewrite is never reached, and a
+  # rewrite without its host here is a TLS error for every pod that asks.
+  intercept:
+    - host: mise-versions.jdx.dev
+      registry: mise-versions
 
   # A GitHub token for the `github` registry's upstream requests (5000 an hour
   # instead of 60), as `[registries.upstream_auth]`. Off until the token is in

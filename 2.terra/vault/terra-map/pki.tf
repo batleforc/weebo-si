@@ -124,6 +124,28 @@ resource "vault_pki_secret_backend_role" "intermediate_role" {
   require_cn = false
 }
 
+# Noms publics que le cluster sert lui-meme a la place de leur origine :
+# CoreDNS les renvoie sur Traefik (2.argo/app/templates/dns/coredns.yaml), qui
+# repond avec un cache batlehub. Ce role ne signe que ces noms exacts, pas leur
+# domaine ; le ClusterIssuer `vault-intercept-issuer` (2.argo/helm/ingress/sub)
+# s'en sert. Seul un pod qui fait confiance a la CA interne (un workspace Che)
+# accepte ces certificats.
+#   mise-versions.jdx.dev : les listes de versions de mise (2.argo/helm/batlehub).
+resource "vault_pki_secret_backend_role" "intercept_role" {
+  backend            = vault_mount.pki_int.path
+  issuer_ref         = "default"
+  depends_on         = [vault_pki_secret_backend_config_issuers.pki_int]
+  name               = "weebo-intercept"
+  ttl                = 86400
+  max_ttl            = 2592000
+  key_type           = "rsa"
+  key_bits           = 4096
+  allowed_domains    = ["mise-versions.jdx.dev"]
+  allow_bare_domains = true
+  allow_subdomains   = false
+  require_cn         = false
+}
+
 resource "vault_kv_secret_v2" "certificate" {
   mount = "mv"
   name  = "cert-manager/config"

@@ -1,0 +1,64 @@
+{{- if .Values.batlehub.enabled -}}
+{{- $b := .Values.batlehub -}}
+{{- range $b.intercept }}
+{{- $slug := .host | replace "." "-" }}
+---
+# {{ .host }}, answered by the `{{ .registry }}` registry (values.yaml, intercept).
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: intercept-{{ $slug }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  secretName: intercept-{{ $slug }}-tls
+  commonName: {{ .host }}
+  dnsNames:
+    - {{ .host }}
+  issuerRef:
+    name: vault-intercept-issuer
+    kind: ClusterIssuer
+  privateKey:
+    size: 4096
+  usages:
+    - digital signature
+    - key encipherment
+---
+# batlehub picks the registry from the forwarded host, which it believes from
+# Traefik only (trustedProxies): name the registry's own subdomain, so the
+# request lands at that registry's root, path untouched.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: intercept-{{ $slug }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Host: {{ printf "%s.%s" .registry $b.dns | quote }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: intercept-{{ $slug }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ .host }}`)
+      middlewares:
+        - name: intercept-{{ $slug }}
+      services:
+        - name: batlehub
+          namespace: {{ $.Release.Namespace }}
+          port: 8080
+          passHostHeader: true
+  tls:
+    secretName: intercept-{{ $slug }}-tls
+{{- end }}
+{{- end -}}

@@ -80,6 +80,18 @@ che:
   # registry.devfile.io proxy on its own host (registry-library asks for the
   # OCI layers at the host root). Empty: Che's default, registry.devfile.io.
   devfileRegistryURL: https://devfile.pkg.weebo.poc/
+  # The internal CA in every workspace container (templates/workspace-trust.yaml):
+  # each variable below points at `bundle`, the public roots plus weebo.poc's,
+  # which che-operator mounts there (ca-certs-merged).
+  workspaceTrust:
+    enabled: true
+    bundle: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+    env:
+      - SSL_CERT_FILE        # OpenSSL, rustls-native-certs (mise), Go
+      - CURL_CA_BUNDLE       # curl
+      - GIT_SSL_CAINFO       # git over HTTPS
+      - REQUESTS_CA_BUNDLE   # Python requests, pip
+      - NODE_EXTRA_CA_CERTS  # Node.js, npm
   # OIDC client the Che gateway authenticates against. Only the client secret
   # is sensitive: it stays in mv/eclipse-che/auth and reaches the CheCluster by
   # Secret name (see templates/oauth-secret.yaml). The client id and secret

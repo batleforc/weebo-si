@@ -21,6 +21,11 @@ data:
 
       rewrite name exact  weebo.poc  traefik.traefik.svc.cluster.local answer auto
       rewrite name regex (.*)\.weebo\.poc traefik.traefik.svc.cluster.local answer auto
+      # Public names served from batlehub instead of their origin
+      # (2.argo/helm/batlehub/values.yaml, batlehub.intercept). Every pod gets
+      # the internal-CA certificate for them: only those trusting it (Che
+      # workspaces, 2.argo/helm/che/sub workspace-trust) can use them.
+      rewrite name exact  mise-versions.jdx.dev  traefik.traefik.svc.cluster.local answer auto
 
       kubernetes cluster.local in-addr.arpa ip6.arpa {
           pods insecure
