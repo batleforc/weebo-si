@@ -443,12 +443,15 @@ batlehub:
   # (2.argo/app/templates/dns/coredns.yaml); templates/batlehub/intercept.yaml
   # gives it a certificate from vault-intercept-issuer (the internal CA, which
   # only Che workspaces trust) and a route that hands the request to
-  # `registry` as if it had come in on <registry>.<dns>. Both lists move
+  # `registry` as if it had come in on <registry>.<dns>, under `prefix`: the
+  # route that registry type answers on there (a `generic` one serves
+  # /generic/<path>, not the bare path the client asks for). Both lists move
   # together: a host here without its CoreDNS rewrite is never reached, and a
   # rewrite without its host here is a TLS error for every pod that asks.
   intercept:
     - host: mise-versions.jdx.dev
       registry: mise-versions
+      prefix: /generic
 
   # A GitHub token for the `github` registry's upstream requests (5000 an hour
   # instead of 60), as `[registries.upstream_auth]`. Off until the token is in

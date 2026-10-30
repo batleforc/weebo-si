@@ -27,7 +27,7 @@ spec:
 ---
 # batlehub picks the registry from the forwarded host, which it believes from
 # Traefik only (trustedProxies): name the registry's own subdomain, so the
-# request lands at that registry's root, path untouched.
+# request lands on that registry, its path under `prefix`.
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -37,6 +37,17 @@ spec:
   headers:
     customRequestHeaders:
       X-Forwarded-Host: {{ printf "%s.%s" .registry $b.dns | quote }}
+{{- with .prefix }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: intercept-{{ $slug }}-prefix
+  namespace: {{ $.Release.Namespace }}
+spec:
+  addPrefix:
+    prefix: {{ . | quote }}
+{{- end }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
@@ -53,6 +64,9 @@ spec:
       match: Host(`{{ .host }}`)
       middlewares:
         - name: intercept-{{ $slug }}
+        {{- if .prefix }}
+        - name: intercept-{{ $slug }}-prefix
+        {{- end }}
       services:
         - name: batlehub
           namespace: {{ $.Release.Namespace }}
