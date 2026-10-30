@@ -387,10 +387,13 @@ config:
         ownership:
           - template: "{user}-{workspace}-{endpoint}"
         exclude: [cde.dev.weebo.poc]
+      # `anonymous` is spelt out although false is the CRD default: the API
+      # server fills it in on every entry, and ArgoCD compares list items
+      # whole, so leaving it implicit kept the app OutOfSync forever.
       catalog:
-        - { key: private, delegation: [] }
-        - { key: team, delegation: [Team] }
-        - { key: shared, delegation: [Team, UsersAndGroups] }
+        - { key: private, anonymous: false, delegation: [] }
+        - { key: team, anonymous: false, delegation: [Team] }
+        - { key: shared, anonymous: false, delegation: [Team, UsersAndGroups] }
       default: private
       # Per-user narrowing, intersected with the team's grant.
       overrides: []

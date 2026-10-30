@@ -15,6 +15,9 @@ spec:
     syncOptions:
     - CreateNamespace=true
     - ServerSideApply=true
+    # Without it a sync still writes the ignored fields below, rotating the
+    # console's JWT secret (logging everyone out) and restarting it.
+    - RespectIgnoreDifferences=true
   source:
     repoURL: {{ .Values.s3Operator.repoURL }}
     path: {{ .Values.s3Operator.path }}
@@ -51,4 +54,13 @@ spec:
       namespace: s3
       jsonPointers:
         - /data/jwt-secret
+    # The chart's `lookup` of the existing secret returns nothing under the
+    # repo-server, so every render draws a fresh random jwt-secret -- and the
+    # console Deployment's checksum of that secret changes with it.
+    - group: apps
+      kind: Deployment
+      name: s3-rustfs-operator-console
+      namespace: s3
+      jsonPointers:
+        - /spec/template/metadata/annotations/checksum~1secret
 {{- end }}
