@@ -204,3 +204,25 @@ obi:
   # extra eBPF work or the flow cardinality turns out not to be worth it. Until
   # 2026-08-16 this was spelt `enabled` in the config and had never been on.
   networkFlows: true
+  # Namespaces OBI never attaches to. Longhorn's instance-manager and manager
+  # poll each other over gRPC (ReplicaList, VolumeGet, Health/Check...) around
+  # the clock: measured on 2026-10-30, ~8M of the ~16.5M spans a day, half of
+  # otel_traces and the bulk of the ClickHouse merges behind it, with no
+  # request a person ever made among them.
+  excludeNamespaces:
+    - longhorn
+  # HTTP paths whose spans and RED metrics OBI drops (routes.ignored_patterns,
+  # ignore_mode left at its `all` default). Exact paths; `*` is the wildcard.
+  # /angos alone was ~3M spans a day on 2026-10-30 -- registry.angos calling it
+  # 8 times a second -- and the rest are probe endpoints.
+  ignoredRoutes:
+    - /angos
+    - /healthz
+    - /readyz
+    - /livez
+    - /ping
+  # Sized from the 7-day working set (avg 723Mi, p95 1105Mi on 2026-10-30)
+  # rather than the namespace LimitRange's 64Mi default, which left the
+  # scheduler blind to a third of a GiB. The 2Gi limit still comes from the
+  # LimitRange.
+  memoryRequest: 768Mi

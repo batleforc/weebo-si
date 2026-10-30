@@ -41,6 +41,9 @@ spec:
           - name: bpffs
             mountPath: /sys/fs/bpf
             mountPropagation: HostToContainer
+        resources:
+          requests:
+            memory: {{ .Values.obi.memoryRequest }}
         env:
           OTEL_EBPF_KUBE_CLUSTER_NAME: {{ .Values.otel.clusterName | quote }}
         # Replaces the bank-vaults webhook injection of
@@ -67,6 +70,25 @@ spec:
             # leave by OTLP above and nothing scraped it. The chart's
             # removeNulls drops the key, and with it the containerPort.
             prometheus_export: null
+            # Any user `discovery` replaces the chart's application-preset one
+            # wholesale (_helpers.tpl), so both of its entries are restated here
+            # -- dropping the exe_path one would have OBI trace itself and the
+            # collectors.
+            discovery:
+              instrument:
+                - k8s_namespace: '*'
+              exclude_instrument:
+                - exe_path: '{*ebpf-instrument*,*otelcol*}'
+                {{- range .Values.obi.excludeNamespaces }}
+                - k8s_namespace: {{ . | quote }}
+                {{- end }}
+            {{- with .Values.obi.ignoredRoutes }}
+            # Merged onto OBI's own routes defaults (unmatched, wildcard_char),
+            # which stay as they are.
+            routes:
+              ignored_patterns:
+                {{- toYaml . | nindent 16 }}
+            {{- end }}
             {{- if .Values.obi.networkFlows }}
             # `enable`, not `enabled`: OBI parses this file with a plain
             # yaml.Unmarshal, so a misspelt key is dropped without a warning and

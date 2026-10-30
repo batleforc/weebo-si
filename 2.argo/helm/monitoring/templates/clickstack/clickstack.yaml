@@ -36,6 +36,12 @@ spec:
             apiPort:
               enabled: true
           deployment:
+            # The namespace LimitRange would otherwise default the request to
+            # 64Mi against a 7-day working set of 439Mi avg / 553Mi max
+            # (2026-10-30). The limit is left to the LimitRange.
+            resources:
+              requests:
+                memory: 512Mi
             useExistingConfigSecret: true
             existingConfigSecret: clickstack-hyperdx-config
             existingConfigConnectionsKey: connections.json
@@ -108,6 +114,12 @@ spec:
                   - name: clickhouse-users-config
                     secret:
                       secretName: clickstack-clickhouse-users
+        otel-collector:
+          # Same LimitRange default as hyperdx above, against 203Mi avg /
+          # 355Mi p95 over 7 days (2026-10-30).
+          resources:
+            requests:
+              memory: 256Mi
         mongodb:
           spec:
             members: 1
