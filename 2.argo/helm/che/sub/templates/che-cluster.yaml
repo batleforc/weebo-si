@@ -87,6 +87,23 @@ spec:
           containers:
             - name: gateway
               image: {{ .Values.che.workspaceImages.gateway | quote }}
+            # One CSRF cookie per login, named after its state. A cold load
+            # sends /dashboard/ and the dashboard's service-worker.js at once;
+            # both start a login, and with a single _oauth2_proxy_csrf cookie
+            # the second overwrites the first: dex comes back with the page's
+            # state, oauth2-proxy answers "CSRF token mismatch" (403), and the
+            # user signs in a second time.
+            # approval_prompt: oauth2-proxy sends `force` by default, which dex
+            # reads as a forced consent and shows its "Grant access" screen
+            # past skipApprovalScreen. Authentik already asks for consent.
+            # che-operator writes the config file without either option; env
+            # vars override it.
+            - name: oauth-proxy
+              env:
+                - name: OAUTH2_PROXY_COOKIE_CSRF_PER_REQUEST
+                  value: "true"
+                - name: OAUTH2_PROXY_APPROVAL_PROMPT
+                  value: "auto"
   components:
     # che-code's extension gallery: batlehub's `vsx` registry, an open-vsx.org
     # proxy (2.argo/helm/batlehub). che-code appends /vscode/gallery,
