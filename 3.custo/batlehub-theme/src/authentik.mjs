@@ -140,6 +140,14 @@ input[type="radio"],
   outline: 2px solid var(--bh-focus) !important;
   outline-offset: 2px;
 }
+/* Text fields take the ring inside their box: outside, a wrapper that clips (the library's
+   search bar) cuts it off, and it doubles PatternFly's focus underline, which it now covers. */
+input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+.pf-c-form-control:focus-visible {
+  outline-offset: -2px;
+}
 body,
 :host {
   font-variant-numeric: tabular-nums;
