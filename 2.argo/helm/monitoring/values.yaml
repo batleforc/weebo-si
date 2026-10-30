@@ -192,7 +192,7 @@ otel:
     image:
       repository: otel/opentelemetry-collector-k8s
       # renovate: datasource=docker depName=otel/opentelemetry-collector-k8s
-      tag: "0.158.0"
+      tag: "0.163.2"
 
 obi:
   enabled: true
