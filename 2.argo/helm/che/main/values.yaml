@@ -38,6 +38,13 @@ che:
       che-code-angos: true # weebo/che-code/latest
       che-code-insiders-weebo: true # weebo/che-code-weebo/next
       che-code-fast-weebo: true # weebo/che-code-fast/latest
+      # che-incubator editors served through angos (header of each file).
+      che-web-terminal: true # weebo/che-web-terminal/latest
+      che-herdr: true # weebo/che-herdr/latest
+      che-orca: true # weebo/che-orca/next
+      che-chemuxer: true # weebo/che-chemuxer/next
+      che-code-server: true # weebo/che-code-server/latest
+      che-code-sshd: true # weebo/che-code-sshd/next
     # The che-incubator editors che-operator ships (list: sub/values.yaml
     # che.editors.upstream.known). Hidden from the picker only: a
     # che-editor.yaml naming one still resolves, and imagePolicy refuses

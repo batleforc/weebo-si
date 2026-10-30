@@ -1,0 +1,94 @@
+# che-incubator/che-web-terminal/latest, as che-operator ships it, served through
+# angos: publisher weebo, and every image from its cache
+# (registry.pkg.weebo.poc/{hub,quay,redhat}/<upstream path>).
+# Re-fetch after a che-operator bump (see README.md, step 1).
+commands:
+  - apply:
+      component: ttyd-injector
+    id: init-ttyd-command
+  - exec:
+      commandLine: >-
+        nohup /ttyd-vol/ttyd -W -p 7681 -t titleFixed=Terminal /bin/sh -c 'cd
+        "${PROJECT_SOURCE:-.}" && exec /bin/sh' > /ttyd-vol/ttyd.log 2>&1 &
+      component: ttyd-runtime
+    id: start-ttyd-command
+components:
+  - container:
+      command:
+        - sh
+        - '-c'
+        - cp /usr/bin/ttyd /ttyd-vol/ttyd && chmod +x /ttyd-vol/ttyd
+      cpuLimit: 500m
+      cpuRequest: 30m
+      image: registry.pkg.weebo.poc/hub/tsl0922/ttyd:1.7.7-alpine
+      memoryLimit: 64Mi
+      memoryRequest: 16Mi
+      volumeMounts:
+        - name: ttyd-volume
+          path: /ttyd-vol
+    name: ttyd-injector
+  - attributes:
+      app.kubernetes.io/component: web-terminal-runtime
+      app.kubernetes.io/part-of: web-terminal.eclipse.org
+      controller.devfile.io/container-contribution: true
+    container:
+      cpuLimit: 500m
+      cpuRequest: 30m
+      endpoints:
+        - attributes:
+            cookiesAuthEnabled: true
+            discoverable: false
+            secure: true
+            type: main
+            urlRewriteSupported: true
+          exposure: public
+          name: web-terminal
+          protocol: https
+          targetPort: 7681
+      image: registry.pkg.weebo.poc/hub/tsl0922/ttyd:1.7.7-alpine
+      memoryLimit: 256Mi
+      memoryRequest: 64Mi
+      volumeMounts:
+        - name: ttyd-volume
+          path: /ttyd-vol
+    name: ttyd-runtime
+  - name: ttyd-volume
+    volume: {}
+events:
+  postStart:
+    - start-ttyd-command
+  preStart:
+    - init-ttyd-command
+metadata:
+  attributes:
+    arch:
+      - x86_64
+      - arm64
+      - s390x
+      - ppc64le
+    firstPublicationDate: '2026-04-01'
+    iconData: >
+      <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"
+      viewBox="0 0 100 100">
+        <rect width="100" height="100" rx="10" fill="#1a1a1a"/>
+        <text x="10" y="35" font-family="monospace" font-size="14" fill="#00ff00">$</text>
+        <rect x="20" y="25" width="10" height="2" fill="#00ff00"/>
+        <text x="10" y="55" font-family="monospace" font-size="14" fill="#00ff00">$</text>
+        <rect x="20" y="45" width="10" height="2" fill="#00ff00"/>
+        <text x="10" y="75" font-family="monospace" font-size="14" fill="#00ff00">$</text>
+        <rect x="20" y="65" width="10" height="2" fill="#00ff00" class="blink">
+          <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
+        </rect>
+      </svg>
+    iconMediatype: image/svg+xml
+    publisher: weebo
+    repository: https://github.com/tsl0922/ttyd
+    title: Web Terminal for Eclipse Che
+    version: latest
+  description: Web-based terminal using ttyd for Eclipse Che
+  displayName: Web Terminal
+  name: che-web-terminal
+  tags:
+    - terminal
+    - ttyd
+schemaVersion: 2.3.0
