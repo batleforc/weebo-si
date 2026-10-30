@@ -16,7 +16,7 @@ export const AK_THEMES = ["light", "dark"];
 // for light ones, which in Authentik's light mode exist side by side (the login header
 // over the background image). In dark mode Authentik collapses both onto the dark values,
 // and so does this.
-export function akVariables(rendition, tk, fonts) {
+export function akVariables(rendition, tk) {
   const t = tk[rendition];
   const onDark = rendition === "dark" ? t : tk.dark; // for "-light-N": surfaces that are dark
   const onLight = rendition === "dark" ? t : tk.light; // for "-dark-N": surfaces that are light
@@ -116,10 +116,6 @@ export function akVariables(rendition, tk, fonts) {
   add("--ak-v2-global--BoxShadow--lg", flat);
   add("--pf-global--BorderRadius--sm", "0");
   add("--pf-global--BorderRadius--lg", "0");
-  const text = `"${fonts.text.family}", ${fonts.text.fallback}`;
-  add("--ak-generic-sans-serif", text);
-  add("--ak-generic-monospace", text);
-  add("--ak-generic-display", `"${fonts.display.family}", ${fonts.display.fallback}`);
   add("color-scheme", rendition);
   return v;
 }
@@ -163,10 +159,10 @@ body,
   --pf-c-button--m-primary--focus--Color: var(--bh-accent-ink);
   --pf-c-button--m-primary--active--BackgroundColor: var(--bh-accent-hover);
   --pf-c-button--m-primary--active--Color: var(--bh-accent-ink);
-  font-family: var(--bh-face-display);
-  font-size: 16px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-family: var(--bh-button-face, var(--pf-global--FontFamily--sans-serif));
+  font-size: var(--bh-button-size, var(--pf-c-button--FontSize));
+  letter-spacing: var(--bh-button-track, normal);
+  text-transform: var(--bh-button-case, none);
 }
 /* Floats are a 1px frame, not a shadow. */
 .pf-c-login__main,
@@ -201,23 +197,20 @@ html[data-theme="dark"] body::before {
   background-image: url("${assets}/background-dark.svg");
 }
 
-/* Titles: the bitmap face, only at integer multiples of 8px. */
-.pf-c-login__main-header .pf-c-title,
-.pf-c-page__main-section .pf-c-title.pf-m-2xl,
-.pf-c-modal-box__title {
+/* The flow's title: the bitmap face, only at integer multiples of 8px. */
+.pf-c-login__main-header .pf-c-title {
   font-family: var(--bh-face-display);
   font-size: 24px;
   font-weight: 400;
   line-height: 1.33;
   letter-spacing: 0.02em;
 }
-.pf-c-form__label-text,
-.pf-c-table thead th {
-  font-size: 12px;
-  font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--bh-ink-dim);
+.pf-c-form__label-text {
+  font-size: var(--bh-label-size, 1em);
+  font-weight: var(--bh-label-weight, var(--pf-c-form__label-text--FontWeight));
+  letter-spacing: var(--bh-label-track, normal);
+  text-transform: var(--bh-label-case, none);
+  color: var(--bh-label-ink, currentColor);
 }
 
 /* The flow's logo: Authentik stretches it to most of the form's width, far too much
@@ -236,6 +229,29 @@ img[src*="${assets}/logo-"] {
 }
 `;
 
+// The type of the flows: the brand's faces, uppercase labels and buttons. Only on a flow's
+// page, so the admin and user interfaces keep Authentik's faces and layout, in our colours.
+// The rules sit in shadow roots, which cannot see which page they are on: they read these
+// variables, which inherit into them, and fall back to Authentik's own values elsewhere.
+function flowOnly(fonts) {
+  const text = `"${fonts.text.family}", ${fonts.text.fallback}`;
+  const vars = [
+    ["--ak-generic-sans-serif", text],
+    ["--ak-generic-monospace", text],
+    ["--ak-generic-display", `"${fonts.display.family}", ${fonts.display.fallback}`],
+    ["--bh-button-face", "var(--bh-face-display)"],
+    ["--bh-button-size", "16px"],
+    ["--bh-button-track", "0.06em"],
+    ["--bh-button-case", "uppercase"],
+    ["--bh-label-size", "12px"],
+    ["--bh-label-weight", "400"],
+    ["--bh-label-track", "0.14em"],
+    ["--bh-label-case", "uppercase"],
+    ["--bh-label-ink", "var(--bh-ink-dim)"],
+  ];
+  return `html:has(ak-flow-executor) {\n${vars.map(([k, v]) => `  ${k}: ${v};`).join("\n")}\n}`;
+}
+
 /**
  * The brand's custom CSS.
  * @param {{tokens: {light: object, dark: object}, fonts: object, assets: string}} p
@@ -253,7 +269,7 @@ export function renderAuthentikCss({ tokens, fonts, assets }) {
       ["--bh-focus", hex(t.focus)],
       ["--bh-face-display", `"${fonts.display.family}", ${fonts.display.fallback}`],
     ];
-    return [...akVariables(r, tokens, fonts), ...own].map(([k, val]) => `  ${k}: ${val};`).join("\n");
+    return [...akVariables(r, tokens), ...own].map(([k, val]) => `  ${k}: ${val};`).join("\n");
   };
   const faces = Object.values(fonts)
     .flatMap((face) =>
@@ -278,6 +294,7 @@ html[data-theme="dark"],
 :host([theme="dark"]) {
 ${block("dark")}
 }
+${flowOnly(fonts)}
 ${rules(assets)}`;
   const bad = /[<>&]/.exec(css);
   if (bad) {

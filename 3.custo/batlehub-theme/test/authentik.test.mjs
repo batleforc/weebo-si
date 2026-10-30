@@ -42,3 +42,11 @@ test("the flow background names each rendition's file, not %(theme)s", () => {
   assert.match(css, /\nbody::before \{\n  background-image: url\("\/static\/dist\/assets\/batlehub\/background-light\.svg"\);/);
   assert.match(css, /html\[data-theme="dark"\] body::before \{\n  background-image: url\("\/static\/dist\/assets\/batlehub\/background-dark\.svg"\);/);
 });
+
+test("the brand's faces only on a flow's page, Authentik's elsewhere", () => {
+  const [, flow] = css.match(/html:has\(ak-flow-executor\) \{([^}]*)\}/);
+  assert.match(flow, /--ak-generic-sans-serif: "/);
+  assert.match(flow, /--ak-generic-display: "/);
+  for (const block of css.matchAll(/(?:^|\n)(?::root|html\[data-theme="dark"\]),\n:host[^{]*\{([^}]*)\}/g))
+    assert.doesNotMatch(block[1], /--ak-generic-/);
+});

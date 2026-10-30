@@ -110,9 +110,6 @@
   --ak-v2-global--BoxShadow--lg: 0 0 #0000;
   --pf-global--BorderRadius--sm: 0;
   --pf-global--BorderRadius--lg: 0;
-  --ak-generic-sans-serif: "JetBrains Mono", ui-monospace, monospace;
-  --ak-generic-monospace: "JetBrains Mono", ui-monospace, monospace;
-  --ak-generic-display: "Silkscreen", monospace;
   color-scheme: light;
   --bh-accent: #c50220;
   --bh-accent-ink: #fefbfb;
@@ -214,9 +211,6 @@ html[data-theme="dark"],
   --ak-v2-global--BoxShadow--lg: 0 0 #0000;
   --pf-global--BorderRadius--sm: 0;
   --pf-global--BorderRadius--lg: 0;
-  --ak-generic-sans-serif: "JetBrains Mono", ui-monospace, monospace;
-  --ak-generic-monospace: "JetBrains Mono", ui-monospace, monospace;
-  --ak-generic-display: "Silkscreen", monospace;
   color-scheme: dark;
   --bh-accent: #ff343d;
   --bh-accent-ink: #080202;
@@ -225,6 +219,20 @@ html[data-theme="dark"],
   --bh-rule-strong: #885b57;
   --bh-focus: #fdc436;
   --bh-face-display: "Silkscreen", monospace;
+}
+html:has(ak-flow-executor) {
+  --ak-generic-sans-serif: "JetBrains Mono", ui-monospace, monospace;
+  --ak-generic-monospace: "JetBrains Mono", ui-monospace, monospace;
+  --ak-generic-display: "Silkscreen", monospace;
+  --bh-button-face: var(--bh-face-display);
+  --bh-button-size: 16px;
+  --bh-button-track: 0.06em;
+  --bh-button-case: uppercase;
+  --bh-label-size: 12px;
+  --bh-label-weight: 400;
+  --bh-label-track: 0.14em;
+  --bh-label-case: uppercase;
+  --bh-label-ink: var(--bh-ink-dim);
 }
 
 *,
@@ -263,10 +271,10 @@ body,
   --pf-c-button--m-primary--focus--Color: var(--bh-accent-ink);
   --pf-c-button--m-primary--active--BackgroundColor: var(--bh-accent-hover);
   --pf-c-button--m-primary--active--Color: var(--bh-accent-ink);
-  font-family: var(--bh-face-display);
-  font-size: 16px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-family: var(--bh-button-face, var(--pf-global--FontFamily--sans-serif));
+  font-size: var(--bh-button-size, var(--pf-c-button--FontSize));
+  letter-spacing: var(--bh-button-track, normal);
+  text-transform: var(--bh-button-case, none);
 }
 /* Floats are a 1px frame, not a shadow. */
 .pf-c-login__main,
@@ -301,23 +309,20 @@ html[data-theme="dark"] body::before {
   background-image: url("/static/dist/assets/batlehub/background-dark.svg");
 }
 
-/* Titles: the bitmap face, only at integer multiples of 8px. */
-.pf-c-login__main-header .pf-c-title,
-.pf-c-page__main-section .pf-c-title.pf-m-2xl,
-.pf-c-modal-box__title {
+/* The flow's title: the bitmap face, only at integer multiples of 8px. */
+.pf-c-login__main-header .pf-c-title {
   font-family: var(--bh-face-display);
   font-size: 24px;
   font-weight: 400;
   line-height: 1.33;
   letter-spacing: 0.02em;
 }
-.pf-c-form__label-text,
-.pf-c-table thead th {
-  font-size: 12px;
-  font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--bh-ink-dim);
+.pf-c-form__label-text {
+  font-size: var(--bh-label-size, 1em);
+  font-weight: var(--bh-label-weight, var(--pf-c-form__label-text--FontWeight));
+  letter-spacing: var(--bh-label-track, normal);
+  text-transform: var(--bh-label-case, none);
+  color: var(--bh-label-ink, currentColor);
 }
 
 /* The flow's logo: Authentik stretches it to most of the form's width, far too much
