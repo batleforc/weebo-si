@@ -17,7 +17,7 @@ Le cluster tourne sur **un seul nœud** (`talos-r2k-rp0`, `37.187.255.5`), qui e
 
 ```mermaid
 graph LR
-    S0["0. Prérequis<br/>sauvegardes"] --> S1["1. Talos 1.13.11"]
+    S0["0. Prérequis<br/>sauvegardes"] --> S1["1. Talos 1.13.12"]
     S1 --> S2["2. Cilium 1.18.14"]
     S2 --> S3["3. Cilium 1.19.8"]
     S3 --> S4["4. Talos 1.14.2"]
@@ -47,6 +47,14 @@ Avec le hostDNS de Talos (`forwardKubeDNSToHost`, actif par défaut), `bpf.masqu
 
 <Callout type="error" title="Toujours --drain=false sur talosctl upgrade">
 `talosctl upgrade` draine le nœud par défaut, contrairement à `talosctl reboot`. Il installe d'abord la nouvelle image, puis draine, avec un délai de 5 minutes. Or sept PDB n'autorisent aucune interruption sur un nœud unique : les trois primaires cnpg (`*-pg-primary`), `csi-attacher` et `csi-provisioner` de Longhorn, et ses deux instance-managers. Le drain échoue donc toujours. talosctl s'arrête alors en erreur : **nœud cordonné, une partie des pods déjà évincée, pas de redémarrage**. Il n'y a de toute façon aucun autre nœud où déplacer les pods : on passe `--drain=false`, et le kubelet arrête les pods proprement au redémarrage (vu dans le code de talosctl 1.14.2, `cmd/talosctl/cmd/talos/upgrade.go`). Si un drain est quand même lancé et reste bloqué : `task k-o -- uncordon talos-r2k-rp0`.
+</Callout>
+
+<Callout type="error" title="Ne jamais s'arrêter sur Talos 1.13.8">
+En 1.13.8, l'extension `iscsi-tools` est passée d'open-iscsi 2.1.11 à 2.1.12 sans changer de numéro (elle affiche toujours `v0.2.0`). La 2.1.12 a renommé un paramètre des enregistrements de `/var/lib/iscsi/nodes/` (`conn_reopen_log_freq` → `sess_reopen_log_freq`) et refuse ceux qu'a écrits la 2.1.11. Résultat : **plus aucun volume Longhorn ne s'attache**, et revenir en 1.13.7 ne répare pas, puisque la 1.13.8 a déjà réécrit les enregistrements ([talos#14000](https://github.com/siderolabs/talos/issues/14000), [extensions#1182](https://github.com/siderolabs/extensions/issues/1182), [open-iscsi#540](https://github.com/open-iscsi/open-iscsi/issues/540)). Corrigé à partir de 1.13.9 : l'extension accepte les deux formats et écrit l'ancien (commit `8135db042`), donc un retour arrière en 1.13.5 reste lisible. On saute directement de 1.13.5 à 1.13.12. Si un volume ne s'attache plus malgré tout avec `Unknown parameter name node.session.conn_reopen_log_freq` dans les logs de l'instance-manager, supprimer les enregistrements fautifs sous `/var/lib/iscsi/nodes/` : Longhorn les recrée à l'attachement suivant.
+</Callout>
+
+<Callout type="warn" title="Le socket-LB peut se rattacher au mauvais cgroup au démarrage">
+Bug Cilium ouvert ([#48420](https://github.com/cilium/cilium/issues/48420), signalé sur Talos 1.13.9 et Cilium 1.20.1, même config que la nôtre : KPR, `Socket LB Coverage: Hostns-only`). Au démarrage du nœud, l'agent peut accrocher les programmes socket-LB à un cgroup éphémère au lieu de la racine. Les pods en `hostNetwork`, **kube-apiserver compris**, n'atteignent alors plus aucune ClusterIP. L'apiserver ne joint plus ses webhooks, donc plus aucun pod ne se crée. `cilium-dbg status` continue d'afficher `Socket LB: Enabled`, et les logs ne disent rien. On le contrôle après chaque redémarrage (point 6 des vérifications).
 </Callout>
 
 Autres points à connaître :
@@ -119,7 +127,16 @@ task k-o -- -n dev-ws-batleforc exec $P -c tools -- sh -c '
 
 # 5. Drops réseau inattendus
 task k-o -- -n kube-system exec $CP -c cilium-agent -- hubble observe --verdict DROPPED --last 50
+
+# 6. Socket-LB accroché à la racine des cgroups (cilium#48420) : doit afficher cgroup_id 1.
+#    Sinon : rm /sys/fs/bpf/cilium/socketlb/links/cgroup/* dans l'agent, puis supprimer le pod cilium.
+task k-o -- -n kube-system exec $CP -c cilium-agent -- bpftool link show | grep -A1 inet4_connect
+
+# 7. Volumes Longhorn tous attachés et sains (le piège iscsi de 1.13.8)
+task k-o -- -n longhorn get volumes.longhorn.io -o custom-columns=N:.status.kubernetesStatus.pvcName,S:.status.state,R:.status.robustness | grep -v "attached *healthy"
 ```
+
+Le point 7 n'affiche normalement que l'en-tête et les volumes des workspaces arrêtés (`detached`).
 
 Penser aussi à vérifier :
 
@@ -127,15 +144,17 @@ Penser aussi à vérifier :
 - **un pull d'image via angos**, par exemple en créant un nouveau workspace (images `registry.pkg.weebo.poc/quay/...`) ;
 - **le login Che**, qui passe par dex puis Authentik.
 
-## Étape 1 : Talos 1.13.5 → 1.13.11
+## Étape 1 : Talos 1.13.5 → 1.13.12
 
-Mise à jour patch : noyau 6.18.36 → 6.18.54, containerd 2.2.9, CoreDNS 1.14.7, etcd 3.6.14, et des corrections réseau qui concernent ce nœud (route IPv6, routes recréées en boucle, DHCP, nftables) ([notes de version](https://github.com/siderolabs/talos/releases/tag/v1.13.11)).
+Mise à jour patch : noyau 6.18.36 → 6.18.57, containerd 2.2.10, CoreDNS 1.14.7, etcd 3.6.14, et des corrections réseau qui concernent ce nœud (route IPv6, routes recréées en boucle, DHCP, buffers netlink de nftables) ([notes de version](https://github.com/siderolabs/talos/releases/tag/v1.13.12)).
+
+Vérifié le 2026-10-30 avant l'opération : rien entre 1.13.6 et 1.13.12 ne touche eBPF, le routage de Cilium ou son proxy DNS, et aucune issue Cilium ou Talos ne signale d'incompatibilité entre ces versions et Cilium 1.18.10. Deux changements à noter : `CONFIG_NFT_SOCKET` est activé en 1.13.8 (sans effet, Cilium passe par iptables) et un débordement noyau sur les métadonnées de tunnel est corrigé en 1.13.6 (concerne `cilium_vxlan`). Le seul vrai piège est celui d'iscsi en 1.13.8 (voir « Les pièges propres à ce cluster »), qu'on évite en allant directement en 1.13.12.
 
 1. Sauvegardes (voir « Avant de commencer »).
 2. Mettre à jour la version dans Pulumi, **uniquement `talosVersion`** :
    ```yaml
    # 1.pulu-init/Pulumi.dev.yaml
-   0.pulumi:talosVersion: v1.13.11
+   0.pulumi:talosVersion: v1.13.12
    ```
 3. Prévisualiser et lire le diff :
    ```bash
@@ -146,7 +165,7 @@ Mise à jour patch : noyau 6.18.36 → 6.18.54, containerd 2.2.9, CoreDNS 1.14.7
    ```bash
    task pulunit:up
    task pulunit:base -- stack output schematicUpdateId
-   task t -- -n 37.187.255.5 upgrade --drain=false --image factory.talos.dev/installer/<schematicUpdateId>:v1.13.11
+   task t -- -n 37.187.255.5 upgrade --drain=false --image factory.talos.dev/installer/<schematicUpdateId>:v1.13.12
    ```
    Le nœud redémarre : le cluster est indisponible pendant quelques minutes.
 
@@ -211,7 +230,7 @@ task k-o -- -n kube-system get deploy hubble-relay hubble-ui
 
 **Retour arrière** : `ciliumVersion: v1.18.14` puis `task pulunit:up`. On ne revient jamais en arrière de plus d'une mineure.
 
-## Étape 4 : Talos 1.13.11 → 1.14.2
+## Étape 4 : Talos 1.13.12 → 1.14.2
 
 À lire avant : [notes de version 1.14.0](https://github.com/siderolabs/talos/releases/tag/v1.14.0). On vise **1.14.2**, qui corrige les routes recréées en boucle des 1.14.0 et 1.14.1 ([#14416](https://github.com/siderolabs/talos/issues/14416)).
 
@@ -236,7 +255,7 @@ Ce qui change pour ce cluster :
    task k-o -- -n kube-system exec $CP -c cilium-agent -- ip6tables -t mangle -S | grep -c TPROXY
    ```
 
-**Retour arrière** : `task t -- -n 37.187.255.5 rollback`. Si le retour en 1.13 échoue à cause d'etcd, restaurer le snapshot (`talosctl bootstrap --recover-from=...`), puis remettre `talosVersion: v1.13.11` dans Pulumi.
+**Retour arrière** : `task t -- -n 37.187.255.5 rollback`. Si le retour en 1.13 échoue à cause d'etcd, restaurer le snapshot (`talosctl bootstrap --recover-from=...`), puis remettre `talosVersion: v1.13.12` dans Pulumi.
 
 ## Étape 5 : Cilium 1.19.8 → 1.20.3 (ou plus)
 
@@ -278,6 +297,8 @@ Seulement une fois Talos en 1.14.x (qui supporte Kubernetes 1.33 à 1.37) et Cil
 
 ## Sources
 
-- Talos : [v1.13.11](https://github.com/siderolabs/talos/releases/tag/v1.13.11), [v1.14.0](https://github.com/siderolabs/talos/releases/tag/v1.14.0), [mise à jour de Talos](https://docs.siderolabs.com/talos/v1.14/configure-your-talos-cluster/lifecycle-management/upgrading-talos), [matrice de support](https://docs.siderolabs.com/talos/v1.14/getting-started/support-matrix), [Cilium sur Talos](https://docs.siderolabs.com/kubernetes-guides/cni/deploying-cilium)
+- Talos : [v1.13.12](https://github.com/siderolabs/talos/releases/tag/v1.13.12), [v1.14.0](https://github.com/siderolabs/talos/releases/tag/v1.14.0), [mise à jour de Talos](https://docs.siderolabs.com/talos/v1.14/configure-your-talos-cluster/lifecycle-management/upgrading-talos), [matrice de support](https://docs.siderolabs.com/talos/v1.14/getting-started/support-matrix), [Cilium sur Talos](https://docs.siderolabs.com/kubernetes-guides/cni/deploying-cilium)
 - Cilium : [v1.18.14](https://github.com/cilium/cilium/releases/tag/v1.18.14), [mise à jour 1.19](https://docs.cilium.io/en/v1.19/operations/upgrade/), [mise à jour 1.20](https://docs.cilium.io/en/v1.20/operations/upgrade/), [prérequis Kubernetes](https://docs.cilium.io/en/v1.20/network/kubernetes/requirements/)
+- iscsi-tools en 1.13.8 : [talos#14000](https://github.com/siderolabs/talos/issues/14000), [extensions#1182](https://github.com/siderolabs/extensions/issues/1182), [open-iscsi#540](https://github.com/open-iscsi/open-iscsi/issues/540)
+- Socket-LB sur le mauvais cgroup : [cilium#48420](https://github.com/cilium/cilium/issues/48420)
 - Bug DNS et `src_valid_mark` : [#46284](https://github.com/cilium/cilium/issues/46284), [#46260](https://github.com/cilium/cilium/issues/46260), [#48706](https://github.com/cilium/cilium/issues/48706), [#48928](https://github.com/cilium/cilium/pull/48928)
