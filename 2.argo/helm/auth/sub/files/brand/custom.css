@@ -283,6 +283,16 @@ body,
   border: 0;
 }
 
+/* The flow background, per rendition. Authentik (2026.8) puts the brand's path into the
+   page's --ak-global--background-image without substituting %(theme)s, so body::before
+   asks for a file that does not exist and the page stays black. Name the file here. */
+body::before {
+  background-image: url("/static/dist/assets/batlehub/background-light.svg");
+}
+html[data-theme="dark"] body::before {
+  background-image: url("/static/dist/assets/batlehub/background-dark.svg");
+}
+
 /* Titles: the bitmap face, only at integer multiples of 8px. */
 .pf-c-login__main-header .pf-c-title,
 .pf-c-page__main-section .pf-c-title.pf-m-2xl,

@@ -37,3 +37,8 @@ test("the background inlines the plate, nothing fetched", () => {
   assert.match(svg, /href="data:image\/png;base64,/);
   assert.doesNotMatch(svg, /href="(https?:|\/)/);
 });
+
+test("the flow background names each rendition's file, not %(theme)s", () => {
+  assert.match(css, /\nbody::before \{\n  background-image: url\("\/static\/dist\/assets\/batlehub\/background-light\.svg"\);/);
+  assert.match(css, /html\[data-theme="dark"\] body::before \{\n  background-image: url\("\/static\/dist\/assets\/batlehub\/background-dark\.svg"\);/);
+});
