@@ -116,6 +116,17 @@ spec:
             otlp: null
             jaeger: null
             zipkin: null
+            # Merged into the hostMetrics preset's receiver. system.memory.limit
+            # (MemTotal) is off by default; the dashboards divide `used` by it.
+            # The states of system.memory.usage overlap (cached includes
+            # slab_reclaimable, used includes slab_unreclaimable): their sum is
+            # ~5% above the RAM, so it can't serve as the total.
+            hostmetrics:
+              scrapers:
+                memory:
+                  metrics:
+                    system.memory.limit:
+                      enabled: true
             kubeletstats:
               # container/pod/node is the receiver's default; `volume` is not,
               # and it is the only source of per-PVC used vs capacity. Emits

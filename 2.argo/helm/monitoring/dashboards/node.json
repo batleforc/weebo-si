@@ -92,7 +92,7 @@
       "config": {
         "name": "Memory",
         "configType": "sql",
-        "sqlTemplate": "SELECT\n  round(100 * used / nullIf(total, 0), 1) AS \"Memory %\"\nFROM (\n  SELECT sumIf(v, state = 'used') AS used, sum(v) AS total\n  FROM (\n    SELECT Attributes['state'] AS state, argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'system.memory.usage' AND $__timeFilter(TimeUnix)\n    GROUP BY state\n  )\n)",
+        "sqlTemplate": "SELECT\n  round(100 * used / nullIf(total, 0), 1) AS \"Memory %\"\nFROM (\n  SELECT\n    argMaxIf(Value, TimeUnix, MetricName = 'system.memory.usage' AND Attributes['state'] = 'used') AS used,\n    argMaxIf(Value, TimeUnix, MetricName = 'system.memory.limit') AS total\n  FROM default.otel_metrics_sum\n  WHERE MetricName IN ('system.memory.usage', 'system.memory.limit') AND $__timeFilter(TimeUnix)\n)",
         "connection": "Local ClickHouse",
         "source": "Metrics",
         "displayType": "number",
@@ -254,7 +254,7 @@
       "config": {
         "name": "Memory utilisation",
         "configType": "sql",
-        "sqlTemplate": "SELECT\n  ts,\n  100 * used / nullIf(total, 0) AS \"Memory %\"\nFROM (\n  SELECT ts, sumIf(v, state = 'used') AS used, sum(v) AS total\n  FROM (\n    SELECT $__timeInterval(TimeUnix) AS ts, Attributes['state'] AS state, argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'system.memory.usage' AND $__timeFilter(TimeUnix)\n    GROUP BY ts, state\n  )\n  GROUP BY ts\n)\nORDER BY ts",
+        "sqlTemplate": "SELECT\n  ts,\n  100 * used / nullIf(total, 0) AS \"Memory %\"\nFROM (\n  SELECT\n    $__timeInterval(TimeUnix) AS ts,\n    argMaxIf(Value, TimeUnix, MetricName = 'system.memory.usage' AND Attributes['state'] = 'used') AS used,\n    argMaxIf(Value, TimeUnix, MetricName = 'system.memory.limit') AS total\n  FROM default.otel_metrics_sum\n  WHERE MetricName IN ('system.memory.usage', 'system.memory.limit') AND $__timeFilter(TimeUnix)\n  GROUP BY ts\n)\nORDER BY ts",
         "connection": "Local ClickHouse",
         "source": "Metrics",
         "displayType": "line",
