@@ -40,7 +40,7 @@ authentik:
   operator:
     enabled: true
     # renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-authentik
-    version: 0.22.0
+    version: 0.22.1
     replicaCount: 1
   sub:
     enabled: true
