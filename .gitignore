@@ -213,3 +213,4 @@ graphify-out/cache/
 .claude/skills/*
 !.claude/skills/graphify/
 .claude/agents/
+graphify-out/cache/

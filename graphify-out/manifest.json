@@ -1,0 +1,1544 @@
+{
+  ".claude/settings.json": {
+    "mtime": 1793282478.444725,
+    "seen": 1793293536.4850917,
+    "ast_hash": "214392d187e9ed9a23b722d42dc46f30",
+    "semantic_hash": ""
+  },
+  ".github/pages/legacy-redirect.js": {
+    "mtime": 1790956725.0411832,
+    "seen": 1793293536.4850974,
+    "ast_hash": "86929d8a3b3c817a658d1f83d6fd6ff1",
+    "semantic_hash": ""
+  },
+  ".github/scripts/assemble-pages.sh": {
+    "mtime": 1790956725.0411832,
+    "seen": 1793293536.4851,
+    "ast_hash": "39aac7669e9d12c300657684dfaa0a0d",
+    "semantic_hash": ""
+  },
+  ".github/scripts/build-legacy-docs.sh": {
+    "mtime": 1790956725.0413144,
+    "seen": 1793293536.485101,
+    "ast_hash": "db7dbdffa2c4503e99e227a37d9e8e95",
+    "semantic_hash": ""
+  },
+  ".github/scripts/inject-archive-banner.mjs": {
+    "mtime": 1790956725.0413144,
+    "seen": 1793293536.4851022,
+    "ast_hash": "e2dd6eb71fe32b21332047079bb9ffd9",
+    "semantic_hash": ""
+  },
+  ".github/scripts/make-404.mjs": {
+    "mtime": 1790956725.0413144,
+    "seen": 1793293536.485103,
+    "ast_hash": "057260e105cfcef1762bdabc1f1097c6",
+    "semantic_hash": ""
+  },
+  ".github/workflows/batlehub-theme.yml": {
+    "mtime": 1793293178.5307176,
+    "seen": 1793293536.4851038,
+    "ast_hash": "e717a3deeb1755f55e3680e2188d948e",
+    "semantic_hash": ""
+  },
+  ".github/workflows/deploy-docs.yml": {
+    "mtime": 1790956725.0413144,
+    "seen": 1793293536.4851043,
+    "ast_hash": "4288f92e2a2b483e469972844d10610b",
+    "semantic_hash": ""
+  },
+  ".github/workflows/renovate.yml": {
+    "mtime": 1790956725.0414982,
+    "seen": 1793293536.485105,
+    "ast_hash": "b9b78f5fc713f0c294febef383bb24e1",
+    "semantic_hash": ""
+  },
+  ".github/workflows/traefik-request-id.yml": {
+    "mtime": 1793282478.4449456,
+    "seen": 1793293536.485106,
+    "ast_hash": "2b8ca9c501692f98833257b15756e046",
+    "semantic_hash": ""
+  },
+  ".vscode/extensions.json": {
+    "mtime": 1790956725.0414982,
+    "seen": 1793293536.4851067,
+    "ast_hash": "c76a013d4eebd2920d94a62897c35ad2",
+    "semantic_hash": ""
+  },
+  ".vscode/settings.json": {
+    "mtime": 1791973166.0527225,
+    "seen": 1793293536.4851077,
+    "ast_hash": "ceb3c29166cbd35bafacce46c30bdb45",
+    "semantic_hash": ""
+  },
+  "0.config/kubeconfig.oidc-template.yaml": {
+    "mtime": 1791040889.319138,
+    "seen": 1793293536.4851084,
+    "ast_hash": "3086004b8ea391460213eacf975e1f9c",
+    "semantic_hash": ""
+  },
+  "0.config/netctx.yaml": {
+    "mtime": 1793282478.4449456,
+    "seen": 1793293536.4851093,
+    "ast_hash": "148bd4f47a735d9bcefff9544b8b848c",
+    "semantic_hash": ""
+  },
+  "0.docs/.oxlintrc.json": {
+    "mtime": 1790956725.0418553,
+    "seen": 1793293536.4851098,
+    "ast_hash": "ff0088581504fe40e0babfe137653beb",
+    "semantic_hash": ""
+  },
+  "0.docs/app/components/mdx.tsx": {
+    "mtime": 1790956725.041981,
+    "seen": 1793293536.4851103,
+    "ast_hash": "31c99f2b3dd835fe9304198a81e7b7c2",
+    "semantic_hash": ""
+  },
+  "0.docs/app/components/mermaid.tsx": {
+    "mtime": 1790956725.0420241,
+    "seen": 1793293536.485111,
+    "ast_hash": "8ceb6abea54a996421a276fb78a9deb9",
+    "semantic_hash": ""
+  },
+  "0.docs/app/components/search.tsx": {
+    "mtime": 1790956725.0420241,
+    "seen": 1793293536.4851117,
+    "ast_hash": "887b84fd0bcf8d70120f3f1ca4709892",
+    "semantic_hash": ""
+  },
+  "0.docs/app/lib/cn.ts": {
+    "mtime": 1790956725.0420241,
+    "seen": 1793293536.4851127,
+    "ast_hash": "186a6fed45ee44cec26103ebb6f51c02",
+    "semantic_hash": ""
+  },
+  "0.docs/app/lib/layout.shared.tsx": {
+    "mtime": 1790956725.0421336,
+    "seen": 1793293536.4851134,
+    "ast_hash": "99d7a6ced46c7ff1d73a06e4128ef3cd",
+    "semantic_hash": ""
+  },
+  "0.docs/app/lib/shared.ts": {
+    "mtime": 1790956725.0421336,
+    "seen": 1793293536.485114,
+    "ast_hash": "09d9f0b9b133ea2a20dbcd45dc938269",
+    "semantic_hash": ""
+  },
+  "0.docs/app/lib/source.ts": {
+    "mtime": 1790956725.0421336,
+    "seen": 1793293536.4851148,
+    "ast_hash": "25566efce9b495451e878a927028edb5",
+    "semantic_hash": ""
+  },
+  "0.docs/app/llms/full.ts": {
+    "mtime": 1790956725.0421336,
+    "seen": 1793293536.485116,
+    "ast_hash": "088fa40c0872d3c99c3b1abb20b0118f",
+    "semantic_hash": ""
+  },
+  "0.docs/app/llms/index.ts": {
+    "mtime": 1790956725.0422697,
+    "seen": 1793293536.4851167,
+    "ast_hash": "7dd78b99663d57bcbb68612616c13541",
+    "semantic_hash": ""
+  },
+  "0.docs/app/llms/mdx.ts": {
+    "mtime": 1790956725.0422697,
+    "seen": 1793293536.4851174,
+    "ast_hash": "bf075f8906b2918d5b51dcd7d878f553",
+    "semantic_hash": ""
+  },
+  "0.docs/app/root.tsx": {
+    "mtime": 1790956725.0422697,
+    "seen": 1793293536.4851182,
+    "ast_hash": "7873c5d29074473830836566765dcb97",
+    "semantic_hash": ""
+  },
+  "0.docs/app/routes.ts": {
+    "mtime": 1790956725.0422697,
+    "seen": 1793293536.4851196,
+    "ast_hash": "709adc893f64e7e5e92b15e3babf5ae2",
+    "semantic_hash": ""
+  },
+  "0.docs/app/routes/docs.tsx": {
+    "mtime": 1790956725.0422697,
+    "seen": 1793293536.4851203,
+    "ast_hash": "f19650b3ab9cc05ad1481cb4fd690d67",
+    "semantic_hash": ""
+  },
+  "0.docs/app/routes/home.tsx": {
+    "mtime": 1790956725.0424492,
+    "seen": 1793293536.4851208,
+    "ast_hash": "358a576430cab5f8746f03fa70bca58f",
+    "semantic_hash": ""
+  },
+  "0.docs/app/routes/not-found.tsx": {
+    "mtime": 1790956725.0424492,
+    "seen": 1793293536.4851215,
+    "ast_hash": "ccdf12147c976650603e558df958824f",
+    "semantic_hash": ""
+  },
+  "0.docs/app/routes/search.ts": {
+    "mtime": 1790956725.0424492,
+    "seen": 1793293536.4851222,
+    "ast_hash": "554d57747560b7e64fa3accec5670d6c",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/Infra/meta.json": {
+    "mtime": 1791973166.0537226,
+    "seen": 1793293536.4851234,
+    "ast_hash": "71e218729b1a63b59d73174d2edcacbe",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/meta.json": {
+    "mtime": 1793282478.4449456,
+    "seen": 1793293536.485124,
+    "ast_hash": "953d059067fc762d4907712dc711ddf6",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/registry/meta.json": {
+    "mtime": 1790956725.0431623,
+    "seen": 1793293536.4851246,
+    "ast_hash": "6e18c9275aba1d45bfb006f47c454166",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/rfc/meta.json": {
+    "mtime": 1793282478.4456964,
+    "seen": 1793293536.4851255,
+    "ast_hash": "67f10c4e358cc0d0b90d71774ad8f12e",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/runbooks/meta.json": {
+    "mtime": 1791219234.2026503,
+    "seen": 1793293536.4851263,
+    "ast_hash": "973eeb19f3a4573b78c92ccb8b294893",
+    "semantic_hash": ""
+  },
+  "0.docs/package.json": {
+    "mtime": 1793282478.4456964,
+    "seen": 1793293536.4851267,
+    "ast_hash": "ebb2ef347014090a8e7882ac11299bee",
+    "semantic_hash": ""
+  },
+  "0.docs/react-router.config.ts": {
+    "mtime": 1790956725.057102,
+    "seen": 1793293536.4851274,
+    "ast_hash": "cf167db72263e2b8e1c95a3f822d65da",
+    "semantic_hash": ""
+  },
+  "0.docs/serve.json": {
+    "mtime": 1790956725.057102,
+    "seen": 1793293536.4851282,
+    "ast_hash": "e4dadb61b7e23f8f92dc4119255432d1",
+    "semantic_hash": ""
+  },
+  "0.docs/source.config.ts": {
+    "mtime": 1790956725.057102,
+    "seen": 1793293536.4851289,
+    "ast_hash": "fd803e56c9276d80ea129d215422919a",
+    "semantic_hash": ""
+  },
+  "0.docs/tsconfig.json": {
+    "mtime": 1790956725.057102,
+    "seen": 1793293536.4851298,
+    "ast_hash": "1dcba3a21217b0a6a539e51bb1b94e25",
+    "semantic_hash": ""
+  },
+  "0.docs/vite.config.ts": {
+    "mtime": 1790956725.057102,
+    "seen": 1793293536.4851303,
+    "ast_hash": "697765e18bedf92789c2609e2758625b",
+    "semantic_hash": ""
+  },
+  "0.task/angos.yaml": {
+    "mtime": 1790956725.0587437,
+    "seen": 1793293536.485131,
+    "ast_hash": "05a2231f4862dc0a1cc902de24e9367c",
+    "semantic_hash": ""
+  },
+  "0.task/argo.yaml": {
+    "mtime": 1790956725.0587437,
+    "seen": 1793293536.4851322,
+    "ast_hash": "0426daafd19d5f5f65d463460e62383c",
+    "semantic_hash": ""
+  },
+  "0.task/s3.yaml": {
+    "mtime": 1790956725.0587437,
+    "seen": 1793293536.4851327,
+    "ast_hash": "1959af272d3885cf37adc39b47279d6e",
+    "semantic_hash": ""
+  },
+  "0.task/vault.yaml": {
+    "mtime": 1791042498.7664149,
+    "seen": 1793293536.4851336,
+    "ast_hash": "e7fe7ffb0d63b392fe915485f8863068",
+    "semantic_hash": ""
+  },
+  "0.task/vpn.yaml": {
+    "mtime": 1790956725.0587437,
+    "seen": 1793293536.4851341,
+    "ast_hash": "d28788041f9f483deee0813379e26f24",
+    "semantic_hash": ""
+  },
+  "1.pulu-conf/Pulumi.dev.yaml": {
+    "mtime": 1793282478.4465864,
+    "seen": 1793293536.4851348,
+    "ast_hash": "f6a1968e4a41717c24517d01aede9f8d",
+    "semantic_hash": ""
+  },
+  "1.pulu-conf/Pulumi.yaml": {
+    "mtime": 1790956725.0589566,
+    "seen": 1793293536.4851353,
+    "ast_hash": "6936b47b8f12557c76400f412b03ec09",
+    "semantic_hash": ""
+  },
+  "1.pulu-conf/Taskfile.yaml": {
+    "mtime": 1790956725.0589566,
+    "seen": 1793293536.4851358,
+    "ast_hash": "07aed287fa452adb84d3017421fda2c6",
+    "semantic_hash": ""
+  },
+  "1.pulu-conf/go.mod": {
+    "mtime": 1793282478.4465864,
+    "seen": 1793293536.4851367,
+    "ast_hash": "8a06eb73f8dfb62b7bef23f4b75ec420",
+    "semantic_hash": ""
+  },
+  "1.pulu-conf/main.go": {
+    "mtime": 1790956725.0591018,
+    "seen": 1793293536.4851372,
+    "ast_hash": "fd60af4f18ecc8060197bb5b19b738a7",
+    "semantic_hash": ""
+  },
+  "1.pulu-init/Pulumi.dev.yaml": {
+    "mtime": 1790956725.0591018,
+    "seen": 1793293536.4851377,
+    "ast_hash": "cdeee2e686213fd3b063b5d25dc41255",
+    "semantic_hash": ""
+  },
+  "1.pulu-init/Pulumi.yaml": {
+    "mtime": 1790956725.059438,
+    "seen": 1793293536.4851384,
+    "ast_hash": "109e7bf06e1e80380904279ca2307a71",
+    "semantic_hash": ""
+  },
+  "1.pulu-init/Taskfile.yaml": {
+    "mtime": 1790956725.059438,
+    "seen": 1793293536.485139,
+    "ast_hash": "dd8dd173719ad2b27bccb399a68ec878",
+    "semantic_hash": ""
+  },
+  "1.pulu-init/cilium-values.yaml": {
+    "mtime": 1793282478.4465864,
+    "seen": 1793293536.4851396,
+    "ast_hash": "d327b5d2e5448b04f57540132d623d3c",
+    "semantic_hash": ""
+  },
+  "1.pulu-init/go.mod": {
+    "mtime": 1793282478.4465864,
+    "seen": 1793293536.4851408,
+    "ast_hash": "7f374fefeebb5401da7ece99a339f9a0",
+    "semantic_hash": ""
+  },
+  "1.pulu-init/main.go": {
+    "mtime": 1793282478.4465864,
+    "seen": 1793293536.4851415,
+    "ast_hash": "62986fb1a61b0d5ae109ce19cc5c2e32",
+    "semantic_hash": ""
+  },
+  "1.pulu-init/secccomp.json": {
+    "mtime": 1790956725.059438,
+    "seen": 1793293536.485142,
+    "ast_hash": "9af35232a05295e47dad5614dc73bcb2",
+    "semantic_hash": ""
+  },
+  "1.pulu-init/seccomp.yaml": {
+    "mtime": 1790956725.059438,
+    "seen": 1793293536.4851425,
+    "ast_hash": "a5bc652ee4f3b4b6769a79e98b9c1ba5",
+    "semantic_hash": ""
+  },
+  "2.argo/app/Chart.yaml": {
+    "mtime": 1790956725.059941,
+    "seen": 1793293536.4851432,
+    "ast_hash": "8fcfee55bf281b1e3b0301ef9597aa96",
+    "semantic_hash": ""
+  },
+  "2.argo/app/templates/auth/weebo_admin.yaml": {
+    "mtime": 1790956725.0600193,
+    "seen": 1793293536.485144,
+    "ast_hash": "694c5a4ed4e438fb13e9fc958c990239",
+    "semantic_hash": ""
+  },
+  "2.argo/app/templates/dns/coredns.yaml": {
+    "mtime": 1790956725.060102,
+    "seen": 1793293536.4851444,
+    "ast_hash": "a294c3ccf1c0b3b53412be106d267879",
+    "semantic_hash": ""
+  },
+  "2.argo/app/values.yaml": {
+    "mtime": 1793282478.4465864,
+    "seen": 1793293536.4851449,
+    "ast_hash": "1a194e16e77c90540ef41b9daff56734",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/angos/Chart.yaml": {
+    "mtime": 1790956725.0606759,
+    "seen": 1793293536.4851456,
+    "ast_hash": "3f222c5319d076f67e635b4195cc69ea",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/angos/values.yaml": {
+    "mtime": 1793282478.4484668,
+    "seen": 1793293536.4851463,
+    "ast_hash": "7ff9b7aae9c4ea3626a3d7160ea21964",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/auth/main/Chart.yaml": {
+    "mtime": 1790956725.0616586,
+    "seen": 1793293536.4851468,
+    "ast_hash": "f0abc432adb565a7b3fceb231d9ab4c1",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/auth/main/values.yaml": {
+    "mtime": 1793293171.6127176,
+    "seen": 1793293536.4851475,
+    "ast_hash": "6077cac4fd6f8fac9acbfb0b88fbaa24",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/auth/sub/Chart.yaml": {
+    "mtime": 1790956725.0621893,
+    "seen": 1793293536.4851482,
+    "ast_hash": "1880b91ca7568f35c955a0bfa2b579da",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/auth/sub/files/brand/brand.yaml": {
+    "mtime": 1793293534.0796697,
+    "seen": 1793293536.4851487,
+    "ast_hash": "7b491c16c9ed4e41117505fcf81fe562",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/auth/sub/values.yaml": {
+    "mtime": 1793293533.8471148,
+    "seen": 1793293536.4851494,
+    "ast_hash": "1b18fff5bf297d50224daecb77174b49",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/batlehub/Chart.yaml": {
+    "mtime": 1790956725.0628343,
+    "seen": 1793293536.48515,
+    "ast_hash": "5cf17c640e499e9244219c0deb152bee",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/batlehub/values.yaml": {
+    "mtime": 1793282478.4485865,
+    "seen": 1793293536.4851508,
+    "ast_hash": "c8aab75f055d5f13402a9068198a164d",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/endpoint-gateway/Chart.yaml": {
+    "mtime": 1791196041.1222599,
+    "seen": 1793293536.4851515,
+    "ast_hash": "73a98292a35ce27743eb09c4ee0b60c5",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/endpoint-gateway/values.yaml": {
+    "mtime": 1791196097.942505,
+    "seen": 1793293536.485152,
+    "ast_hash": "f3ce492b72b08be6fff1f7ab1823848f",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/hardening/Chart.yaml": {
+    "mtime": 1791188398.2664526,
+    "seen": 1793293536.4851527,
+    "ast_hash": "f2e7c42ca51ac6442755672980ddec59",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/hardening/values.yaml": {
+    "mtime": 1793282478.4485865,
+    "seen": 1793293536.4851532,
+    "ast_hash": "09e82f9d5346842e294705df9f9e8f26",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/main/Chart.yaml": {
+    "mtime": 1790956725.063463,
+    "seen": 1793293536.4851542,
+    "ast_hash": "6ba82d61e77e465c04e0a06bc51738f1",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/main/values.yaml": {
+    "mtime": 1793282478.4485865,
+    "seen": 1793293536.4851549,
+    "ast_hash": "845795d12110fe270b8691004c0e908d",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/operator/kustomization.yaml": {
+    "mtime": 1790958602.0755827,
+    "seen": 1793293536.4851553,
+    "ast_hash": "d05bc8c112d9c0e12b8839a8befaf805",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/sub-bis/Chart.yaml": {
+    "mtime": 1790956725.0636702,
+    "seen": 1793293536.4851558,
+    "ast_hash": "9f06e5ee9897d609e5f1817216724f5c",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/sub-bis/editors/che-code-angos.yaml": {
+    "mtime": 1791232809.1240578,
+    "seen": 1793293536.4851565,
+    "ast_hash": "cb756ee62a971034d885084e61331427",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/sub-bis/editors/che-code-fast-weebo.yaml": {
+    "mtime": 1791973166.0547225,
+    "seen": 1793293536.485157,
+    "ast_hash": "199e925d78638497a77dab5fa4770cd7",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/sub-bis/editors/che-code-insiders-weebo.yaml": {
+    "mtime": 1791232809.1241958,
+    "seen": 1793293536.4851577,
+    "ast_hash": "2436aaec8adab7264a614bb193caa2c6",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/sub-bis/values.yaml": {
+    "mtime": 1790956725.0671017,
+    "seen": 1793293536.4851584,
+    "ast_hash": "70b872caea183ae96bd3abdd6eb45ce4",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/sub/Chart.yaml": {
+    "mtime": 1790956725.0677884,
+    "seen": 1793293536.485159,
+    "ast_hash": "2832019cc0af43285c2d118b8bc4e8de",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/sub/values.yaml": {
+    "mtime": 1793282478.4485865,
+    "seen": 1793293536.4851599,
+    "ast_hash": "b192a318527520418212a1b4bcca33e3",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/database/main/Chart.yaml": {
+    "mtime": 1790956725.0680516,
+    "seen": 1793293536.4851604,
+    "ast_hash": "c91b603e1c650916a9bcbc0fb5eda219",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/database/main/values.yaml": {
+    "mtime": 1793282478.4485865,
+    "seen": 1793293536.4851613,
+    "ast_hash": "389e79e36d80f6a833348742134d6625",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/database/sub/Chart.yaml": {
+    "mtime": 1790956725.0684543,
+    "seen": 1793293536.4851618,
+    "ast_hash": "2832019cc0af43285c2d118b8bc4e8de",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/database/sub/values.yaml": {
+    "mtime": 1793282478.4485865,
+    "seen": 1793293536.4851623,
+    "ast_hash": "4b7f732e3650700c17e433de192529a6",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/forgejo/Chart.yaml": {
+    "mtime": 1791974430.9368644,
+    "seen": 1793293536.485163,
+    "ast_hash": "2717bff2b08cddfae100752acbb80f5a",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/forgejo/files/theme/theme.yaml": {
+    "mtime": 1793293534.0737774,
+    "seen": 1793293536.4851635,
+    "ast_hash": "2cbfb33d6b41595bb9e872e313f9e909",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/forgejo/values.yaml": {
+    "mtime": 1793292930.432804,
+    "seen": 1793293536.485164,
+    "ast_hash": "3330e4d32fedd40afdd882d92825d575",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/hook/main/Chart.yaml": {
+    "mtime": 1790956725.0689163,
+    "seen": 1793293536.4851649,
+    "ast_hash": "4eea8c1abe7a5019c6b4ef9769c3c82d",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/hook/main/values.yaml": {
+    "mtime": 1793282478.4505866,
+    "seen": 1793293536.4851654,
+    "ast_hash": "d536d4004cb106c4e7daa07a205a3e21",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/hook/sub/Chart.yaml": {
+    "mtime": 1790956725.0691035,
+    "seen": 1793293536.485166,
+    "ast_hash": "2832019cc0af43285c2d118b8bc4e8de",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/hook/sub/values.yaml": {
+    "mtime": 1790956725.0691776,
+    "seen": 1793293536.4851668,
+    "ast_hash": "cab5a21db013626b73abb02941b51222",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/main/Chart.yaml": {
+    "mtime": 1790956725.0693793,
+    "seen": 1793293536.485168,
+    "ast_hash": "6ba82d61e77e465c04e0a06bc51738f1",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/main/files/requestid/.traefik.yml": {
+    "mtime": 1793282478.452056,
+    "seen": 1793293536.48517,
+    "ast_hash": "5e840b63a733d36dbb9b1ff679b03ee5",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/main/files/requestid/e2e.sh": {
+    "mtime": 1793282478.4520905,
+    "seen": 1793293536.4851708,
+    "ast_hash": "1a70c53e1084ee8abe2b6f1bfc435786",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/main/files/requestid/go.mod": {
+    "mtime": 1793282478.4520905,
+    "seen": 1793293536.4851718,
+    "ast_hash": "6fb23de1eb12b5af77b27fd5ba3792c0",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/main/files/requestid/requestid.go": {
+    "mtime": 1793282478.4520905,
+    "seen": 1793293536.4851727,
+    "ast_hash": "f2841c1342eade157ec7e1914e803f8f",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/main/files/requestid/requestid_test.go": {
+    "mtime": 1793282478.4520905,
+    "seen": 1793293536.4851735,
+    "ast_hash": "8e797bdc16217a537b7e5bf59f3b9138",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/main/values.yaml": {
+    "mtime": 1793282478.4520905,
+    "seen": 1793293536.4851744,
+    "ast_hash": "b1de5acd9303dd94e71e288510c72fdb",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/sub/Chart.yaml": {
+    "mtime": 1790956725.0696602,
+    "seen": 1793293536.4851756,
+    "ast_hash": "2832019cc0af43285c2d118b8bc4e8de",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/sub/templates/bundle/bundle.yaml": {
+    "mtime": 1790956725.0696917,
+    "seen": 1793293536.4851763,
+    "ast_hash": "04895401469898de8228ff0b43c7eab1",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/sub/templates/bundle/store.yaml": {
+    "mtime": 1790956725.0697381,
+    "seen": 1793293536.4851773,
+    "ast_hash": "be958a1736e63304c0f4485b90e85e7b",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/sub/templates/clusterIssuer/rbac.yaml": {
+    "mtime": 1790956725.0699184,
+    "seen": 1793293536.4851785,
+    "ast_hash": "e77e70bae1e05494a2c005f000dd56cb",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/sub/templates/clusterIssuer/vault-issuer.yaml": {
+    "mtime": 1790956725.0699184,
+    "seen": 1793293536.4851818,
+    "ast_hash": "31678b732799a9d31cfa00d2a94df910",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/sub/values.yaml": {
+    "mtime": 1793292930.4332037,
+    "seen": 1793293536.4851828,
+    "ast_hash": "6e598eb8d6dbb156550b6aaf97faeb63",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/mail/Chart.yaml": {
+    "mtime": 1793282478.4528785,
+    "seen": 1793293536.4851837,
+    "ast_hash": "bff52de124be99740b7515d985011b74",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/mail/files/app-password-key-permissions.json": {
+    "mtime": 1793282478.4528785,
+    "seen": 1793293536.4851844,
+    "ast_hash": "d340de933747346fae750b4ccee1b98b",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/mail/files/operator-api-key-permissions.json": {
+    "mtime": 1793282478.452914,
+    "seen": 1793293536.4851856,
+    "ast_hash": "404146b88b2c67233a88445317910ae3",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/mail/values.yaml": {
+    "mtime": 1793282478.4532282,
+    "seen": 1793293536.4851863,
+    "ast_hash": "58cec9b616a029a8599dca06f8f78357",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/Chart.yaml": {
+    "mtime": 1790956725.070255,
+    "seen": 1793293536.4851873,
+    "ast_hash": "57133ac6defc2c2326aa17649cf5dab0",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/app-health.json": {
+    "mtime": 1790956725.070451,
+    "seen": 1793293536.4851882,
+    "ast_hash": "7167e5d00e890f50395de4cfab84fcdb",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/argocd.json": {
+    "mtime": 1790956725.070451,
+    "seen": 1793293536.4851892,
+    "ast_hash": "d484add7380c7648da59a7b54d473aeb",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/consumers.json": {
+    "mtime": 1790956725.070451,
+    "seen": 1793293536.4851902,
+    "ast_hash": "1fbfd65dfbd2e118f2ab5773704e2e16",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/control-plane.json": {
+    "mtime": 1793282478.4532282,
+    "seen": 1793293536.4851909,
+    "ast_hash": "b4c20439e773a95683701c8e86f31bde",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/dependencies.json": {
+    "mtime": 1790956725.070451,
+    "seen": 1793293536.4851918,
+    "ast_hash": "011a1d321aff880ca185bcbe9eedb0e1",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/egress.json": {
+    "mtime": 1790956725.070451,
+    "seen": 1793293536.4851928,
+    "ast_hash": "09f14c0bd8eac706a6e3d53a61b73795",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/hardening.json": {
+    "mtime": 1791229017.350352,
+    "seen": 1793293536.4851935,
+    "ast_hash": "d76af32c6904a1d0f0856faf5a870066",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/network.json": {
+    "mtime": 1790956725.070451,
+    "seen": 1793293536.4851942,
+    "ast_hash": "79906819fd11625b80f2b8e9e570edd9",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/node-health.json": {
+    "mtime": 1790956725.070451,
+    "seen": 1793293536.4851952,
+    "ast_hash": "bf9c1e4d2da61e897e83250a23ef6a1c",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/node.json": {
+    "mtime": 1790956725.070451,
+    "seen": 1793293536.485196,
+    "ast_hash": "f111e2e40faa7ac58a99dd9ec17bed1c",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/probes.json": {
+    "mtime": 1792265733.2873123,
+    "seen": 1793293536.4851968,
+    "ast_hash": "a87a4c56f85cf5b7dcd90f55fea9a908",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/rustfs.json": {
+    "mtime": 1790956725.070451,
+    "seen": 1793293536.4851975,
+    "ast_hash": "5210f598e33b60863328f4d5b2338d4a",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/storage.json": {
+    "mtime": 1790956725.070451,
+    "seen": 1793293536.4851983,
+    "ast_hash": "b18b2ccc1841dfba55d5ec44febcfc86",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/files/clickstack-dashboards.py": {
+    "mtime": 1790956725.0711017,
+    "seen": 1793293536.4851992,
+    "ast_hash": "1e539940df197fed1b7255594a305dab",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/values.yaml": {
+    "mtime": 1793282478.4532282,
+    "seen": 1793293536.4852,
+    "ast_hash": "eefd497cfbc756444c590b316dcc2ee7",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/storage/Chart.yaml": {
+    "mtime": 1790956725.0721972,
+    "seen": 1793293536.4852006,
+    "ast_hash": "f9e711513e7671ca19e1ffaafd4a56ab",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/storage/values.yaml": {
+    "mtime": 1793282478.4532282,
+    "seen": 1793293536.4852014,
+    "ast_hash": "2294c05b9779389ca634951fdd9f28c6",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/vault/main/Chart.yaml": {
+    "mtime": 1790956725.07278,
+    "seen": 1793293536.4852026,
+    "ast_hash": "6ba82d61e77e465c04e0a06bc51738f1",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/vault/main/templates/hook/hook-ns.yaml": {
+    "mtime": 1790956725.0728137,
+    "seen": 1793293536.4852033,
+    "ast_hash": "56c104cc65f131dd145465c5236cb9e4",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/vault/main/values.yaml": {
+    "mtime": 1793282478.4532282,
+    "seen": 1793293536.4852042,
+    "ast_hash": "5ea7fb7998235c18cd75c0918ebc71b5",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/vault/sub/Chart.yaml": {
+    "mtime": 1790956725.0731347,
+    "seen": 1793293536.485205,
+    "ast_hash": "2832019cc0af43285c2d118b8bc4e8de",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/vault/sub/templates/sa/auth_crb.yaml": {
+    "mtime": 1790956725.0731652,
+    "seen": 1793293536.4852057,
+    "ast_hash": "5ba4b07e38540d40e7e0cd2dbfcabd7b",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/vault/sub/templates/sa/leader_election_r.yaml": {
+    "mtime": 1790956725.0732105,
+    "seen": 1793293536.4852066,
+    "ast_hash": "230bcc079b0eca7a51ed06d0375a26aa",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/vault/sub/templates/sa/leader_election_rb.yaml": {
+    "mtime": 1790956725.0732105,
+    "seen": 1793293536.4852073,
+    "ast_hash": "a8c269cfea5c06010510ba59648f232a",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/vault/sub/templates/sa/sa.yaml": {
+    "mtime": 1790956725.0732105,
+    "seen": 1793293536.485208,
+    "ast_hash": "31a7c148b1d793cc8cadd220d9abc87f",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/vault/sub/templates/sa/vault_r.yaml": {
+    "mtime": 1790956725.0732105,
+    "seen": 1793293536.4852087,
+    "ast_hash": "5855aaf92384077c26bc4b139f93a1f8",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/vault/sub/templates/sa/vault_rb.yaml": {
+    "mtime": 1790956725.0732105,
+    "seen": 1793293536.4852097,
+    "ast_hash": "d2d65d90d623643b91f6671cbf108694",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/vault/sub/values.yaml": {
+    "mtime": 1793282478.4532282,
+    "seen": 1793293536.4852104,
+    "ast_hash": "ed06ac36b6da4a27cc83716665f7120a",
+    "semantic_hash": ""
+  },
+  "2.helm/clickstack/Chart.yaml": {
+    "mtime": 1793282478.4532282,
+    "seen": 1793293536.485211,
+    "ast_hash": "cc049ff113818d7995b9411322dba503",
+    "semantic_hash": ""
+  },
+  "2.helm/clickstack/charts/opentelemetry-collector/Chart.yaml": {
+    "mtime": 1790956725.073835,
+    "seen": 1793293536.4852116,
+    "ast_hash": "cd86d8b53f8530fcafeeef99cdbc41de",
+    "semantic_hash": ""
+  },
+  "2.helm/clickstack/charts/opentelemetry-collector/values.schema.json": {
+    "mtime": 1790956725.0741024,
+    "seen": 1793293536.485212,
+    "ast_hash": "8d81df0ab451ef654efa54956f93e1d3",
+    "semantic_hash": ""
+  },
+  "2.helm/clickstack/charts/opentelemetry-collector/values.yaml": {
+    "mtime": 1790956725.0741024,
+    "seen": 1793293536.485213,
+    "ast_hash": "56a67ccbd2f38d943ba68e0be849ad76",
+    "semantic_hash": ""
+  },
+  "2.helm/clickstack/values.yaml": {
+    "mtime": 1793282478.4535866,
+    "seen": 1793293536.4852135,
+    "ast_hash": "4a36e0dd5488fe7306277bd0be47c974",
+    "semantic_hash": ""
+  },
+  "2.helm/netbird-exit-node/Chart.yaml": {
+    "mtime": 1790956725.0756867,
+    "seen": 1793293536.4852142,
+    "ast_hash": "371610e1bc89ba89123d094f8d95615e",
+    "semantic_hash": ""
+  },
+  "2.helm/netbird-exit-node/values.yaml": {
+    "mtime": 1793282478.4535866,
+    "seen": 1793293536.4852147,
+    "ast_hash": "c0b125b0de5b86e5762c8799f50a802c",
+    "semantic_hash": ""
+  },
+  "2.helm/rustfs/Chart.yaml": {
+    "mtime": 1790956725.0758452,
+    "seen": 1793293536.4852152,
+    "ast_hash": "0b55a667c06d7c1fe662cff525300f3c",
+    "semantic_hash": ""
+  },
+  "2.helm/rustfs/values.yaml": {
+    "mtime": 1790956725.0762923,
+    "seen": 1793293536.485216,
+    "ast_hash": "2db46ab27a4f563f18bcd5dcc8498ce5",
+    "semantic_hash": ""
+  },
+  "2.helm/user-app/Chart.yaml": {
+    "mtime": 1791191166.5418167,
+    "seen": 1793293536.4852166,
+    "ast_hash": "c202457e593d65af89c4371f2dd8d3ed",
+    "semantic_hash": ""
+  },
+  "2.helm/user-app/values.yaml": {
+    "mtime": 1793282478.4535866,
+    "seen": 1793293536.485217,
+    "ast_hash": "354dbe8ac0403423d89d5191fd1462ab",
+    "semantic_hash": ""
+  },
+  "2.terra/auth/job.yaml": {
+    "mtime": 1793282478.4535866,
+    "seen": 1793293536.4852178,
+    "ast_hash": "eb2c98eb094895699e1fc6ddeff7244a",
+    "semantic_hash": ""
+  },
+  "2.terra/auth/kustomization.yaml": {
+    "mtime": 1790956725.0769615,
+    "seen": 1793293536.4852183,
+    "ast_hash": "28b4c7a35a54d451571f9443fb2d6947",
+    "semantic_hash": ""
+  },
+  "2.terra/auth/volume.yaml": {
+    "mtime": 1790956725.0770242,
+    "seen": 1793293536.4852188,
+    "ast_hash": "24a78389f8c6b60570d59bd418fa4ccc",
+    "semantic_hash": ""
+  },
+  "2.terra/vault/job.yaml": {
+    "mtime": 1793282478.4535866,
+    "seen": 1793293536.4852195,
+    "ast_hash": "2aaede42db005f1eedf298626a755fda",
+    "semantic_hash": ""
+  },
+  "2.terra/vault/kustomization.yaml": {
+    "mtime": 1793282478.4535866,
+    "seen": 1793293536.4852202,
+    "ast_hash": "cb049d09c94929c6d543b27be65eb60d",
+    "semantic_hash": ""
+  },
+  "2.terra/vault/volume.yaml": {
+    "mtime": 1790956725.0773368,
+    "seen": 1793293536.485221,
+    "ast_hash": "9c72ef3a890d4ac87b169456ec2e2bb1",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/.impeccable/config.json": {
+    "mtime": 1793282478.4535866,
+    "seen": 1793293536.4852214,
+    "ast_hash": "b41677283e660ddfcef58ebb43d1b1f3",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/package.json": {
+    "mtime": 1793292930.4349084,
+    "seen": 1793293536.485222,
+    "ast_hash": "316b39ef5e160e3db6dd69c0f49a63f6",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/src/authentik.mjs": {
+    "mtime": 1793293119.935061,
+    "seen": 1793293536.4852226,
+    "ast_hash": "b1d94f4984f6b2ced60bfdc0df3d6cfa",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/src/build.mjs": {
+    "mtime": 1793293086.9724154,
+    "seen": 1793293536.4852235,
+    "ast_hash": "6772b0e0dc32095884a5263c4b346e5d",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/src/color.mjs": {
+    "mtime": 1791973244.0693376,
+    "seen": 1793293536.485224,
+    "ast_hash": "7c4191988a5ba2a048b6ee609cb09cc9",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/src/errors.mjs": {
+    "mtime": 1793282478.4535866,
+    "seen": 1793293536.4852247,
+    "ast_hash": "ace84671a4195492359bb023afaa3d1e",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/src/home.mjs": {
+    "mtime": 1791973244.069549,
+    "seen": 1793293536.4852252,
+    "ast_hash": "8fadac662577a75fd3add975b57addf0",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/src/scenes.mjs": {
+    "mtime": 1793282478.4535866,
+    "seen": 1793293536.485226,
+    "ast_hash": "e2a1b6436e08442ad4ce64bf1654702c",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/src/variables.mjs": {
+    "mtime": 1791973244.0700428,
+    "seen": 1793293536.4852269,
+    "ast_hash": "1542237862f30a9153a2a20e30111c65",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/test/authentik.test.mjs": {
+    "mtime": 1793293195.0988894,
+    "seen": 1793293536.4852273,
+    "ast_hash": "b1ca0681a87b4bec365ebf1b9aacbe5a",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/test/color.test.mjs": {
+    "mtime": 1791973244.0728922,
+    "seen": 1793293536.4852285,
+    "ast_hash": "f8956880f61680a98ebfacd3624505af",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/test/errors.test.mjs": {
+    "mtime": 1793282478.4535866,
+    "seen": 1793293536.4852293,
+    "ast_hash": "2167fc7013a5c66cf081dc2a25d98e4b",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/theme.config.mjs": {
+    "mtime": 1793293074.2121596,
+    "seen": 1793293536.4852297,
+    "ast_hash": "19b58e83c2fea457b8c9de9a9600665f",
+    "semantic_hash": ""
+  },
+  "Taskfile.yml": {
+    "mtime": 1790956725.0773368,
+    "seen": 1793293536.4852304,
+    "ast_hash": "c245e1065be8650366f569e876082c81",
+    "semantic_hash": ""
+  },
+  "devfile.yaml": {
+    "mtime": 1790956725.0773368,
+    "seen": 1793293536.4852312,
+    "ast_hash": "31781af1021945ce727c189791d385a7",
+    "semantic_hash": ""
+  },
+  ".claude/CLAUDE.md": {
+    "mtime": 1793282478.4435863,
+    "seen": 1793293536.4852319,
+    "ast_hash": "9b31786b637be3c13978bec4c2330752",
+    "semantic_hash": ""
+  },
+  "0.docs/README.md": {
+    "mtime": 1790956725.0418553,
+    "seen": 1793293536.4852324,
+    "ast_hash": "97036412d943dd18f805cb70c8051a27",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/Infra/argo.mdx": {
+    "mtime": 1791973166.0537226,
+    "seen": 1793293536.485233,
+    "ast_hash": "d3b5d89a553bfebaaced03cfbcb99d86",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/Infra/authentik.mdx": {
+    "mtime": 1791973166.0537226,
+    "seen": 1793293536.4852335,
+    "ast_hash": "139df7829f102cbdc2c36802d3979ce5",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/Infra/cert-manager.mdx": {
+    "mtime": 1791973166.0537226,
+    "seen": 1793293536.4852345,
+    "ast_hash": "549efdffa754be7faf35c2f9dcc62069",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/Infra/cilium.mdx": {
+    "mtime": 1791973166.0537226,
+    "seen": 1793293536.485235,
+    "ast_hash": "2cfc0b75ec68bb071d532a9ea677a969",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/Infra/dex.mdx": {
+    "mtime": 1791973166.0537226,
+    "seen": 1793293536.4852357,
+    "ast_hash": "da5e92b268239bf181d48a9aa0c1320c",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/Infra/index.mdx": {
+    "mtime": 1791973166.0537226,
+    "seen": 1793293536.4852362,
+    "ast_hash": "6a8dc95980c6f72f5e55519b094eeb94",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/Infra/kyverno.mdx": {
+    "mtime": 1791973166.0537226,
+    "seen": 1793293536.485237,
+    "ast_hash": "872cfe4e889200cb1e7067682fd99a92",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/Infra/longhorn.mdx": {
+    "mtime": 1791973166.0537226,
+    "seen": 1793293536.4852376,
+    "ast_hash": "087c0f12169e4a917d16563bfcf30c94",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/Infra/openbao.mdx": {
+    "mtime": 1791973166.0537226,
+    "seen": 1793293536.485238,
+    "ast_hash": "f555950e2f25f82bbf3b2c3325c485ae",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/Infra/proxyauthk8s.mdx": {
+    "mtime": 1791973166.0537226,
+    "seen": 1793293536.4852388,
+    "ast_hash": "6d73bbf1b94de8199ae823abca9c7edb",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/Infra/talos.mdx": {
+    "mtime": 1791973166.0537226,
+    "seen": 1793293536.4852393,
+    "ast_hash": "33f0bf2ecf95a314e493c87c50712d91",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/Infra/traefik.mdx": {
+    "mtime": 1791973166.0537226,
+    "seen": 1793293536.4852397,
+    "ast_hash": "e9546868caf37ac3af000bd8bcbabaaf",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/archi/auth.mdx": {
+    "mtime": 1790956725.0425658,
+    "seen": 1793293536.4852405,
+    "ast_hash": "58879437b90af470950a9238465963f6",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/archi/index.mdx": {
+    "mtime": 1790956725.0427656,
+    "seen": 1793293536.4852412,
+    "ast_hash": "b2b498ccfec0797934ef927d906178b8",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/archi/infra.mdx": {
+    "mtime": 1790956725.0427656,
+    "seen": 1793293536.485242,
+    "ast_hash": "e556d6c0c0124cc3f61a7d5b21686bca",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/database/index.mdx": {
+    "mtime": 1790956725.0427656,
+    "seen": 1793293536.4852424,
+    "ast_hash": "d7c2b4cfd56ebdd7a40c9517c697e823",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/dev-env/index.mdx": {
+    "mtime": 1790956725.0427656,
+    "seen": 1793293536.4852428,
+    "ast_hash": "6b2f9059e5affc0dba8c0a31e3759da9",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/index.mdx": {
+    "mtime": 1790956725.0427656,
+    "seen": 1793293536.4852433,
+    "ast_hash": "b11f226bfe9987f10915babceb33bbd7",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/left-todo.md": {
+    "mtime": 1793282478.4449456,
+    "seen": 1793293536.4852443,
+    "ast_hash": "2f9b1aaadc23033508f4dde5a25fb40f",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/monitoring/index.mdx": {
+    "mtime": 1790956725.0427656,
+    "seen": 1793293536.4852448,
+    "ast_hash": "f0ffaf9d499620def201bf501c577d13",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/registry/angos.mdx": {
+    "mtime": 1790956725.0427656,
+    "seen": 1793293536.4852452,
+    "ast_hash": "9dd34ea059d762f95bab0cb878e159d0",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/registry/batlehub.mdx": {
+    "mtime": 1790956725.0431623,
+    "seen": 1793293536.485246,
+    "ast_hash": "0f962be358273c6195129dc533c7dc1c",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/registry/index.mdx": {
+    "mtime": 1790956725.0431623,
+    "seen": 1793293536.4852464,
+    "ast_hash": "eb6fbbd27ce7a1bd1332e21edcd1eaa1",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/rfc/0001-stalwart.md": {
+    "mtime": 1793282478.4449456,
+    "seen": 1793293536.4852471,
+    "ast_hash": "a036f68ac8e71b03c6ea3a72cc07f2c1",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/rfc/0002-liaison.md": {
+    "mtime": 1793282478.4456964,
+    "seen": 1793293536.4852479,
+    "ast_hash": "10f47da686a95493831ff3eb52ea9877",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/rfc/0003-authentik-ecritures.md": {
+    "mtime": 1793282478.4456964,
+    "seen": 1793293536.4852483,
+    "ast_hash": "292a4c691b64cf0203b993817a3e379e",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/rfc/0005-proxyauthk8s-agent-weebo-si.md": {
+    "mtime": 1793282478.4456964,
+    "seen": 1793293536.485249,
+    "ast_hash": "3f6769fb5ebe59969d62d449595b5a89",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/rfc/0006-ingress-public-interne.md": {
+    "mtime": 1793282478.4456964,
+    "seen": 1793293536.4852495,
+    "ast_hash": "1eabcbef772b839043351f4fda855fe2",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/rfc/index.mdx": {
+    "mtime": 1793282478.4456964,
+    "seen": 1793293536.48525,
+    "ast_hash": "0a64f11250b1690baffabe4387f366e7",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/runbooks/index.mdx": {
+    "mtime": 1791219234.2036502,
+    "seen": 1793293536.4852507,
+    "ast_hash": "c5106e2565eb87d23fcf65fc475c1431",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/runbooks/upgrade-talos-cilium.mdx": {
+    "mtime": 1793282478.4456964,
+    "seen": 1793293536.4852514,
+    "ast_hash": "5222976727bdfcfeebfafebfc741e313",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/security/index.mdx": {
+    "mtime": 1790956725.0431623,
+    "seen": 1793293536.485252,
+    "ast_hash": "b0271151e627537fd92af42ce2f38247",
+    "semantic_hash": ""
+  },
+  "0.docs/content/todo/angos.md": {
+    "mtime": 1790956725.0431623,
+    "seen": 1793293536.4852526,
+    "ast_hash": "9b2cb06ddf19a1d2d309da94f7c6aae2",
+    "semantic_hash": ""
+  },
+  "0.docs/content/todo/ide.md": {
+    "mtime": 1791973166.0537226,
+    "seen": 1793293536.485253,
+    "ast_hash": "bf7744003a915f59372f710fe16f94fe",
+    "semantic_hash": ""
+  },
+  "0.task/Readme.md": {
+    "mtime": 1790956725.058102,
+    "seen": 1793293536.4852536,
+    "ast_hash": "e0c6a2eff8b13b23b9c8c6d6e303c6fe",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/che/sub-bis/editors/README.md": {
+    "mtime": 1791973166.0547225,
+    "seen": 1793293536.4852543,
+    "ast_hash": "7601c555da82a082db51cc60e3da7e70",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/sub/files/error-pages/errors-external.html": {
+    "mtime": 1793293534.0737774,
+    "seen": 1793293536.485255,
+    "ast_hash": "f12588862468c99dd2a563d1b3847c16",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/ingress/sub/files/error-pages/errors-internal.html": {
+    "mtime": 1793293534.0737774,
+    "seen": 1793293536.4852555,
+    "ast_hash": "ef420cb3d28fcd41cc79199233da4463",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/README.md": {
+    "mtime": 1793282478.4532282,
+    "seen": 1793293536.485256,
+    "ast_hash": "1819b0180f9d8d492d3a3e28522a930a",
+    "semantic_hash": ""
+  },
+  "2.helm/clickstack/charts/opentelemetry-collector/CONTRIBUTING.md": {
+    "mtime": 1790956725.073835,
+    "seen": 1793293536.4852567,
+    "ast_hash": "3490d0639fa0a0aed0dab19e06903a89",
+    "semantic_hash": ""
+  },
+  "2.helm/clickstack/charts/opentelemetry-collector/README.md": {
+    "mtime": 1790956725.073835,
+    "seen": 1793293536.4852571,
+    "ast_hash": "1e7f488377072b3a8b77d6bcd5b6e542",
+    "semantic_hash": ""
+  },
+  "2.helm/clickstack/charts/opentelemetry-collector/UPGRADING.md": {
+    "mtime": 1790956725.073835,
+    "seen": 1793293536.4852576,
+    "ast_hash": "fece34b359f73711dfa87a0507308c5d",
+    "semantic_hash": ""
+  },
+  "2.helm/clickstack/charts/opentelemetry-collector/templates/NOTES.txt": {
+    "mtime": 1790956725.073835,
+    "seen": 1793293536.4852586,
+    "ast_hash": "1bd101d924a1021bddb31c6bac752fed",
+    "semantic_hash": ""
+  },
+  "2.helm/clickstack/templates/NOTES.txt": {
+    "mtime": 1793282478.4532282,
+    "seen": 1793293536.485259,
+    "ast_hash": "191aee4bb607a51d492a00ac222f8633",
+    "semantic_hash": ""
+  },
+  "2.helm/rustfs/templates/NOTES.txt": {
+    "mtime": 1790956725.0758452,
+    "seen": 1793293536.4852595,
+    "ast_hash": "e2e01d49ec66920c7f547d811ff2b475",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/README.md": {
+    "mtime": 1793293195.0965664,
+    "seen": 1793293536.4852602,
+    "ast_hash": "a01aa384a1accd6fb8f79f7b9f523aa9",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1793282478.4535866,
+    "seen": 1793293536.4852607,
+    "ast_hash": "2528711400751c6376fcd20fb5b6c59f",
+    "semantic_hash": ""
+  },
+  "CONTRIBUTING.md": {
+    "mtime": 1790956725.0773368,
+    "seen": 1793293536.4852617,
+    "ast_hash": "3eb504972f43ac3e9b308e53f7a70ceb",
+    "semantic_hash": ""
+  },
+  "Readme.md": {
+    "mtime": 1790956725.0773368,
+    "seen": 1793293536.4852622,
+    "ast_hash": "5c7901855af12f4b4fb21aa611314501",
+    "semantic_hash": ""
+  },
+  "0.docs/public/banner.png": {
+    "mtime": 1790956725.0501022,
+    "seen": 1793293536.4852626,
+    "ast_hash": "dfb6047c3edd7d9365ca08559a2cf2a6",
+    "semantic_hash": ""
+  },
+  "0.docs/public/logo-mark.png": {
+    "mtime": 1790956725.0511022,
+    "seen": 1793293536.485263,
+    "ast_hash": "3a5d23f2ab87a1ef20bc2e8c73014502",
+    "semantic_hash": ""
+  },
+  "0.docs/public/logo-wide.png": {
+    "mtime": 1790956725.053102,
+    "seen": 1793293536.4852638,
+    "ast_hash": "a544828416d5ab2aa81fbaf8c0f2e60a",
+    "semantic_hash": ""
+  },
+  "0.docs/public/logo.png": {
+    "mtime": 1790956725.057102,
+    "seen": 1793293536.4852643,
+    "ast_hash": "6649575725c7a40b8ba19abbaee084e3",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/auth/main/files/theme/background-dark.svg": {
+    "mtime": 1793293534.0778804,
+    "seen": 1793293536.4852648,
+    "ast_hash": "5b728d9926b83a54d066db02254263d2",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/auth/main/files/theme/background-light.svg": {
+    "mtime": 1793293534.0783608,
+    "seen": 1793293536.4852657,
+    "ast_hash": "372e8dcb9903eb5c277fe63216186efd",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/auth/main/files/theme/favicon.svg": {
+    "mtime": 1793293534.077739,
+    "seen": 1793293536.4852662,
+    "ast_hash": "11498cd78fb3edbd2a5e69ef5ba05748",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/auth/main/files/theme/logo-dark.svg": {
+    "mtime": 1793293534.0776074,
+    "seen": 1793293536.4852667,
+    "ast_hash": "9d00ecaa8ce3611127db91efb96a6864",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/auth/main/files/theme/logo-light.svg": {
+    "mtime": 1793293534.0774171,
+    "seen": 1793293536.4852674,
+    "ast_hash": "b9fd3962f6dacee499e48852cad09bdd",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/forgejo/files/theme/public/assets/img/apple-touch-icon.png": {
+    "mtime": 1793293534.0721722,
+    "seen": 1793293536.4852679,
+    "ast_hash": "c92511583a9f7cc5f84f72bc45d18c58",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/forgejo/files/theme/public/assets/img/batlehub/halftone-plate.png": {
+    "mtime": 1793293534.073056,
+    "seen": 1793293536.4852688,
+    "ast_hash": "5cfc551d75f3e28432027a891d140cbd",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/forgejo/files/theme/public/assets/img/batlehub/logo-cream.svg": {
+    "mtime": 1793293534.0731595,
+    "seen": 1793293536.4852693,
+    "ast_hash": "9d00ecaa8ce3611127db91efb96a6864",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/forgejo/files/theme/public/assets/img/batlehub/logo-ink.svg": {
+    "mtime": 1793293534.0732903,
+    "seen": 1793293536.4852698,
+    "ast_hash": "b9fd3962f6dacee499e48852cad09bdd",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/forgejo/files/theme/public/assets/img/favicon.png": {
+    "mtime": 1793293534.0722775,
+    "seen": 1793293536.4852705,
+    "ast_hash": "45229a7c0f34f1ce1d2c02ae823642df",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/forgejo/files/theme/public/assets/img/favicon.svg": {
+    "mtime": 1793293534.0723658,
+    "seen": 1793293536.485271,
+    "ast_hash": "11498cd78fb3edbd2a5e69ef5ba05748",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/forgejo/files/theme/public/assets/img/logo.png": {
+    "mtime": 1793293534.0725431,
+    "seen": 1793293536.4852715,
+    "ast_hash": "a38620364cd91b12dd5e2f0702928885",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/forgejo/files/theme/public/assets/img/logo.svg": {
+    "mtime": 1793293534.072736,
+    "seen": 1793293536.4852722,
+    "ast_hash": "16b0b0e740c6c2b215c1a81d8b1292f3",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/assets/img/apple-touch-icon.png": {
+    "mtime": 1791973244.0501387,
+    "seen": 1793293536.485273,
+    "ast_hash": "c92511583a9f7cc5f84f72bc45d18c58",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/assets/img/favicon.png": {
+    "mtime": 1791973244.0503337,
+    "seen": 1793293536.4852734,
+    "ast_hash": "45229a7c0f34f1ce1d2c02ae823642df",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/assets/img/favicon.svg": {
+    "mtime": 1791973244.0512025,
+    "seen": 1793293536.4852738,
+    "ast_hash": "11498cd78fb3edbd2a5e69ef5ba05748",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/assets/img/logo.png": {
+    "mtime": 1791973244.0514252,
+    "seen": 1793293536.4852746,
+    "ast_hash": "a38620364cd91b12dd5e2f0702928885",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/assets/img/logo.svg": {
+    "mtime": 1791973244.0515594,
+    "seen": 1793293536.485275,
+    "ast_hash": "16b0b0e740c6c2b215c1a81d8b1292f3",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/assets/img/theme/halftone-plate.png": {
+    "mtime": 1791973244.0518656,
+    "seen": 1793293536.4852757,
+    "ast_hash": "5cfc551d75f3e28432027a891d140cbd",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/assets/img/theme/logo-cream.svg": {
+    "mtime": 1791973244.0520587,
+    "seen": 1793293536.4852765,
+    "ast_hash": "9d00ecaa8ce3611127db91efb96a6864",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/assets/img/theme/logo-ink.svg": {
+    "mtime": 1791973244.0521705,
+    "seen": 1793293536.485277,
+    "ast_hash": "b9fd3962f6dacee499e48852cad09bdd",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/docs/preview-dark.png": {
+    "mtime": 1791973244.063303,
+    "seen": 1793293536.4852777,
+    "ast_hash": "239ca11b67a0791400fac65a4f870d2a",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/docs/preview-light.png": {
+    "mtime": 1791973244.0634484,
+    "seen": 1793293536.4852781,
+    "ast_hash": "77c59a05193579df24d550999b4322eb",
+    "semantic_hash": ""
+  },
+  "logo.png": {
+    "mtime": 1790956725.0831013,
+    "seen": 1793293536.485279,
+    "ast_hash": "8094d43fcd2f0d4dde96adddf81f1a32",
+    "semantic_hash": ""
+  },
+  "0.docs/yarn.lock": {
+    "mtime": 1793282478.4465864,
+    "seen": 1793293536.4852796,
+    "ast_hash": "57657b3f771bb0fbd7b4ddf12dd06648",
+    "semantic_hash": ""
+  },
+  "yarn.lock": {
+    "mtime": 1790956725.0831013,
+    "seen": 1793293536.48528,
+    "ast_hash": "7dc1bfa5b675b0cbdf7f851227bf80f4",
+    "semantic_hash": ""
+  }
+}
