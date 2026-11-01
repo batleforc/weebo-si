@@ -1,17 +1,17 @@
 # Graph Report - weebo-si  (2026-11-01)
 
 ## Corpus Check
-- 518 files · ~234,875 words
+- 518 files · ~235,066 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 84 file(s) not represented in the graph (top: (none) 32, .tpl 16, .woff2 12)
 
 ## Summary
-- 5017 nodes · 5364 edges · 503 communities (466 shown, 37 thin omitted)
+- 5016 nodes · 5363 edges · 500 communities (463 shown, 37 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 21 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5c41e0c6`
+- Built from commit: `256359b5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -78,7 +78,7 @@
 - labels
 - token
 - env
-- foundation
+- weebo
 - operator
 - forgejo
 - Namespace vault-infra
@@ -129,7 +129,7 @@
 - foundation
 - oauth2
 - items
-- networkProfiles
+- matchLabels
 - che-code-fast-weebo.yaml
 - oidc
 - storage/values.yaml
@@ -144,7 +144,7 @@
 - vault
 - weebo-npmrc
 - imagePolicy
-- weebo
+- features
 - gateway
 - hardening
 - mirrors
@@ -172,7 +172,7 @@
 - authentik
 - oidc
 - clientSecret
-- features
+- networkProfiles
 - operator/kustomization.yaml
 - che-code-angos.yaml
 - attributes
@@ -199,7 +199,7 @@
 - weeboEmail
 - requests
 - key
-- che
+- foundation
 - angos/values.yaml
 - postgres
 - .traefik.yml
@@ -311,7 +311,7 @@
 - argo
 - auth-ingress
 - kubeAuth
-- features
+- builtin
 - caBundle
 - attributes
 - applications
@@ -394,7 +394,7 @@
 - hook
 - ingress
 - mail
-- default-authenticator-webauthn-setup
+- token
 - vpn
 - attributes
 - House editors
@@ -424,10 +424,10 @@
 - kubernetes-ovh-go
 - weebo.poc/requestid
 - default-provider-authorization-explicit-consent
-- default-provider-authorization-implicit-consent
+- default-authenticator-webauthn-setup
 - upstream
 - default-source-authentication
-- eclipse-che-ingress
+- default-provider-authorization-implicit-consent
 - default-user-settings-flow
 - react-router.config.ts
 - vault
@@ -474,13 +474,13 @@
 - che-web-terminal.yaml
 - endpoints
 - metadata
-- builtin
+- default-provider-invalidation-flow
 - forgejo
 - monitoring-ingress
 - adminMode
 - weebo-base/Chart.yaml
 - ingress.mdx
-- token
+- images
 - ciliumNetworkPolicies
 - caSecret
 - annotations
@@ -488,12 +488,10 @@
 - monitoring.mdx
 - kubectl
 - ingress
-- default-provider-invalidation-flow
 - default-source-enrollment
 - auth
 - extraEnvsFrom
 - volumeClaimTemplates
-- workspaceImages
 - fluentd
 - network-flows/angos.mdx
 - network-flows/batlehub.mdx
@@ -507,7 +505,6 @@
 - docs:netflow
 - ui
 - ghcr
-- intercept
 
 ## God Nodes (most connected - your core abstractions)
 1. `deployment` - 28 edges
@@ -536,7 +533,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (503 total, 37 thin omitted)
+## Communities (500 total, 37 thin omitted)
 
 ### Community 0 - "Upgrade guidelines"
 Cohesion: 0.04
@@ -564,7 +561,7 @@ Nodes (41): 10.1 Observabilité, 10.2 Modes de défaillance, 10.3 Performances e
 
 ### Community 6 - "che"
 Cohesion: 0.13
-Nodes (15): che, cheApp, cluster, devfileRegistryURL, enabled, images, ingress, namespace (+7 more)
+Nodes (15): che, cheApp, cluster, devfileRegistryURL, enabled, ingress, namespace, openVSXURL (+7 more)
 
 ### Community 7 - "ingress/main/values.yaml"
 Cohesion: 0.05
@@ -611,8 +608,8 @@ Cohesion: 0.07
 Nodes (32): cmds, dir, env, KUBECONFIG, PULUMI_BACKEND_URL, PULUMI_CONFIG_PASSPHRASE, VAULT_ADDR, VAULT_CACERT (+24 more)
 
 ### Community 18 - "source"
-Cohesion: 0.11
-Nodes (19): extraAddons, level, che, mode, source, values, access, externalConfig (+11 more)
+Cohesion: 0.06
+Nodes (37): extraAddons, level, prune, selfHeal, active, che, email, team (+29 more)
 
 ### Community 19 - "RoleBinding vault-issuer"
 Cohesion: 0.07
@@ -768,7 +765,7 @@ Nodes (16): dependencies, fumadocs-ui@16.17.7, isbot@^5.1.40, mermaid@^11.15.0, 
 
 ### Community 57 - "kubearmorPolicy"
 Cohesion: 0.12
-Nodes (17): templateRef, kubearmorPolicy, baseline, catalog, default, enabled, mode, onNotGranted (+9 more)
+Nodes (17): kubearmorPolicy, workspaceSelection, baseline, default, enabled, mode, onNotGranted, templates (+9 more)
 
 ### Community 58 - "custom"
 Cohesion: 0.20
@@ -786,9 +783,9 @@ Nodes (15): sh, CLIENT_ID, CLIENT_SECRET, ISSUER, cmds, desc, silent, tasks (+7 
 Cohesion: 0.12
 Nodes (15): cmds, dir, env, ARGO_DNS, GIT_BRANCH, GIT_REPO, KUBECONFIG, PULUMI_BACKEND_URL (+7 more)
 
-### Community 62 - "foundation"
-Cohesion: 0.18
-Nodes (11): foundation, enabled, namespacePolicy, secretStore, url, allowedNamespaces, enabled, enabled (+3 more)
+### Community 62 - "weebo"
+Cohesion: 0.25
+Nodes (8): allowedGroupRefs, groupRefs, authentik, weebo, displayName, features, identity, priority
 
 ### Community 63 - "operator"
 Cohesion: 0.12
@@ -855,8 +852,8 @@ Cohesion: 0.15
 Nodes (15): chart, name, repoURL, version, group, name, prefix, registry (+7 more)
 
 ### Community 79 - "batlehub"
-Cohesion: 0.13
-Nodes (15): batlehub, caTrust, dns, enabled, replicaCount, subdomainRouting, trustedProxies, writableConfig (+7 more)
+Cohesion: 0.12
+Nodes (16): batlehub, caTrust, dns, enabled, intercept, replicaCount, subdomainRouting, trustedProxies (+8 more)
 
 ### Community 80 - "container"
 Cohesion: 0.20
@@ -990,9 +987,9 @@ Nodes (12): matchingMode, url, accessTokenValidity, allowedRedirectUris, authori
 Cohesion: 0.18
 Nodes (12): email_verified, items, attributes, crName, email, groupRefs, isActive, isSuperuser (+4 more)
 
-### Community 113 - "networkProfiles"
-Cohesion: 0.13
-Nodes (16): namespaceSelector, networkProfiles, hardening.weebo.io/workspace-namespace, weebo.io/team, matchLabels, baseline, default, enabled (+8 more)
+### Community 113 - "matchLabels"
+Cohesion: 0.18
+Nodes (11): namespaceSelector, policyGuard, hardening.weebo.io/workspace-namespace, weebo.io/team, matchLabels, namespaceSelector, allowedIdentities, enabled (+3 more)
 
 ### Community 114 - "che-code-fast-weebo.yaml"
 Cohesion: 0.29
@@ -1047,12 +1044,12 @@ Cohesion: 0.18
 Nodes (11): controller.devfile.io/mount-as, controller.devfile.io/mount-path, .npmrc, controller.devfile.io/mount-to-devworkspace, templates, weebo-npmrc, annotations, apiVersion (+3 more)
 
 ### Community 127 - "imagePolicy"
-Cohesion: 0.15
-Nodes (13): imagePolicy, default, enabled, mode, onNotGranted, platform, variables, workspaceSelection (+5 more)
+Cohesion: 0.22
+Nodes (9): imagePolicy, default, enabled, mode, onNotGranted, platform, variables, builtin (+1 more)
 
-### Community 128 - "weebo"
-Cohesion: 0.18
-Nodes (11): allowedGroupRefs, groupRefs, allowedProjects, allowedRepoUrls, applicationNamespace, identity, authentik, che (+3 more)
+### Community 128 - "features"
+Cohesion: 0.14
+Nodes (13): branch, allowedProjects, allowedRepoUrls, applicationNamespace, config, features, identity, che (+5 more)
 
 ### Community 129 - "gateway"
 Cohesion: 0.18
@@ -1162,9 +1159,9 @@ Nodes (9): oidc, enabled, name, roleClaim, roleMappings, scopes, userIdClaim, we
 Cohesion: 0.22
 Nodes (8): clientSecret, key, name, vaultKey, vaultProperty, sessionKeys, key, name
 
-### Community 156 - "features"
-Cohesion: 0.18
-Nodes (10): active, email, team, username, branch, operator, repo, teams (+2 more)
+### Community 156 - "networkProfiles"
+Cohesion: 0.25
+Nodes (8): variants, networkProfiles, baseline, catalog, default, enabled, mode, onNotGranted
 
 ### Community 157 - "operator/kustomization.yaml"
 Cohesion: 0.22
@@ -1267,12 +1264,12 @@ Cohesion: 0.25
 Nodes (8): resources, ephemeral-storage, memory, cpu, ephemeral-storage, memory, limits, requests
 
 ### Community 182 - "key"
-Cohesion: 0.18
-Nodes (11): anonymous, delegation, ecosystem, key, patterns, sources, variants, catalog (+3 more)
+Cohesion: 0.15
+Nodes (13): anonymous, delegation, ecosystem, key, patterns, sources, templateRef, catalog (+5 more)
 
-### Community 183 - "che"
-Cohesion: 0.17
-Nodes (12): prune, selfHeal, destination, name, project, syncPolicy, namespace, server (+4 more)
+### Community 183 - "foundation"
+Cohesion: 0.18
+Nodes (11): foundation, enabled, namespacePolicy, secretStore, url, allowedNamespaces, enabled, enabled (+3 more)
 
 ### Community 184 - "angos/values.yaml"
 Cohesion: 0.33
@@ -1718,9 +1715,9 @@ Nodes (15): endpointSelector, ingress, namespace, reaches, ciliumNetworkPolicies
 Cohesion: 0.40
 Nodes (5): kubeAuth, audience, enabled, roleMappings, system:serviceaccounts
 
-### Community 295 - "features"
-Cohesion: 0.29
-Nodes (7): config, features, policyGuard, allowedIdentities, enabled, mode, namespaceSelector
+### Community 295 - "builtin"
+Cohesion: 0.33
+Nodes (6): theme, builtin, enabled, css, enabled, flows
 
 ### Community 296 - "caBundle"
 Cohesion: 0.40
@@ -1859,8 +1856,8 @@ Cohesion: 0.40
 Nodes (5): metadata, description, displayName, name, tags
 
 ### Community 330 - "workspaceTrust"
-Cohesion: 0.50
-Nodes (4): workspaceTrust, bundle, enabled, env
+Cohesion: 0.33
+Nodes (6): workspaceTrust, MISE_URL_REPLACEMENTS, bundle, enabled, env, extraEnv
 
 ### Community 331 - "network-flows/index.mdx"
 Cohesion: 0.29
@@ -1915,8 +1912,8 @@ Cohesion: 0.50
 Nodes (4): githubToken, enabled, property, vaultKey
 
 ### Community 344 - "eclipse-che-ingress"
-Cohesion: 0.50
-Nodes (4): endpointSelector, namespace, reaches, eclipse-che-ingress
+Cohesion: 0.29
+Nodes (8): endpointSelector, ingress, namespace, reaches, fromEndpoints, toPorts, eclipse-che-ingress, ingress
 
 ### Community 345 - "container"
 Cohesion: 0.20
@@ -1931,8 +1928,8 @@ Cohesion: 0.50
 Nodes (3): defaultTheme, name, themes
 
 ### Community 348 - "che/sub/values.yaml"
-Cohesion: 0.50
-Nodes (3): branch, project, repo
+Cohesion: 0.18
+Nodes (10): branch, ciliumNetworkPolicies, enabled, policies, endpointSelector, ingress, namespace, devworkspace-controller-ingress (+2 more)
 
 ### Community 350 - "image"
 Cohesion: 0.67
@@ -2026,9 +2023,9 @@ Nodes (3): ingress, enabled, project
 Cohesion: 0.67
 Nodes (3): mail, enabled, project
 
-### Community 378 - "default-authenticator-webauthn-setup"
-Cohesion: 0.50
-Nodes (4): default-authenticator-webauthn-setup, authentication, designation, name
+### Community 378 - "token"
+Cohesion: 0.40
+Nodes (5): token, refreshInterval, secretName, vaultKey, vaultProperty
 
 ### Community 379 - "vpn"
 Cohesion: 0.67
@@ -2070,9 +2067,9 @@ Nodes (4): Flux, Flux ouverts par d'autres applications, Légende, Politiques
 Cohesion: 0.50
 Nodes (4): default-provider-authorization-explicit-consent, authentication, designation, name
 
-### Community 419 - "default-provider-authorization-implicit-consent"
+### Community 419 - "default-authenticator-webauthn-setup"
 Cohesion: 0.50
-Nodes (4): default-provider-authorization-implicit-consent, authentication, designation, name
+Nodes (4): default-authenticator-webauthn-setup, authentication, designation, name
 
 ### Community 420 - "upstream"
 Cohesion: 0.25
@@ -2082,9 +2079,9 @@ Nodes (8): editors, custom, default, upstream, hide, hideAll, known, show
 Cohesion: 0.50
 Nodes (4): default-source-authentication, authentication, designation, name
 
-### Community 422 - "eclipse-che-ingress"
-Cohesion: 0.29
-Nodes (8): endpointSelector, ingress, namespace, ingress, fromEndpoints, toPorts, devworkspace-controller-ingress, ingress
+### Community 422 - "default-provider-authorization-implicit-consent"
+Cohesion: 0.50
+Nodes (4): default-provider-authorization-implicit-consent, authentication, designation, name
 
 ### Community 423 - "default-user-settings-flow"
 Cohesion: 0.50
@@ -2266,9 +2263,9 @@ Nodes (5): endpoints, exposure, name, protocol, targetPort
 Cohesion: 0.40
 Nodes (5): metadata, description, displayName, name, tags
 
-### Community 469 - "builtin"
-Cohesion: 0.33
-Nodes (6): theme, builtin, enabled, css, enabled, flows
+### Community 469 - "default-provider-invalidation-flow"
+Cohesion: 0.50
+Nodes (4): default-provider-invalidation-flow, authentication, designation, name
 
 ### Community 470 - "forgejo"
 Cohesion: 0.33
@@ -2290,13 +2287,13 @@ Nodes (5): apiVersion, description, name, type, version
 Cohesion: 0.40
 Nodes (4): Flux, Flux ouverts par d'autres applications, Légende, Politiques
 
-### Community 475 - "token"
-Cohesion: 0.40
-Nodes (5): token, refreshInterval, secretName, vaultKey, vaultProperty
+### Community 475 - "images"
+Cohesion: 0.67
+Nodes (3): images, dashboard, server
 
 ### Community 476 - "ciliumNetworkPolicies"
-Cohesion: 0.18
-Nodes (12): ciliumNetworkPolicies, enabled, policies, reaches, matchLabels, app.kubernetes.io/name, weebo-si-operator-ingress, endpointSelector (+4 more)
+Cohesion: 0.22
+Nodes (9): reaches, matchLabels, app.kubernetes.io/name, weebo-si-operator-ingress, endpointSelector, hosts, namespace, endpointSelector (+1 more)
 
 ### Community 477 - "caSecret"
 Cohesion: 0.40
@@ -2322,10 +2319,6 @@ Nodes (5): aliases, cmds, desc, silent, kubectl
 Cohesion: 0.40
 Nodes (5): ingress, additionalIngresses, annotations, enabled, spec
 
-### Community 483 - "default-provider-invalidation-flow"
-Cohesion: 0.50
-Nodes (4): default-provider-invalidation-flow, authentication, designation, name
-
 ### Community 484 - "default-source-enrollment"
 Cohesion: 0.50
 Nodes (4): default-source-enrollment, authentication, designation, name
@@ -2341,10 +2334,6 @@ Nodes (5): name, configMapRef, secretRef, extraEnvsFrom, name
 ### Community 487 - "volumeClaimTemplates"
 Cohesion: 0.40
 Nodes (5): statefulSet, volumeClaimTemplates, spec, metadata, spec
-
-### Community 488 - "workspaceImages"
-Cohesion: 0.67
-Nodes (3): workspaceImages, gateway, projectClone
 
 ### Community 489 - "fluentd"
 Cohesion: 0.40
@@ -2398,29 +2387,25 @@ Nodes (4): ui, enabled, nativeAuth, scope
 Cohesion: 0.50
 Nodes (4): access, scan, upstreams, ghcr
 
-### Community 502 - "intercept"
-Cohesion: 0.50
-Nodes (4): intercept, host, prefix, registry
-
 ## Knowledge Gaps
 - **3 isolated node(s):** `0.pulumi-conf`, `kubernetes-ovh-go`, `weebo.poc/requestid`
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3261 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3260 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **37 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `fumadocs-core` connect `source.ts` to `docs.tsx`, `0.docs/package.json`, `react-router.config.ts`, `root.tsx`?**
+- **Why does `hyperdx` connect `hyperdx` to `ingress`, `dashboards`, `ports`, `clickstack/values.yaml`, `config`, `requests`, `service`, `secrets`, `deployment`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **What connects `0.pulumi-conf`, `kubernetes-ovh-go`, `weebo.poc/requestid` to the rest of the system?**
   _3 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Upgrade guidelines` be split into smaller, more focused modules?**
   _Cohesion score 0.04081632653061224 - nodes in this community are weakly interconnected._
-- **Why does `angos` connect `angos` to `image`, `scanner`, `credentialProvider`, `maintenance`, `repositories`, `ui`, `angos/values.yaml`, `oauth2Proxy`, `caTrust`?**
+- **Why does `fumadocs-core` connect `source.ts` to `docs.tsx`, `0.docs/package.json`, `react-router.config.ts`, `root.tsx`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **Should `rustfs` be split into smaller, more focused modules?**
   _Cohesion score 0.044444444444444446 - nodes in this community are weakly interconnected._
-- **Why does `hyperdx` connect `hyperdx` to `ingress`, `dashboards`, `ports`, `clickstack/values.yaml`, `config`, `requests`, `service`, `secrets`, `deployment`?**
+- **Why does `angos` connect `angos` to `image`, `scanner`, `credentialProvider`, `maintenance`, `repositories`, `ui`, `angos/values.yaml`, `oauth2Proxy`, `caTrust`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **Should `env` be split into smaller, more focused modules?**
   _Cohesion score 0.045454545454545456 - nodes in this community are weakly interconnected._

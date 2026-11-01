@@ -80,9 +80,10 @@ che:
   # registry.devfile.io proxy on its own host (registry-library asks for the
   # OCI layers at the host root). Empty: Che's default, registry.devfile.io.
   devfileRegistryURL: https://devfile.pkg.weebo.poc/
-  # The internal CA in every workspace container (templates/workspace-trust.yaml):
-  # each variable below points at `bundle`, the public roots plus weebo.poc's,
-  # which che-operator mounts there (ca-certs-merged).
+  # Environment of every workspace container (templates/workspace-trust.yaml).
+  # `env`: the internal CA -- each variable points at `bundle`, the public roots
+  # plus weebo.poc's, which che-operator mounts there (ca-certs-merged).
+  # `extraEnv`: other variables, with their own value.
   workspaceTrust:
     enabled: true
     bundle: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
@@ -92,6 +93,19 @@ che:
       - GIT_SSL_CAINFO       # git over HTTPS
       - REQUESTS_CA_BUNDLE   # Python requests, pip
       - NODE_EXTRA_CA_CERTS  # Node.js, npm
+    extraEnv:
+      # mise's HTTP client rewrites every URL through these rules before
+      # sending, its hardcoded mise-versions.jdx.dev included, so its version
+      # lists come from batlehub (2.argo/helm/batlehub/values.yaml, the
+      # mise-versions registry) on the public pkg.weebo.poc name. A plain key
+      # matches anywhere in the URL; the first rule that changes it wins. The
+      # three `generic` dist mirrors go here too, once mise's go/helm/kubectl
+      # downloads are moved over:
+      #   "https://dl.google.com/go/": "https://pkg.weebo.poc/proxy/go-dist/generic/"
+      #   "https://get.helm.sh/":      "https://pkg.weebo.poc/proxy/helm-dist/generic/"
+      #   "https://dl.k8s.io/":        "https://pkg.weebo.poc/proxy/k8s-dist/generic/"
+      MISE_URL_REPLACEMENTS: >-
+        {"https://mise-versions.jdx.dev/": "https://pkg.weebo.poc/proxy/mise-versions/generic/"}
   # OIDC client the Che gateway authenticates against. Only the client secret
   # is sensitive: it stays in mv/eclipse-che/auth and reaches the CheCluster by
   # Secret name (see templates/oauth-secret.yaml). The client id and secret

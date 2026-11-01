@@ -1,14 +1,15 @@
 {{- if .Values.che.workspaceTrust.enabled -}}
 ---
-# The internal CA, trusted by default in every workspace container.
+# The internal CA, trusted by default in every workspace container, and the
+# other variables every workspace starts with (workspaceTrust.extraEnv).
 #
 # che-operator already mounts ca-certs-merged in every container of every
 # workspace, init containers included (DevWorkspace Operator mounts automount
 # resources and their env together, so one never comes without the other): the
 # public roots plus weebo.poc's, at the RHEL path below. Ubuntu-based images
 # never read that path; these variables point the usual tools at it, so
-# *.weebo.poc and the names the cluster intercepts (batlehub's `intercept`)
-# verify without any setup in the image. che-operator copies a ConfigMap with
+# *.weebo.poc (and any name batlehub's `intercept` answers for) verify without
+# any setup in the image. che-operator copies a ConfigMap with
 # these labels into each user namespace, and DevWorkspace Operator turns its
 # keys into env vars (mount-as: env).
 apiVersion: v1
@@ -26,5 +27,8 @@ metadata:
 data:
   {{- range .Values.che.workspaceTrust.env }}
   {{ . }}: {{ $.Values.che.workspaceTrust.bundle | quote }}
+  {{- end }}
+  {{- range $k, $v := .Values.che.workspaceTrust.extraEnv }}
+  {{ $k }}: {{ $v | quote }}
   {{- end }}
 {{- end -}}

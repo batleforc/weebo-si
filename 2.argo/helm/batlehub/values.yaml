@@ -449,15 +449,20 @@ batlehub:
         - https://dl.k8s.io
       path_allow: ["**"]
       rbac: *readRbac
-    # mise's version lists (mise-versions.jdx.dev), served to workspaces on
-    # that very name: see `intercept` below. The upstream is the other name
-    # the same Cloudflare Worker answers on (jdx/mise-versions, wrangler.jsonc),
-    # which CoreDNS leaves alone -- with mise-versions.jdx.dev itself, batlehub
-    # would resolve it to Traefik and fetch from itself.
+    # mise's version lists and public GitHub release metadata
+    # (mise-versions.jdx.dev). mise has no setting naming another host, but
+    # every request it sends -- this one included -- goes through its HTTP
+    # client, which applies `[settings.url_replacements]` first
+    # (crates/mise-util/src/http.rs, apply_url_replacements). A workspace is
+    # pointed here with one rule, no DNS trick and no internal CA:
+    #   "https://mise-versions.jdx.dev/" = "https://pkg.weebo.poc/proxy/mise-versions/generic/"
+    # or MISE_URL_REPLACEMENTS as the same JSON object. The install-tracking
+    # ping (/t) follows the rule too: set use_versions_host_track = false
+    # beside it, or let batlehub relay it.
     - type: generic
       name: mise-versions
       upstreams:
-        - https://mise-tools.jdx.dev
+        - https://mise-versions.jdx.dev
       path_allow: ["**"]
       rbac: *readRbac
     # Che's Get Started samples (registry.devfile.io, RFC 0035). Its own host,
@@ -469,19 +474,20 @@ batlehub:
       rbac: *readRbac
 
   # Public hosts batlehub answers for in place of their origin, each served by
-  # one registry above at its root. CoreDNS sends `host` to Traefik
-  # (2.argo/app/templates/dns/coredns.yaml); templates/batlehub/intercept.yaml
+  # one registry above at its root. For a client that cannot be told another
+  # URL: CoreDNS sends `host` to Traefik (2.argo/app/templates/dns/coredns.yaml,
+  # one `rewrite name exact` per host); templates/batlehub/intercept.yaml
   # gives it a certificate from vault-intercept-issuer (the internal CA, which
-  # only Che workspaces trust) and a route that hands the request to
-  # `registry` as if it had come in on <registry>.<dns>, under `prefix`: the
-  # route that registry type answers on there (a `generic` one serves
-  # /generic/<path>, not the bare path the client asks for). Both lists move
-  # together: a host here without its CoreDNS rewrite is never reached, and a
-  # rewrite without its host here is a TLS error for every pod that asks.
-  intercept:
-    - host: mise-versions.jdx.dev
-      registry: mise-versions
-      prefix: /generic
+  # only Che workspaces trust; the weebo-intercept PKI role in
+  # 2.terra/vault/terra-map/pki.tf must allow the name) and a route that hands
+  # the request to `registry` as if it had come in on <registry>.<dns>, under
+  # `prefix`: the route that registry type answers on there (a `generic` one
+  # serves /generic/<path>, not the bare path the client asks for). Both lists
+  # move together: a host here without its CoreDNS rewrite is never reached,
+  # and a rewrite without its host here is a TLS error for every pod that asks.
+  # Empty since mise-versions.jdx.dev left it: mise takes the proxy URL through
+  # url_replacements (see the mise-versions registry), as go/helm/kubectl will.
+  intercept: []
 
   # A GitHub token for the `github` registry's upstream requests (5000 an hour
   # instead of 60), as `[registries.upstream_auth]`. Off until the token is in
