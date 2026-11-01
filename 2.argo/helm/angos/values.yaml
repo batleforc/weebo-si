@@ -579,3 +579,84 @@ operator:
     prune:
       suspend: false
       dryRun: false
+
+# CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
+# documents the format). Ingress only, like openbao-ingress: egress stays open.
+# Every policy also lets `host` in (kubelet probes, apiserver -> webhooks).
+#
+# Sources come from a Hubble capture (2026-10-31, every flow replayed through
+# `kubectl cilium-policy-gen`) plus the IngressRoutes and the repo for what a
+# capture window misses. Before turning one on, check its namespace again:
+#   hubble observe --to-namespace <ns> --last 5000 -o compact
+# then watch for policy drops right after:
+#   hubble observe --to-namespace <ns> --verdict DROPPED -f
+ciliumNetworkPolicies:
+  enabled: false
+  policies:
+    angos-ingress:
+      namespace: angos
+      endpointSelector: {}
+      ingress:
+        # registry <-> valkey, and the precache CronJob.
+        - fromEndpoints:
+            - {}
+        # registry.pkg.weebo.poc. Every in-cluster client (kubelet pulls
+        # included, through extraHostEntries) comes in through Traefik.
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: traefik
+                app.kubernetes.io/name: traefik
+          toPorts:
+            - ports:
+                - port: "8000"
+                  protocol: TCP
+        # The operator talking to the registry it manages.
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: weebo-angos
+          toPorts:
+            - ports:
+                - port: "8000"
+                  protocol: TCP
+    # Operator: its webhook (8443) is only called by the apiserver, i.e. host.
+    weebo-angos-ingress:
+      namespace: weebo-angos
+      endpointSelector: {}
+      ingress:
+        - fromEndpoints:
+            - {}
+    # The credential-provider installer DaemonSet serves nothing.
+    angos-node-ingress:
+      namespace: angos-node
+      endpointSelector: {}
+    # angos-egress is computed in templates/weebo-base.yaml from
+    # angos.repositories: DNS, the namespace (valkey), Traefik (s3-main and
+    # auth.weebo.poc), the apiserver (kubeOidc JWKS) and, on 443, each
+    # upstream with its companions below. `angos-egress: {enabled: false}`
+    # here turns it off on its own.
+
+# Hosts an upstream redirects blob downloads to: a pull through
+# registry-1.docker.io that may only reach registry-1.docker.io gets its
+# manifests and then fails on every layer. A `*` makes it a matchPattern.
+# The Red Hat entries are a guess: confirm with
+#   hubble observe -n angos --verdict DROPPED --type l7 -f
+# right after enabling, and narrow them.
+networkEgress:
+  # What the registry opens through Traefik besides angos.s3Url (added by the
+  # template): the `weebo` OIDC issuer. Drawn by `task docs:netflow`, not
+  # enforced -- the policy itself only allows Traefik:8443.
+  reaches:
+    - auth.weebo.poc
+  companions:
+    registry-1.docker.io:
+      - auth.docker.io
+      - production.cloudflare.docker.com
+    ghcr.io:
+      - pkg-containers.githubusercontent.com
+    quay.io:
+      - "*.quay.io"
+    gcr.io:
+      - storage.googleapis.com
+    registry.access.redhat.com:
+      - "*.redhat.com"
+      - "*.redhat.io"

@@ -65,3 +65,19 @@ rustfsCaTrust:
   # 2.argo/helm/database/sub/templates/s3/tenant-s3.yaml. The file lands at
   # <mountPath>/<bundleKey>.
   mountPath: /etc/rustfs/ca
+
+# CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
+# documents the format). Ingress only, egress stays open; `host` is always let
+# in (kubelet probes, apiserver -> webhooks). Same sources and checks as in
+# 2.argo/helm/angos/values.yaml. Values passed down by the main chart override
+# these, ciliumNetworkPolicies.enabled included.
+ciliumNetworkPolicies:
+  enabled: false
+  policies:
+    # Kyverno: the admission webhook is only called by the apiserver.
+    hook-ingress:
+      namespace: hook
+      endpointSelector: {}
+      ingress:
+        - fromEndpoints:
+            - {}

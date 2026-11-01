@@ -44,6 +44,10 @@ tasks:
     dir: 0.docs
     cmds:
       - npm run dev
+  docs:netflow:
+    desc: "Redraw the network-policy flows (Mermaid) into 0.docs/content/docs/security/network-flows"
+    cmds:
+      - python3 -I 0.task/scripts/netflow.py
   docs:legacy:run:
     desc: "Run the archived VitePress doc (saisons 1 & 2) from its git tag, in a throwaway worktree"
     cmds:

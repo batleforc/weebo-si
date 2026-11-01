@@ -22,6 +22,14 @@ cog verify --file $1
 script = """#!/bin/sh
 set -e
 gitleaks git --pre-commit --redact --staged --verbose
+# Network-flow diagrams (0.docs/content/docs/security/network-flows), drawn
+# from the rendered network policies. Only when a chart or the generator is
+# part of the commit; the result is added to the same commit. It renders the
+# working tree, not the index: partially staged chart edits are drawn whole.
+if git diff --cached --name-only | grep -qE '^(2\\.argo/|2\\.helm/|0\\.task/scripts/netflow\\.py)'; then
+  task docs:netflow
+  git add 0.docs/content/docs/security/network-flows
+fi
 """
 
 [commit_types]

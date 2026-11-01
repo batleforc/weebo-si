@@ -335,6 +335,15 @@ batlehub:
   # group, admins bypass it. `overwrite` is still subject to `immutable`, which
   # defaults to `never` -- a published version can be replaced until a
   # namespace block says otherwise.
+  #
+  # `rules` is the release age gate: a version published upstream less than an
+  # hour ago is refused (403) to everyone but admins, so a package hijacked and
+  # republished has an hour to be yanked before a workspace can pull it. The
+  # gate only judges a version the upstream dates; it is silent on a request
+  # that carries no timestamp. Four kinds here never carry one -- the `generic`
+  # trees and `devfile` (its lastModified is the whole registry's rebuild time)
+  # -- and the only gate possible on them is `deny_missing_timestamp: true`,
+  # which refuses every download. They stay ungated.
   registries:
     - type: npm
       name: npm
@@ -353,6 +362,10 @@ batlehub:
           - catalogue:browse
         admin:
           - "*"
+      rules: &ageGate
+        - kind: release_age_gate
+          min_age_secs: 3600
+          bypass_roles: ["admin"]
     - type: cargo
       name: cargo
       mode: hybrid
@@ -360,18 +373,22 @@ batlehub:
         - https://crates.io
       index_url: https://index.crates.io
       rbac: *readRbac
+      rules: *ageGate
     - type: goproxy
       name: go
       mode: hybrid
       upstreams:
         - https://proxy.golang.org
       rbac: *readRbac
+      rules: *ageGate
     - type: pypi
       name: pypi
       rbac: *readRbac
+      rules: *ageGate
     - type: maven
       name: maven
       rbac: *readRbac
+      rules: *ageGate
     # VS Code extensions, proxied from open-vsx.org: Che's extension gallery
     # (spec.components.pluginRegistry.openVSXURL in 2.argo/helm/che/sub). Its
     # anonymous read is not only the "public upstream" trade above but a hard
@@ -380,6 +397,7 @@ batlehub:
     - type: openvsx
       name: vsx
       rbac: *readRbac
+      rules: *ageGate
     # What a dev workspace downloads outside a package manager:
     # mise's github/aqua/ubi tools, Taskfile remote includes and devfile
     # `parent.uri`s (raw files), then the toolchains. All proxy-only kinds.
@@ -390,14 +408,26 @@ batlehub:
       raw:
         enabled: true
       rbac: *readRbac
+      # Dated only on a release asset pulled by tag; raw files and source
+      # tarballs carry no timestamp, so the gate lets them through.
+      rules: *ageGate
     # RUSTUP_DIST_SERVER / RUSTUP_UPDATE_ROOT (RFC 0024).
     - type: rustup
       name: rustup
       rbac: *readRbac
+      rules: *ageGate
     # NODEJS_ORG_MIRROR, and mise's node downloads.
     - type: nodedist
       name: node
       rbac: *readRbac
+      # Dated from index.tab, so a current release is gated. A release the
+      # index no longer lists reaches the gate undated, and this kind makes
+      # the choice explicit: `false` serves it, as it is by definition old.
+      rules:
+        - kind: release_age_gate
+          min_age_secs: 3600
+          bypass_roles: ["admin"]
+          deny_missing_timestamp: false
     # Plain file trees mise's core tools download from. `generic` has no
     # default upstream and needs `path_allow`; each host is dedicated to its
     # tool, so the whole tree is allowed.
@@ -574,3 +604,68 @@ operator:
       registry: go
       prefix: git.weebo.poc/batleforc-org
       group: oidc:batleforc
+
+# CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
+# documents the format). Ingress only, egress stays open; `host` is always let
+# in (kubelet probes, apiserver -> webhooks). Same sources and checks as in
+# 2.argo/helm/angos/values.yaml.
+ciliumNetworkPolicies:
+  enabled: false
+  policies:
+    batlehub-ingress:
+      namespace: batlehub
+      endpointSelector: {}
+      # Opened through Traefik: s3 storage, OIDC, and Forgejo for the go
+      # modules of the git.weebo.poc/* namespaces. Drawn by `task docs:netflow`.
+      reaches:
+        - s3-main.weebo.poc
+        - auth.weebo.poc
+        - git.weebo.poc
+      ingress:
+        # batlehub <-> postgres and valkey.
+        - fromEndpoints:
+            - {}
+        # pkg.weebo.poc and every intercepted host.
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: traefik
+                app.kubernetes.io/name: traefik
+          toPorts:
+            - ports:
+                - port: "8080"
+                  protocol: TCP
+        # CNPG: instance status (8000) and the postgres port it manages.
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: database
+                app.kubernetes.io/name: cloudnative-pg
+          toPorts:
+            - ports:
+                - port: "8000"
+                  protocol: TCP
+                - port: "5432"
+                  protocol: TCP
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: database
+                app.kubernetes.io/name: valkey-operator
+          toPorts:
+            - ports:
+                - port: "6379"
+                  protocol: TCP
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: weebo-batlehub
+          toPorts:
+            - ports:
+                - port: "8080"
+                  protocol: TCP
+    weebo-batlehub-ingress:
+      namespace: weebo-batlehub
+      endpointSelector: {}
+      # The operator configures batlehub through its API (operator/instance.yaml url).
+      reaches:
+        - pkg.weebo.poc
+      ingress:
+        - fromEndpoints:
+            - {}

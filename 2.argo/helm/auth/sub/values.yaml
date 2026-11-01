@@ -888,3 +888,60 @@ applications:
 project: ""
 repo: ""
 branch: ""
+
+# CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
+# documents the format). Ingress only, egress stays open; `host` is always let
+# in (kubelet probes, apiserver -> webhooks). Same sources and checks as in
+# 2.argo/helm/angos/values.yaml. Values passed down by the main chart override
+# these, ciliumNetworkPolicies.enabled included.
+ciliumNetworkPolicies:
+  enabled: false
+  policies:
+    auth-ingress:
+      namespace: auth
+      endpointSelector: {}
+      # The weebo-authentik operator drives authentik's API by its public name.
+      reaches:
+        - auth.weebo.poc
+      ingress:
+        # server/worker <-> postgres, the operator -> server API.
+        - fromEndpoints:
+            - {}
+        # auth.weebo.poc, and Traefik's forwardAuth to authentik-server.
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: traefik
+                app.kubernetes.io/name: traefik
+          toPorts:
+            - ports:
+                - port: "9000"
+                  protocol: TCP
+                - port: "9443"
+                  protocol: TCP
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: database
+                app.kubernetes.io/name: cloudnative-pg
+          toPorts:
+            - ports:
+                - port: "8000"
+                  protocol: TCP
+                - port: "5432"
+                  protocol: TCP
+    # dex.weebo.poc. The apiserver reaches it through Traefik too: the node
+    # resolves the name to its own IP (machine.network.extraHostEntries).
+    dex-ingress:
+      namespace: dex
+      endpointSelector: {}
+      # Dex's upstream connector is authentik's OIDC issuer.
+      reaches:
+        - auth.weebo.poc
+      ingress:
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: traefik
+                app.kubernetes.io/name: traefik
+          toPorts:
+            - ports:
+                - port: "5556"
+                  protocol: TCP

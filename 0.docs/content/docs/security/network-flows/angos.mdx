@@ -1,0 +1,90 @@
+---
+title: "Flux réseau : angos"
+description: "Les flux autorisés par les politiques réseau de angos"
+---
+
+{/* Généré par `task docs:netflow` (0.task/scripts/netflow.py). Ne pas éditer à la main. */}
+
+Les flux que les politiques de l'application Argo CD `angos` autorisent. Namespaces : `angos`, `angos-node`, `weebo-angos`.
+
+## Légende
+
+- Une **flèche pleine** est un flux autorisé par une politique déployée aujourd'hui.
+- Une **flèche pointillée** est un flux qu'une politique `weebo-base` encore désactivée (`ciliumNetworkPolicies.enabled: false`) autoriserait.
+- Un cadre est un namespace, une boîte un ensemble de pods (« tous les pods » = sélecteur vide).
+- Une **flèche épaisse** « via Traefik » relie un workload au backend qu'il atteint par un nom `*.weebo.poc` (annotation `weebo.io/reaches`, backend tiré des IngressRoute/Ingress du dépôt, ou du bloc `ingress` des values d'un chart upstream). C'est une relation applicative : la politique ne contrôle que le saut vers Traefik, c'est Traefik qui ouvre la connexion vers le backend.
+- `tout : internet + cluster` marque des pods qu'aucune politique déployée ne restreint en sortie : ils peuvent joindre n'importe quelle destination, IP directe comprise. « autres pods » désigne ceux du namespace qu'aucune politique d'egress ne sélectionne, et un pod visé par une politique proposée reste ouvert tant qu'elle est désactivée.
+- L'entité `host` sans port n'est pas dessinée : chaque politique `weebo-base` la laisse entrer (sondes kubelet, apiserver vers les webhooks).
+- Une politique qui ne liste que de l'ingress laisse l'egress ouvert, et inversement.
+
+## Flux
+
+```mermaid
+flowchart LR
+  n_entity_kube_apiserver_3b39a7(["entité: kube-apiserver"])
+  n_entity_open_f65d5d(["tout : internet + cluster"])
+  n_fqdn_codeberg_org_code_forgejo_org_gcr_io_storage_googleapis_com_ghcr_io_pkg_con_feb69b[/"FQDN<br/>codeberg.org<br/>code.forgejo.org<br/>gcr.io<br/>storage.googleapis.com<br/>ghcr.io<br/>pkg-containers.githubusercontent.com<br/>registry-1.docker.io<br/>auth.docker.io<br/>production.cloudflare.docker.com<br/>quay.io<br/>*.quay.io<br/>registry.access.redhat.com<br/>*.redhat.com<br/>*.redhat.io"/]
+  subgraph ns_angos["angos"]
+    n_ns_angos_ece4d4["angos / server"]
+    n_ns_angos_dafce5["autres pods"]
+    n_ns_angos_86cc70["tous les pods"]
+  end
+  subgraph ns_angos_node["angos-node"]
+    n_ns_angos_node_61b630["tous les pods"]
+  end
+  subgraph ns_auth["auth"]
+    n_ns_auth_3aba95["authentik / server (chart authentik)"]
+  end
+  subgraph ns_kube_system["kube-system"]
+    n_ns_kube_system_9d0e37["kube-dns"]
+  end
+  subgraph ns_s3["s3"]
+    n_ns_s3_aa1591["svc main-console"]
+  end
+  subgraph ns_traefik["traefik"]
+    n_ns_traefik_d50a8d["traefik"]
+  end
+  subgraph ns_weebo_angos["weebo-angos"]
+    n_ns_weebo_angos_b7bea6["tous les pods"]
+  end
+  n_ns_angos_ece4d4 -.->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
+  n_ns_angos_ece4d4 -->|"egress non restreint tant que angos-egress est désactivée"| n_entity_open_f65d5d
+  n_ns_angos_ece4d4 -.->|"TCP 443"| n_fqdn_codeberg_org_code_forgejo_org_gcr_io_storage_googleapis_com_ghcr_io_pkg_con_feb69b
+  n_ns_angos_ece4d4 -.->|"tous ports"| n_ns_angos_86cc70
+  n_ns_angos_ece4d4 ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
+  n_ns_angos_ece4d4 -.->|"ANY 53 (dns)"| n_ns_kube_system_9d0e37
+  n_ns_angos_ece4d4 ==>|"via Traefik : s3-main.weebo.poc"| n_ns_s3_aa1591
+  n_ns_angos_ece4d4 -.->|"TCP 8443"| n_ns_traefik_d50a8d
+  n_ns_angos_dafce5 -->|"egress non restreint"| n_entity_open_f65d5d
+  n_ns_angos_86cc70 -.->|"tous ports"| n_ns_angos_86cc70
+  n_ns_angos_node_61b630 -->|"egress non restreint"| n_entity_open_f65d5d
+  n_ns_traefik_d50a8d -.->|"TCP 8000"| n_ns_angos_86cc70
+  n_ns_weebo_angos_b7bea6 -->|"egress non restreint"| n_entity_open_f65d5d
+  n_ns_weebo_angos_b7bea6 -.->|"TCP 8000"| n_ns_angos_86cc70
+  n_ns_weebo_angos_b7bea6 -.->|"tous ports"| n_ns_weebo_angos_b7bea6
+```
+
+## Flux ouverts par d'autres applications
+
+Les politiques d'autres applications qui touchent les namespaces de `angos`.
+
+```mermaid
+flowchart LR
+  subgraph ns_angos["angos"]
+    n_ns_angos_f1c162["svc registry"]
+  end
+  subgraph ns_netbird["netbird"]
+    n_ns_netbird_45c447["exit-node-ingress"]
+  end
+  n_ns_netbird_45c447 ==>|"via Traefik : registry.pkg.weebo.poc"| n_ns_angos_f1c162
+```
+
+## Politiques
+
+| Namespace | Politique | Type | État | Chart |
+|---|---|---|---|---|
+| angos | `angos-egress` | Cilium | proposée | `2.argo/helm/angos` |
+| angos | `angos-ingress` | Cilium | proposée | `2.argo/helm/angos` |
+| angos-node | `angos-node-ingress` | Cilium | proposée | `2.argo/helm/angos` |
+| weebo-angos | `weebo-angos-ingress` | Cilium | proposée | `2.argo/helm/angos` |
+

@@ -22,3 +22,10 @@ version: 0.1.0
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "1.16.0"
+
+dependencies:
+  # Shared value checks and CiliumNetworkPolicies (templates/weebo-base.yaml).
+  # Argo CD runs `helm dependency build`; Chart.lock and charts/ stay out of git.
+  - name: weebo-base
+    version: 0.1.0
+    repository: file://../../../2.helm/weebo-base

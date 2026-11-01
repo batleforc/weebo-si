@@ -108,3 +108,85 @@ che:
 repo: ""
 project: ""
 branch: ""
+
+# CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
+# documents the format). Ingress only, egress stays open; `host` is always let
+# in (kubelet probes, apiserver -> webhooks). Same sources and checks as in
+# 2.argo/helm/angos/values.yaml. Values passed down by the main chart override
+# these, ciliumNetworkPolicies.enabled included.
+ciliumNetworkPolicies:
+  enabled: false
+  # Docs only (weebo-base.netflowReaches): endpoint-gateway's policy comes
+  # from its upstream chart, so the relation cannot sit on a policy here.
+  reaches:
+    - namespace: weebo-si-hardening
+      endpointSelector:
+        matchLabels:
+          app.kubernetes.io/name: endpoint-gateway
+      # Its OIDC issuer (che/main endpoint-gateway.yaml).
+      hosts: [auth.weebo.poc]
+  policies:
+    eclipse-che-ingress:
+      namespace: eclipse-che
+      endpointSelector: {}
+      # che.auth.identityProviderURL: che-server and the gateway's oauth2-proxy.
+      reaches:
+        - dex.weebo.poc
+      ingress:
+        # gateway -> che/dashboard, operator -> everything it manages.
+        - fromEndpoints:
+            - {}
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: traefik
+                app.kubernetes.io/name: traefik
+          toPorts:
+            - ports:
+                - port: "8080"
+                  protocol: TCP
+        # Workspaces, matched by namespace label so a new dev-ws-* needs no
+        # edit. Mirrors the egress weebo-net-base gives them (che/hardening).
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.cilium.k8s.namespace.labels.app.kubernetes.io/component: workspaces-namespace
+          toPorts:
+            - ports:
+                - port: "8080"
+                  protocol: TCP
+                - port: "8089"
+                  protocol: TCP
+        # endpoint-gateway asks the gateway to authenticate (8089).
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: weebo-si-hardening
+                app.kubernetes.io/name: endpoint-gateway
+          toPorts:
+            - ports:
+                - port: "8089"
+                  protocol: TCP
+    # Webhooks and conversion only, all called by the apiserver.
+    devworkspace-controller-ingress:
+      namespace: devworkspace-controller
+      endpointSelector: {}
+      ingress:
+        - fromEndpoints:
+            - {}
+    # The operator pods only. endpoint-gateway has its own policy
+    # (che/endpoint-gateway), and the network canary must stay out of reach:
+    # it exists to prove a connection is refused, and an allow here would
+    # turn that proof green for the wrong reason.
+    weebo-si-operator-ingress:
+      namespace: weebo-si-hardening
+      endpointSelector:
+        matchLabels:
+          app.kubernetes.io/name: weebo-si-operator
+      ingress:
+        # otel-cluster's weebo-si-hardening scrape job (http-health).
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: monitoring
+                app.kubernetes.io/instance: otel-cluster
+          toPorts:
+            - ports:
+                - port: "8081"
+                  protocol: TCP

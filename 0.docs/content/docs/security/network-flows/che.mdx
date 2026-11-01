@@ -1,0 +1,104 @@
+---
+title: "Flux réseau : che"
+description: "Les flux autorisés par les politiques réseau de che"
+---
+
+{/* Généré par `task docs:netflow` (0.task/scripts/netflow.py). Ne pas éditer à la main. */}
+
+Les flux que les politiques de l'application Argo CD `che` autorisent. Namespaces : `devworkspace-controller`, `eclipse-che`, `weebo-si-hardening`.
+
+## Légende
+
+- Une **flèche pleine** est un flux autorisé par une politique déployée aujourd'hui.
+- Une **flèche pointillée** est un flux qu'une politique `weebo-base` encore désactivée (`ciliumNetworkPolicies.enabled: false`) autoriserait.
+- Un cadre est un namespace, une boîte un ensemble de pods (« tous les pods » = sélecteur vide).
+- Une **flèche épaisse** « via Traefik » relie un workload au backend qu'il atteint par un nom `*.weebo.poc` (annotation `weebo.io/reaches`, backend tiré des IngressRoute/Ingress du dépôt, ou du bloc `ingress` des values d'un chart upstream). C'est une relation applicative : la politique ne contrôle que le saut vers Traefik, c'est Traefik qui ouvre la connexion vers le backend.
+- `tout : internet + cluster` marque des pods qu'aucune politique déployée ne restreint en sortie : ils peuvent joindre n'importe quelle destination, IP directe comprise. « autres pods » désigne ceux du namespace qu'aucune politique d'egress ne sélectionne, et un pod visé par une politique proposée reste ouvert tant qu'elle est désactivée.
+- L'entité `host` sans port n'est pas dessinée : chaque politique `weebo-base` la laisse entrer (sondes kubelet, apiserver vers les webhooks).
+- Une politique qui ne liste que de l'ingress laisse l'egress ouvert, et inversement.
+
+## Flux
+
+```mermaid
+flowchart LR
+  n_entity_kube_apiserver_3b39a7(["entité: kube-apiserver"])
+  n_entity_open_f65d5d(["tout : internet + cluster"])
+  n_entity_world_1a2945(["entité: world"])
+  n_fqdn_api_anthropic_com_41439f[/"FQDN<br/>api.anthropic.com"/]
+  n_fqdn_github_com_git_batleforc_fr_c00a93[/"FQDN<br/>github.com<br/>git.batleforc.fr"/]
+  subgraph ns_auth["auth"]
+    n_ns_auth_3aba95["authentik / server (chart authentik)"]
+  end
+  subgraph ns_devworkspace_controller["devworkspace-controller"]
+    n_ns_devworkspace_controller_3115b1["tous les pods"]
+  end
+  subgraph ns_dex["dex"]
+    n_ns_dex_bea24e["dex (chart dex)"]
+  end
+  subgraph ns_eclipse_che["eclipse-che"]
+    n_ns_eclipse_che_50dd3c["che-gateway"]
+    n_ns_eclipse_che_2b9ac4["component In che,che-dashboard,che-gateway"]
+    n_ns_eclipse_che_43d24e["tous les pods"]
+  end
+  subgraph ns_kube_system["kube-system"]
+    n_ns_kube_system_9d0e37["kube-dns"]
+  end
+  subgraph ns_monitoring["monitoring"]
+    n_ns_monitoring_1d4c40["tous les pods"]
+  end
+  subgraph ns_traefik["traefik"]
+    n_ns_traefik_d50a8d["traefik"]
+  end
+  subgraph ns_weebo_si_hardening["weebo-si-hardening"]
+    n_ns_weebo_si_hardening_98b8dc["endpoint-gateway"]
+    n_ns_weebo_si_hardening_af5a96["tous les pods"]
+    n_ns_weebo_si_hardening_973fb2["weebo-si-operator"]
+  end
+  subgraph ns_workspaces_Che__dev_ws___["workspaces Che (dev-ws-*)"]
+    n_ns_workspaces_Che__dev_ws____07f3cd["profil weebo-net-anthropic"]
+    n_ns_workspaces_Che__dev_ws____ac87b9["profil weebo-net-base"]
+    n_ns_workspaces_Che__dev_ws____fa1322["profil weebo-net-dev-registries"]
+    n_ns_workspaces_Che__dev_ws____01372c["profil weebo-net-internet"]
+    n_ns_workspaces_Che__dev_ws____e38a98["profil weebo-net-kube-api"]
+    n_ns_workspaces_Che__dev_ws____a24264["tous les pods"]
+  end
+  n_ns_devworkspace_controller_3115b1 -->|"egress non restreint"| n_entity_open_f65d5d
+  n_ns_devworkspace_controller_3115b1 -.->|"tous ports"| n_ns_devworkspace_controller_3115b1
+  n_ns_devworkspace_controller_3115b1 -->|"tous ports"| n_ns_workspaces_Che__dev_ws____ac87b9
+  n_ns_eclipse_che_43d24e -->|"egress non restreint"| n_entity_open_f65d5d
+  n_ns_eclipse_che_43d24e ==>|"via Traefik : dex.weebo.poc"| n_ns_dex_bea24e
+  n_ns_eclipse_che_43d24e -.->|"tous ports"| n_ns_eclipse_che_43d24e
+  n_ns_eclipse_che_43d24e -->|"tous ports"| n_ns_workspaces_Che__dev_ws____ac87b9
+  n_ns_monitoring_1d4c40 -.->|"TCP 8081"| n_ns_weebo_si_hardening_973fb2
+  n_ns_traefik_d50a8d -.->|"TCP 8080"| n_ns_eclipse_che_43d24e
+  n_ns_traefik_d50a8d -->|"tous ports"| n_ns_workspaces_Che__dev_ws____ac87b9
+  n_ns_weebo_si_hardening_98b8dc ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
+  n_ns_weebo_si_hardening_98b8dc -.->|"TCP 8089"| n_ns_eclipse_che_43d24e
+  n_ns_weebo_si_hardening_af5a96 -->|"egress non restreint"| n_entity_open_f65d5d
+  n_ns_workspaces_Che__dev_ws____07f3cd -->|"TCP 443"| n_fqdn_api_anthropic_com_41439f
+  n_ns_workspaces_Che__dev_ws____ac87b9 -->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
+  n_ns_workspaces_Che__dev_ws____ac87b9 -->|"TCP 8089"| n_ns_eclipse_che_50dd3c
+  n_ns_workspaces_Che__dev_ws____ac87b9 -->|"TCP 8080"| n_ns_eclipse_che_2b9ac4
+  n_ns_workspaces_Che__dev_ws____ac87b9 -->|"ANY 53 (dns)"| n_ns_kube_system_9d0e37
+  n_ns_workspaces_Che__dev_ws____ac87b9 -->|"TCP 8000, TCP 8443"| n_ns_traefik_d50a8d
+  n_ns_workspaces_Che__dev_ws____ac87b9 -->|"tous ports"| n_ns_workspaces_Che__dev_ws____a24264
+  n_ns_workspaces_Che__dev_ws____fa1322 -->|"TCP 22, TCP 443"| n_fqdn_github_com_git_batleforc_fr_c00a93
+  n_ns_workspaces_Che__dev_ws____01372c -->|"tous ports"| n_entity_world_1a2945
+  n_ns_workspaces_Che__dev_ws____e38a98 -->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
+  n_ns_workspaces_Che__dev_ws____a24264 -.->|"TCP 8080, TCP 8089"| n_ns_eclipse_che_43d24e
+  n_ns_workspaces_Che__dev_ws____a24264 -->|"tous ports"| n_ns_workspaces_Che__dev_ws____ac87b9
+```
+
+## Politiques
+
+| Namespace | Politique | Type | État | Chart |
+|---|---|---|---|---|
+| devworkspace-controller | `devworkspace-controller-ingress` | Cilium | proposée | `2.argo/helm/che/sub` |
+| eclipse-che | `eclipse-che-ingress` | Cilium | proposée | `2.argo/helm/che/sub` |
+| weebo-si-hardening | `weebo-net-anthropic` | Cilium | déployée | `2.argo/helm/che/hardening` |
+| weebo-si-hardening | `weebo-net-base` | Cilium | déployée | `2.argo/helm/che/hardening` |
+| weebo-si-hardening | `weebo-net-dev-registries` | Cilium | déployée | `2.argo/helm/che/hardening` |
+| weebo-si-hardening | `weebo-net-internet` | Cilium | déployée | `2.argo/helm/che/hardening` |
+| weebo-si-hardening | `weebo-net-kube-api` | Cilium | déployée | `2.argo/helm/che/hardening` |
+| weebo-si-hardening | `weebo-si-operator-ingress` | Cilium | proposée | `2.argo/helm/che/sub` |
+

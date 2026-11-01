@@ -22,3 +22,20 @@ snapshotCrds:
 repo: ""
 project: ""
 branch: ""
+
+# CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
+# documents the format). Ingress only, egress stays open; `host` is always let
+# in. Longhorn keeps the NetworkPolicies of its own chart
+# (templates/longhorn/network-policy.yaml). Same checks as in
+# 2.argo/helm/angos/values.yaml.
+ciliumNetworkPolicies:
+  enabled: false
+  policies:
+    # The provisioner serves nothing; its helper pods run in the same
+    # namespace and only talk to the apiserver.
+    local-path-storage-ingress:
+      namespace: local-path-storage
+      endpointSelector: {}
+      ingress:
+        - fromEndpoints:
+            - {}

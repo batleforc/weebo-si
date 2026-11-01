@@ -226,3 +226,77 @@ obi:
   # scheduler blind to a third of a GiB. The 2Gi limit still comes from the
   # LimitRange.
   memoryRequest: 768Mi
+
+# CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
+# documents the format). Ingress only, egress stays open; `host` is always let
+# in (kubelet probes, otel-controlplane on the host network). Same sources and
+# checks as in 2.argo/helm/angos/values.yaml.
+ciliumNetworkPolicies:
+  enabled: false
+  policies:
+    monitoring-ingress:
+      namespace: monitoring
+      endpointSelector: {}
+      ingress:
+        # collectors -> clickstack-otel-collector, HyperDX -> clickhouse and
+        # mongo, clickhouse <-> keeper.
+        - fromEndpoints:
+            - {}
+        # clickstack.weebo.poc goes Traefik -> preauth -> HyperDX.
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: traefik
+                app.kubernetes.io/name: traefik
+          toPorts:
+            - ports:
+                - port: "8080"
+                  protocol: TCP
+        # Authentik's proxy provider (auth/sub values: internalHost).
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: auth
+          toPorts:
+            - ports:
+                - port: "8080"
+                  protocol: TCP
+        # OBI ships its spans and metrics over OTLP.
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: obi
+          toPorts:
+            - ports:
+                - port: "4317"
+                  protocol: TCP
+                - port: "4318"
+                  protocol: TCP
+        # ClickHouse operator: keeper and server management.
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: database
+                app.kubernetes.io/name: clickhouse-operator
+          toPorts:
+            - ports:
+                - port: "2181"
+                  protocol: TCP
+                - port: "9123"
+                  protocol: TCP
+                - port: "8123"
+                  protocol: TCP
+                - port: "9000"
+                  protocol: TCP
+                - port: "9001"
+                  protocol: TCP
+                - port: "9002"
+                  protocol: TCP
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: database
+                app.kubernetes.io/name: mongodb-kubernetes-operator
+          toPorts:
+            - ports:
+                - port: "27017"
+                  protocol: TCP
+    # OBI is an eBPF DaemonSet, it serves nothing.
+    obi-ingress:
+      namespace: obi
+      endpointSelector: {}

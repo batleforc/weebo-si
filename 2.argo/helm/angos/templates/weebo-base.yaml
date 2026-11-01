@@ -1,0 +1,48 @@
+{{- /* Shared helpers from 2.helm/weebo-base. */ -}}
+{{- include "weebo-base.require" (dict "ctx" . "keys" (list "project")) -}}
+{{- /*
+angos-egress: the registry may only leave the cluster towards the upstreams
+of angos.repositories, plus the hosts those upstreams redirect blob
+downloads to (networkEgress.companions). Built here rather than in values so
+that adding an upstream opens it, and removing one closes it, in the same
+commit.
+*/ -}}
+{{- $fqdns := list -}}
+{{- range $name, $repo := .Values.angos.repositories -}}
+{{- range $url := $repo.upstreams | default list -}}
+{{- $host := (urlParse $url).hostname -}}
+{{- $fqdns = append $fqdns (dict "matchName" $host) -}}
+{{- range $companion := index $.Values.networkEgress.companions $host | default list -}}
+{{- $fqdns = append $fqdns (ternary (dict "matchPattern" $companion) (dict "matchName" $companion) (contains "*" $companion)) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- /*
+DNS only for the names this pod has a reason to resolve: the cluster
+(search-domain expansions included), *.weebo.poc and the upstreams. Any other
+name is refused by Cilium's DNS proxy, which closes exfiltration through
+queries -- with `*`, any name could carry data out through CoreDNS.
+toFQDNs only opens the IPs the proxy saw answered for those names, so a
+connection straight to some other IP is dropped.
+*/ -}}
+{{- $dns := list (dict "matchPattern" "*.cluster.local") (dict "matchPattern" "*.weebo.poc") -}}
+{{- $dns = concat $dns $fqdns | uniq -}}
+{{- $egress := list
+  (dict "toEndpoints" (list (dict "matchLabels" (dict "k8s:io.kubernetes.pod.namespace" "kube-system" "k8s-app" "kube-dns")))
+        "toPorts" (list (dict "ports" (list (dict "port" "53" "protocol" "ANY")) "rules" (dict "dns" $dns))))
+  (dict "toEndpoints" (list dict))
+  (dict "toEndpoints" (list (dict "matchLabels" (dict "k8s:io.kubernetes.pod.namespace" "traefik" "app.kubernetes.io/name" "traefik")))
+        "toPorts" (list (dict "ports" (list (dict "port" "8443" "protocol" "TCP")))))
+  (dict "toEntities" (list "kube-apiserver")
+        "toPorts" (list (dict "ports" (list (dict "port" "6443" "protocol" "TCP")))))
+-}}
+{{- if $fqdns -}}
+{{- $egress = append $egress (dict "toFQDNs" (uniq $fqdns) "toPorts" (list (dict "ports" (list (dict "port" "443" "protocol" "TCP"))))) -}}
+{{- end -}}
+{{- $extra := dict "angos-egress" (dict
+  "namespace" "angos"
+  "endpointSelector" (dict "matchLabels" (dict "app.kubernetes.io/name" "angos" "app.kubernetes.io/component" "server"))
+  "allowHost" false
+  "egress" $egress
+  "reaches" (concat (list (urlParse .Values.angos.s3Url).hostname) (.Values.networkEgress.reaches | default list) | uniq)) -}}
+{{- include "weebo-base.ciliumNetworkPolicies" (dict "ctx" . "extra" $extra) -}}

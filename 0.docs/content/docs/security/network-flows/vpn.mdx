@@ -1,0 +1,95 @@
+---
+title: "Flux réseau : vpn"
+description: "Les flux autorisés par les politiques réseau de vpn"
+---
+
+{/* Généré par `task docs:netflow` (0.task/scripts/netflow.py). Ne pas éditer à la main. */}
+
+Les flux que les politiques de l'application Argo CD `vpn` autorisent. Namespaces : `netbird`.
+
+## Légende
+
+- Une **flèche pleine** est un flux autorisé par une politique déployée aujourd'hui.
+- Une **flèche pointillée** est un flux qu'une politique `weebo-base` encore désactivée (`ciliumNetworkPolicies.enabled: false`) autoriserait.
+- Un cadre est un namespace, une boîte un ensemble de pods (« tous les pods » = sélecteur vide).
+- Une **flèche épaisse** « via Traefik » relie un workload au backend qu'il atteint par un nom `*.weebo.poc` (annotation `weebo.io/reaches`, backend tiré des IngressRoute/Ingress du dépôt, ou du bloc `ingress` des values d'un chart upstream). C'est une relation applicative : la politique ne contrôle que le saut vers Traefik, c'est Traefik qui ouvre la connexion vers le backend.
+- `tout : internet + cluster` marque des pods qu'aucune politique déployée ne restreint en sortie : ils peuvent joindre n'importe quelle destination, IP directe comprise. « autres pods » désigne ceux du namespace qu'aucune politique d'egress ne sélectionne, et un pod visé par une politique proposée reste ouvert tant qu'elle est désactivée.
+- L'entité `host` sans port n'est pas dessinée : chaque politique `weebo-base` la laisse entrer (sondes kubelet, apiserver vers les webhooks).
+- Une politique qui ne liste que de l'ingress laisse l'egress ouvert, et inversement.
+
+## Flux
+
+```mermaid
+flowchart LR
+  n_entity_open_f65d5d(["tout : internet + cluster"])
+  subgraph ns_angos["angos"]
+    n_ns_angos_f1c162["svc registry"]
+  end
+  subgraph ns_auth["auth"]
+    n_ns_auth_3aba95["authentik / server (chart authentik)"]
+  end
+  subgraph ns_batlehub["batlehub"]
+    n_ns_batlehub_eb6c8e["svc batlehub"]
+  end
+  subgraph ns_dex["dex"]
+    n_ns_dex_bea24e["dex (chart dex)"]
+  end
+  subgraph ns_forgejo["forgejo"]
+    n_ns_forgejo_881e90["svc forgejo-http"]
+  end
+  subgraph ns_longhorn["longhorn"]
+    n_ns_longhorn_3ce2a9["svc longhorn-frontend"]
+  end
+  subgraph ns_monitoring["monitoring"]
+    n_ns_monitoring_adae0f["svc clickstack-preauth"]
+  end
+  subgraph ns_netbird["netbird"]
+    n_ns_netbird_45c447["exit-node-ingress"]
+    n_ns_netbird_b1fc84["tous les pods"]
+  end
+  subgraph ns_s3["s3"]
+    n_ns_s3_aa1591["svc main-console"]
+  end
+  subgraph ns_traefik["traefik"]
+    n_ns_traefik_67721a["svc error-pages-internal"]
+  end
+  subgraph ns_vault["vault"]
+    n_ns_vault_b5391e["svc openbao"]
+  end
+  n_ns_netbird_45c447 ==>|"via Traefik : registry.pkg.weebo.poc"| n_ns_angos_f1c162
+  n_ns_netbird_45c447 ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
+  n_ns_netbird_45c447 ==>|"via Traefik : pkg.weebo.poc"| n_ns_batlehub_eb6c8e
+  n_ns_netbird_45c447 ==>|"via Traefik : dex.weebo.poc"| n_ns_dex_bea24e
+  n_ns_netbird_45c447 ==>|"via Traefik : git.weebo.poc"| n_ns_forgejo_881e90
+  n_ns_netbird_45c447 ==>|"via Traefik : longhorn.weebo.poc"| n_ns_longhorn_3ce2a9
+  n_ns_netbird_45c447 ==>|"via Traefik : clickstack.weebo.poc"| n_ns_monitoring_adae0f
+  n_ns_netbird_45c447 ==>|"via Traefik : s3-main.weebo.poc"| n_ns_s3_aa1591
+  n_ns_netbird_45c447 ==>|"via Traefik : truc.weebo.poc"| n_ns_traefik_67721a
+  n_ns_netbird_45c447 ==>|"via Traefik : vault.weebo.poc"| n_ns_vault_b5391e
+  n_ns_netbird_b1fc84 -->|"egress non restreint"| n_entity_open_f65d5d
+```
+
+## Flux ouverts par d'autres applications
+
+Les politiques d'autres applications qui touchent les namespaces de `vpn`.
+
+```mermaid
+flowchart LR
+  subgraph ns_forgejo["forgejo"]
+    n_ns_forgejo_90cc22["tous les pods"]
+  end
+  subgraph ns_netbird["netbird"]
+    n_ns_netbird_b1fc84["tous les pods"]
+  end
+  subgraph ns_vault["vault"]
+    n_ns_vault_da07f8["openbao"]
+  end
+  n_ns_netbird_b1fc84 -.->|"TCP 2222"| n_ns_forgejo_90cc22
+  n_ns_netbird_b1fc84 -->|"TCP 8200"| n_ns_vault_da07f8
+```
+
+## Politiques
+
+| Namespace | Politique | Type | État | Chart |
+|---|---|---|---|---|
+

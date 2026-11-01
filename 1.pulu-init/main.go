@@ -30,7 +30,7 @@ import (
 const (
 	registryHost    = "registry.pkg.weebo.poc"
 	authHost        = "dex.weebo.poc"
-	s3Host 					= "s3-main.weebo.poc"
+	s3Host          = "s3-main.weebo.poc"
 	clusterCABundle = "../.tmp/weebo-si-ca.pem"
 )
 
@@ -314,6 +314,8 @@ func main() {
 			return fmt.Errorf("failed to marshal longhorn disks config: %w", err)
 		}
 
+		podSubnets := []string{"10.245.0.0/16", "fd00:10:245::/56"}
+
 		jsonPatchConfig := urlUpdateResult.Urls().Installer().ApplyT(func(installerUrl string) (string, error) {
 			conf := map[string]interface{}{
 				"cluster": map[string]interface{}{
@@ -326,10 +328,7 @@ func main() {
 						"cni": map[string]interface{}{
 							"name": "none",
 						},
-						"podSubnets": []string{
-							"10.245.0.0/16",
-							"fd00:10:245::/56",
-						},
+						"podSubnets": podSubnets,
 						"serviceSubnets": []string{
 							"10.128.0.0/12",
 							"fd00:10:128::/112",
@@ -1104,17 +1103,106 @@ func main() {
 			},
 		})
 
+		configPatches := pulumi.StringArray{
+			jsonPatchConfig,
+			pulumi.String(string(jsonPatchUserVolume)),
+			pulumi.String(string(jsonPatchNetbirdConfig)),
+		}
+
+		// Talos ingress firewall: everything addressed to the host is dropped
+		// unless a rule below lets it in. It filters the host's INPUT chain
+		// only, so what it covers is Talos itself (apid, trustd), the static
+		// pods and every hostNetwork listener (cilium-agent, hubble).
+		//
+		// Traefik's 80/443 are NOT covered and need no rule: the LoadBalancer
+		// and its NodePorts are DNATed to the pod by Cilium's eBPF on eth0
+		// before netfilter sees the packet. Same for anything pod-bound.
+		//
+		// Pods reaching the host (metrics-server -> kubelet, hubble-relay ->
+		// 4244, anything -> kubernetes.default -> 6443) arrive with their pod
+		// IP, hence podSubnets on those rules. The node talking to itself goes
+		// through lo, which Talos always accepts, as it does established
+		// traffic and ICMP/ICMPv6.
+		//
+		// Left closed on purpose, all on ::: today: etcd 2379/2380 (single
+		// member, the apiserver uses loopback), trustd 50001 (only joining
+		// nodes ask it), VXLAN 8472 (no peer node; open, it lets anyone inject
+		// frames into the pod network).
+		//
+		// ADMIN_CIDRS (comma separated, IPv4 and/or IPv6) is who keeps apid and
+		// the apiserver. Without it there is no firewall at all: a block policy
+		// with no admin source would lock talosctl out, and on a single node
+		// the only way back is a reinstall.
+		if adminCIDRs := strings.FieldsFunc(os.Getenv("ADMIN_CIDRS"), func(r rune) bool {
+			return r == ',' || r == ' '
+		}); len(adminCIDRs) == 0 {
+			ctx.Log.Warn("ADMIN_CIDRS is not set, so the node gets no ingress firewall: "+
+				"apid, kubelet, etcd and hubble stay reachable from the internet.", nil)
+		} else {
+			subnets := func(cidrs ...[]string) []map[string]interface{} {
+				var out []map[string]interface{}
+				for _, list := range cidrs {
+					for _, cidr := range list {
+						out = append(out, map[string]interface{}{"subnet": cidr})
+					}
+				}
+				return out
+			}
+			firewall := []map[string]interface{}{
+				{
+					"apiVersion": "v1alpha1",
+					"kind":       "NetworkDefaultActionConfig",
+					"ingress":    "block",
+				},
+				{
+					// talosctl. Pods included so the netbird routing peer
+					// (exit-node-ingress) masquerades admins in from the VPN.
+					"name":         "apid",
+					"portSelector": map[string]interface{}{"ports": []int{50000}, "protocol": "tcp"},
+					"ingress":      subnets(adminCIDRs, podSubnets),
+				},
+				{
+					// kubectl, and every in-cluster client of
+					// kubernetes.default (ArgoCD, operators, cilium...).
+					"name":         "kube-apiserver",
+					"portSelector": map[string]interface{}{"ports": []int{6443}, "protocol": "tcp"},
+					"ingress":      subnets(adminCIDRs, podSubnets),
+				},
+				{
+					// metrics-server, kubeletstats, `kubectl logs/exec`
+					// (the apiserver dials it over loopback).
+					"name":         "kubelet",
+					"portSelector": map[string]interface{}{"ports": []int{10250}, "protocol": "tcp"},
+					"ingress":      subnets(podSubnets),
+				},
+				{
+					// 4240: cilium-health from its health endpoint.
+					// 4244: hubble server, read by hubble-relay.
+					"name":         "cilium",
+					"portSelector": map[string]interface{}{"ports": []interface{}{4240, 4244}, "protocol": "tcp"},
+					"ingress":      subnets(podSubnets),
+				},
+			}
+			for _, rule := range firewall[1:] {
+				rule["apiVersion"] = "v1alpha1"
+				rule["kind"] = "NetworkRuleConfig"
+			}
+			for _, doc := range firewall {
+				patch, err := json.Marshal(doc)
+				if err != nil {
+					return fmt.Errorf("failed to marshal firewall patch: %w", err)
+				}
+				configPatches = append(configPatches, pulumi.String(string(patch)))
+			}
+		}
+
 		// Apply the configuration and Bootstrap the cluster
 		configurationApply, err := machine.NewConfigurationApply(ctx, "configurationApply", &machine.ConfigurationApplyArgs{
 			ClientConfiguration:       secrets.ClientConfiguration,
 			MachineConfigurationInput: configuration.MachineConfiguration(),
 			Node:                      pulumi.String(serverNetwork.Routing.Ipv4.Ip),
 			Endpoint:                  pulumi.String(serverNetwork.Routing.Ipv4.Ip),
-			ConfigPatches: pulumi.StringArray{
-				jsonPatchConfig,
-				pulumi.String(string(jsonPatchUserVolume)),
-				pulumi.String(string(jsonPatchNetbirdConfig)),
-			},
+			ConfigPatches:             configPatches,
 		}, pulumi.DependsOn([]pulumi.Resource{
 			reinstall,
 		}))

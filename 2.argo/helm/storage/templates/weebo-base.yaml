@@ -1,0 +1,3 @@
+{{- /* Shared helpers from 2.helm/weebo-base. */ -}}
+{{- include "weebo-base.require" (dict "ctx" . "keys" (list "project")) -}}
+{{- include "weebo-base.ciliumNetworkPolicies" . -}}

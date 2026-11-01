@@ -57,3 +57,43 @@ s3:
       - name: forgejo
       # Stalwart's BlobStore (2.argo/helm/mail), keys in mv/mail/s3.
       - name: mail
+
+# CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
+# documents the format). Ingress only, egress stays open; `host` is always let
+# in (kubelet probes, apiserver -> webhooks). Same sources and checks as in
+# 2.argo/helm/angos/values.yaml. Values passed down by the main chart override
+# these, ciliumNetworkPolicies.enabled included.
+ciliumNetworkPolicies:
+  enabled: false
+  policies:
+    # Operators only: webhooks (apiserver = host) and nothing else.
+    database-ingress:
+      namespace: database
+      endpointSelector: {}
+      ingress:
+        - fromEndpoints:
+            - {}
+    s3-ingress:
+      namespace: s3
+      endpointSelector: {}
+      # RustFS console login (s3.mainInstance.oidc).
+      reaches:
+        - auth.weebo.poc
+      ingress:
+        # operator -> tenant, console -> tenant.
+        - fromEndpoints:
+            - {}
+        # s3-main.weebo.poc: every S3 client (angos, batlehub, forgejo, mail)
+        # resolves it to Traefik. Plus both consoles.
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: traefik
+                app.kubernetes.io/name: traefik
+          toPorts:
+            - ports:
+                - port: "9000"
+                  protocol: TCP
+                - port: "9001"
+                  protocol: TCP
+                - port: "9090"
+                  protocol: TCP

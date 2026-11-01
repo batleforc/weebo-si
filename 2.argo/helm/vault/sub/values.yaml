@@ -58,3 +58,34 @@ networkPolicy:
     - traefik
     # Dex auth
     - dex
+
+# CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
+# documents the format). Ingress only, egress stays open; `host` is always let
+# in (kubelet probes, apiserver -> webhooks). Same sources and checks as in
+# 2.argo/helm/angos/values.yaml. Values passed down by the main chart override
+# these, ciliumNetworkPolicies.enabled included.
+# openbao keeps its own policy (networkPolicy above).
+ciliumNetworkPolicies:
+  enabled: false
+  policies:
+    # vault-operator serves metrics only, nobody scrapes them.
+    vault-operator-ingress:
+      namespace: vault-operator
+      endpointSelector: {}
+      ingress:
+        - fromEndpoints:
+            - {}
+    # vault-secrets-webhook, called by the apiserver.
+    vault-infra-ingress:
+      namespace: vault-infra
+      endpointSelector: {}
+      ingress:
+        - fromEndpoints:
+            - {}
+    # ESO: webhook and cert-controller, called by the apiserver.
+    external-secrets-ingress:
+      namespace: external-secrets
+      endpointSelector: {}
+      ingress:
+        - fromEndpoints:
+            - {}

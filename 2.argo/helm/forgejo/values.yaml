@@ -357,3 +357,66 @@ operator:
     kubernetesAuthRole: forgejo-operator
     # Only used by targets that do not pin a path.
     pathPrefix: weebo-forgejo
+
+# CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
+# documents the format). Ingress only, egress stays open; `host` is always let
+# in (kubelet probes, apiserver -> webhooks). Same sources and checks as in
+# 2.argo/helm/angos/values.yaml.
+ciliumNetworkPolicies:
+  enabled: false
+  policies:
+    forgejo-ingress:
+      namespace: forgejo
+      endpointSelector: {}
+      # Opened through Traefik (s3 storage, OIDC). Drawn by `task docs:netflow`.
+      reaches:
+        - s3-main.weebo.poc
+        - auth.weebo.poc
+      ingress:
+        # forgejo <-> postgres, and the forgejo-operator-token CronJob.
+        - fromEndpoints:
+            - {}
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: traefik
+                app.kubernetes.io/name: traefik
+          toPorts:
+            - ports:
+                - port: "3000"
+                  protocol: TCP
+        # git over SSH: no Traefik entrypoint for it, so VPN peers reach the
+        # forgejo-ssh ClusterIP through the netbird exit node.
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: netbird
+          toPorts:
+            - ports:
+                - port: "2222"
+                  protocol: TCP
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: database
+                app.kubernetes.io/name: cloudnative-pg
+          toPorts:
+            - ports:
+                - port: "8000"
+                  protocol: TCP
+                - port: "5432"
+                  protocol: TCP
+        # The operator talking to the instance it manages.
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: weebo-forgejo
+          toPorts:
+            - ports:
+                - port: "3000"
+                  protocol: TCP
+    weebo-forgejo-ingress:
+      namespace: weebo-forgejo
+      endpointSelector: {}
+      # The operator configures Forgejo through its API (operator/instance.yaml url).
+      reaches:
+        - git.weebo.poc
+      ingress:
+        - fromEndpoints:
+            - {}

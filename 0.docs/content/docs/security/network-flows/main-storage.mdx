@@ -1,0 +1,62 @@
+---
+title: "Flux réseau : main-storage"
+description: "Les flux autorisés par les politiques réseau de main-storage"
+---
+
+{/* Généré par `task docs:netflow` (0.task/scripts/netflow.py). Ne pas éditer à la main. */}
+
+Les flux que les politiques de l'application Argo CD `main-storage` autorisent. Namespaces : `local-path-storage`, `longhorn`.
+
+## Légende
+
+- Une **flèche pleine** est un flux autorisé par une politique déployée aujourd'hui.
+- Une **flèche pointillée** est un flux qu'une politique `weebo-base` encore désactivée (`ciliumNetworkPolicies.enabled: false`) autoriserait.
+- Un cadre est un namespace, une boîte un ensemble de pods (« tous les pods » = sélecteur vide).
+- Une **flèche épaisse** « via Traefik » relie un workload au backend qu'il atteint par un nom `*.weebo.poc` (annotation `weebo.io/reaches`, backend tiré des IngressRoute/Ingress du dépôt, ou du bloc `ingress` des values d'un chart upstream). C'est une relation applicative : la politique ne contrôle que le saut vers Traefik, c'est Traefik qui ouvre la connexion vers le backend.
+- `tout : internet + cluster` marque des pods qu'aucune politique déployée ne restreint en sortie : ils peuvent joindre n'importe quelle destination, IP directe comprise. « autres pods » désigne ceux du namespace qu'aucune politique d'egress ne sélectionne, et un pod visé par une politique proposée reste ouvert tant qu'elle est désactivée.
+- L'entité `host` sans port n'est pas dessinée : chaque politique `weebo-base` la laisse entrer (sondes kubelet, apiserver vers les webhooks).
+- Une politique qui ne liste que de l'ingress laisse l'egress ouvert, et inversement.
+
+## Flux
+
+```mermaid
+flowchart LR
+  n_entity_open_f65d5d(["tout : internet + cluster"])
+  subgraph ns_local_path_storage["local-path-storage"]
+    n_ns_local_path_storage_78f2b1["tous les pods"]
+  end
+  subgraph ns_longhorn["longhorn"]
+    n_ns_longhorn_e4afa5["longhorn-manager"]
+    n_ns_longhorn_911a87["tous les pods"]
+  end
+  subgraph ns_monitoring["monitoring"]
+    n_ns_monitoring_f1b4f0["opentelemetry-collector / component=agent-collector"]
+  end
+  n_ns_local_path_storage_78f2b1 -->|"egress non restreint"| n_entity_open_f65d5d
+  n_ns_local_path_storage_78f2b1 -.->|"tous ports"| n_ns_local_path_storage_78f2b1
+  n_ns_longhorn_911a87 -->|"egress non restreint"| n_entity_open_f65d5d
+  n_ns_monitoring_f1b4f0 -->|"TCP 9500"| n_ns_longhorn_e4afa5
+```
+
+## Flux ouverts par d'autres applications
+
+Les politiques d'autres applications qui touchent les namespaces de `main-storage`.
+
+```mermaid
+flowchart LR
+  subgraph ns_longhorn["longhorn"]
+    n_ns_longhorn_3ce2a9["svc longhorn-frontend"]
+  end
+  subgraph ns_netbird["netbird"]
+    n_ns_netbird_45c447["exit-node-ingress"]
+  end
+  n_ns_netbird_45c447 ==>|"via Traefik : longhorn.weebo.poc"| n_ns_longhorn_3ce2a9
+```
+
+## Politiques
+
+| Namespace | Politique | Type | État | Chart |
+|---|---|---|---|---|
+| local-path-storage | `local-path-storage-ingress` | Cilium | proposée | `2.argo/helm/storage` |
+| longhorn | `longhorn-manager-metrics` | Kubernetes | déployée | `2.argo/helm/storage` |
+

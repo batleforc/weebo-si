@@ -4,3 +4,10 @@ description: Stalwart, the cluster's internal mail server (RFC 0001, phase 0)
 type: application
 version: 0.1.0
 appVersion: "v0.16.27"
+
+dependencies:
+  # Shared value checks and CiliumNetworkPolicies (templates/weebo-base.yaml).
+  # Argo CD runs `helm dependency build`; Chart.lock and charts/ stay out of git.
+  - name: weebo-base
+    version: 0.1.0
+    repository: file://../../../2.helm/weebo-base

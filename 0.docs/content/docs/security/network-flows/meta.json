@@ -1,0 +1,18 @@
+{
+  "title": "Flux r\u00e9seau",
+  "pages": [
+    "index",
+    "angos",
+    "auth",
+    "batlehub",
+    "che",
+    "database",
+    "forgejo",
+    "hook",
+    "ingress",
+    "main-storage",
+    "monitoring",
+    "vault",
+    "vpn"
+  ]
+}

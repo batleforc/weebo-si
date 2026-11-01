@@ -214,3 +214,11 @@ graphify-out/cache/
 !.claude/skills/graphify/
 .claude/agents/
 graphify-out/cache/
+
+# weebo-base (2.helm/weebo-base) is a file:// dependency: Argo CD runs
+# `helm dependency build` itself, so neither the lock nor the packaged copy is
+# committed -- a stale lock would fail every chart after a weebo-base change.
+2.argo/helm/**/Chart.lock
+2.argo/helm/**/charts/weebo-base-*.tgz
+2.helm/netbird-exit-node/Chart.lock
+2.helm/netbird-exit-node/charts/

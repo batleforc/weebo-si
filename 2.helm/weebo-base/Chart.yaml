@@ -1,0 +1,8 @@
+apiVersion: v2
+name: weebo-base
+description: >-
+  Shared helpers for the weebo Argo CD app charts: value validation and the
+  CiliumNetworkPolicies every chart can switch on. Library only, renders nothing
+  by itself.
+type: library
+version: 0.1.0

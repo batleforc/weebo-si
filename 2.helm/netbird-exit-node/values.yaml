@@ -110,3 +110,19 @@ netpol:
         - ports:
             - port: "1900"
               protocol: UDP
+
+# CiliumNetworkPolicies from 2.helm/weebo-base. Nothing here: the exit node
+# already has its own policy (netpol above), and it accepts no connection
+# from inside the cluster.
+ciliumNetworkPolicies:
+  enabled: false
+  policies: {}
+  # Docs only (weebo-base.netflowReaches): VPN peers are masqueraded by the
+  # exit node, so from inside the cluster it is the one reaching every
+  # name Traefik serves.
+  reaches:
+    - namespace: netbird
+      endpointSelector:
+        matchLabels:
+          app: exit-node-ingress
+      hosts: ["*"]

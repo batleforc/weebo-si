@@ -24,6 +24,8 @@ tools:
       - { title: Argo, url: "https://argo.weebo.poc/" }
       - { title: Vault, url: "https://vault.weebo.poc/" }
       - { title: Auth, url: "https://auth.weebo.poc/" }
+      # Dex has no UI: its root is a 404, the discovery document is the page.
+      - { title: Dex, url: "https://dex.weebo.poc/.well-known/openid-configuration" }
       - { title: Monitoring, url: "https://clickstack.weebo.poc/" }
       - { title: Longhorn, url: "https://longhorn.weebo.poc/" }
       - { title: S3 Admin, url: "https://s3-main.weebo.poc/" }
@@ -33,3 +35,5 @@ tools:
       - { title: Batlehub, url: "https://pkg.weebo.poc" }
       - { title: Eclipse Che, url: "https://cde.dev.weebo.poc" }
       - { title: "Forgejo", url: "https://git.weebo.poc" }
+      # Off until mail.enabled in 2.argo/app/values.yaml.
+      # - { title: Mail, url: "https://mail.weebo.poc/" }
