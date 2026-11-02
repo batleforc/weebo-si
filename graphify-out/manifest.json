@@ -210,9 +210,9 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/runbooks/meta.json": {
-    "mtime": 1791219234.2026503,
-    "seen": 1793293536.4851263,
-    "ast_hash": "973eeb19f3a4573b78c92ccb8b294893",
+    "mtime": 1793624130.8778222,
+    "seen": 1793648937.1195006,
+    "ast_hash": "025c47d300cd596ae3e13d69e307cf4f",
     "semantic_hash": ""
   },
   "0.docs/package.json": {
@@ -456,9 +456,9 @@
     "semantic_hash": ""
   },
   "2.argo/helm/che/hardening/values.yaml": {
-    "mtime": 1793381305.218358,
-    "seen": 1793381321.2701895,
-    "ast_hash": "b7899e681f0d5792777b4569aca52091",
+    "mtime": 1793623318.3966618,
+    "seen": 1793648937.1209152,
+    "ast_hash": "ba0db977117a4660963de84f365c5275",
     "semantic_hash": ""
   },
   "2.argo/helm/che/main/Chart.yaml": {
@@ -468,9 +468,9 @@
     "semantic_hash": ""
   },
   "2.argo/helm/che/main/values.yaml": {
-    "mtime": 1793396362.171758,
-    "seen": 1793396375.162494,
-    "ast_hash": "a1cf05a8bf86cd950b547a91e42948dc",
+    "mtime": 1793623285.9926274,
+    "seen": 1793623313.2444723,
+    "ast_hash": "c2f5b94a1d77d2543924ccb445d015ab",
     "semantic_hash": ""
   },
   "2.argo/helm/che/operator/kustomization.yaml": {
@@ -1176,9 +1176,9 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/left-todo.md": {
-    "mtime": 1793282478.4449456,
-    "seen": 1793293536.4852443,
-    "ast_hash": "2f9b1aaadc23033508f4dde5a25fb40f",
+    "mtime": 1793648920.0605013,
+    "seen": 1793648937.1258693,
+    "ast_hash": "1429ae7217ed24ae2ce54a6bbd2dfae7",
     "semantic_hash": ""
   },
   "0.docs/content/docs/monitoring/index.mdx": {
@@ -1242,9 +1242,9 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/runbooks/index.mdx": {
-    "mtime": 1791219234.2036502,
-    "seen": 1793293536.4852507,
-    "ast_hash": "c5106e2565eb87d23fcf65fc475c1431",
+    "mtime": 1793624138.0137532,
+    "seen": 1793648937.1262586,
+    "ast_hash": "c3ab998e97690e650fe7c89d5ebb758d",
     "semantic_hash": ""
   },
   "0.docs/content/docs/runbooks/upgrade-talos-cilium.mdx": {
@@ -1650,8 +1650,8 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/meta.json": {
-    "mtime": 1793562828.2836611,
-    "seen": 1793572218.0556982,
+    "mtime": 1793572846.298927,
+    "seen": 1793623313.2438874,
     "ast_hash": "f19ecf4551267145389a4e0a1fbd3c0a",
     "semantic_hash": ""
   },
@@ -1662,81 +1662,87 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/angos.mdx": {
-    "mtime": 1793562828.282398,
-    "seen": 1793572218.058586,
+    "mtime": 1793572846.2976637,
+    "seen": 1793623313.2468872,
     "ast_hash": "c502d0a3d0a465797af7d8a31ebfa4eb",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/auth.mdx": {
-    "mtime": 1793562828.2825606,
-    "seen": 1793572218.0585873,
+    "mtime": 1793572846.297818,
+    "seen": 1793623313.2468889,
     "ast_hash": "7a41e41dbec4a3bd4c7f0e7a2776c0bb",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/batlehub.mdx": {
-    "mtime": 1793562828.2826743,
-    "seen": 1793572218.0585887,
+    "mtime": 1793572846.2979295,
+    "seen": 1793623313.2468908,
     "ast_hash": "72d37bceda2c2cf6ae8fa07ad14fcd35",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/che.mdx": {
-    "mtime": 1793562828.2828612,
-    "seen": 1793572218.0585902,
+    "mtime": 1793572846.2981174,
+    "seen": 1793623313.2468922,
     "ast_hash": "f66eb97002fed722d7e545e2e97a5ff4",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/database.mdx": {
-    "mtime": 1793562828.2829916,
-    "seen": 1793572218.0585916,
+    "mtime": 1793572846.298246,
+    "seen": 1793623313.2468936,
     "ast_hash": "edea3cca4c805b379bbaf6f63c65fe7a",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/forgejo.mdx": {
-    "mtime": 1793562828.283098,
-    "seen": 1793572218.0585928,
+    "mtime": 1793572846.298351,
+    "seen": 1793623313.2468953,
     "ast_hash": "fbd2e7fa3c9e77859cc249f58d193ba4",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/hook.mdx": {
-    "mtime": 1793562828.283143,
-    "seen": 1793572218.058594,
+    "mtime": 1793572846.2983983,
+    "seen": 1793623313.246897,
     "ast_hash": "642edb5fd0afa4e0722e9d90765056ab",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/index.mdx": {
-    "mtime": 1793562828.2822156,
-    "seen": 1793572218.0585954,
+    "mtime": 1793572846.2974777,
+    "seen": 1793623313.246898,
     "ast_hash": "6ddd7d8ed44e2fe83f2b54af27e5c1ac",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/ingress.mdx": {
-    "mtime": 1793562828.283195,
-    "seen": 1793572218.0585966,
+    "mtime": 1793572846.2984676,
+    "seen": 1793623313.2468991,
     "ast_hash": "e1bf26885f677e142821a3c41bc2b4fa",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/main-storage.mdx": {
-    "mtime": 1793562828.2832644,
-    "seen": 1793572218.0585978,
+    "mtime": 1793572846.2985368,
+    "seen": 1793623313.2469006,
     "ast_hash": "641ebbd0d5b7de750b0406800e3c9198",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/monitoring.mdx": {
-    "mtime": 1793562828.2833664,
-    "seen": 1793572218.0585992,
+    "mtime": 1793572846.2986367,
+    "seen": 1793623313.2469018,
     "ast_hash": "1a26cc884597733db3238538010f9fef",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/vault.mdx": {
-    "mtime": 1793562828.2835004,
-    "seen": 1793572218.0586002,
+    "mtime": 1793572846.2987683,
+    "seen": 1793623313.2469025,
     "ast_hash": "980b8390a018a71b52811b8fcf11754b",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/vpn.mdx": {
-    "mtime": 1793562828.283613,
-    "seen": 1793572218.0586011,
+    "mtime": 1793572846.2988791,
+    "seen": 1793623313.2469032,
     "ast_hash": "01ae2361db3c56e548bf8b65afaefe51",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/runbooks/bascule-weebo-si.mdx": {
+    "mtime": 1793648920.057171,
+    "seen": 1793648937.1262553,
+    "ast_hash": "717fd62d68adee6849e3aa579d033a4f",
     "semantic_hash": ""
   },
   "0.docs/yarn.lock": {

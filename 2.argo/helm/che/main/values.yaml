@@ -85,7 +85,7 @@ che:
     enabled: true
     namespace: weebo-si-hardening
     ## renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-si-operator
-    version: 0.2.1
+    version: 0.3.0
     # 1 = no HA (no webhook during a drain, see hardening-operator.yaml).
     replicas: 1
     # WeeboSiConfig/Team/User, rendered by 2.argo/helm/che/hardening and
@@ -139,6 +139,24 @@ che:
         rbac:
           enabled: false
         failurePolicy: Ignore
+      # features.podSecurity (RFC 0013): patch on namespaces, for the
+      # pod-security.kubernetes.io/* labels. Off until the feature is
+      # rolled out in the config chart (DryRun first, then the pods audit).
+      podSecurity:
+        rbac:
+          enabled: false
+      # features.resourceQuotas (RFC 0014): write on resourcequotas and
+      # limitranges cluster-wide, plus the pod-less namespace that holds the
+      # quota templates (a quota is live where it lives, so never in the
+      # operator's own namespace). Both rendered only once enabled; the
+      # template namespace then needs a dest entry in the che AppProject
+      # (2.argo/app/values.yaml).
+      resourceQuotas:
+        rbac:
+          enabled: false
+        templateNamespace:
+          name: weebo-si-hardening-templates
+          create: true
       # features.endpointAuth. Served by the endpoint-gateway deployment
       # (templates/endpoint-gateway.yaml, che.hardening.endpointGateway).
       endpointAuth:

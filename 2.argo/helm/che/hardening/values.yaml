@@ -421,6 +421,51 @@ config:
         # .Values.repo is always added.
         allowedRepoUrls: []
 
+    # RFC 0013. A Pod Security Admission level per workspace namespace,
+    # written as the pod-security.kubernetes.io/* labels; the apiserver's
+    # PodSecurity plugin does the refusing. No catalogue: a team picks one
+    # of the three upstream levels (lowercase). Before Enforce, run
+    # `weebo-si-operator pods audit --all-namespaces`. Needs
+    # operator.podSecurity.rbac.enabled.
+    podSecurity:
+      enabled: false
+      mode: DryRun
+      namespaceSelector:
+        matchLabels:
+          hardening.weebo.io/workspace-namespace: "true"
+      # Image builds in a workspace (podman/buildah) need baseline plus
+      # the build seccomp profile set through the DWOC.
+      default: baseline
+      ceiling: baseline
+      # Pinned on purpose: `latest` would let a Talos upgrade tighten a
+      # level. Keep in step with the cluster version (runbooks).
+      version: v1.36
+      backend: Auto
+      namespaceSelection:
+        annotation: hardening.weebo.io/pod-security
+
+    # RFC 0014. One quota profile (ResourceQuota + LimitRange) per workspace
+    # namespace, per team, copied from templates that live in the pod-less
+    # operator.resourceQuotas.templateNamespace, never here: a quota is
+    # enforced where it lives, so the `templates` key of this block is
+    # refused by feature-templates.yaml. Author them in that namespace
+    # (an extra Application) before enabling. Needs
+    # operator.resourceQuotas.rbac.enabled.
+    resourceQuotas:
+      enabled: false
+      mode: DryRun
+      namespaceSelector:
+        matchLabels:
+          hardening.weebo.io/workspace-namespace: "true"
+      catalog:
+        - key: standard
+          quotaRef: { name: quota-standard, namespace: weebo-si-hardening-templates }
+          limitRangeRef: { name: limits-standard, namespace: weebo-si-hardening-templates }
+      default: standard
+      namespaceSelection:
+        annotation: hardening.weebo.io/resource-quota
+      onNotGranted: Default
+
 # WeeboSiTeam objects: name -> spec. A team's feature block only does
 # something while that feature is enabled above; its catalogue entries must
 # be identical to the cluster's when they share a key.

@@ -12,6 +12,9 @@
 {{- range $feature, $block := .Values.config.features }}
 {{- if $block.enabled }}
 {{- range $name, $obj := $block.templates }}
+{{- if has $obj.kind (list "ResourceQuota" "LimitRange") }}
+{{- fail (printf "config.features.%s.templates.%s: a %s is enforced in the namespace that holds it; author it in operator.resourceQuotas.templateNamespace, not here" $feature $name $obj.kind) }}
+{{- end }}
 ---
 # Template of config.features.{{ $feature }}.
 apiVersion: {{ $obj.apiVersion }}

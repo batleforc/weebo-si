@@ -58,6 +58,7 @@ description: "What's left to do ?"
 - [ ] [Kuberarmor](https://kubearmor.com/)
 - [ ] [Kloak](https://une-tasse-de.cafe/blog/kloak/)
 - [ ] [Weebo Si Hardening](https://github.com/batleforc/weebo-si-hardening)
+  - [ ] Bascule Weebo5 → Weebo-SI : [runbook](/docs/runbooks/bascule-weebo-si) (élévation admin 2FA tracée, KubeArmor)
   - [x] NetPolicy (networkProfiles, Enforce)
   - [ ] NetPolicy guard (policyGuard, activé en DryRun, passer en Enforce)
   - [ ] DWOC restrictions (dwocPin, activé en DryRun, passer en Enforce)
@@ -66,6 +67,8 @@ description: "What's left to do ?"
   - [ ] Package Registry (registryConfig)
   - [x] Endpoint auth (endpointAuth, Enforce)
   - [ ] KubeArmor policies (kubearmorPolicy, needs KubeArmor)
+  - [ ] Pod Security (podSecurity, dispo depuis l'opérateur 0.3.0, à passer en DryRun puis `pods audit`)
+  - [ ] Resource quotas (resourceQuotas, dispo depuis l'opérateur 0.3.0, templates dans weebo-si-hardening-templates)
 - [ ] [Eclipse Che](https://www.eclipse.org/che/)
   - [x] Expo : cde.dev.weebo.poc && \*.cde.dev.weebo.poc
   - [x] Deploy App
