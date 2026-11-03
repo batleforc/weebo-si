@@ -3,9 +3,11 @@
 # issued after the second factor, mailed to the weebo_admin members and kept
 # in the UI. Without a refresh token that is at most one a token-hour.
 #
-# The mail needs SMTP, set by auth/main (authentik.smtp, AUTHENTIK_EMAIL__*).
-# The two transports are Authentik's own, from its default
-# `events-default.yaml` blueprint.
+# Rendered through `tpl` (templates/authentik/blueprints.yaml). The email
+# transport is only bound while authentik.smtp.enabled -- off while Stalwart
+# is -- and the Local one (Authentik UI, bell icon) always. Turning SMTP off
+# again later does NOT unbind the email transport: the blueprint only adds.
+# Both transports are Authentik's own, from its default `events-default.yaml`.
 version: 1
 metadata:
   name: weebo - admin step-up notifications
@@ -43,8 +45,10 @@ entries:
       severity: notice
       destination_group: !Find [authentik_core.group, [name, weebo_admin]]
       transports:
-        - !Find [authentik_events.notificationtransport, [name, default-email-transport]]
         - !Find [authentik_events.notificationtransport, [name, default-local-transport]]
+{{- if .Values.authentik.smtp.enabled }}
+        - !Find [authentik_events.notificationtransport, [name, default-email-transport]]
+{{- end }}
 
   - model: authentik_policies.policybinding
     identifiers:

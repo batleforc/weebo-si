@@ -177,13 +177,13 @@ Dans le shell : `alias kadmin='kubectl --context Weebo-si-admin'`. `0.config/kub
 | Trace | Ce qu'elle dit | Où | Quand |
 | --- | --- | --- | --- |
 | Événements Authentik | chaque `authorize_application` sur `kube-admin` : qui, quelle IP, quand ; rétention 365 jours | Events → Logs, base Authentik | lundi, natif |
-| Mail par élévation | une ligne « élévation admin à 9 h 12 depuis telle IP » dans `max@weebo.internal`, au plus une par heure d'admin | Notification Rule + transport Email | lundi |
+| Notification par élévation | une ligne « élévation admin à 9 h 12 depuis telle IP », au plus une par heure d'admin : dans l'UI Authentik (cloche) toujours, dans `max@weebo.internal` une fois Stalwart allumé | Notification Rule, transports Local + Email | lundi (Local), avec `mail.enabled` (Email) |
 | Audit apiserver | toutes les requêtes `labsso-admin:*`, donc première et dernière action de chaque session | ClickStack, via `/var/log/audit/kube` du nœud | « ce qui reste après » |
 
 Pour le mail, deux réglages que l'opérateur ne modélise pas, tous deux dans git :
 
-- **SMTP.** Le compte d'envoi `authentik@weebo.internal` existe déjà côté Stalwart (`bootstrap.serviceAccounts` de `2.argo/helm/mail`) et ses identifiants dans `mv/auth/smtp` (`2.terra/vault/terra-map/mail.tf`) ; `auth` est déjà dans `networkPolicy.mailClients`. `authentik.yaml` lit `host`, `port`, `username`, `password` et `from` par `vault:mv/data/auth/smtp#...` dans les env `AUTHENTIK_EMAIL__*`, avec STARTTLS (`USE_TLS`), derrière `authentik.smtp.enabled`.
-- **Notification Rule** `weebo-notify-admin-step-up`, blueprint `2.argo/helm/auth/main/files/blueprints/admin-step-up-notify.yaml` : groupe destinataire `weebo_admin`, transports `default-email-transport` et `default-local-transport` (celui-ci garde une copie dans l'UI), sévérité Notice. Une seule Expression Policy, qui vérifie l'action **et** l'application : une règle de notification évalue ses policies en mode `any`, un Event Matcher sur `authorize_application` lié à côté ferait partir un mail pour toutes les applications.
+- **SMTP.** Le compte d'envoi `authentik@weebo.internal` existe déjà côté Stalwart (`bootstrap.serviceAccounts` de `2.argo/helm/mail`) et ses identifiants dans `mv/auth/smtp` (`2.terra/vault/terra-map/mail.tf`) ; `auth` est déjà dans `networkPolicy.mailClients`. `authentik.yaml` lit `host`, `port`, `username`, `password` et `from` par `vault:mv/data/auth/smtp#...` dans les env `AUTHENTIK_EMAIL__*`, avec STARTTLS (`USE_TLS`), derrière `authentik.smtp.enabled`. **Off tant que Stalwart l'est** (`mail.enabled: false` dans `2.argo/app/values.yaml`) : le secret existe, mais `stalwart.mail.svc` ne résout pas et chaque envoi échouerait. Les deux s'allument ensemble.
+- **Notification Rule** `weebo-notify-admin-step-up`, blueprint `2.argo/helm/auth/main/files/blueprints/admin-step-up-notify.yaml` : groupe destinataire `weebo_admin`, transport `default-local-transport` (l'UI) toujours, `default-email-transport` seulement avec `authentik.smtp.enabled` (le blueprint passe par `tpl`), sévérité Notice. Repasser SMTP à off ne retire pas le transport Email déjà lié : un blueprint ne fait qu'ajouter. Une seule Expression Policy, qui vérifie l'action **et** l'application : une règle de notification évalue ses policies en mode `any`, un Event Matcher sur `authorize_application` lié à côté ferait partir un mail pour toutes les applications.
 
 ```python
 event = request.context.get("event")
@@ -212,7 +212,7 @@ KUBECONFIG=0.config/kubeconfig.oidc.yaml kubectl --context Weebo-si-admin auth c
 
 # trace
 #   Authentik Events -> Logs : un authorize_application, application kube-admin, l'IP du poste
-#   un mail dans max@weebo.internal
+#   une notification dans l'UI Authentik (cloche) ; un mail dans max@weebo.internal une fois Stalwart allumé
 # comportement du seuil : rm -rf ~/.kube/cache/oidc-login-admin puis kadmin get nodes
 #   -> redirection navigateur, PAS de nouvelle demande de clé (moins de 8 h)
 ```

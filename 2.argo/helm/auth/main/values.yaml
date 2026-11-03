@@ -42,9 +42,14 @@ authentik:
   # mail sent on each kube-admin elevation.
   blueprints:
     enabled: true
-  # Outgoing mail from mv/auth/smtp, for those notifications.
+  # Outgoing mail from mv/auth/smtp, for those notifications. OFF while
+  # Stalwart is (2.argo/app/values.yaml, mail.enabled): the secret exists
+  # (Terraform writes it regardless) but stalwart.mail.svc does not resolve,
+  # so every send would fail and be retried. Off, the elevation notification
+  # keeps only its Local transport (Authentik UI) and the events. Turn on
+  # with mail.enabled: it also adds the email transport to that rule.
   smtp:
-    enabled: true
+    enabled: false
   operator:
     enabled: true
     # renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-authentik

@@ -1,7 +1,7 @@
 # Graph Report - weebo-si  (2026-11-03)
 
 ## Corpus Check
-- 522 files · ~239,940 words
+- 522 files · ~240,147 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 84 file(s) not represented in the graph (top: (none) 32, .tpl 16, .woff2 12)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b79f2865`
+- Built from commit: `1792bd1f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -2441,11 +2441,11 @@ _Questions this graph is uniquely positioned to answer:_
   _3 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Upgrade guidelines` be split into smaller, more focused modules?**
   _Cohesion score 0.04081632653061224 - nodes in this community are weakly interconnected._
-- **Why does `applications` connect `applications` to `argo`, `kind`, `kube-admin`, `angos`, `che`, `endpoint-gateway`, `forgejo`, `s3`, `stalwart`, `vault`, `auth/sub/values.yaml`?**
+- **Why does `fumadocs-core` connect `source.ts` to `fumadocs-mdx`, `react-router.config.ts`, `0.docs/package.json`, `search.tsx`, `docs.tsx`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **Should `rustfs` be split into smaller, more focused modules?**
   _Cohesion score 0.044444444444444446 - nodes in this community are weakly interconnected._
-- **Why does `fumadocs-core` connect `source.ts` to `fumadocs-mdx`, `react-router.config.ts`, `0.docs/package.json`, `search.tsx`, `docs.tsx`?**
+- **Why does `applications` connect `applications` to `argo`, `kind`, `kube-admin`, `angos`, `che`, `endpoint-gateway`, `forgejo`, `s3`, `stalwart`, `vault`, `auth/sub/values.yaml`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **Should `env` be split into smaller, more focused modules?**
   _Cohesion score 0.045454545454545456 - nodes in this community are weakly interconnected._

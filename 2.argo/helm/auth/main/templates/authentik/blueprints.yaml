@@ -7,6 +7,10 @@
 # the worker discovers every *.yaml there and applies it, again on every
 # change and on its hourly schedule. Removing a file does not delete what it
 # created: do that by hand.
+#
+# Each file goes through `tpl` with this chart's values, so a blueprint can
+# follow a flag (admin-step-up-notify.yaml and authentik.smtp.enabled). Plain
+# blueprints carry no template action, and render as they are.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -17,6 +21,6 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
 data:
   {{- range $path, $_ := .Files.Glob "files/blueprints/*.yaml" }}
-  {{ base $path }}: {{ $.Files.Get $path | toJson }}
+  {{ base $path }}: {{ tpl ($.Files.Get $path) $ | toJson }}
   {{- end }}
 {{- end -}}
