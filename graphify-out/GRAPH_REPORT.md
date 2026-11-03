@@ -1,9 +1,9 @@
-# Graph Report - weebo-si  (2026-11-02)
+# Graph Report - weebo-si  (2026-11-03)
 
 ## Corpus Check
-- 519 files · ~238,410 words
+- 519 files · ~238,415 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 85 file(s) not represented in the graph (top: (none) 33, .tpl 16, .woff2 12)
+- Unclassified: 84 file(s) not represented in the graph (top: (none) 32, .tpl 16, .woff2 12)
 
 ## Summary
 - 5067 nodes · 5422 edges · 515 communities (477 shown, 38 thin omitted)
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ee77e720`
+- Built from commit: `3a8c4439`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

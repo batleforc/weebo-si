@@ -291,6 +291,8 @@ operator:
       # redirects there).
       - name: batlehub
         source: https://github.com/batlehub/batlehub.git
+      - name: openidea
+        source: https://github.com/l0ng-ai/openidea.git
       - { name: weebo-notify-v2, private: true }
       - { name: easy-3d-stl, private: true }
       - { name: rift-of-sym, private: true }
