@@ -1,0 +1,146 @@
+---
+title: Onboarder un utilisateur
+description: "Créer un compte Authentik, lui donner un premier accès sans mail, faire enrôler son second facteur (TOTP / passkey) et, selon son rôle, son workspace Che et l'élévation admin"
+---
+
+Objectif : une personne reçoit un compte Weebo-SI, se connecte une première fois sans mot de passe transmis en clair, définit le sien et enrôle un second facteur. Tant que Stalwart est éteint (`mail.enabled: false`), aucun lien ne part par mail : le premier accès passe par une clé de récupération à usage unique, envoyée par un autre canal.
+
+Le second facteur n'est pas exigé à la connexion. Il garde l'**élévation admin** : le flow `admin-step-up` (`2.argo/helm/auth/main/files/blueprints/admin-step-up.yaml`) refuse un compte sans appareil sur `kube-admin`, Longhorn et ClickStack. Il est donc obligatoire pour un `weebo_admin` et recommandé pour tous.
+
+## Avant de commencer
+
+Choisir le groupe. Les groupes s'emboîtent : `weebo_admin` ⊃ `weebo_moderator` ⊃ `weebo_user`, et chaque application est ouverte à un groupe (`accessGroup` dans `2.argo/helm/auth/sub/values.yaml`).
+
+| Groupe | Ouvre | Pour qui |
+| --- | --- | --- |
+| `weebo_user` | le webmail Stalwart | un compte sans accès dev |
+| `weebo_moderator` | en plus Che, endpoint-gateway, Forgejo, Argo CD, batlehub, angos, S3 | un développeur |
+| `weebo_admin` | en plus `kube-admin` (cluster-admin), Longhorn, ClickStack | un administrateur |
+
+`weebo_admin` est aussi `isSuperuser` : super-admin d'Authentik. Ne le donner qu'à qui doit administrer l'identité elle-même.
+
+Il faut aussi :
+
+- l'adresse : `<username>@weebo.internal` (le domaine mail ; Stalwart refuse `.poc`). C'est aussi l'identité vue par l'apiserver, `labsso:` + email ;
+- un canal privé pour envoyer un lien (Signal, de vive voix…) ;
+- `KUBECONFIG=0.config/kubeconfig.yaml` pour l'étape 2.
+
+## Étapes
+
+### 1. Déclarer le compte (git)
+
+Dans `2.argo/helm/auth/sub/values.yaml`, `identity.users.items` :
+
+```yaml
+      - crName: alice
+        username: alice
+        name: alice
+        email: alice@weebo.internal
+        isActive: true
+        # Noms Authentik des groupes (underscore), pas les crName.
+        groupRefs:
+          - weebo_moderator
+```
+
+Commit sur `develop`, push, puis attendre la synchro de l'Application `auth-app`.
+
+**Vérification** :
+
+```bash
+export KUBECONFIG=0.config/kubeconfig.yaml
+kubectl get authentikuser alice -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'   # True
+```
+
+Le CRD `AuthentikUser` n'a pas de champ mot de passe : le compte existe, mais personne ne peut encore s'y connecter.
+
+### 2. Premier accès : clé de récupération
+
+Le brand n'a pas de flow de récupération, donc l'action « lien de récupération » de l'UI admin ne fonctionne pas. `ak create_recovery_key` n'en a pas besoin. Sa durée est en **minutes**, et le jeton est supprimé à sa première utilisation.
+
+```bash
+W=$(kubectl -n auth get pod -o name | grep worker | head -1)
+kubectl -n auth exec $W -c worker -- /vault/vault-env ak create_recovery_key 60 alice
+#   https://auth.weebo.poc/recovery/use-token/<clé>/   valide 60 min, une seule fois
+```
+
+`/vault/vault-env` est obligatoire : sans lui, la commande n'a pas le mot de passe Postgres (`password authentication failed for user "authentik"`).
+
+Envoyer le lien par le canal privé, jamais dans un ticket ni un dépôt : il connecte directement sous ce compte.
+
+### 3. Mot de passe et second facteur (par la personne)
+
+Une fois connectée par le lien :
+
+1. *Paramètres → Mot de passe* : définir le mot de passe.
+2. *Paramètres → Appareils MFA → Enrôler* :
+   - **TOTP** : scanner le QR code avec une application (Aegis, 2FAS, Google Authenticator…), puis saisir un code pour confirmer ;
+   - **passkey / clé de sécurité (WebAuthn)**, en plus si possible : elle sert de secours si le téléphone est perdu, et c'est une simple touche à l'élévation.
+3. Se déconnecter, puis se reconnecter avec le mot de passe.
+
+**Vérification** (côté admin) : *Annuaire → Utilisateurs → alice → Appareils MFA* liste au moins un appareil confirmé. Ou en shell :
+
+```bash
+kubectl -n auth exec $W -c worker -- /vault/vault-env ak shell -c "
+from authentik.core.models import User
+from authentik.stages.authenticator_totp.models import TOTPDevice
+from authentik.stages.authenticator_webauthn.models import WebAuthnDevice
+u = User.objects.get(username='alice')
+print('totp', TOTPDevice.objects.filter(user=u, confirmed=True).count(),
+      'webauthn', WebAuthnDevice.objects.filter(user=u).count(),
+      'password', u.has_usable_password())
+"
+```
+
+### 4. Workspace Che (`weebo_moderator` et plus)
+
+Dans `2.argo/helm/che/hardening/values.yaml`, `users`, sur le modèle de `batleforc` :
+
+```yaml
+users:
+  alice:
+    username: alice                 # preferred_username Authentik -> dev-ws-alice
+    email: alice@weebo.internal     # le MÊME que l'AuthentikUser : les RoleBindings visent labsso:<email>
+    team: weebo
+    active: true
+    che:
+      mode: Ensure
+```
+
+Pas de bloc `authentik:` : l'AuthentikUser est déjà géré par le chart auth (étape 1), l'opérateur ne doit pas en créer un second.
+
+**Vérification** :
+
+```bash
+kubectl get ns dev-ws-alice
+kubectl -n dev-ws-alice get rolebindings -o wide | grep labsso:alice@weebo.internal
+```
+
+Puis la personne ouvre `https://cde.dev.weebo.poc` et démarre un workspace.
+
+### 5. Élévation admin (`weebo_admin` seulement)
+
+Lui donner le contexte `Weebo-si-admin` de `0.config/kubeconfig.oidc-template.yaml` (cluster et CA à remplir comme pour le contexte dev), et `alias kadmin='kubectl --context Weebo-si-admin'`.
+
+**Vérification**, par la personne :
+
+```bash
+kubectl auth whoami                       # labsso:alice@weebo.internal, sans labsso:weebo_admin
+kadmin auth whoami                        # navigateur, code TOTP ou clé, puis labsso-admin:alice@weebo.internal
+kadmin auth can-i '*' '*'                 # yes
+```
+
+Sans appareil MFA, `kadmin` aboutit à un refus d'Authentik sur le flow `admin-step-up` : revenir à l'étape 3.
+
+## Appareil perdu
+
+1. UI admin : *Annuaire → Utilisateurs → alice → Appareils MFA*, supprimer l'appareil perdu.
+2. S'il n'en reste aucun et que la personne ne peut plus se connecter : nouvelle clé (étape 2), puis réenrôlement (étape 3).
+
+Le seuil de 8 h du flow `admin-step-up` ne concerne que la dernière validation réussie. Supprimer un appareil n'invalide pas un jeton `kube-admin` déjà émis : il expire à l'heure.
+
+## Retour arrière
+
+- **Retirer un accès** : enlever le groupe dans `groupRefs`, ou passer `isActive: false` pour bloquer toute connexion sans rien supprimer.
+- **Supprimer le compte** : retirer l'entrée ne suffit pas. `auth-app` ne fait pas de prune, et le CR porte un finalizer qui supprime l'utilisateur Authentik. Il faut donc `kubectl delete authentikuser alice`, une fois, volontairement.
+- **Workspace** : retirer l'entrée de `che/hardening` `users` supprime le WeeboSiUser, son Application et, à terme, `dev-ws-alice` **avec ses workspaces**. Sauvegarder d'abord ce qui doit l'être.
+- **Clé de récupération non utilisée** : elle expire seule. Pour l'annuler avant, *Annuaire → Jetons*, intent `recovery`, la supprimer.
