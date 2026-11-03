@@ -37,6 +37,14 @@ authentik:
   # auth/sub (brand).
   theme:
     enabled: true
+  # files/blueprints/ (templates/authentik/blueprints.yaml): what the operator's
+  # CRDs do not model. Today the admin-step-up flow, its MFA stage, and the
+  # mail sent on each kube-admin elevation.
+  blueprints:
+    enabled: true
+  # Outgoing mail from mv/auth/smtp, for those notifications.
+  smtp:
+    enabled: true
   operator:
     enabled: true
     # renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-authentik
@@ -103,6 +111,10 @@ authentik:
         enabled: true
       vault:
         enabled: false
+      # New. The apiserver's admin issuer (1.pulu-init, jwt[1]), behind the
+      # admin-step-up flow (files/blueprints/admin-step-up.yaml).
+      kube-admin:
+        enabled: true
 
 dns:
   domain: auth.weebo.poc

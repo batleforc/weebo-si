@@ -28,14 +28,37 @@ import (
 // regenerated rather than committed. The path is relative to this project's
 // directory, which is where the pulumi task runs.
 const (
-	registryHost    = "registry.pkg.weebo.poc"
-	authHost        = "dex.weebo.poc"
+	registryHost = "registry.pkg.weebo.poc"
+	authHost     = "dex.weebo.poc"
+	// The admin issuer's host (Authentik itself, not dex), resolved the same
+	// way as authHost: the apiserver fetches its discovery document and JWKS.
+	adminAuthHost   = "auth.weebo.poc"
 	s3Host          = "s3-main.weebo.poc"
 	clusterCABundle = "../.tmp/weebo-si-ca.pem"
 )
 
-// The apiserver's structured authentication config, for the issuer URL, the
-// client ID it accepts as an audience, and the CA that signs the issuer.
+// The admin issuer: Authentik's `kube-admin` application (2.argo/helm/auth/sub,
+// applications.kube-admin), whose authorization flow demands a second factor
+// (admin-step-up). Pinned here rather than read from Vault like the dex
+// issuer: slug and client id are in git on both sides, and change together.
+const (
+	adminIssuerURL = "https://" + adminAuthHost + "/application/o/kube-admin/"
+	adminClientID  = "kube-admin"
+)
+
+// The apiserver's structured authentication config: two JWT authenticators,
+// both validated against caPEM.
+//
+//   - jwt[0], dev: the dex issuer and client given here. Usernames
+//     `labsso:` + email, groups `labsso:` + name -- MINUS weebo_admin. That
+//     path is the everyday kubectl context and the token Che's dashboard hands
+//     the apiserver; neither is cluster-admin any more.
+//   - jwt[1], admin: Authentik's kube-admin application (adminIssuerURL),
+//     reached only through the admin-step-up flow, so behind a second factor,
+//     with one-hour tokens and no refresh. Usernames `labsso-admin:` + email,
+//     all groups, so labsso:weebo_admin -> weebo-admin-crb (cluster-admin).
+//     The distinct prefix lets the apiserver audit tell the two identities
+//     apart, and no RoleBinding of a dev-ws-* namespace names this one.
 //
 // Built as an object and handed to the YAML marshaller rather than printed
 // into a text template: certificateAuthority carries a whole PEM bundle, and
@@ -44,28 +67,62 @@ const (
 // treats specially, and silently corrupt otherwise. The marshaller picks a
 // scalar style that fits whatever it is given.
 func authenticationConfig(issuerURL, clientID, caPEM string) (string, error) {
+	claimValidationRules := []map[string]interface{}{
+		{
+			"expression": "claims.email_verified == true",
+			"message":    "email must be verified",
+		},
+	}
+	userValidationRules := []map[string]interface{}{
+		{
+			"expression": "!user.username.startsWith('system:')",
+			"message":    "username cannot used reserved system: prefix",
+		},
+		{
+			"expression": "user.groups.all(group, !group.startsWith('system:'))",
+			"message":    "groups cannot used reserved system: prefix",
+		},
+	}
+	issuer := func(url, audience string) map[string]interface{} {
+		return map[string]interface{}{
+			"url":                  url,
+			"audiences":            []string{audience},
+			"audienceMatchPolicy":  "MatchAny",
+			"certificateAuthority": caPEM,
+		}
+	}
+
 	doc, err := yaml.Marshal(map[string]interface{}{
 		"apiVersion": "apiserver.config.k8s.io/v1beta1",
 		"kind":       "AuthenticationConfiguration",
 		"jwt": []map[string]interface{}{
 			{
-				"issuer": map[string]interface{}{
-					"url":                  issuerURL,
-					"audiences":            []string{clientID},
-					"audienceMatchPolicy":  "MatchAny",
-					"certificateAuthority": caPEM,
-				},
-				"claimValidationRules": []map[string]interface{}{
-					{
-						"expression": "claims.email_verified == true",
-						"message":    "email must be verified",
-					},
-				},
+				"issuer":               issuer(issuerURL, clientID),
+				"claimValidationRules": claimValidationRules,
 				"claimMappings": map[string]interface{}{
 					// The prefix keeps every OIDC identity in its own namespace, so
 					// no token can name a subject an in-cluster binding already uses.
 					"username": map[string]interface{}{
 						"expression": `"labsso:" + claims.email`,
+					},
+					// weebo_admin is dropped: cluster-admin is only reachable
+					// through jwt[1]. `has()` so a token without a groups claim
+					// maps to no groups instead of failing the expression.
+					"groups": map[string]interface{}{
+						"expression": `has(claims.groups) ? claims.groups.filter(g, g != "weebo_admin").map(g, "labsso:" + g) : []`,
+					},
+					"uid": map[string]interface{}{
+						"expression": "claims.sub",
+					},
+				},
+				"userValidationRules": userValidationRules,
+			},
+			{
+				"issuer":               issuer(adminIssuerURL, adminClientID),
+				"claimValidationRules": claimValidationRules,
+				"claimMappings": map[string]interface{}{
+					"username": map[string]interface{}{
+						"expression": `"labsso-admin:" + claims.email`,
 					},
 					"groups": map[string]interface{}{
 						"claim":  "groups",
@@ -75,16 +132,7 @@ func authenticationConfig(issuerURL, clientID, caPEM string) (string, error) {
 						"expression": "claims.sub",
 					},
 				},
-				"userValidationRules": []map[string]interface{}{
-					{
-						"expression": "!user.username.startsWith('system:')",
-						"message":    "username cannot used reserved system: prefix",
-					},
-					{
-						"expression": "user.groups.all(group, !group.startsWith('system:'))",
-						"message":    "groups cannot used reserved system: prefix",
-					},
-				},
+				"userValidationRules": userValidationRules,
 			},
 		},
 	})
@@ -914,6 +962,7 @@ func main() {
 								"ip": serverNetwork.Routing.Ipv4.Ip,
 								"aliases": []string{
 									authHost,
+									adminAuthHost,
 									// The node resolves nothing under .weebo.poc: its
 									// nameservers are OVH and Google, and the name only
 									// exists inside the cluster. Without this the kubelet

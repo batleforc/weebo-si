@@ -1,0 +1,61 @@
+# The admin elevation's second factor (runbook bascule-weebo-si, Lundi 2).
+#
+# A blueprint and not an AuthentikFlow CR: the CRD models the flow object
+# only, never its stages or bindings, and this flow is nothing but its one
+# stage. The operator also creates first and never adopts by slug, so the
+# flow cannot be split between a CR and this file either -- whoever came
+# second would end in AuthentikObjectAlreadyExists. Everything lives here.
+#
+# Referenced by slug (`admin-step-up`) as the authorizationFlow of the
+# kube-admin, longhorn and clickstack applications (auth/sub values). Until
+# the worker has applied this file those applications fail to reconcile on a
+# missing flow and retry; nothing is ever served without the stage.
+#
+# PREREQUISITE: the account must already have a WebAuthn or TOTP device.
+# `not_configured_action: deny` refuses anyone without one, on purpose -- the
+# elevation does not invite you to enrol, it expects you to have done so.
+version: 1
+metadata:
+  name: weebo - admin step-up
+  labels:
+    blueprints.goauthentik.io/description: "Second factor for weebo_admin applications"
+entries:
+  - model: authentik_flows.flow
+    id: flow
+    identifiers:
+      slug: admin-step-up
+    attrs:
+      name: admin-step-up
+      title: "Second facteur pour l'accès admin"
+      designation: authorization
+      authentication: require_authenticated
+      # Denied (no device, wrong key) is a message, not a silent continue.
+      denied_action: message
+
+  - model: authentik_stages_authenticator_validate.authenticatorvalidatestage
+    id: mfa
+    identifiers:
+      name: admin-step-up-mfa
+    attrs:
+      # No SMS, email or static recovery codes for the admin path.
+      device_classes:
+        - webauthn
+        - totp
+      not_configured_action: deny
+      # One factor per working day, shared by every application on this flow:
+      # a touch in the morning covers kubectl, Longhorn and ClickStack. A
+      # kube-admin token still expires after an hour; renewing it within the
+      # threshold is a browser redirect, not a new prompt.
+      last_auth_threshold: hours=8
+      webauthn_user_verification: preferred
+
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow
+      stage: !KeyOf mfa
+      order: 0
+    attrs:
+      # Evaluated when the stage is reached, so the threshold is checked
+      # against the session as it is now.
+      evaluate_on_plan: false
+      re_evaluate_policies: true

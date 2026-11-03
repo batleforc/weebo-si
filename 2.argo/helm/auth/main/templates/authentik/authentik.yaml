@@ -59,6 +59,28 @@ spec:
             - name: AUTHENTIK_POSTGRESQL__HOST
               value: authentik-pg-rw
           {{- end }}
+          {{- if .Values.authentik.smtp.enabled }}
+            # Stalwart's `authentik@weebo.internal` sending account
+            # (2.argo/helm/mail, bootstrap.serviceAccounts), published to
+            # mv/auth/smtp by 2.terra/vault/terra-map/mail.tf. Read by the
+            # worker, which sends the notification mails (admin step-up).
+            # 587 with STARTTLS: USE_TLS, not USE_SSL. The certificate is the
+            # Weebo PKI's, trusted through the inject-certs annotation below.
+            - name: AUTHENTIK_EMAIL__HOST
+              value: "vault:mv/data/auth/smtp#host"
+            - name: AUTHENTIK_EMAIL__PORT
+              value: "vault:mv/data/auth/smtp#port"
+            - name: AUTHENTIK_EMAIL__USERNAME
+              value: "vault:mv/data/auth/smtp#username"
+            - name: AUTHENTIK_EMAIL__PASSWORD
+              value: "vault:mv/data/auth/smtp#password"
+            - name: AUTHENTIK_EMAIL__FROM
+              value: "vault:mv/data/auth/smtp#from"
+            - name: AUTHENTIK_EMAIL__USE_TLS
+              value: "true"
+            - name: AUTHENTIK_EMAIL__USE_SSL
+              value: "false"
+          {{- end }}
           podAnnotations:
             inject-certs: "enabled"
             vault.security.banzaicloud.io/vault-addr: "https://openbao.vault:8200"
@@ -126,6 +148,12 @@ spec:
               mountPath: /web/dist/assets/batlehub
               readOnly: true
           {{- end }}
+        {{- if .Values.authentik.blueprints.enabled }}
+        # templates/authentik/blueprints.yaml, mounted on the worker.
+        blueprints:
+          configMaps:
+            - authentik-blueprints
+        {{- end }}
         # The database is CNPG's (templates/authentik/postgres.yaml), not the
         # chart's bundled Bitnami PostgreSQL -- off upstream by default, and
         # stated here so a chart bump can't bring it back.

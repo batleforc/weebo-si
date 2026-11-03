@@ -52,18 +52,9 @@ Avant tout le reste, sinon l'étape 2 enferme le compte dehors : User settings �
 
 ### 2. Flow `admin-step-up` dans Authentik
 
-Le CRD AuthentikFlow ne modélise que le flow, pas ses stages ni leurs bindings. Le flow est donc déclaré dans `flows` de `2.argo/helm/auth/sub/values.yaml`, sur le modèle de `device-code-flow`, et son unique stage est posé en UI (ou en blueprint, à écrire le jour où il y en a un second) :
+Le CRD AuthentikFlow ne modélise que le flow, pas ses stages ni leurs bindings, et l'opérateur crée sans jamais adopter par slug : le flow ne peut donc pas être partagé entre un CR et autre chose. Il est entièrement porté par un blueprint Authentik, `2.argo/helm/auth/main/files/blueprints/admin-step-up.yaml`, que le chart `auth/main` met dans la ConfigMap `authentik-blueprints` (`authentik.blueprints.enabled`) et que le chart Authentik monte sur le worker (`blueprints.configMaps`). Le worker l'applique à chaque changement et toutes les heures.
 
-```yaml
-  adminStepUp:
-    crName: admin-step-up
-    slug: admin-step-up
-    name: admin-step-up
-    title: "Second facteur pour l'accès admin"
-    designation: authorization
-```
-
-Stage Authenticator Validation `admin-step-up-mfa`, binding d'ordre 0 sur ce flow :
+Le flow `admin-step-up` (désignation `authorization`) a un seul stage, Authenticator Validation `admin-step-up-mfa`, binding d'ordre 0 :
 
 | Réglage | Valeur | Pourquoi |
 | --- | --- | --- |
@@ -121,7 +112,7 @@ talosctl --talosconfig 0.config/talosconfig2.yaml -n talos-r2k-rp0 read /var/lib
 ```go
 // jwt[0] -- dev, issuer et audience inchangés
 "groups": map[string]interface{}{
-    "expression": `claims.groups.filter(g, g != "weebo_admin").map(g, "labsso:" + g)`,
+    "expression": `has(claims.groups) ? claims.groups.filter(g, g != "weebo_admin").map(g, "labsso:" + g) : []`,
 },
 ```
 
@@ -144,7 +135,7 @@ talosctl --talosconfig 0.config/talosconfig2.yaml -n talos-r2k-rp0 read /var/lib
 "userValidationRules": /* identiques */,
 ```
 
-Issuer et audience de l'admin sont dans git (slug et clientId ci-dessus), pas besoin d'aller-retour par Vault ni de nouvelle tâche `vault:OIDC_*`. Deux conséquences à connaître :
+Issuer et audience de l'admin sont dans git (constantes `adminIssuerURL` / `adminClientID`, à garder alignées sur le slug et le clientId ci-dessus), pas besoin d'aller-retour par Vault ni de nouvelle tâche `vault:OIDC_*`. `auth.weebo.poc` rejoint `dex.weebo.poc` dans les `extraHostEntries` du nœud : sans elle l'apiserver ne résout pas l'issuer admin. Deux conséquences à connaître :
 
 - Le chemin dev perd `weebo_admin` pour tous ses consommateurs, y compris le jeton que le dashboard Che transmet à l'apiserver (`aud` `weebo-kube` via dex). C'est voulu : un workspace n'est pas admin.
 - Le fichier est rechargé à chaud par l'apiserver. Une expression CEL invalide ne fait pas tomber l'apiserver, elle est refusée au rechargement et l'ancienne configuration reste en place : surveiller `apiserver_authentication_config_controller_automatic_reload_last_timestamp_seconds{status="failure"}` après le `pulumi up`, et garder `0.config/kubeconfig.yaml` ouvert dans un terminal pendant toute l'étape.
@@ -189,13 +180,17 @@ Dans le shell : `alias kadmin='kubectl --context Weebo-si-admin'`. `0.config/kub
 | Mail par élévation | une ligne « élévation admin à 9 h 12 depuis telle IP » dans `max@weebo.internal`, au plus une par heure d'admin | Notification Rule + transport Email | lundi |
 | Audit apiserver | toutes les requêtes `labsso-admin:*`, donc première et dernière action de chaque session | ClickStack, via `/var/log/audit/kube` du nœud | « ce qui reste après » |
 
-Pour le mail, deux réglages Authentik que l'opérateur ne modélise pas, à faire en UI (ou blueprint) :
+Pour le mail, deux réglages que l'opérateur ne modélise pas, tous deux dans git :
 
-- **SMTP.** Authentik n'en a pas aujourd'hui. Stalwart publie un compte par namespace dans `mv/<namespace>/smtp` (`2.argo/helm/mail/values.yaml`) : en ajouter un pour `auth`, puis dans `authentik.yaml` les env `AUTHENTIK_EMAIL__HOST`, `__PORT`, `__USERNAME`, `__PASSWORD`, `__USE_TLS`, `__FROM` lus par le même mécanisme `vault:mv/data/auth/smtp#...` que le reste du fichier.
-- **Notification Rule** `admin-step-up`, groupe destinataire `weebo_admin`, transports Email et Local (celui-ci garde une copie dans l'UI), sévérité Notice, avec une Event Matcher Policy sur l'action `authorize_application` et une Expression Policy qui restreint à l'application :
+- **SMTP.** Le compte d'envoi `authentik@weebo.internal` existe déjà côté Stalwart (`bootstrap.serviceAccounts` de `2.argo/helm/mail`) et ses identifiants dans `mv/auth/smtp` (`2.terra/vault/terra-map/mail.tf`) ; `auth` est déjà dans `networkPolicy.mailClients`. `authentik.yaml` lit `host`, `port`, `username`, `password` et `from` par `vault:mv/data/auth/smtp#...` dans les env `AUTHENTIK_EMAIL__*`, avec STARTTLS (`USE_TLS`), derrière `authentik.smtp.enabled`.
+- **Notification Rule** `weebo-notify-admin-step-up`, blueprint `2.argo/helm/auth/main/files/blueprints/admin-step-up-notify.yaml` : groupe destinataire `weebo_admin`, transports `default-email-transport` et `default-local-transport` (celui-ci garde une copie dans l'UI), sévérité Notice. Une seule Expression Policy, qui vérifie l'action **et** l'application : une règle de notification évalue ses policies en mode `any`, un Event Matcher sur `authorize_application` lié à côté ferait partir un mail pour toutes les applications.
 
 ```python
-return request.context["event"].context.get("authorized_application", {}).get("name") == "kube-admin"
+event = request.context.get("event")
+if event is None or event.action != "authorize_application":
+    return False
+app = event.context.get("authorized_application") or {}
+return app.get("name") == "kube-admin"
 ```
 
 Le niveau de log par défaut du serveur Authentik n'écrit pas ses événements en stdout (vérifié sur 72 h : requêtes HTTP seulement), donc ClickStack ne voit pas ces élévations sans monter le niveau. La base Authentik et le mail sont la source de vérité du login ; l'audit apiserver, quand il sera collecté, celle des actions.

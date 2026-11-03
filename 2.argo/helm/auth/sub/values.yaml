@@ -464,7 +464,9 @@ applications:
       proxy:
         internalHost: "http://longhorn-frontend.longhorn.svc.cluster.local"
         externalHost: "https://longhorn.weebo.poc"
-        authorizationFlow: default-provider-authorization-implicit-consent
+        # weebo_admin only, so behind the same second factor as kube-admin
+        # (files/blueprints/admin-step-up.yaml in auth/main).
+        authorizationFlow: admin-step-up
         invalidationFlow: default-provider-invalidation-flow
 
   # clickstack is the one proxy provider that depends on a field the CRD does
@@ -504,7 +506,8 @@ applications:
       proxy:
         internalHost: "http://clickstack-preauth.monitoring.svc.cluster.local:8080"
         externalHost: "https://clickstack.weebo.poc"
-        authorizationFlow: default-provider-authorization-implicit-consent
+        # weebo_admin only: same second factor as kube-admin.
+        authorizationFlow: admin-step-up
         invalidationFlow: default-provider-invalidation-flow
 
   # --- Phase 4: oauth2 providers. Each of these has a `vault_kv_secret_v2` in
@@ -808,6 +811,48 @@ applications:
         allowedRedirectUris:
           - matchingMode: strict
             url: "https://endpoint-auth.cde.dev.weebo.poc/oidc/callback"
+
+  # The apiserver's ADMIN issuer (runbook bascule-weebo-si, Lundi 3): the
+  # `Weebo-si-admin` kubectl context, the only way to cluster-admin besides
+  # the Talos break-glass kubeconfig. 1.pulu-init trusts it as a second
+  # `jwt` authenticator, usernames `labsso-admin:` + email, and strips
+  # weebo_admin from the dex (dev) path. A new application, nothing to
+  # import. Slug and clientId are pinned in 1.pulu-init/main.go
+  # (adminIssuerURL / adminClientID): change both together.
+  kube-admin:
+    enabled: false
+    slug: kube-admin
+    name: kube-admin
+    accessGroup: weebo_admin
+    # Public client (kubectl oidc-login, PKCE): no secret, nothing to write.
+    # An empty list falls back to the instance default, read by nothing.
+    secretTargets: []
+    provider:
+      kind: oauth2
+      oauth2:
+        clientType: public
+        clientId: kube-admin
+        # files/blueprints/admin-step-up.yaml in auth/main: WebAuthn or TOTP,
+        # remembered 8 h.
+        authorizationFlow: admin-step-up
+        invalidationFlow: default-provider-invalidation-flow
+        signingKey: "authentik Self-signed Certificate"
+        # No refresh_token: an elevation expires with its token, an hour.
+        grantTypes: ["authorization_code"]
+        accessTokenValidity: "hours=1"
+        propertyMappings:
+          # NOT the built-in OpenID 'email': it returns email_verified=false
+          # and the apiserver requires claims.email_verified == true.
+          - "weebo email"
+          - "weebo groups"
+          - "authentik default OAuth Mapping: OpenID 'profile'"
+          - "authentik default OAuth Mapping: OpenID 'openid'"
+        # kubelogin's two default ports.
+        allowedRedirectUris:
+          - matchingMode: strict
+            url: "http://localhost:8000"
+          - matchingMode: strict
+            url: "http://localhost:18000"
 
   s3:
     enabled: false

@@ -1,0 +1,22 @@
+{{- if and .Values.authentik.enabled .Values.authentik.blueprints.enabled -}}
+---
+# Authentik blueprints for what the weebo-authentik CRDs do not model (stages,
+# stage bindings, notification rules, policies), from files/blueprints/.
+# authentik.yaml lists this ConfigMap under the chart's `blueprints.configMaps`,
+# which mounts it on the WORKER at /blueprints/mounted/cm-authentik-blueprints;
+# the worker discovers every *.yaml there and applies it, again on every
+# change and on its hourly schedule. Removing a file does not delete what it
+# created: do that by hand.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-blueprints
+  namespace: auth
+  annotations:
+    # Before the authentik Application: the worker pod waits on this volume.
+    argocd.argoproj.io/sync-wave: "-1"
+data:
+  {{- range $path, $_ := .Files.Glob "files/blueprints/*.yaml" }}
+  {{ base $path }}: {{ $.Files.Get $path | toJson }}
+  {{- end }}
+{{- end -}}

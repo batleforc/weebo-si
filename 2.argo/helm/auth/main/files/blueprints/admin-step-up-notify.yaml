@@ -1,0 +1,53 @@
+# One notification per admin elevation (runbook bascule-weebo-si, Lundi 6):
+# every `authorize_application` on kube-admin, i.e. every kube-admin token
+# issued after the second factor, mailed to the weebo_admin members and kept
+# in the UI. Without a refresh token that is at most one a token-hour.
+#
+# The mail needs SMTP, set by auth/main (authentik.smtp, AUTHENTIK_EMAIL__*).
+# The two transports are Authentik's own, from its default
+# `events-default.yaml` blueprint.
+version: 1
+metadata:
+  name: weebo - admin step-up notifications
+  labels:
+    blueprints.goauthentik.io/description: "Mail on every kube-admin elevation"
+entries:
+  # Applied first so the transports exist on a fresh instance.
+  - model: authentik_blueprints.metaapplyblueprint
+    attrs:
+      identifiers:
+        path: default/events-default.yaml
+      required: false
+
+  # One expression and not an Event Matcher plus an expression: a
+  # notification rule runs its policies in `any` mode (that is how the default
+  # exception rule matches two actions), so a matcher on authorize_application
+  # bound beside it would fire for EVERY application. This checks both.
+  - model: authentik_policies_expression.expressionpolicy
+    id: match
+    identifiers:
+      name: weebo-match-kube-admin-elevation
+    attrs:
+      expression: |
+        event = request.context.get("event")
+        if event is None or event.action != "authorize_application":
+            return False
+        app = event.context.get("authorized_application") or {}
+        return app.get("name") == "kube-admin"
+
+  - model: authentik_events.notificationrule
+    id: rule
+    identifiers:
+      name: weebo-notify-admin-step-up
+    attrs:
+      severity: notice
+      destination_group: !Find [authentik_core.group, [name, weebo_admin]]
+      transports:
+        - !Find [authentik_events.notificationtransport, [name, default-email-transport]]
+        - !Find [authentik_events.notificationtransport, [name, default-local-transport]]
+
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      policy: !KeyOf match
+      target: !KeyOf rule
