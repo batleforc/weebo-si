@@ -21,6 +21,10 @@ spec:
         {{- with .Values.authentik.sub }}
         {{- toYaml . | nindent 10 }}
         {{- end }}
+          # Whether Authentik sends mail (authentik.smtp, its AUTHENTIK_EMAIL__*
+          # env): the admin-step-up-notify blueprint binds its email transport
+          # only then.
+          authentikSmtp: {{ .Values.authentik.smtp.enabled }}
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: 'auth'

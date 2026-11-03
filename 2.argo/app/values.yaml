@@ -133,6 +133,8 @@ project:
         kind: "AuthentikFlow"
       - group: "authentik.weebo.io"
         kind: "AuthentikScopeMapping"
+      - group: "authentik.weebo.io"
+        kind: "AuthentikBlueprint"
       - group: "longhorn.io"
         kind: "RecurringJob"
   - name: monitoring

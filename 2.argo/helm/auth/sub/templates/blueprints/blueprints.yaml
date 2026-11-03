@@ -1,0 +1,41 @@
+{{- if .Values.blueprints.enabled }}
+{{- range $key, $bp := .Values.blueprints.items }}
+{{- if $bp.enabled }}
+{{- $file := printf "files/blueprints/%s.yaml" $key }}
+{{- $content := $.Files.Get $file }}
+{{- if not $content }}
+{{- fail (printf "blueprints.items.%s: %s is missing or empty" $key $file) }}
+{{- end }}
+---
+# An Authentik blueprint held by the operator (AuthentikBlueprint, operator
+# >= 0.23.0): a BlueprintInstance with inline content, applied by
+# Authentik's worker. For what no other kind models (stages, their flow
+# bindings, policies, notification rules).
+#
+# The content is files/blueprints/<key>.yaml through `tpl`, so it can follow
+# a value (admin-step-up-notify and `authentikSmtp`). Authentik validates it
+# on every write: an invalid one is Ready False / BlueprintInvalid, with the
+# validation log as the message. Ready True once the worker applied it
+# (BlueprintApplyPending until then).
+#
+# Deleting the CR deletes the instance, NOT what it applied: mark the entries
+# `state: absent`, let that apply, then delete. The Application syncing this
+# chart does not prune anyway.
+apiVersion: authentik.weebo.io/v1alpha1
+kind: AuthentikBlueprint
+metadata:
+  # Cluster-scoped, like AuthentikFlow.
+  name: {{ $key }}
+  annotations:
+    # With the flows, before the applications (wave 5): kube-admin, longhorn
+    # and clickstack use the flow admin-step-up declares. They retry until it
+    # exists anyway.
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  # The instance's name in Authentik (System > Blueprints), unique there.
+  name: {{ $bp.name | quote }}
+  content: |
+{{ tpl $content $ | indent 4 }}
+{{- end }}
+{{- end }}
+{{- end }}

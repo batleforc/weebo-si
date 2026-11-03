@@ -465,7 +465,7 @@ applications:
         internalHost: "http://longhorn-frontend.longhorn.svc.cluster.local"
         externalHost: "https://longhorn.weebo.poc"
         # weebo_admin only, so behind the same second factor as kube-admin
-        # (files/blueprints/admin-step-up.yaml in auth/main).
+        # (blueprints.items.admin-step-up below).
         authorizationFlow: admin-step-up
         invalidationFlow: default-provider-invalidation-flow
 
@@ -832,7 +832,7 @@ applications:
       oauth2:
         clientType: public
         clientId: kube-admin
-        # files/blueprints/admin-step-up.yaml in auth/main: WebAuthn or TOTP,
+        # blueprints.items.admin-step-up below: WebAuthn or TOTP,
         # remembered 8 h.
         authorizationFlow: admin-step-up
         invalidationFlow: default-provider-invalidation-flow
@@ -927,6 +927,35 @@ applications:
             url: "http://localhost:8250/authentik/callback"
           - matchingMode: strict
             url: "http://localhost:8250/oidc/callback"
+
+# ---------------------------------------------------------------------------
+# AuthentikBlueprint CRs (operator >= 0.23.0), templates/blueprints/: what no
+# other kind models -- stages and their flow bindings, policies, notification
+# rules. One CR per entry; its content is files/blueprints/<key>.yaml through
+# `tpl` (so a blueprint can follow a value). `name` is the instance's name in
+# Authentik (System > Blueprints), unique there.
+#
+# New objects, nothing to adopt: these flows, stages and rules never existed
+# before the CRs.
+# ---------------------------------------------------------------------------
+blueprints:
+  enabled: false
+  items:
+    # The admin elevation's second factor: flow admin-step-up + its
+    # WebAuthn/TOTP stage (8 h threshold, deny without a device). The
+    # authorizationFlow of kube-admin, longhorn and clickstack.
+    admin-step-up:
+      enabled: true
+      name: "weebo - admin step-up"
+    # A notification per kube-admin elevation: always in the Authentik UI,
+    # mailed too while `authentikSmtp`. Needs the weebo_admin group.
+    admin-step-up-notify:
+      enabled: true
+      name: "weebo - admin step-up notifications"
+
+# auth/main's authentik.smtp.enabled, passed down by templates/authentik/
+# sub-app.yaml: whether Authentik sends mail.
+authentikSmtp: false
 
 # Passed down from the parent chart; unused here but present so the parent's
 # `toYaml .Values` handoff does not surprise anyone reading this file.

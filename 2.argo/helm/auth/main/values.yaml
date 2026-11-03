@@ -37,23 +37,21 @@ authentik:
   # auth/sub (brand).
   theme:
     enabled: true
-  # files/blueprints/ (templates/authentik/blueprints.yaml): what the operator's
-  # CRDs do not model. Today the admin-step-up flow, its MFA stage, and the
-  # mail sent on each kube-admin elevation.
-  blueprints:
-    enabled: true
-  # Outgoing mail from mv/auth/smtp, for those notifications. OFF while
+  # Outgoing mail from mv/auth/smtp, for the admin step-up notifications
+  # (auth/sub, blueprints.items.admin-step-up-notify). OFF while
   # Stalwart is (2.argo/app/values.yaml, mail.enabled): the secret exists
   # (Terraform writes it regardless) but stalwart.mail.svc does not resolve,
   # so every send would fail and be retried. Off, the elevation notification
   # keeps only its Local transport (Authentik UI) and the events. Turn on
-  # with mail.enabled: it also adds the email transport to that rule.
+  # with mail.enabled: it also adds the email transport to that rule
+  # (passed down to auth/sub as `authentikSmtp`, templates/authentik/sub-app.yaml).
   smtp:
     enabled: false
   operator:
     enabled: true
     # renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-authentik
-    version: 0.22.1
+    # >= 0.23.0: AuthentikBlueprint (auth/sub, blueprints).
+    version: 0.23.0
     replicaCount: 1
   sub:
     enabled: true
@@ -117,9 +115,13 @@ authentik:
       vault:
         enabled: false
       # New. The apiserver's admin issuer (1.pulu-init, jwt[1]), behind the
-      # admin-step-up flow (files/blueprints/admin-step-up.yaml).
+      # admin-step-up flow (blueprints below).
       kube-admin:
         enabled: true
+    # AuthentikBlueprint CRs (operator >= 0.23.0), from auth/sub's
+    # files/blueprints/: what no other kind models.
+    blueprints:
+      enabled: true
 
 dns:
   domain: auth.weebo.poc

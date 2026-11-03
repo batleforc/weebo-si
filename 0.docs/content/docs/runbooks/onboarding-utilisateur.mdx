@@ -5,7 +5,7 @@ description: "Créer un compte Authentik, lui donner un premier accès sans mail
 
 Objectif : une personne reçoit un compte Weebo-SI, se connecte une première fois sans mot de passe transmis en clair, définit le sien et enrôle un second facteur. Tant que Stalwart est éteint (`mail.enabled: false`), aucun lien ne part par mail : le premier accès passe par une clé de récupération à usage unique, envoyée par un autre canal.
 
-Le second facteur n'est pas exigé à la connexion. Il garde l'**élévation admin** : le flow `admin-step-up` (`2.argo/helm/auth/main/files/blueprints/admin-step-up.yaml`) refuse un compte sans appareil sur `kube-admin`, Longhorn et ClickStack. Il est donc obligatoire pour un `weebo_admin` et recommandé pour tous.
+Le second facteur n'est pas exigé à la connexion. Il garde l'**élévation admin** : le flow `admin-step-up` (CR `AuthentikBlueprint/admin-step-up`, `2.argo/helm/auth/sub/files/blueprints/admin-step-up.yaml`) refuse un compte sans appareil sur `kube-admin`, Longhorn et ClickStack. Il est donc obligatoire pour un `weebo_admin` et recommandé pour tous.
 
 ## Avant de commencer
 

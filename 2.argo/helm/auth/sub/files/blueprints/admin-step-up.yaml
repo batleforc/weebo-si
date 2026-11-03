@@ -1,15 +1,17 @@
 # The admin elevation's second factor (runbook bascule-weebo-si, Lundi 2).
 #
-# A blueprint and not an AuthentikFlow CR: the CRD models the flow object
-# only, never its stages or bindings, and this flow is nothing but its one
-# stage. The operator also creates first and never adopts by slug, so the
-# flow cannot be split between a CR and this file either -- whoever came
-# second would end in AuthentikObjectAlreadyExists. Everything lives here.
+# The content of the AuthentikBlueprint `admin-step-up`
+# (templates/blueprints/blueprints.yaml). A blueprint and not an
+# AuthentikFlow CR: that CRD models the flow object only, never its stages or
+# bindings, and this flow is nothing but its one stage. The operator also
+# creates first and never adopts by slug, so the flow cannot be split
+# between an AuthentikFlow and this blueprint either -- whoever came second
+# would end in AuthentikObjectAlreadyExists. Everything lives here.
 #
 # Referenced by slug (`admin-step-up`) as the authorizationFlow of the
-# kube-admin, longhorn and clickstack applications (auth/sub values). Until
-# the worker has applied this file those applications fail to reconcile on a
-# missing flow and retry; nothing is ever served without the stage.
+# kube-admin, longhorn and clickstack applications (values.yaml). Until it is
+# applied those applications fail to reconcile on a missing flow and retry;
+# nothing is ever served without the stage.
 #
 # PREREQUISITE: the account must already have a WebAuthn or TOTP device.
 # `not_configured_action: deny` refuses anyone without one, on purpose -- the
