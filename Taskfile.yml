@@ -39,6 +39,13 @@ tasks:
     aliases: [k-oidc, k-o]
     cmds:
       - kubectl {{ .CLI_ARGS }}
+  # Élévation kube-admin (2FA Authentik, jeton 1 h) ; contexte créé par create-kubeconfig-oidc.
+  kadmin:
+    silent: true
+    env:
+      KUBECONFIG: 0.config/kubeconfig.oidc.yaml
+    cmds:
+      - kubectl --context Weebo-si-admin {{ .CLI_ARGS }}
   docs:run:
     desc: "Run the current doc (Fumadocs) dev server"
     dir: 0.docs
