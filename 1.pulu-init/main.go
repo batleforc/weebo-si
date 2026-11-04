@@ -274,7 +274,16 @@ func main() {
 				ImageUrl:          qcow2Url,
 				EfiBootloaderPath: pulumi.String("\\EFI\\BOOT\\BOOTX64.EFI"),
 			},
-		})
+		},
+			// A replace of this task wipes the disk of the only node. The image URL
+			// embeds the Image Factory schematic ID, which the factory re-derived for
+			// unchanged content in Nov 2026, so a `refresh` alone produced a replace.
+			// Inputs are frozen after the first install, and Protect fails any
+			// delete/replace that still gets through. Deliberate reinstall:
+			// `pulumi state unprotect <urn>`, then `pulumi up --replace <urn>`.
+			pulumi.IgnoreChanges([]string{"serviceName", "os", "customizations"}),
+			pulumi.Protect(true),
+		)
 		if err != nil {
 			return err
 		}
