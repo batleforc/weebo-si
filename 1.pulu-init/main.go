@@ -109,7 +109,7 @@ func authenticationConfig(issuerURL, clientID, caPEM string) (string, error) {
 					// through jwt[1]. `has()` so a token without a groups claim
 					// maps to no groups instead of failing the expression.
 					"groups": map[string]interface{}{
-						"expression": `has(claims.groups) ? claims.groups.filter(g, g != "weebo_admin").map(g, "labsso:" + g) : []`,
+						"expression": `has(claims.groups) ? dyn(claims.groups).filter(g, g != "weebo_admin").map(g, "labsso:" + g) : []`,
 					},
 					"uid": map[string]interface{}{
 						"expression": "claims.sub",
