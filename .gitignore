@@ -222,3 +222,14 @@ graphify-out/cache/
 2.argo/helm/**/charts/weebo-base-*.tgz
 2.helm/netbird-exit-node/Chart.lock
 2.helm/netbird-exit-node/charts/
+
+# >>> wska links in .claude/ (rewritten by wska install)
+/.claude/agents/nr-check
+/.claude/skills/batlehub-rfc
+/.claude/skills/grill-me
+/.claude/skills/grilling
+/.claude/skills/ponytail
+/.claude/skills/weebo-good-practice
+/.claude/skills/weebo-testing
+/.claude/skills/wska
+# <<< wska links in .claude/

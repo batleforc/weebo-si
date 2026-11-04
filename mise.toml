@@ -27,6 +27,8 @@ yarn = "latest"
 "pipx:graphifyy" = "latest"
 "github:batleforc/weebo-skillsagent" = "0.17.0"
 node = "latest"
+uv = "latest"
+cargo-binstall = "latest"
 
 [plugins]
 kkrew = "https://github.com/soupglasses/mise-krew"
