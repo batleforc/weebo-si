@@ -576,6 +576,54 @@ teams:
             selfHeal: true
           options: [ServerSideApply=true]
 
+# The AppProjects of the per-user Applications (templates/che-users-project.yaml).
+#
+# - che-users: the Application weebo-si-operator creates per person
+#   (workspace.che.project above), rendering 2.helm/user-app from THIS repo.
+#   It needs argocd (the external-config Application) and dev-ws-*.
+# - che-config-<username>, one per `users` entry with an external config:
+#   that Application, syncing the person's OWN repo. Only their namespace,
+#   only ConfigMaps and Secrets: a manifest there can neither land in argocd
+#   (an Application in another project, a cluster or repository Secret: an
+#   Argo CD takeover) nor in another person's dev-ws-*.
+#
+# Rendered here and not by the app of apps (2.argo/app) so they follow
+# `users`: each person gets a role `user-<name>` on both, matched on the
+# email claim (Argo CD's rbac scopes are [groups, email], 1.pulu-conf), to
+# see and sync their own Applications and nothing else.
+cheUsersProject:
+  enabled: true
+  name: che-users
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: "dev-ws-*"
+    - server: https://kubernetes.default.svc
+      namespace: "argocd"
+  clusterResourceWhitelist:
+    - group: ""
+      kind: "Namespace"
+  # What 2.helm/user-app renders, nothing more.
+  namespaceResourceWhitelist:
+    - group: "rbac.authorization.k8s.io"
+      kind: "RoleBinding"
+    - group: "external-secrets.io"
+      kind: "SecretStore"
+    - group: "argoproj.io"
+      kind: "Application"
+    - group: ""
+      kind: "ConfigMap"
+  # The per-person project of the external config. Its prefix must match
+  # 2.helm/user-app's externalConfigProjectPrefix.
+  config:
+    prefix: che-config
+    namespaceResourceWhitelist:
+      - group: ""
+        kind: "ConfigMap"
+      - group: ""
+        kind: "Secret"
+  # What a person may do on their own Applications.
+  userActions: [get, sync]
+
 # WeeboSiUser objects: name -> spec. Removing an entry deletes the object,
 # its Application and, through it, dev-ws-<username> and every workspace in
 # it (the Application syncing this chart does not prune, so that takes a
@@ -608,3 +656,20 @@ users:
             repoURL: https://github.com/batleforc/weebo-dotfiles-che
             path: config
             branch: HEAD
+  # A plain weebo_user, for checking what a non-moderator gets: its
+  # Application in Argo CD, nothing else (no Che: che-cluster wants
+  # weebo_moderator). Same email as AuthentikUser/batleforc-test (auth/sub).
+  batleforc-test:
+    username: batleforc-test
+    email: batleforc-test@weebo.internal
+    team: weebo
+    active: true
+    che:
+      mode: Ensure
+      values:
+        cheUser:
+          access:
+            level: ""
+            extraAddons: []
+          externalConfig:
+            enabled: false

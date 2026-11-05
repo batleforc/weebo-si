@@ -1,0 +1,596 @@
+---
+title: "Applications Authentik"
+description: "Chaque client Authentik et ses consommateurs"
+---
+
+{/* Généré par `task docs:authflow` (0.task/scripts/authflow.py). Ne pas éditer à la main. */}
+
+Une section par application Authentik (`AuthentikApplication`), avec qui y a accès, par quel flux, et qui consomme son client.
+
+## Légende
+
+- Un **groupe** donne accès à une application Authentik par une politique d'accès (`AuthentikAccessPolicy`). Les membres d'un groupe enfant passent aussi les politiques de ses parents : `weebo_admin` ⊂ `weebo_moderator` ⊂ `weebo_user`.
+- Une flèche **Authentik → consommateur** suit le client OIDC : l'opérateur écrit `client_id`/`client_secret` dans Vault (`secretTargets`), un `ExternalSecret` ou une injection `vault:` le relit dans un namespace, et l'objet qui nomme ce Secret est le consommateur. Une URL `/application/o/<slug>/` en dur compte aussi.
+- Une flèche **épaisse** (`==>`) passe par une étape de second facteur (flux d'autorisation à étape `authenticator_validate`, ici `admin-step-up`).
+- Les **Dex** sont des courtiers : ils se connectent à Authentik comme un client, puis émettent leurs propres jetons à leurs clients statiques.
+- Les **proxys** Authentik sont servis par le middleware Traefik `forwardAuth` : l'IngressRoute n'atteint le backend qu'après l'avant-poste Authentik.
+- Côté Kubernetes, l'apiserver accepte deux émetteurs JWT (`AuthenticationConfiguration` de `1.pulu-init`), et les (Cluster)RoleBindings donnent les droits aux noms préfixés qu'ils produisent.
+
+## angos
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_angos_b0924d["angos<br/>oauth2 public"]
+  end
+  subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
+    n_user_batleforc_01dd2e(["👤 batleforc"])
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_moderator_a8f585("weebo_moderator")
+  end
+  subgraph n_sg_Flux_3086f2["Flux"]
+    n_flow_default_provider_authorization_implicit_consent_4789aa[/"flux default-provider-authorization-implicit-consent"/]
+  end
+  subgraph n_sg_ns_angos_16e398["ns angos"]
+    n_c_angos_angos_AngosLocalInstance_registry_441d35["AngosLocalInstance/registry<br/>(angos)"]
+  end
+  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_moderator_a8f585
+  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_angos_b0924d
+  n_ak_angos_b0924d -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
+  n_ak_angos_b0924d -->|"Vault mv/angos/auth → ExternalSecret angos/angos-operator → Secret angos-operator"| n_c_angos_angos_AngosLocalInstance_registry_441d35
+```
+
+| Propriété | Valeur |
+|---|---|
+| Slug | `angos` |
+| CR | `angos` |
+| Fournisseur | oauth2 |
+| Émetteur | `https://auth.weebo.poc/application/o/angos/` |
+| Client | `angos` (public) |
+| Grants | `authorization_code`, `urn:ietf:params:oauth:grant-type:device_code`, `refresh_token` |
+| Durée du jeton d'accès | `hours=12` |
+| Scopes / mappings | `weebo email`<br/>`weebo groups`<br/>`authentik default OAuth Mapping: OpenID 'profile'`<br/>`authentik default OAuth Mapping: OpenID 'openid'`<br/>`authentik default OAuth Mapping: OpenID 'offline_access'` |
+| Redirections | `https://registry.pkg.weebo.poc/` (strict)<br/>`https://registry.pkg.weebo.poc/oauth2/callback` (strict) |
+| Clé de signature | `authentik Self-signed Certificate` |
+| Flux d'autorisation | `default-provider-authorization-implicit-consent` |
+| Flux d'invalidation | `default-provider-invalidation-flow` |
+| Accès | `weebo_moderator` |
+| Utilisateurs autorisés | `batleforc` |
+| Secret écrit dans | `angos/auth` |
+
+### Consommateurs
+
+| App Argo CD | Objet | Chemin du secret |
+|---|---|---|
+| `angos` | `angos/AngosLocalInstance/registry` | Vault `mv/angos/auth` → ExternalSecret `angos/angos-operator` → Secret `angos-operator` |
+
+## argo
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_argo_358618["argo<br/>oauth2"]
+  end
+  subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
+    n_user_batleforc_01dd2e(["👤 batleforc"])
+    n_user_batleforc_test_74b72b(["👤 batleforc-test"])
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_user_58ae05("weebo_user")
+  end
+  subgraph n_sg_Flux_3086f2["Flux"]
+    n_flow_default_provider_authorization_implicit_consent_4789aa[/"flux default-provider-authorization-implicit-consent"/]
+  end
+  subgraph n_sg_ns_argocd_2626c9["ns argocd"]
+    n_c_argocd__1_pulu_conf__argocd_ConfigMap_argocd_cm_735ff0["Dex d'Argo CD"]
+  end
+  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_user_58ae05
+  n_user_batleforc_test_74b72b -->|"membre (direct ou hérité)"| n_group_weebo_user_58ae05
+  n_group_weebo_user_58ae05 -->|"accès"| n_ak_argo_358618
+  n_ak_argo_358618 -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
+  n_ak_argo_358618 -->|"Vault mv/argocd/auth → ExternalSecret argocd/auth-secret → Secret argo-dev-auth"| n_c_argocd__1_pulu_conf__argocd_ConfigMap_argocd_cm_735ff0
+```
+
+| Propriété | Valeur |
+|---|---|
+| Slug | `argo` |
+| CR | `argo` |
+| Fournisseur | oauth2 |
+| Émetteur | `https://auth.weebo.poc/application/o/argo/` |
+| Client | `argo` (confidential) |
+| Grants | `authorization_code` |
+| Durée du jeton d'accès | `défaut` |
+| Scopes / mappings | `authentik default OAuth Mapping: OpenID 'email'`<br/>`authentik default OAuth Mapping: OpenID 'profile'`<br/>`authentik default OAuth Mapping: OpenID 'openid'` |
+| Redirections | `https://argo.weebo.poc/api/dex/callback` (strict)<br/>`https://localhost:8085/auth/callback` (strict) |
+| Clé de signature | `authentik Self-signed Certificate` |
+| Flux d'autorisation | `default-provider-authorization-implicit-consent` |
+| Flux d'invalidation | `default-provider-invalidation-flow` |
+| Accès | `weebo_user` |
+| Utilisateurs autorisés | `batleforc`, `batleforc-test` |
+| Secret écrit dans | `argocd/auth` |
+
+### Consommateurs
+
+| App Argo CD | Objet | Chemin du secret |
+|---|---|---|
+| `argocd (1.pulu-conf)` | `argocd/ConfigMap/argocd-cm` | Vault `mv/argocd/auth` → ExternalSecret `argocd/auth-secret` → Secret `argo-dev-auth` |
+
+## argo-admin
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_argo_admin_7fdc96["argo-admin<br/>oauth2 · 2FA"]
+  end
+  subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
+    n_user_batleforc_01dd2e(["👤 batleforc"])
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_admin_38219b("weebo_admin")
+  end
+  subgraph n_sg_Flux_3086f2["Flux"]
+    n_flow_admin_step_up_6938b4[/"flux admin-step-up"/]
+  end
+  subgraph n_sg_ns_argocd_2626c9["ns argocd"]
+    n_c_argocd__1_pulu_conf__argocd_ConfigMap_argocd_cm_735ff0["Dex d'Argo CD"]
+  end
+  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_admin_38219b
+  n_group_weebo_admin_38219b -->|"accès"| n_ak_argo_admin_7fdc96
+  n_ak_argo_admin_7fdc96 ==>|"autorisation"| n_flow_admin_step_up_6938b4
+  n_ak_argo_admin_7fdc96 -->|"Vault mv/argocd/admin-auth → ExternalSecret argocd/auth-admin-secret → Secret argo-admin-auth"| n_c_argocd__1_pulu_conf__argocd_ConfigMap_argocd_cm_735ff0
+```
+
+| Propriété | Valeur |
+|---|---|
+| Slug | `argo-admin` |
+| CR | `argo-admin` |
+| Fournisseur | oauth2 |
+| Émetteur | `https://auth.weebo.poc/application/o/argo-admin/` |
+| Client | `argo-admin` (confidential) |
+| Grants | `authorization_code` |
+| Durée du jeton d'accès | `hours=1` |
+| Scopes / mappings | `weebo email`<br/>`argo admin profile`<br/>`authentik default OAuth Mapping: OpenID 'openid'` |
+| Redirections | `https://argo.weebo.poc/api/dex/callback` (strict) |
+| Clé de signature | `authentik Self-signed Certificate` |
+| Flux d'autorisation | `admin-step-up` (second facteur) |
+| Flux d'invalidation | `default-provider-invalidation-flow` |
+| Accès | `weebo_admin` |
+| Utilisateurs autorisés | `batleforc` |
+| Secret écrit dans | `argocd/admin-auth` |
+
+### Consommateurs
+
+| App Argo CD | Objet | Chemin du secret |
+|---|---|---|
+| `argocd (1.pulu-conf)` | `argocd/ConfigMap/argocd-cm` | Vault `mv/argocd/admin-auth` → ExternalSecret `argocd/auth-admin-secret` → Secret `argo-admin-auth` |
+
+## batlehub
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_batlehub_5edbeb["batlehub<br/>oauth2"]
+  end
+  subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
+    n_user_batleforc_01dd2e(["👤 batleforc"])
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_moderator_a8f585("weebo_moderator")
+  end
+  subgraph n_sg_Flux_3086f2["Flux"]
+    n_flow_default_provider_authorization_implicit_consent_4789aa[/"flux default-provider-authorization-implicit-consent"/]
+  end
+  subgraph n_sg_ns_batlehub_f92bb2["ns batlehub"]
+    n_c_batlehub_batlehub_Application_batlehub_app_f7a5a0["Application/batlehub-app<br/>(batlehub)"]
+  end
+  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_moderator_a8f585
+  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_batlehub_5edbeb
+  n_ak_batlehub_5edbeb -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
+  n_ak_batlehub_5edbeb -->|"Vault mv/batlehub/auth → ExternalSecret batlehub/batlehub-auth → Secret batlehub-auth"| n_c_batlehub_batlehub_Application_batlehub_app_f7a5a0
+```
+
+| Propriété | Valeur |
+|---|---|
+| Slug | `batlehub` |
+| CR | `batlehub` |
+| Fournisseur | oauth2 |
+| Émetteur | `https://auth.weebo.poc/application/o/batlehub/` |
+| Client | `batlehub` (confidential) |
+| Grants | `authorization_code`, `urn:ietf:params:oauth:grant-type:device_code`, `refresh_token` |
+| Durée du jeton d'accès | `hours=12` |
+| Scopes / mappings | `weebo email`<br/>`authentik default OAuth Mapping: OpenID 'profile'`<br/>`authentik default OAuth Mapping: OpenID 'openid'`<br/>`authentik default OAuth Mapping: OpenID 'offline_access'` |
+| Redirections | `https://pkg.weebo.poc/api/v1/auth/oidc/callback` (strict) |
+| Clé de signature | `authentik Self-signed Certificate` |
+| Flux d'autorisation | `default-provider-authorization-implicit-consent` |
+| Flux d'invalidation | `default-provider-invalidation-flow` |
+| Accès | `weebo_moderator` |
+| Utilisateurs autorisés | `batleforc` |
+| Secret écrit dans | `batlehub/auth` |
+
+### Consommateurs
+
+| App Argo CD | Objet | Chemin du secret |
+|---|---|---|
+| `batlehub` | `batlehub/Application/batlehub-app` | Vault `mv/batlehub/auth` → ExternalSecret `batlehub/batlehub-auth` → Secret `batlehub-auth` |
+
+## che-cluster
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_che_21e3e8["che-cluster<br/>oauth2"]
+  end
+  subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
+    n_user_batleforc_01dd2e(["👤 batleforc"])
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_moderator_a8f585("weebo_moderator")
+  end
+  subgraph n_sg_Flux_3086f2["Flux"]
+    n_flow_default_provider_authorization_implicit_consent_4789aa[/"flux default-provider-authorization-implicit-consent"/]
+  end
+  subgraph n_sg_ns_eclipse_che_6bd185["ns eclipse-che"]
+    n_c_che_eclipse_che_CheCluster_eclipse_che_b3411f["CheCluster/eclipse-che<br/>(che)"]
+  end
+  subgraph n_sg_ns_dex_d836f0["ns dex"]
+    n_c_auth_dex_Application_dex_1085c6["Dex https://dex.weebo.poc"]
+  end
+  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_moderator_a8f585
+  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_che_21e3e8
+  n_ak_che_21e3e8 -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
+  n_ak_che_21e3e8 -->|"Vault mv/eclipse-che/auth → ExternalSecret eclipse-che/che-oauth-secret → Secret che-oauth-secret"| n_c_che_eclipse_che_CheCluster_eclipse_che_b3411f
+  n_ak_che_21e3e8 -->|"Vault mv/dex/auth injecté (vault:)"| n_c_auth_dex_Application_dex_1085c6
+```
+
+| Propriété | Valeur |
+|---|---|
+| Slug | `che-cluster` |
+| CR | `che` |
+| Fournisseur | oauth2 |
+| Émetteur | `https://auth.weebo.poc/application/o/che-cluster/` |
+| Client | `che-cluster` (confidential) |
+| Grants | `authorization_code` |
+| Durée du jeton d'accès | `défaut` |
+| Scopes / mappings | `weebo email`<br/>`authentik default OAuth Mapping: OpenID 'profile'`<br/>`authentik default OAuth Mapping: OpenID 'openid'`<br/>`authentik default OAuth Mapping: OpenID 'offline_access'` |
+| Redirections | `http://localhost:8000` (strict)<br/>`https://dex.weebo.poc/callback` (strict)<br/>`https://cde.dev.weebo.poc/oauth/callback` (strict)<br/>`https://.*.cde.dev.weebo.poc/*.` (regex) |
+| Clé de signature | `authentik Self-signed Certificate` |
+| Flux d'autorisation | `default-provider-authorization-implicit-consent` |
+| Flux d'invalidation | `default-provider-invalidation-flow` |
+| Accès | `weebo_moderator` |
+| Utilisateurs autorisés | `batleforc` |
+| Secret écrit dans | `eclipse-che/auth`, `dex/auth` |
+
+### Consommateurs
+
+| App Argo CD | Objet | Chemin du secret |
+|---|---|---|
+| `che` | `eclipse-che/CheCluster/eclipse-che` | Vault `mv/eclipse-che/auth` → ExternalSecret `eclipse-che/che-oauth-secret` → Secret `che-oauth-secret` |
+| `auth` | `dex/Application/dex` | Vault `mv/dex/auth` injecté (`vault:`) |
+
+## clickstack
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_clickstack_f02905["clickstack<br/>proxy · 2FA"]
+  end
+  subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
+    n_user_batleforc_01dd2e(["👤 batleforc"])
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_admin_38219b("weebo_admin")
+  end
+  subgraph n_sg_Flux_3086f2["Flux"]
+    n_flow_admin_step_up_6938b4[/"flux admin-step-up"/]
+  end
+  subgraph n_sg_Traefik_9d658b["Traefik"]
+    n_route_clickstack_weebo_poc_99dbd2[/"clickstack.weebo.poc<br/>IngressRoute monitoring/clickstack"/]
+  end
+  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_admin_38219b
+  n_group_weebo_admin_38219b -->|"accès"| n_ak_clickstack_f02905
+  n_ak_clickstack_f02905 ==>|"autorisation"| n_flow_admin_step_up_6938b4
+  n_ak_clickstack_f02905 -->|"forwardAuth auth/authentik"| n_route_clickstack_weebo_poc_99dbd2
+```
+
+| Propriété | Valeur |
+|---|---|
+| Slug | `clickstack` |
+| CR | `clickstack` |
+| Fournisseur | proxy |
+| Hôte externe | `https://clickstack.weebo.poc` |
+| Hôte interne | `http://clickstack-preauth.monitoring.svc.cluster.local:8080` |
+| Flux d'autorisation | `admin-step-up` (second facteur) |
+| Flux d'invalidation | `default-provider-invalidation-flow` |
+| Accès | `weebo_admin` |
+| Utilisateurs autorisés | `batleforc` |
+| Secret écrit dans | — |
+
+### Consommateurs
+
+| App Argo CD | Objet | Chemin du secret |
+|---|---|---|
+| — | `monitoring/IngressRoute/clickstack` | forwardAuth `auth/authentik` sur `clickstack.weebo.poc` |
+
+## endpoint-gateway
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_endpoint_gateway_582eb2["endpoint-gateway<br/>oauth2"]
+  end
+  subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
+    n_user_batleforc_01dd2e(["👤 batleforc"])
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_moderator_a8f585("weebo_moderator")
+  end
+  subgraph n_sg_Flux_3086f2["Flux"]
+    n_flow_default_provider_authorization_implicit_consent_4789aa[/"flux default-provider-authorization-implicit-consent"/]
+  end
+  subgraph n_sg_ns_weebo_si_hardening_9501e2["ns weebo-si-hardening"]
+    n_c_che_weebo_si_hardening_Application_weebo_si_endpoint_gatew_0d1517["Application/weebo-si-endpoint-gateway<br/>(che)"]
+  end
+  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_moderator_a8f585
+  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_endpoint_gateway_582eb2
+  n_ak_endpoint_gateway_582eb2 -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
+  n_ak_endpoint_gateway_582eb2 -->|"issuer …/application/o/endpoint-gateway/ en dur"| n_c_che_weebo_si_hardening_Application_weebo_si_endpoint_gatew_0d1517
+```
+
+| Propriété | Valeur |
+|---|---|
+| Slug | `endpoint-gateway` |
+| CR | `endpoint-gateway` |
+| Fournisseur | oauth2 |
+| Émetteur | `https://auth.weebo.poc/application/o/endpoint-gateway/` |
+| Client | `endpoint-gateway` (confidential) |
+| Grants | `authorization_code`, `refresh_token` |
+| Durée du jeton d'accès | `défaut` |
+| Scopes / mappings | `weebo email`<br/>`weebo groups`<br/>`authentik default OAuth Mapping: OpenID 'profile'`<br/>`authentik default OAuth Mapping: OpenID 'openid'`<br/>`authentik default OAuth Mapping: OpenID 'offline_access'` |
+| Redirections | `https://endpoint-auth.cde.dev.weebo.poc/oidc/callback` (strict) |
+| Clé de signature | `authentik Self-signed Certificate` |
+| Flux d'autorisation | `default-provider-authorization-implicit-consent` |
+| Flux d'invalidation | `default-provider-invalidation-flow` |
+| Accès | `weebo_moderator` |
+| Utilisateurs autorisés | `batleforc` |
+| Secret écrit dans | `weebo-si-hardening/endpoint-gateway` |
+
+### Consommateurs
+
+| App Argo CD | Objet | Chemin du secret |
+|---|---|---|
+| `che` | `weebo-si-hardening/Application/weebo-si-endpoint-gateway` | issuer `…/application/o/endpoint-gateway/` en dur |
+
+## forgejo
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_forgejo_696ffa["forgejo<br/>oauth2"]
+  end
+  subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
+    n_user_batleforc_01dd2e(["👤 batleforc"])
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_moderator_a8f585("weebo_moderator")
+  end
+  subgraph n_sg_Flux_3086f2["Flux"]
+    n_flow_default_provider_authorization_implicit_consent_4789aa[/"flux default-provider-authorization-implicit-consent"/]
+  end
+  subgraph n_sg_ns_forgejo_ed1669["ns forgejo"]
+    n_c_forgejo_forgejo_Application_forgejo_app_1f26bd["Application/forgejo-app<br/>(forgejo)"]
+  end
+  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_moderator_a8f585
+  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_forgejo_696ffa
+  n_ak_forgejo_696ffa -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
+  n_ak_forgejo_696ffa -->|"Vault mv/forgejo/auth → ExternalSecret forgejo/forgejo-oidc → Secret forgejo-oidc"| n_c_forgejo_forgejo_Application_forgejo_app_1f26bd
+```
+
+| Propriété | Valeur |
+|---|---|
+| Slug | `forgejo` |
+| CR | `forgejo` |
+| Fournisseur | oauth2 |
+| Émetteur | `https://auth.weebo.poc/application/o/forgejo/` |
+| Client | `forgejo` (confidential) |
+| Grants | `authorization_code`, `refresh_token` |
+| Durée du jeton d'accès | `défaut` |
+| Scopes / mappings | `weebo email`<br/>`weebo groups`<br/>`authentik default OAuth Mapping: OpenID 'profile'`<br/>`authentik default OAuth Mapping: OpenID 'openid'`<br/>`authentik default OAuth Mapping: OpenID 'offline_access'` |
+| Redirections | `https://git.weebo.poc/user/oauth2/authentik/callback` (strict) |
+| Clé de signature | `authentik Self-signed Certificate` |
+| Flux d'autorisation | `default-provider-authorization-implicit-consent` |
+| Flux d'invalidation | `default-provider-invalidation-flow` |
+| Accès | `weebo_moderator` |
+| Utilisateurs autorisés | `batleforc` |
+| Secret écrit dans | `forgejo/auth` |
+
+### Consommateurs
+
+| App Argo CD | Objet | Chemin du secret |
+|---|---|---|
+| `forgejo` | `forgejo/Application/forgejo-app` | Vault `mv/forgejo/auth` → ExternalSecret `forgejo/forgejo-oidc` → Secret `forgejo-oidc` |
+
+## kube-admin
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_kube_admin_23eb63["kube-admin<br/>oauth2 public · 2FA"]
+  end
+  subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
+    n_user_batleforc_01dd2e(["👤 batleforc"])
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_admin_38219b("weebo_admin")
+  end
+  subgraph n_sg_Flux_3086f2["Flux"]
+    n_flow_admin_step_up_6938b4[/"flux admin-step-up"/]
+  end
+  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_admin_38219b
+  n_group_weebo_admin_38219b -->|"accès"| n_ak_kube_admin_23eb63
+  n_ak_kube_admin_23eb63 ==>|"autorisation"| n_flow_admin_step_up_6938b4
+```
+
+| Propriété | Valeur |
+|---|---|
+| Slug | `kube-admin` |
+| CR | `kube-admin` |
+| Fournisseur | oauth2 |
+| Émetteur | `https://auth.weebo.poc/application/o/kube-admin/` |
+| Client | `kube-admin` (public) |
+| Grants | `authorization_code` |
+| Durée du jeton d'accès | `hours=1` |
+| Scopes / mappings | `weebo email`<br/>`weebo groups`<br/>`authentik default OAuth Mapping: OpenID 'profile'`<br/>`authentik default OAuth Mapping: OpenID 'openid'` |
+| Redirections | `http://localhost:8000` (strict)<br/>`http://localhost:18000` (strict) |
+| Clé de signature | `authentik Self-signed Certificate` |
+| Flux d'autorisation | `admin-step-up` (second facteur) |
+| Flux d'invalidation | `default-provider-invalidation-flow` |
+| Accès | `weebo_admin` |
+| Utilisateurs autorisés | `batleforc` |
+| Secret écrit dans | — |
+
+### Consommateurs
+
+| App Argo CD | Objet | Chemin du secret |
+|---|---|---|
+| hors Argo CD | kubeconfig `Weebo-si-admin` | issuer de l'application |
+| hors Argo CD | apiserver jwt[1] | issuer de l'application |
+
+## longhorn
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_longhorn_dda6d7["longhorn<br/>proxy · 2FA"]
+  end
+  subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
+    n_user_batleforc_01dd2e(["👤 batleforc"])
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_admin_38219b("weebo_admin")
+  end
+  subgraph n_sg_Flux_3086f2["Flux"]
+    n_flow_admin_step_up_6938b4[/"flux admin-step-up"/]
+  end
+  subgraph n_sg_Traefik_9d658b["Traefik"]
+    n_route_longhorn_weebo_poc_6bd48b[/"longhorn.weebo.poc<br/>IngressRoute longhorn/longhorn"/]
+  end
+  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_admin_38219b
+  n_group_weebo_admin_38219b -->|"accès"| n_ak_longhorn_dda6d7
+  n_ak_longhorn_dda6d7 ==>|"autorisation"| n_flow_admin_step_up_6938b4
+  n_ak_longhorn_dda6d7 -->|"forwardAuth auth/authentik"| n_route_longhorn_weebo_poc_6bd48b
+```
+
+| Propriété | Valeur |
+|---|---|
+| Slug | `longhorn` |
+| CR | `longhorn` |
+| Fournisseur | proxy |
+| Hôte externe | `https://longhorn.weebo.poc` |
+| Hôte interne | `http://longhorn-frontend.longhorn.svc.cluster.local` |
+| Flux d'autorisation | `admin-step-up` (second facteur) |
+| Flux d'invalidation | `default-provider-invalidation-flow` |
+| Accès | `weebo_admin` |
+| Utilisateurs autorisés | `batleforc` |
+| Secret écrit dans | — |
+
+### Consommateurs
+
+| App Argo CD | Objet | Chemin du secret |
+|---|---|---|
+| — | `longhorn/IngressRoute/longhorn` | forwardAuth `auth/authentik` sur `longhorn.weebo.poc` |
+
+## s3
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_s3_a060e5["s3<br/>oauth2"]
+  end
+  subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
+    n_user_batleforc_01dd2e(["👤 batleforc"])
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_moderator_a8f585("weebo_moderator")
+  end
+  subgraph n_sg_Flux_3086f2["Flux"]
+    n_flow_default_provider_authorization_implicit_consent_4789aa[/"flux default-provider-authorization-implicit-consent"/]
+  end
+  subgraph n_sg_ns_s3_a0c176["ns s3"]
+    n_c_database_s3_Tenant_main_e7b280["Tenant/main<br/>(database)"]
+  end
+  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_moderator_a8f585
+  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_s3_a060e5
+  n_ak_s3_a060e5 -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
+  n_ak_s3_a060e5 -->|"Vault mv/s3/auth → ExternalSecret s3/main-oidc → Secret main-oidc"| n_c_database_s3_Tenant_main_e7b280
+```
+
+| Propriété | Valeur |
+|---|---|
+| Slug | `s3` |
+| CR | `s3` |
+| Fournisseur | oauth2 |
+| Émetteur | `https://auth.weebo.poc/application/o/s3/` |
+| Client | `s3` (confidential) |
+| Grants | `authorization_code` |
+| Durée du jeton d'accès | `défaut` |
+| Scopes / mappings | `authentik default OAuth Mapping: OpenID 'email'`<br/>`authentik default OAuth Mapping: OpenID 'profile'`<br/>`authentik default OAuth Mapping: OpenID 'openid'`<br/>`authentik default OAuth Mapping: OpenID 'offline_access'`<br/>`rustfs policies` |
+| Redirections | `https://s3-main.weebo.poc/rustfs/admin/v3/oidc/callback/default` (strict) |
+| Clé de signature | `authentik Self-signed Certificate` |
+| Flux d'autorisation | `default-provider-authorization-implicit-consent` |
+| Flux d'invalidation | `default-provider-invalidation-flow` |
+| Accès | `weebo_moderator` |
+| Utilisateurs autorisés | `batleforc` |
+| Secret écrit dans | `s3/auth` |
+
+### Consommateurs
+
+| App Argo CD | Objet | Chemin du secret |
+|---|---|---|
+| `database` | `s3/Tenant/main` | Vault `mv/s3/auth` → ExternalSecret `s3/main-oidc` → Secret `main-oidc` |
+
+## stalwart
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_stalwart_576573["stalwart<br/>oauth2 public"]
+  end
+  subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
+    n_user_batleforc_01dd2e(["👤 batleforc"])
+    n_user_batleforc_test_74b72b(["👤 batleforc-test"])
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_user_58ae05("weebo_user")
+  end
+  subgraph n_sg_Flux_3086f2["Flux"]
+    n_flow_default_provider_authorization_implicit_consent_4789aa[/"flux default-provider-authorization-implicit-consent"/]
+  end
+  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_user_58ae05
+  n_user_batleforc_test_74b72b -->|"membre (direct ou hérité)"| n_group_weebo_user_58ae05
+  n_group_weebo_user_58ae05 -->|"accès"| n_ak_stalwart_576573
+  n_ak_stalwart_576573 -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
+```
+
+| Propriété | Valeur |
+|---|---|
+| Slug | `stalwart` |
+| CR | `stalwart` |
+| Fournisseur | oauth2 |
+| Émetteur | `https://auth.weebo.poc/application/o/stalwart/` |
+| Client | `stalwart` (public) |
+| Grants | `authorization_code`, `refresh_token` |
+| Durée du jeton d'accès | `défaut` |
+| Scopes / mappings | `weebo email`<br/>`weebo groups`<br/>`authentik default OAuth Mapping: OpenID 'profile'`<br/>`authentik default OAuth Mapping: OpenID 'openid'`<br/>`authentik default OAuth Mapping: OpenID 'offline_access'` |
+| Redirections | `https://mail\.weebo\.poc/.*` (regex) |
+| Clé de signature | `authentik Self-signed Certificate` |
+| Flux d'autorisation | `default-provider-authorization-implicit-consent` |
+| Flux d'invalidation | `default-provider-invalidation-flow` |
+| Accès | `weebo_user` |
+| Utilisateurs autorisés | `batleforc`, `batleforc-test` |
+| Secret écrit dans | `mail/auth` |
+
+### Consommateurs
+
+Aucun consommateur trouvé dans le rendu.
+

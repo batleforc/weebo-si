@@ -1,0 +1,18 @@
+{{- if .Values.lockDefaultProject }}
+---
+# Argo CD's built-in project, emptied: an Application that names no project
+# lands here and can deploy nothing. Every Application of this repo names
+# one (values.yaml, project). Argo CD recreates `default` if it is deleted,
+# so it is locked rather than removed.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: default
+  namespace: argocd
+spec:
+  description: "Verrouillé : aucune source, aucune destination"
+  sourceRepos: []
+  destinations: []
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist: []
+{{- end }}

@@ -203,6 +203,17 @@ identity:
         groupRefs:
           - weebo_admin
           - batleforc
+      # A plain weebo_user, for checking what a non-moderator gets (Argo CD:
+      # its own Application only). Same email as che/hardening's
+      # users.batleforc-test. No password in git: onboard it like anyone
+      # (runbook onboarding-utilisateur).
+      - crName: batleforc-test
+        username: batleforc-test
+        name: batleforc-test
+        email: batleforc-test@weebo.internal
+        isActive: true
+        groupRefs:
+          - weebo_user
 
 # ---------------------------------------------------------------------------
 # Phase 2 -- brand. Mirrors the `authentik_brand.default` half of flow.tf.
@@ -408,6 +419,26 @@ scopeMappings:
           "email_verified": str(verified).lower() == "true",
       }
 
+  # The profile of the argo-admin application only: its groups claim carries
+  # a single marker, `weebo_admin:step-up`, which Argo CD's policy.csv
+  # (1.pulu-conf) maps to role:admin. Only this application emits it, and it
+  # sits behind admin-step-up: Argo CD admin needs the second factor, like
+  # kube-admin. The everyday `argo` application keeps the plain group names,
+  # which policy.csv maps to read-only at most.
+  argoAdminProfile:
+    enabled: true
+    crName: argo-admin-profile
+    name: "argo admin profile"
+    scopeName: profile
+    description: "Argo CD admin marker, emitted after the step-up only"
+    expression: |
+      admin = ak_is_group_member(request.user, name="weebo_admin")
+      return {
+          "name": request.user.name,
+          "preferred_username": request.user.username,
+          "nickname": request.user.username,
+          "groups": ["weebo_admin:step-up"] if admin else [],
+      }
   weeboGroups:
     enabled: true
     crName: weebo-groups
@@ -528,7 +559,10 @@ applications:
     slug: argo
     name: argo
     metaIcon: "https://maxleriche.net/public/media/techno/argo.png"
-    accessGroup: weebo_moderator
+    # weebo_user: anyone may sign in, Argo CD's RBAC decides what they see.
+    # Its default policy is empty, so a plain user only gets the che-users
+    # role of their own Applications (che/hardening, cheUsersProject).
+    accessGroup: weebo_user
     # AUTHENTIK_URL here is read by main/templates/authentik/auth-secret.yaml
     # and becomes argocd's OIDC issuer, so the `slug` above is what argocd
     # ends up trusting.
@@ -558,6 +592,35 @@ applications:
   #   - access_token_validity = hours=10
   # plus meta_launch_url. All three survive adoption untouched, but they become
   # invisible to git the moment this CR owns the provider. Migrate it last.
+  # Argo CD as admin: a second connector of Argo CD's Dex (1.pulu-conf,
+  # dex.config `weebo-admin`), reached through admin-step-up. Its token's
+  # groups are just the `weebo_admin:step-up` marker (scopeMappings.
+  # argoAdminProfile), the only thing policy.csv makes role:admin.
+  argo-admin:
+    enabled: false
+    slug: argo-admin
+    name: argo-admin
+    metaIcon: "https://maxleriche.net/public/media/techno/argo.png"
+    accessGroup: weebo_admin
+    secretTargets:
+      - backend: vault
+        path: argocd/admin-auth
+    provider:
+      kind: oauth2
+      oauth2:
+        clientId: argo-admin
+        authorizationFlow: admin-step-up
+        invalidationFlow: default-provider-invalidation-flow
+        signingKey: "authentik Self-signed Certificate"
+        grantTypes: ["authorization_code"]
+        accessTokenValidity: "hours=1"
+        propertyMappings:
+          - "weebo email"
+          - "argo admin profile"
+          - "authentik default OAuth Mapping: OpenID 'openid'"
+        allowedRedirectUris:
+          - matchingMode: strict
+            url: "https://argo.weebo.poc/api/dex/callback"
   che:
     enabled: false
     slug: che-cluster

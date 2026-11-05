@@ -2,8 +2,11 @@
 # (2.argo/helm/che/hardening/templates/teams/<team>.yaml, workspace.che) sets the base, the
 # WeeboSiUser's spec.che.values is deep-merged over it.
 
-# AppProject of the external-config Application.
+# AppProject of this Application (che-users), set by the operator.
 project: ""
+# The external-config Application goes to <prefix>-<username>, a project of
+# its own rendered by 2.argo/helm/che/hardening from the same `users` list.
+externalConfigProjectPrefix: che-config
 
 cheUser:
   # Che username: dev-ws-<username>, and the namespace owner annotation.

@@ -12,6 +12,7 @@ deploys today) and with ciliumNetworkPolicies.enabled forced on (what
 2.helm/weebo-base would add). A flow only present in the second render is a
 proposal and is drawn dashed.
 
+The rendering itself lives in argorender.py, shared with authflow.py.
 Only stdlib: YAML goes through `yq -o=json`, so the pre-commit hook needs
 nothing beyond helm and yq, both pinned in mise.toml.
 
@@ -20,18 +21,15 @@ nothing beyond helm and yq, both pinned in mise.toml.
 import hashlib
 import json
 import re
-import subprocess
 import sys
 from collections import defaultdict
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from argorender import ROOT, walk  # noqa: E402
+
 OUT = ROOT / "0.docs/content/docs/security/network-flows"
-APP_CHART = "2.argo/app"
-# Stands in for the git URL the app of apps is given: an Application whose
-# repoURL is this one points back into the checkout, anything else (upstream
-# charts) is not ours to render.
-REPO = "https://netflow.invalid/weebo-si.git"
 NS_KEY = "io.kubernetes.pod.namespace"
 NS_LABEL = "io.cilium.k8s.namespace.labels."
 WORKSPACES = "workspaces Che (dev-ws-*)"
@@ -43,74 +41,34 @@ TEMPLATE_LABEL = "hardening.weebo.io/never-selected"
 GENERATED = "{/* Généré par `task docs:netflow` (0.task/scripts/netflow.py). Ne pas éditer à la main. */}"
 
 
-def run(*cmd, cwd=None, stdin=None):
-    return subprocess.run(cmd, cwd=cwd, input=stdin, capture_output=True, text=True)
-
-
-def yaml_docs(text):
-    res = run("yq", "-o=json", "-I=0", ".", "-", stdin=text)
-    if res.returncode != 0:
-        raise RuntimeError(res.stderr)
-    return [json.loads(l) for l in res.stdout.splitlines() if l.strip() not in ("", "null")]
-
-
-# ── Rendering, the way Argo CD does it ───────────────────────────────────────
-
-
-def render(chart, release, namespace, values, force=False):
-    """helm template with the valuesObject the parent Application passes."""
-    # netflowRender: weebo-base then also emits the docs-only NetflowReaches.
-    args = ["helm", "template", release, ".", "--namespace", namespace, "--values", "-",
-            "--set", "netflowRender=true"]
-    if force:
-        args += ["--set", "ciliumNetworkPolicies.enabled=true"]
-    res = run(*args, cwd=ROOT / chart, stdin=json.dumps(values))
-    if res.returncode != 0:
-        err = [l for l in res.stderr.splitlines() if l.startswith("Error")]
-        return None, (err or ["helm template failed"])[0]
-    return yaml_docs(res.stdout), None
+# ── Rendering, the way Argo CD does it (argorender.py) ───────────────────────
 
 
 def policies():
-    """Walk the app of apps: 2.argo/app, then every Application rendered from
-    it that points back into this repo, with the valuesObject it carries.
-    Disabled apps are simply never rendered, as in the cluster."""
-    queue = [(APP_CHART, "app", "argocd", {"repo": REPO, "branch": "develop"}, None)]
-    out, skipped, seen, routes, upstream, reaches = [], [], set(), [], [], []
-    while queue:
-        chart, release, namespace, values, app = queue.pop(0)
-        if chart in seen:
-            continue
-        seen.add(chart)
-        run("helm", "dependency", "build", "--skip-refresh", cwd=ROOT / chart)
-        live, err = render(chart, release, namespace, values)
+    """Every network policy of the rendered apps. Each chart is rendered
+    twice: as is, and with ciliumNetworkPolicies.enabled forced on.
+    netflowRender: weebo-base then also emits the docs-only NetflowReaches."""
+    out, skipped, routes, upstream, reaches = [], [], [], [], []
+    for r in walk(sets=("netflowRender=true",), forced_sets=("ciliumNetworkPolicies.enabled=true",)):
+        app, namespace, live = r.app, r.namespace, r.live
         if live is None:
-            skipped.append((chart, app or "app of apps", err))
+            skipped.append((r.chart, app or "app of apps", r.err))
             continue
-        forced, _ = render(chart, release, namespace, values, force=True)
         for d in live:
             src = (d.get("spec") or {}).get("source") or {}
-            path = (src.get("path") or "").rstrip("/")
             if d.get("kind") == "Application" and src.get("chart"):
                 upstream.append(d)
-            if d.get("kind") != "Application" or src.get("repoURL") != REPO or not (ROOT / path / "Chart.yaml").exists():
-                continue
-            helm = src.get("helm") or {}
-            child_values = helm.get("valuesObject") or (yaml_docs(helm["values"])[0] if helm.get("values") else {})
-            queue.append((path, helm.get("releaseName") or d["metadata"]["name"],
-                          d["spec"]["destination"].get("namespace", "default"), child_values,
-                          app or d["metadata"]["name"]))
         routes += [(d, namespace) for d in live if d.get("kind") in ("IngressRoute", "Ingress")]
         reaches += [(e, app or "app of apps") for d in live if d.get("kind") == "NetflowReaches"
                     for e in d.get("entries") or []]
         kinds = ("CiliumNetworkPolicy", "NetworkPolicy")
         live_ids = {(d["kind"], d["metadata"].get("namespace") or namespace, d["metadata"]["name"])
                     for d in live if d.get("kind") in kinds}
-        for d in (forced or live):
+        for d in (r.forced or live):
             if d.get("kind") not in kinds:
                 continue
             ns = d["metadata"].get("namespace") or namespace
-            out.append({"app": app, "chart": chart, "ns": ns, "doc": d,
+            out.append({"app": app, "chart": r.chart, "ns": ns, "doc": d,
                         "active": (d["kind"], ns, d["metadata"]["name"]) in live_ids})
     return out, skipped, routes, upstream, reaches
 

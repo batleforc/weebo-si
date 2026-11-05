@@ -21,6 +21,9 @@ authentik:
   version: 2026.8.5
   argoAuth:
     enabled: true
+    # argo-admin-auth, the client of the `weebo-admin` connector of Argo CD's
+    # Dex (1.pulu-conf), read from mv/argocd/admin-auth.
+    admin: true
   # The database, on CNPG (templates/authentik/postgres.yaml), as for forgejo
   # and batlehub. One instance: the cluster has one worker.
   postgres:
@@ -106,6 +109,8 @@ authentik:
       s3:
         enabled: true
       argo: # 0.8.0 writes the same issuer TF did, so no consumer fix (3.3)
+        enabled: true
+      argo-admin: # Argo CD admin behind admin-step-up (1.pulu-conf, dex.config weebo-admin)
         enabled: true
       che:
         enabled: true

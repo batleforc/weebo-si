@@ -1,0 +1,116 @@
+---
+title: "Argo CD"
+description: "Connecteurs, rôles et projets d'Argo CD"
+---
+
+{/* Généré par `task docs:authflow` (0.task/scripts/authflow.py). Ne pas éditer à la main. */}
+
+Comment on entre dans Argo CD et ce que chacun y peut, d'après `1.pulu-conf/main.go` (Dex, RBAC, réglages) et les AppProjects rendus par les charts. Ce que décrit `1.pulu-conf` n'est en place qu'après `pulumi up`.
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Argo_CD_7a7c93["Argo CD"]
+    n_argocd_88dc19{{"Argo CD"}}
+  end
+  subgraph n_sg_Dex_d_Argo_CD_86e450["Dex d'Argo CD"]
+    n_conn_weebo_f3bc65{{"connecteur weebo<br/>Weebo"}}
+    n_conn_weebo_admin_fec74b{{"connecteur weebo-admin<br/>Weebo admin (2FA)"}}
+    n_conn_forgejo_actions_7232d9{{"connecteur forgejo-actions<br/>forgejo-actions"}}
+  end
+  subgraph n_sg_Authentik_212dcb["Authentik"]
+    n_ak_argo_358618["argo<br/>oauth2"]
+    n_ak_argo_admin_7fdc96["argo-admin<br/>oauth2 · 2FA"]
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_user_58ae05("weebo_user")
+    n_group_weebo_admin_38219b("weebo_admin")
+  end
+  subgraph n_sg__metteurs_externes_d65dd9["Émetteurs externes"]
+    n_ext_https___git_batleforc_fr_api_actions_a6fdf1[/"https://git.batleforc.fr/api/actions"/]
+  end
+  subgraph n_sg_Claims_groups_804256["Claims groups"]
+    n_claim_weebo_admin_step_up_348fcd("weebo_admin:step-up")
+    n_claim_weebo_admin_5bbd1d("weebo_admin")
+    n_claim_max_weebo_internal_e2e9e1("max@weebo.internal")
+    n_claim_batleforc_test_weebo_internal_69b8a7("batleforc-test@weebo.internal")
+  end
+  subgraph n_sg_R_les_Argo_CD_be5664["Rôles Argo CD"]
+    n_role_role_admin_10a3e4(["role:admin"])
+    n_role_role_readonly_cab0d8(["role:readonly"])
+  end
+  subgraph n_sg_Projet_che_config_batleforc_f2500c["Projet che-config-batleforc"]
+    n_prole_che_config_batleforc_user_batleforc_0ce05f(["proj:che-config-batleforc:user-batleforc"])
+  end
+  subgraph n_sg_Projet_che_users_ad876b["Projet che-users"]
+    n_prole_che_users_user_batleforc_c7d9e9(["proj:che-users:user-batleforc"])
+    n_prole_che_users_user_batleforc_test_8f5a6d(["proj:che-users:user-batleforc-test"])
+  end
+  n_ak_argo_358618 --> n_conn_weebo_f3bc65
+  n_group_weebo_user_58ae05 -->|"accès"| n_ak_argo_358618
+  n_conn_weebo_f3bc65 -->|"groupes"| n_argocd_88dc19
+  n_ak_argo_admin_7fdc96 ==> n_conn_weebo_admin_fec74b
+  n_group_weebo_admin_38219b -->|"accès"| n_ak_argo_admin_7fdc96
+  n_conn_weebo_admin_fec74b -->|"groupes"| n_argocd_88dc19
+  n_ext_https___git_batleforc_fr_api_actions_a6fdf1 --> n_conn_forgejo_actions_7232d9
+  n_conn_forgejo_actions_7232d9 -->|"sans groupes"| n_argocd_88dc19
+  n_claim_weebo_admin_step_up_348fcd -->|"policy.csv"| n_role_role_admin_10a3e4
+  n_claim_weebo_admin_5bbd1d -->|"policy.csv"| n_role_role_readonly_cab0d8
+  n_claim_max_weebo_internal_e2e9e1 -->|"rôle de projet"| n_prole_che_config_batleforc_user_batleforc_0ce05f
+  n_claim_max_weebo_internal_e2e9e1 -->|"rôle de projet"| n_prole_che_users_user_batleforc_c7d9e9
+  n_claim_batleforc_test_weebo_internal_69b8a7 -->|"rôle de projet"| n_prole_che_users_user_batleforc_test_8f5a6d
+```
+
+## Réglages
+
+| Clé | Valeur (1.pulu-conf) | Rôle |
+|---|---|---|
+| `admin.enabled` | `pulumi.String(fmt.Sprintf("%t", !deployed))` | compte local `admin` (mot de passe statique) |
+| `exec.enabled` | `pulumi.Bool(false)` | terminal web dans les pods |
+| `users.session.duration` | `pulumi.String("8h")` | durée d'une session (24h par défaut) |
+| `policy.default` | `pulumi.String("")` | rôle de qui n'est nommé nulle part |
+| `scopes` | `pulumi.String("[groups, email]")` | claims lues comme groupes par le RBAC |
+| `server.rbac.log.enforce.enable` | `pulumi.String("true")` | journalisation des refus RBAC |
+| `server.insecure` | `pulumi.Bool(deployed)` | TLS terminé en amont (Traefik) |
+
+## Connecteurs Dex
+
+| Connecteur | Nom | Émetteur | Groupes transmis | Nom d'utilisateur |
+|---|---|---|---|---|
+| `weebo` | Weebo | `$argo-dev-auth:url` | oui | `défaut` |
+| `weebo-admin` | Weebo admin (2FA) | `$argo-admin-auth:url` | oui | `défaut` |
+| `forgejo-actions` | forgejo-actions | `https://git.batleforc.fr/api/actions` | non | `sub` |
+
+Un connecteur sans groupes ni email n'obtient que ce qu'un rôle de projet donne à son nom d'utilisateur ; `policy.default` donne le reste.
+
+## Rôles globaux (`policy.csv`)
+
+| Claim | Rôle | Nature |
+|---|---|---|
+| `weebo_admin:step-up` | `role:admin` | marqueur émis par un mapping |
+| `weebo_admin` | `role:readonly` | groupe Authentik |
+
+## Projets
+
+L'app of apps `main` est dans le projet `bootstrap`, destination `argocd` (`1.pulu-conf`).
+
+Projet `default` : **Non verrouillé** : le projet intégré d'Argo CD permet tout (`lockDefaultProject: false` dans `2.argo/app/values.yaml`). Plus aucune Application ne l'utilise : il peut être verrouillé.
+
+| Projet | Sources | Destinations | Types cluster | Types namespacés | Applications | Rendu par |
+|---|---|---|---|---|---|---|
+| `bootstrap` | ce dépôt | `argocd`, `kube-system` | `ClusterRoleBinding` | tous | `main (1.pulu-conf)` | `app of apps` |
+| `che-config-batleforc` | `https://github.com/batleforc/weebo-dotfiles-che` | `dev-ws-batleforc` | aucun | `ConfigMap`, `Secret` | `batleforc-external-config (2.helm/user-app)` | `che` |
+| `che-users` | ce dépôt | `dev-ws-*`, `argocd` | `Namespace` | `RoleBinding`, `SecretStore`, `Application`, `ConfigMap` | `che-user-batleforc (weebo-si-operator)`<br/>`che-user-batleforc-test (weebo-si-operator)` | `che` |
+| `database` | `oci://ghcr.io/clickhouse/clickhouse-operator-helm`<br/>`https://mongodb.github.io/helm-charts`<br/>`https://cloudnative-pg.github.io/charts`<br/>`https://operator.rustfs.com`<br/>`https://github.com/rustfs/operator`<br/>`https://valkey.io/valkey-helm`<br/>ce dépôt | `argocd`, `database`, `monitoring`, `s3`, `valkey` | `Namespace`, `CustomResourceDefinition`, `ClusterRole`, `MutatingWebhookConfiguration`, `ValidatingWebhookConfiguration`, `ClusterRoleBinding`, `Tenant` | tous | `clickhouse-operator`<br/>`cnpg-operator`<br/>`database`<br/>`database-app`<br/>`mongodb-operator`<br/>`s3-operator`<br/>`valkey-operator` | `app of apps` |
+| `dev` | `https://github.com/devfile/devworkspace-operator`<br/>`https://eclipse-che.github.io/che-operator/charts`<br/>`oci://ghcr.io/batleforc/charts/weebo-si-operator`<br/>`oci://ghcr.io/batleforc/charts/endpoint-gateway`<br/>ce dépôt | `argocd`, `eclipse-che`, `devworkspace-controller`, `weebo-si-hardening` | `Namespace`, `ClusterRole`, `ClusterRoleBinding`, `MutatingWebhookConfiguration`, `CustomResourceDefinition`, `ValidatingWebhookConfiguration`, `DevWorkspaceOperatorConfig`, `Bundle`, `WeeboSiConfig`, `WeeboSiTeam`, `WeeboSiUser` | tous | `che`<br/>`che-app`<br/>`che-app-bis`<br/>`devworkspace-operator`<br/>`eclipse-che-operator`<br/>`weebo-si-endpoint-gateway`<br/>`weebo-si-hardening-config`<br/>`weebo-si-hardening-operator` | `app of apps` |
+| `dev-base` | `oci://ghcr.io/batlehub/batlehub/charts/batlehub`<br/>`oci://code.forgejo.org/forgejo-helm/forgejo`<br/>`oci://ghcr.io/batleforc/charts/weebo-forgejo`<br/>`oci://ghcr.io/batleforc/charts/weebo-batlehub`<br/>`oci://ghcr.io/batleforc/charts/weebo-angos`<br/>`oci://ghcr.io/batleforc/charts/weebo-stalwart`<br/>ce dépôt | `argocd`, `angos`, `batlehub`, `forgejo`, `weebo-forgejo`, `weebo-batlehub`, `weebo-angos`, `angos-node`, `mail`, `weebo-stalwart` | `Namespace`, `ValkeyCluster`, `ClusterRole`, `ClusterRoleBinding`, `ClusterSecretStore`, `ClusterExternalSecret`, `CustomResourceDefinition`, `ValidatingWebhookConfiguration`, `ForgejoInstance`, `ForgejoNamespacePolicy`, `StalwartInstance`, `StalwartNamespacePolicy`, `StalwartDomain` | tous | `angos`<br/>`batlehub`<br/>`batlehub-app`<br/>`forgejo`<br/>`forgejo-app`<br/>`weebo-angos`<br/>`weebo-batlehub`<br/>`weebo-forgejo` | `app of apps` |
+| `infra` | `oci://ghcr.io/traefik/helm/traefik`<br/>`oci://quay.io/jetstack/charts/cert-manager`<br/>`oci://ghcr.io/bank-vaults/helm-charts/vault-operator`<br/>`oci://quay.io/jetstack/charts/trust-manager`<br/>`oci://ghcr.io/tarampampam/error-pages/charts/error-pages`<br/>`https://ghcr.io/external-secrets/charts`<br/>`https://ghcr.io/bank-vaults/helm-charts`<br/>`https://charts.dexidp.io`<br/>`https://kyverno.github.io/kyverno/`<br/>`https://charts.longhorn.io`<br/>`https://github.com/kubernetes-csi/external-snapshotter`<br/>`https://charts.goauthentik.io`<br/>`oci://ghcr.io/batleforc/charts/weebo-authentik`<br/>`ghcr.io/external-secrets/charts`<br/>`ghcr.io/bank-vaults/helm-charts`<br/>`https://github.com/rancher/local-path-provisioner`<br/>ce dépôt | `argocd`, `auth`, `dex`, `cert-manager`, `kube-system`, `hook`, `longhorn`, `netbird`, `traefik`, `vault`, `vault-operator`, `vault-infra`, `external-secrets`, `local-path-storage` | `Namespace`, `CustomResourceDefinition`, `ClusterRole`, `Role`, `ClusterRoleBinding`, `RoleBinding`, `IngressClass`, `ValidatingWebhookConfiguration`, `MutatingWebhookConfiguration`, `ClusterIssuer`, `Vault`, `Bundle`, `Certificate`, `MutatingPolicy`, `ClusterPolicy`, `PriorityClass`, `AuthentikInstance`, `AuthentikNamespacePolicy`, `AuthentikUser`, `AuthentikGroup`, `AuthentikBrand`, `AuthentikFlow`, `AuthentikScopeMapping`, `AuthentikBlueprint`, `RecurringJob`, `StorageClass` | tous | `auth`<br/>`auth-app`<br/>`authentik`<br/>`authentik-operator`<br/>`cert-manager`<br/>`dex`<br/>`error-pages-external`<br/>`error-pages-internal`<br/>`external-secrets`<br/>`hook`<br/>`hook-app`<br/>`ingress`<br/>`ingress-app`<br/>`kyverno`<br/>`local-storage`<br/>`longhorn`<br/>`main-storage`<br/>`snapshot-crds`<br/>`terra-authentik`<br/>`terra-vault`<br/>`traefik`<br/>`trust-manager`<br/>`vault`<br/>`vault-app`<br/>`vault-operator`<br/>`vault-webhook`<br/>`vpn` | `app of apps` |
+| `monitoring` | `https://open-telemetry.github.io/opentelemetry-helm-charts`<br/>`https://github.com/batleforc/weebo-si-hardening`<br/>ce dépôt | `argocd`, `monitoring`, `obi` | `Namespace`, `ClusterRole`, `ClusterRoleBinding`, `ClusterSecretStore`, `ClusterExternalSecret` | tous | `clickstack`<br/>`clickstack-preauth`<br/>`monitoring`<br/>`obi`<br/>`otel-cluster`<br/>`otel-node` | `app of apps` |
+
+## Rôles de projet
+
+| Projet | Rôle | Sujets | Politiques |
+|---|---|---|---|
+| `che-config-batleforc` | `user-batleforc` | `max@weebo.internal` | `p, proj:che-config-batleforc:user-batleforc, applications, get, che-config-batleforc/*, allow`<br/>`p, proj:che-config-batleforc:user-batleforc, applications, sync, che-config-batleforc/*, allow` |
+| `che-users` | `user-batleforc` | `max@weebo.internal` | `p, proj:che-users:user-batleforc, applications, get, che-users/che-user-batleforc, allow`<br/>`p, proj:che-users:user-batleforc, applications, sync, che-users/che-user-batleforc, allow` |
+| `che-users` | `user-batleforc-test` | `batleforc-test@weebo.internal` | `p, proj:che-users:user-batleforc-test, applications, get, che-users/che-user-batleforc-test, allow`<br/>`p, proj:che-users:user-batleforc-test, applications, sync, che-users/che-user-batleforc-test, allow` |
+

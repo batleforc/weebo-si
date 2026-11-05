@@ -10,4 +10,4 @@ Les flux que les politiques réseau du cluster autorisent, dessinés à partir d
 
 ## Authentification
 
-Le graph d'authentification est généré par `task docs:auth`, lancée par le hook `pre-commit`. Il est disponible à l'adresse : [schéma global et détail par application](/docs/security/authentication).
+La chaîne d'authentification (Authentik, les Dex, l'apiserver, le RBAC), dessinée à partir des charts et de la configuration Pulumi : [schéma global, applications, groupes, flux et Kubernetes](/docs/security/authentication). Les pages sont régénérées par `task docs:authflow`, lancée par le hook `pre-commit`.

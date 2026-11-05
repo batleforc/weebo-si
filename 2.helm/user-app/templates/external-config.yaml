@@ -7,7 +7,10 @@ metadata:
   name: {{ .Values.cheUser.username }}-external-config
   namespace: argocd
 spec:
-  project: {{ required "project is rendered by the operator" .Values.project }}
+  # Its own project, che-config-<username> (2.argo/helm/che/hardening,
+  # templates/che-users-project.yaml): this repo is the person's, so it may
+  # only reach their namespace -- never argocd, never another dev-ws-*.
+  project: {{ printf "%s-%s" .Values.externalConfigProjectPrefix .Values.cheUser.username }}
   source:
     path: {{ .Values.cheUser.externalConfig.path }}
     repoURL: {{ required "cheUser.externalConfig.repoURL" .Values.cheUser.externalConfig.repoURL }}

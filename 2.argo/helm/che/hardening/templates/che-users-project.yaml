@@ -1,0 +1,76 @@
+{{- with .Values.cheUsersProject }}
+{{- if .enabled }}
+{{- $p := . }}
+{{- $users := dict }}
+{{- range $name, $u := $.Values.users }}
+{{- if $u.active }}
+{{- $_ := set $users $name $u }}
+{{- end }}
+{{- end }}
+---
+# The project of the Applications weebo-si-operator creates, one per person
+# (values.yaml, cheUsersProject). Its sources are this repo only.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ $p.name }}
+  namespace: argocd
+spec:
+  description: "Applications personnelles (weebo-si-operator, 2.helm/user-app)"
+  sourceRepos:
+    - {{ required "repo is passed by che/main" $.Values.repo | quote }}
+  destinations:
+    {{- toYaml $p.destinations | nindent 4 }}
+  clusterResourceWhitelist:
+    {{- toYaml $p.clusterResourceWhitelist | nindent 4 }}
+  namespaceResourceWhitelist:
+    {{- toYaml $p.namespaceResourceWhitelist | nindent 4 }}
+  {{- if $users }}
+  roles:
+    {{- range $name, $u := $users }}
+    - name: user-{{ $name }}
+      description: {{ printf "%s : son Application che-user-%s" $u.username $name | quote }}
+      groups:
+        - {{ required (printf "users.%s.email" $name) $u.email | quote }}
+      policies:
+        {{- range $p.userActions }}
+        - {{ printf "p, proj:%s:user-%s, applications, %s, %s/che-user-%s, allow" $p.name $name . $p.name $name | quote }}
+        {{- end }}
+    {{- end }}
+  {{- end }}
+{{- range $name, $u := $users }}
+{{- $ext := ((((($u.che).values).cheUser).externalConfig) | default dict) }}
+{{- if and $ext.enabled $ext.repoURL }}
+{{- $proj := printf "%s-%s" $p.config.prefix $u.username }}
+---
+# {{ $u.username }}'s external config: their own repo, into their own
+# namespace only (values.yaml, cheUsersProject.config).
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ $proj }}
+  namespace: argocd
+spec:
+  description: {{ printf "Config externe de %s (dev-ws-%s uniquement)" $u.username $u.username | quote }}
+  sourceRepos:
+    - {{ $ext.repoURL | quote }}
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: {{ printf "dev-ws-%s" $u.username | quote }}
+  # No cluster-scoped kind at all.
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    {{- toYaml $p.config.namespaceResourceWhitelist | nindent 4 }}
+  roles:
+    - name: user-{{ $name }}
+      description: {{ printf "%s : sa config externe" $u.username | quote }}
+      groups:
+        - {{ $u.email | quote }}
+      policies:
+        {{- range $p.userActions }}
+        - {{ printf "p, proj:%s:user-%s, applications, %s, %s/*, allow" $proj $name . $proj | quote }}
+        {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

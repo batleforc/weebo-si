@@ -1,6 +1,158 @@
 ---
-title: Authentication
-description: "Weebo's authentication practices"
+title: "Authentification"
+description: "La chaîne d'authentification du cluster, générée depuis les charts"
 ---
 
-# TODO: Générer le graph d'authentification et le mettre à jour dans la documentation.
+{/* Généré par `task docs:authflow` (0.task/scripts/authflow.py). Ne pas éditer à la main. */}
+
+La chaîne d'authentification du cluster, tirée du rendu Helm des applications Argo CD (comme [les flux réseau](/docs/security/network-flows)), des CRs de l'opérateur `weebo-authentik`, de la configuration Pulumi de l'apiserver et d'Argo CD, et du kubeconfig du dépôt.
+
+Fournisseur d'identité : Authentik (`https://auth.weebo.poc`), géré par CRs dans `2.argo/helm/auth/sub`. Tout le reste s'y raccroche, directement ou par un Dex.
+
+- [Applications Authentik](/docs/security/authentication/applications) : chaque client, ses consommateurs et la façon dont le secret leur parvient.
+- [Groupes et accès](/docs/security/authentication/groupes) : qui ouvre quoi, et ce que chaque groupe donne en aval.
+- [Flux Authentik](/docs/security/authentication/flux) : les flux, les blueprints, le second facteur.
+- [Kubernetes](/docs/security/authentication/kubernetes) : de `kubectl` aux RoleBindings.
+- [Argo CD](/docs/security/authentication/argocd) : connecteurs, rôles, projets et ce que chacun permet.
+
+## Légende
+
+- Un **groupe** donne accès à une application Authentik par une politique d'accès (`AuthentikAccessPolicy`). Les membres d'un groupe enfant passent aussi les politiques de ses parents : `weebo_admin` ⊂ `weebo_moderator` ⊂ `weebo_user`.
+- Une flèche **Authentik → consommateur** suit le client OIDC : l'opérateur écrit `client_id`/`client_secret` dans Vault (`secretTargets`), un `ExternalSecret` ou une injection `vault:` le relit dans un namespace, et l'objet qui nomme ce Secret est le consommateur. Une URL `/application/o/<slug>/` en dur compte aussi.
+- Une flèche **épaisse** (`==>`) passe par une étape de second facteur (flux d'autorisation à étape `authenticator_validate`, ici `admin-step-up`).
+- Les **Dex** sont des courtiers : ils se connectent à Authentik comme un client, puis émettent leurs propres jetons à leurs clients statiques.
+- Les **proxys** Authentik sont servis par le middleware Traefik `forwardAuth` : l'IngressRoute n'atteint le backend qu'après l'avant-poste Authentik.
+- Côté Kubernetes, l'apiserver accepte deux émetteurs JWT (`AuthenticationConfiguration` de `1.pulu-init`), et les (Cluster)RoleBindings donnent les droits aux noms préfixés qu'ils produisent.
+
+## Chaîne globale
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_user_58ae05("weebo_user")
+    n_group_weebo_moderator_a8f585("weebo_moderator")
+    n_group_weebo_admin_38219b("weebo_admin (superuser)")
+    n_group_batleforc_a99536("batleforc")
+  end
+  subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
+    n_user_batleforc_01dd2e(["👤 batleforc"])
+    n_user_batleforc_test_74b72b(["👤 batleforc-test"])
+  end
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_angos_b0924d["angos<br/>oauth2 public"]
+    n_ak_argo_358618["argo<br/>oauth2"]
+    n_ak_argo_admin_7fdc96["argo-admin<br/>oauth2 · 2FA"]
+    n_ak_batlehub_5edbeb["batlehub<br/>oauth2"]
+    n_ak_che_21e3e8["che-cluster<br/>oauth2"]
+    n_ak_clickstack_f02905["clickstack<br/>proxy · 2FA"]
+    n_ak_endpoint_gateway_582eb2["endpoint-gateway<br/>oauth2"]
+    n_ak_forgejo_696ffa["forgejo<br/>oauth2"]
+    n_ak_kube_admin_23eb63["kube-admin<br/>oauth2 public · 2FA"]
+    n_ak_longhorn_dda6d7["longhorn<br/>proxy · 2FA"]
+    n_ak_s3_a060e5["s3<br/>oauth2"]
+    n_ak_stalwart_576573["stalwart<br/>oauth2 public"]
+  end
+  subgraph n_sg_ns_angos_16e398["ns angos"]
+    n_c_angos_angos_AngosLocalInstance_registry_441d35["AngosLocalInstance/registry<br/>(angos)"]
+  end
+  subgraph n_sg_Argo_CD_7a7c93["Argo CD"]
+    n_argodex_97df58{{"Dex d'Argo CD"}}
+  end
+  subgraph n_sg_ns_batlehub_f92bb2["ns batlehub"]
+    n_c_batlehub_batlehub_Application_batlehub_app_f7a5a0["Application/batlehub-app<br/>(batlehub)"]
+  end
+  subgraph n_sg_ns_eclipse_che_6bd185["ns eclipse-che"]
+    n_c_che_eclipse_che_CheCluster_eclipse_che_b3411f["CheCluster/eclipse-che<br/>(che)"]
+  end
+  subgraph n_sg_Dex__courtier__db108a["Dex (courtier)"]
+    n_dex_c93574{{"Dex https://dex.weebo.poc"}}
+    n_dexclient_weebo_kube_f43905["client weebo-kube"]
+    n_dexclient_che_cluster_3365a0["client che-cluster"]
+  end
+  subgraph n_sg_ns_weebo_si_hardening_9501e2["ns weebo-si-hardening"]
+    n_c_che_weebo_si_hardening_Application_weebo_si_endpoint_gatew_0d1517["Application/weebo-si-endpoint-gateway<br/>(che)"]
+  end
+  subgraph n_sg_ns_forgejo_ed1669["ns forgejo"]
+    n_c_forgejo_forgejo_Application_forgejo_app_1f26bd["Application/forgejo-app<br/>(forgejo)"]
+  end
+  subgraph n_sg_ns_s3_a0c176["ns s3"]
+    n_c_database_s3_Tenant_main_e7b280["Tenant/main<br/>(database)"]
+  end
+  subgraph n_sg_Traefik_forwardAuth_1a4c6c["Traefik forwardAuth"]
+    n_route_clickstack_weebo_poc_99dbd2[/"clickstack.weebo.poc<br/>IngressRoute monitoring/clickstack"/]
+    n_route_longhorn_weebo_poc_6bd48b[/"longhorn.weebo.poc<br/>IngressRoute longhorn/longhorn"/]
+  end
+  subgraph n_sg_Postes__kubectl__0d22fa["Postes (kubectl)"]
+    n_ext_kubeconfig__Weebo_si__54bc94(["kubeconfig Weebo-si"])
+    n_ext_kubeconfig__Weebo_si_admin__0168aa(["kubeconfig Weebo-si-admin"])
+  end
+  subgraph n_sg__metteurs_externes_d65dd9["Émetteurs externes"]
+    n_ext_https___git_batleforc_fr_api_actions_a6fdf1[/"forgejo-actions<br/>https://git.batleforc.fr/api/actions"/]
+  end
+  subgraph n_sg_kube_apiserver_70e72b["kube-apiserver"]
+    n_jwt_0_cb928b{{"apiserver jwt[0]<br/>labsso:email"}}
+    n_jwt_1_408e87{{"apiserver jwt[1]<br/>labsso-admin:email"}}
+  end
+  subgraph n_sg_RBAC_Kubernetes_62b3cf["RBAC Kubernetes"]
+    n_rb_weebo_admin_crb_e7a12d["ClusterRoleBinding weebo-admin-crb<br/>→ cluster-admin"]
+  end
+  n_group_weebo_moderator_a8f585 -.->|"inclus dans"| n_group_weebo_user_58ae05
+  n_group_weebo_admin_38219b -.->|"inclus dans"| n_group_weebo_moderator_a8f585
+  n_user_batleforc_01dd2e -->|"membre"| n_group_weebo_admin_38219b
+  n_user_batleforc_01dd2e -->|"membre"| n_group_batleforc_a99536
+  n_user_batleforc_test_74b72b -->|"membre"| n_group_weebo_user_58ae05
+  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_angos_b0924d
+  n_ak_angos_b0924d -->|"client OIDC"| n_c_angos_angos_AngosLocalInstance_registry_441d35
+  n_group_weebo_user_58ae05 -->|"accès"| n_ak_argo_358618
+  n_ak_argo_358618 -->|"connecteur OIDC"| n_argodex_97df58
+  n_group_weebo_admin_38219b -->|"accès"| n_ak_argo_admin_7fdc96
+  n_ak_argo_admin_7fdc96 -->|"connecteur OIDC"| n_argodex_97df58
+  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_batlehub_5edbeb
+  n_ak_batlehub_5edbeb -->|"client OIDC"| n_c_batlehub_batlehub_Application_batlehub_app_f7a5a0
+  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_che_21e3e8
+  n_ak_che_21e3e8 -->|"client OIDC"| n_c_che_eclipse_che_CheCluster_eclipse_che_b3411f
+  n_ak_che_21e3e8 -->|"connecteur OIDC"| n_dex_c93574
+  n_group_weebo_admin_38219b -->|"accès"| n_ak_clickstack_f02905
+  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_endpoint_gateway_582eb2
+  n_ak_endpoint_gateway_582eb2 -->|"client OIDC"| n_c_che_weebo_si_hardening_Application_weebo_si_endpoint_gatew_0d1517
+  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_forgejo_696ffa
+  n_ak_forgejo_696ffa -->|"client OIDC"| n_c_forgejo_forgejo_Application_forgejo_app_1f26bd
+  n_group_weebo_admin_38219b -->|"accès"| n_ak_kube_admin_23eb63
+  n_group_weebo_admin_38219b -->|"accès"| n_ak_longhorn_dda6d7
+  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_s3_a060e5
+  n_ak_s3_a060e5 -->|"client OIDC"| n_c_database_s3_Tenant_main_e7b280
+  n_group_weebo_user_58ae05 -->|"accès"| n_ak_stalwart_576573
+  n_ak_clickstack_f02905 ==>|"forwardAuth"| n_route_clickstack_weebo_poc_99dbd2
+  n_ak_longhorn_dda6d7 ==>|"forwardAuth"| n_route_longhorn_weebo_poc_6bd48b
+  n_dex_c93574 --> n_dexclient_weebo_kube_f43905
+  n_dex_c93574 --> n_dexclient_che_cluster_3365a0
+  n_dexclient_che_cluster_3365a0 -->|"OIDC"| n_c_che_eclipse_che_CheCluster_eclipse_che_b3411f
+  n_dexclient_weebo_kube_f43905 -->|"OIDC"| n_ext_kubeconfig__Weebo_si__54bc94
+  n_ext_https___git_batleforc_fr_api_actions_a6fdf1 -->|"connecteur OIDC"| n_argodex_97df58
+  n_ak_kube_admin_23eb63 ==>|"OIDC"| n_ext_kubeconfig__Weebo_si_admin__0168aa
+  n_dexclient_weebo_kube_f43905 -->|"jeton validé"| n_jwt_0_cb928b
+  n_ak_kube_admin_23eb63 ==>|"jeton validé"| n_jwt_1_408e87
+  n_jwt_1_408e87 -->|"labsso:weebo_admin"| n_rb_weebo_admin_crb_e7a12d
+```
+
+## Applications
+
+| Application | Type | Accès | Flux d'autorisation | Consommateurs |
+|---|---|---|---|---|
+| [`angos`](/docs/security/authentication/applications#angos) | oauth2 public | `weebo_moderator` | `default-provider-authorization-implicit-consent` | AngosLocalInstance/registry (angos) |
+| [`argo`](/docs/security/authentication/applications#argo) | oauth2 | `weebo_user` | `default-provider-authorization-implicit-consent` | ConfigMap/argocd-cm (argocd) |
+| [`argo-admin`](/docs/security/authentication/applications#argo-admin) | oauth2 | `weebo_admin` | `admin-step-up` | ConfigMap/argocd-cm (argocd) |
+| [`batlehub`](/docs/security/authentication/applications#batlehub) | oauth2 | `weebo_moderator` | `default-provider-authorization-implicit-consent` | Application/batlehub-app (batlehub) |
+| [`che-cluster`](/docs/security/authentication/applications#che-cluster) | oauth2 | `weebo_moderator` | `default-provider-authorization-implicit-consent` | Application/dex (dex)<br/>CheCluster/eclipse-che (eclipse-che) |
+| [`clickstack`](/docs/security/authentication/applications#clickstack) | proxy | `weebo_admin` | `admin-step-up` | IngressRoute monitoring/clickstack |
+| [`endpoint-gateway`](/docs/security/authentication/applications#endpoint-gateway) | oauth2 | `weebo_moderator` | `default-provider-authorization-implicit-consent` | Application/weebo-si-endpoint-gateway (weebo-si-hardening) |
+| [`forgejo`](/docs/security/authentication/applications#forgejo) | oauth2 | `weebo_moderator` | `default-provider-authorization-implicit-consent` | Application/forgejo-app (forgejo) |
+| [`kube-admin`](/docs/security/authentication/applications#kube-admin) | oauth2 public | `weebo_admin` | `admin-step-up` | kubeconfig `Weebo-si-admin`<br/>apiserver jwt[1] |
+| [`longhorn`](/docs/security/authentication/applications#longhorn) | proxy | `weebo_admin` | `admin-step-up` | IngressRoute longhorn/longhorn |
+| [`s3`](/docs/security/authentication/applications#s3) | oauth2 | `weebo_moderator` | `default-provider-authorization-implicit-consent` | Tenant/main (s3) |
+| [`stalwart`](/docs/security/authentication/applications#stalwart) | oauth2 public | `weebo_user` | `default-provider-authorization-implicit-consent` | aucun rendu |
+
+## Charts non rendus
+
+- aucun
+

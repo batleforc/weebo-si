@@ -27,4 +27,7 @@ spec:
       include: 'snapshot.storage.k8s.io_*.yaml'
   destination:
     server: https://kubernetes.default.svc
+    # Only CRDs (cluster-scoped), but the infra project matches destinations
+    # by namespace and has no wildcard any more.
+    namespace: kube-system
 {{- end -}}

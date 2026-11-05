@@ -186,6 +186,26 @@ connectors:
         - "profile"
         - "email"
         - "groups"
+  # Argo CD as admin: Authentik's argo-admin application (2.argo/helm/auth/sub),
+  # behind admin-step-up (second factor). Its only group is the
+  # weebo_admin:step-up marker, which policy.csv below makes role:admin.
+  # The connector above, without the second factor, gives read-only at most.
+  - type: oidc
+    name: Weebo admin (2FA)
+    id: weebo-admin
+    config:
+      issuer: $argo-admin-auth:url
+      clientID: $argo-admin-auth:client_id
+      clientSecret: $argo-admin-auth:client_secret
+      insecureEnableGroups: true
+      scopes:
+        - openid
+        - profile
+        - email
+  # Forgejo Actions OIDC tokens (git.batleforc.fr), for CI to come. Today it
+  # grants nothing: no groups (insecureEnableGroups off), no email, and
+  # policy.default is empty. Give it a project role on the exact sub
+  # (repository and ref) it needs, never a policy.csv group.
   - type: oidc
     name: forgejo-actions
     id: forgejo-actions
@@ -203,8 +223,17 @@ frontend:
   theme: batlehub
   issuer: Argo CD
   logoURL: theme/logo.svg`),
-						"url":          pulumi.String(fmt.Sprintf("https://%s", argoDNSName)),
-						"exec.enabled": pulumi.Bool(true),
+						"url": pulumi.String(fmt.Sprintf("https://%s", argoDNSName)),
+						// No web terminal into pods: a way into every workload that the
+						// apiserver audit does not attribute to a labsso identity.
+						"exec.enabled": pulumi.Bool(false),
+						// The local `admin` account: kept until the stack is `deployed`
+						// (no ingress yet, so no Authentik sign-in: it is the only way
+						// in). Once deployed it is off: sign-in is Authentik only, and
+						// the break-glass is the Talos kubeconfig, not a static password.
+						"admin.enabled": pulumi.String(fmt.Sprintf("%t", !deployed)),
+						// A working day, not the 24h default.
+						"users.session.duration": pulumi.String("8h"),
 						// The BatleHub theme: argocd-styles-cm, rendered by the root
 						// app (2.argo/app/templates/argocd-theme.yaml) and mounted by
 						// the chart at /shared/app/custom. Until it exists the UI
@@ -213,14 +242,23 @@ frontend:
 					},
 					"params": pulumi.Map{
 						"server.insecure": pulumi.Bool(deployed),
+						// Log every RBAC denial (to ClickStack with the server logs).
+						"server.rbac.log.enforce.enable": pulumi.String("true"),
 					},
 					"rbac": pulumi.Map{
-						"scopes": pulumi.String("[groups]"),
-						"policy.csv": pulumi.String(`g, admin, role:admin
-g, dev, role:dev
-g, reader, role:readonly
-g, weebo_admin, role:admin
-g, authentik Admins, role:admin`),
+						// email too: the che-users AppProject (2.argo/helm/che/hardening)
+						// names each person by email in its per-user roles.
+						"scopes": pulumi.String("[groups, email]"),
+						// Nothing for whoever no line names: a plain weebo_user sees
+						// only their che-users / che-config-<user> project roles
+						// (2.argo/helm/che/hardening).
+						"policy.default": pulumi.String(""),
+						// Only groups Authentik's CRs manage. role:admin needs the
+						// weebo_admin:step-up marker, emitted by the argo-admin
+						// application alone (connector weebo-admin, second factor);
+						// weebo_admin without it reads.
+						"policy.csv": pulumi.String(`g, weebo_admin:step-up, role:admin
+g, weebo_admin, role:readonly`),
 					},
 				},
 				"global": pulumi.Map{
@@ -340,11 +378,16 @@ g, authentik Admins, role:admin`),
 						"syncPolicy": map[string]interface{}{
 							"automated": map[string]interface{}{},
 						},
+						// Every object 2.argo/app renders names its namespace (argocd or
+						// kube-system), so the default one only has to be one the
+						// `bootstrap` project allows.
 						"destination": map[string]interface{}{
-							"namespace": "default",
+							"namespace": "argocd",
 							"server":    "https://kubernetes.default.svc",
 						},
-						"project": "default",
+						// `bootstrap` (2.argo/app/values.yaml), not Argo CD's `default`,
+						// which 2.argo/app locks once this is applied (lockDefaultProject).
+						"project": "bootstrap",
 						"source": map[string]interface{}{
 							"repoURL":        gitRepo,
 							"path":           "2.argo/app",

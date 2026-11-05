@@ -71,7 +71,29 @@ branch: ""
 traefik:
   ips: ""
 
+# Lock Argo CD's built-in `default` project (templates/appProject/default.yaml):
+# no source, no destination, so nothing can deploy through it. Flip to true
+# only AFTER the app of apps (`main`, created by 1.pulu-conf) has moved to the
+# `bootstrap` project below -- locked while `main` still uses it, the root
+# would stop syncing.
+lockDefaultProject: false
+
 project:
+  # The app of apps itself (`main`, 1.pulu-conf). What this chart renders:
+  # Applications, AppProjects and theme ConfigMaps in argocd, the dex-theme
+  # ConfigMap in kube-system, and weebo-admin-crb. It writes the AppProjects,
+  # so it is the root of trust whatever its own restrictions.
+  - name: bootstrap
+    sourceRepo: []
+    includeBaseRepo: true
+    dest:
+      - server: "https://kubernetes.default.svc"
+        namespace: "argocd"
+      - server: "https://kubernetes.default.svc"
+        namespace: "kube-system"
+    clusterResourceWhitelist:
+      - group: "rbac.authorization.k8s.io"
+        kind: "ClusterRoleBinding"
   - name: infra
     sourceRepo:
       - oci://ghcr.io/traefik/helm/traefik
@@ -87,10 +109,44 @@ project:
       - https://github.com/kubernetes-csi/external-snapshotter
       - https://charts.goauthentik.io
       - oci://ghcr.io/batleforc/charts/weebo-authentik
+      # vault/main's operators (bank-vaults, external-secrets), spelled as
+      # their Applications spell them, and local-storage.
+      - ghcr.io/external-secrets/charts
+      - ghcr.io/bank-vaults/helm-charts
+      - https://github.com/rancher/local-path-provisioner
     includeBaseRepo: true
+    # The namespaces the infra Applications actually manage (live inventory,
+    # 2026-11-05), not `*`: a new one is an explicit edit here. kube-system:
+    # cert-manager's leader-election Role, and snapshot-crds' destination.
     dest:
       - server: "https://kubernetes.default.svc"
-        namespace: "*"
+        namespace: "argocd"
+      - server: "https://kubernetes.default.svc"
+        namespace: "auth"
+      - server: "https://kubernetes.default.svc"
+        namespace: "dex"
+      - server: "https://kubernetes.default.svc"
+        namespace: "cert-manager"
+      - server: "https://kubernetes.default.svc"
+        namespace: "kube-system"
+      - server: "https://kubernetes.default.svc"
+        namespace: "hook"
+      - server: "https://kubernetes.default.svc"
+        namespace: "longhorn"
+      - server: "https://kubernetes.default.svc"
+        namespace: "netbird"
+      - server: "https://kubernetes.default.svc"
+        namespace: "traefik"
+      - server: "https://kubernetes.default.svc"
+        namespace: "vault"
+      - server: "https://kubernetes.default.svc"
+        namespace: "vault-operator"
+      - server: "https://kubernetes.default.svc"
+        namespace: "vault-infra"
+      - server: "https://kubernetes.default.svc"
+        namespace: "external-secrets"
+      - server: "https://kubernetes.default.svc"
+        namespace: "local-path-storage"
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"
@@ -142,6 +198,9 @@ project:
         kind: "AuthentikBlueprint"
       - group: "longhorn.io"
         kind: "RecurringJob"
+      # local-storage (moved out of `default`).
+      - group: "storage.k8s.io"
+        kind: "StorageClass"
   - name: monitoring
     sourceRepo:
       - https://open-telemetry.github.io/opentelemetry-helm-charts
@@ -311,35 +370,6 @@ project:
         kind: "WeeboSiTeam"
       - group: "hardening.weebo.io"
         kind: "WeeboSiUser"
-  # The per-user Applications weebo-si-operator creates (identity feature),
-  # rendering 2.helm/user-app, and the external-config Application that chart
-  # renders in turn. Kept to what they do: a dev-ws-* namespace, plus that
-  # one Application in argocd.
-  - name: che-users
-    includeBaseRepo: true
-    sourceRepo:
-      # Users' external config (cheUser.externalConfig.repoURL).
-      - https://github.com/batleforc/weebo-dotfiles-che
-    dest:
-      - server: https://kubernetes.default.svc
-        namespace: "dev-ws-*"
-      - server: https://kubernetes.default.svc
-        namespace: "argocd"
-    clusterResourceWhitelist:
-      - group: ""
-        kind: "Namespace"
-    # Unset, every namespaced kind is allowed, a RoleBinding to `admin` and an
-    # Application naming another project included. Kept to what user-app
-    # renders. The user's external config (dotfiles, ConfigMaps, Secrets...)
-    # is deployed under this project too, so a kind it needs goes here.
-    namespaceResourceWhitelist:
-      - group: "rbac.authorization.k8s.io"
-        kind: "RoleBinding"
-      - group: "external-secrets.io"
-        kind: "SecretStore"
-      - group: "argoproj.io"
-        kind: "Application"
-      - group: ""
-        kind: "ConfigMap"
-      - group: ""
-        kind: "Secret"
+  # che-users (the per-user Applications weebo-si-operator creates) is
+  # rendered by 2.argo/helm/che/hardening, next to the WeeboSiUser objects it
+  # gives each person a role for: one list of users, both in step.

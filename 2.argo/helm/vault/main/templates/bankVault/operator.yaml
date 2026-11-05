@@ -7,7 +7,8 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
 spec:
-  project: default
+  # Not `default`: that project is locked (2.argo/app, lockDefaultProject).
+  project: {{ required "project is passed by the app of apps" .Values.project }}
   syncPolicy:
     automated:
       selfHeal: true

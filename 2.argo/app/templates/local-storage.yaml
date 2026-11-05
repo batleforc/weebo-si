@@ -7,7 +7,8 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "0"
 spec:
-  project: default
+  # Not `default`: that project is locked (lockDefaultProject).
+  project: {{ .Values.storage.main.project }}
   source:
     repoURL: 'https://github.com/rancher/local-path-provisioner'
     path: 'deploy'
@@ -56,7 +57,8 @@ spec:
 
   destination:
     name: "in-cluster"
-    namespace: 'default'
+    # The kustomization names its own namespace on every object.
+    namespace: 'local-path-storage'
   syncPolicy:
     automated:
       selfHeal: true

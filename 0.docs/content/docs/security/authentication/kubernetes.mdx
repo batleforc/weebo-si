@@ -1,0 +1,80 @@
+---
+title: "Kubernetes"
+description: "De kubectl aux RoleBindings : les émetteurs de l'apiserver"
+---
+
+{/* Généré par `task docs:authflow` (0.task/scripts/authflow.py). Ne pas éditer à la main. */}
+
+De `kubectl` aux droits : les deux émetteurs que l'apiserver accepte (`AuthenticationConfiguration`, écrite par `1.pulu-init/main.go`), d'où viennent leurs jetons, et les (Cluster)RoleBindings qu'atteignent les noms qu'ils produisent.
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Poste_a7715e["Poste"]
+    n_ext_Weebo_si_6e3e3b(["kubeconfig Weebo-si<br/>client weebo-kube"])
+    n_ext_Weebo_si_admin_bf77b8(["kubeconfig Weebo-si-admin<br/>client kube-admin"])
+  end
+  subgraph n_sg_Dex_59e010["Dex"]
+    n_dex_weebo_kube_89ab03{{"Dex https://dex.weebo.poc<br/>client weebo-kube"}}
+  end
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_che_21e3e8["che-cluster<br/>oauth2"]
+    n_ak_kube_admin_23eb63["kube-admin<br/>oauth2 public · 2FA"]
+  end
+  subgraph n_sg_kube_apiserver_70e72b["kube-apiserver"]
+    n_jwt_0_cb928b{{"apiserver jwt[0]<br/>labsso:email"}}
+    n_jwt_1_408e87{{"apiserver jwt[1]<br/>labsso-admin:email"}}
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_moderator_a8f585("weebo_moderator")
+    n_group_weebo_admin_38219b("weebo_admin")
+  end
+  subgraph n_sg_RBAC_42827e["RBAC"]
+    n_rb_weebo_admin_crb_e7a12d["ClusterRoleBinding weebo-admin-crb<br/>→ ClusterRole cluster-admin"]
+  end
+  n_ext_Weebo_si_6e3e3b -->|"connexion"| n_dex_weebo_kube_89ab03
+  n_dex_weebo_kube_89ab03 -->|"connecteur"| n_ak_che_21e3e8
+  n_ext_Weebo_si_admin_bf77b8 ==>|"connexion"| n_ak_kube_admin_23eb63
+  n_dex_weebo_kube_89ab03 -->|"jeton"| n_jwt_0_cb928b
+  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_che_21e3e8
+  n_ak_kube_admin_23eb63 ==>|"jeton"| n_jwt_1_408e87
+  n_group_weebo_admin_38219b -->|"accès"| n_ak_kube_admin_23eb63
+  n_jwt_1_408e87 -->|"labsso:weebo_admin"| n_rb_weebo_admin_crb_e7a12d
+```
+
+## Émetteurs JWT de l'apiserver
+
+|  | Émetteur | Audience | Origine | Derrière | Nom d'utilisateur | Groupes | Groupes retirés |
+|---|---|---|---|---|---|---|---|
+| jwt[0] | `https://dex.weebo.poc` | `weebo-kube` | Vault (`OIDC_URL`, `OIDC_CLIENT_ID`), valeur attendue d'après le kubeconfig | Dex, connecteur vers Authentik `che-cluster` | `"labsso:" + claims.email` | `has(claims.groups) ? dyn(claims.groups).filter(g, g != "weebo_admin").map(g, "labsso:" + g) : []` | `weebo_admin` |
+| jwt[1] | `https://auth.weebo.poc/application/o/kube-admin/` | `kube-admin` | constante de `1.pulu-init/main.go` | Authentik `kube-admin` | `"labsso-admin:" + claims.email` | claim `groups`, préfixe `labsso:` | — |
+
+Règles communes, sur les claims puis sur l'utilisateur obtenu :
+
+- `claims.email_verified == true`
+- `!user.username.startsWith('system:')`
+- `user.groups.all(group, !group.startsWith('system:'))`
+
+## Contextes du kubeconfig
+
+`0.config/kubeconfig.oidc-template.yaml` :
+
+| Contexte | Émetteur | Client | Scopes en plus |
+|---|---|---|---|
+| `Weebo-si` | `https://dex.weebo.poc` | `weebo-kube` | `email offline_access profile openid groups` |
+| `Weebo-si-admin` | `https://auth.weebo.poc/application/o/kube-admin/` | `kube-admin` | `email profile groups` |
+
+## Clients statiques de Dex
+
+| Client | Nom | Redirections | Pairs de confiance |
+|---|---|---|---|
+| `weebo-kube` | Kube App | `https://dex.weebo.poc/callback`<br/>`http://localhost:8000` | `che-cluster` |
+| `che-cluster` | Eclipse Che | `https://cde.dev.weebo.poc/oauth/callback` | — |
+
+## RBAC
+
+Les bindings du rendu qui nomment un groupe ou un utilisateur hors `system:`, et l'émetteur capable de produire ce nom.
+
+| Binding | Portée | Rôle | Sujet | Atteint par | App Argo CD |
+|---|---|---|---|---|---|
+| `ClusterRoleBinding/weebo-admin-crb` | cluster | `ClusterRole/cluster-admin` | Group `labsso:weebo_admin` | jwt[1] (accès Authentik : `weebo_admin`) | `app of apps` |
+

@@ -1,0 +1,80 @@
+---
+title: Durcir Argo CD
+description: "Projets au moindre privilège, admin Argo CD derrière le second facteur, projet default verrouillé : l'ordre de bascule, charts puis Pulumi"
+---
+
+Objectif : qu'aucun chemin vers Argo CD ne vaille plus que ce qu'il doit. Un utilisateur ne voit et ne synchronise que ses propres Applications, sa config externe ne sort pas de son namespace, `role:admin` exige le second facteur, et plus rien ne passe par le projet `default`.
+
+Les changements sont en deux moitiés : les **charts** (appliqués par Argo CD au prochain sync de `develop`) et **`1.pulu-conf`** (appliqué par `pulumi up`). Les charts sont faits pour être inoffensifs tant que Pulumi n'a pas suivi ; l'inverse n'est pas vrai. L'ordre ci-dessous compte.
+
+## Ce qui change
+
+| Où | Avant | Après |
+|---|---|---|
+| `che-users` (`2.argo/helm/che/hardening`) | rendu par l'app of apps ; destinations `dev-ws-*` + `argocd`, `Application`/`Secret`/`ConfigMap` permis, dépôt de dotfiles en source | rendu depuis `users` ; dépôt Weebo-SI seul, sans `Secret` ; un rôle `user-<nom>` par personne sur `che-user-<nom>` |
+| Config externe d'un utilisateur | projet `che-users` : pouvait écrire une `Application` ou un `Secret` dans `argocd` (prise de contrôle d'Argo CD), ou dans le `dev-ws-*` d'un autre | projet `che-config-<username>` : son dépôt, son namespace, `ConfigMap`/`Secret` seulement |
+| `infra` | destinations `*` | les 14 namespaces réellement gérés |
+| `vault-operator`, `external-secrets`, `vault-webhook`, `local-storage` | projet `default` | projet `infra` |
+| App of apps `main` | projet `default`, destination `default` | projet `bootstrap`, destination `argocd` (Pulumi) |
+| Projet `default` | tout permis | verrouillé (`lockDefaultProject`) |
+| Admin Argo CD | `weebo_admin` via le flux sans second facteur, plus `admin`, `dev`, `reader`, `authentik Admins` | marqueur `weebo_admin:step-up`, émis par l'application Authentik `argo-admin` derrière `admin-step-up` ; `weebo_admin` seul lit |
+| Connecteur Dex `forgejo-actions` | conservé (préparatif CI) | conservé : il n'obtient rien tant qu'aucun rôle de projet ne nomme son `sub` (`policy.default` vide) |
+| Compte local `admin` | actif | actif tant que la stack n'est pas `deployed` (pas d'ingress, donc pas de connexion Authentik), désactivé ensuite |
+| Terminal web | actif | désactivé |
+| Session, audit | 24 h, refus RBAC non journalisés | 8 h, refus journalisés |
+
+## 1. Pousser les charts
+
+Commit sur `develop`, puis laisser Argo CD synchroniser. Vérifier :
+
+```sh
+export KUBECONFIG=0.config/kubeconfig.yaml
+kubectl -n argocd get appprojects            # bootstrap, che-config-batleforc en plus
+kubectl -n argocd get application batleforc-external-config -o jsonpath='{.spec.project}'   # che-config-batleforc
+kubectl -n argocd get applications -o custom-columns=NAME:.metadata.name,PROJ:.spec.project,SYNC:.status.sync.status,HEALTH:.status.health.status
+kubectl get authentikapplication argo-admin -o jsonpath='{.status}'   # Ready, client écrit dans mv/argocd/admin-auth
+kubectl -n argocd get secret argo-admin-auth                          # relu par l'ExternalSecret auth-admin-secret
+```
+
+Toutes les Applications doivent rester `Synced`/`Healthy`. Une Application en `InvalidSpecError` (« not permitted in project ») veut dire qu'un projet est trop serré : ajouter le namespace ou le type manquant dans `2.argo/app/values.yaml` plutôt que de revenir à `*`.
+
+`lockDefaultProject` reste à `false` à cette étape : `main` est encore dans `default`.
+
+## 2. Appliquer Pulumi
+
+Avant : **enrôler un second facteur** sur le compte admin (le runbook [onboarding](/docs/runbooks/onboarding-utilisateur)). Après l'apply, sans lui, plus de `role:admin` dans Argo CD, et le compte local `admin` est coupé (avec `deployed: true`). Le secours reste le kubeconfig Talos (`0.config/kubeconfig.yaml`) et `kubectl`.
+
+```sh
+cd 1.pulu-conf && pulumi preview   # attendu : argocd-cm, argocd-rbac-cm, argocd-cmd-params-cm, Application main
+pulumi up
+```
+
+Vérifier :
+
+1. Se connecter à Argo CD avec **Weebo** : tout est visible, en lecture seule.
+2. Se déconnecter, se connecter avec **Weebo admin (2FA)** : second facteur demandé, puis `role:admin`.
+3. Avec `batleforc-test` : seule `che-user-batleforc-test` est visible.
+
+```sh
+argocd account can-i sync applications 'che-users/che-user-batleforc-test'   # yes, connecté en batleforc-test
+argocd account can-i get applications 'che-users/che-user-batleforc'         # no
+```
+
+## 3. Verrouiller default
+
+Une fois `main` dans `bootstrap` (`kubectl -n argocd get application main -o jsonpath='{.spec.project}'`) et plus aucune Application dans `default` :
+
+```sh
+kubectl -n argocd get applications -o jsonpath='{range .items[?(@.spec.project=="default")]}{.metadata.name}{"\n"}{end}'   # vide
+```
+
+passer `lockDefaultProject: true` dans `2.argo/app/values.yaml` et pousser.
+
+## À vérifier à la main
+
+- **Email non modifiable.** Les rôles `che-users` / `che-config-*` et les RoleBindings `labsso:<email>` reconnaissent une personne à sa claim `email`, que le mapping `weebo email` marque vérifiée pour tout `weebo_user`. Dans Authentik, System › Settings : « Allow users to change email » doit être désactivé, sinon un utilisateur pourrait prendre l'email d'un autre.
+
+## Retour arrière
+
+- Charts : `git revert`, Argo CD resynchronise. Une Application `che-config-*` dont le projet disparaît passe en erreur sans perdre ses ressources (pas de prune).
+- Pulumi : revenir sur `1.pulu-conf/main.go` et `pulumi up`. Si `lockDefaultProject` est déjà à `true`, le repasser à `false` **avant**, sinon `main` revenu dans `default` ne synchronise plus.
