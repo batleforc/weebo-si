@@ -1,0 +1,112 @@
+{{- if .Values.forgejo.enabled }}
+{{- $ns := printf "dev-ws-%s" .Values.cheUser.username }}
+{{- $name := .Values.forgejo.name }}
+{{- $reader := printf "%s-reader" $name }}
+# A Forgejo token for this person, minted by weebo-forgejo into the Secret
+# <name> (FORGEJO_TOKEN, FORGEJO_USERNAME, FORGEJO_URL). Allowed only by the
+# ForgejoNamespacePolicy che-workspaces (2.argo/helm/che/hardening), which
+# lets dev-ws-<username> mint tokens for <username> and nobody else.
+apiVersion: forgejo.weebo.io/v1alpha1
+kind: ForgejoAccessToken
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  # The Forgejo login is the Authentik preferred_username, as is Che's.
+  userRef:
+    remoteName: {{ .Values.cheUser.username | quote }}
+  scopes:
+    {{- toYaml .Values.forgejo.scopes | nindent 4 }}
+  {{- with .Values.forgejo.rotationPeriod }}
+  rotationPeriod: {{ . | quote }}
+  {{- end }}
+  deletionPolicy: Delete
+---
+# The operator's keys are fixed, the DevWorkspace git-credential format wants
+# one `credentials` key: ESO re-reads that Secret, through the Kubernetes
+# provider, and writes it in the right shape. This ServiceAccount may read
+# that one Secret and nothing else.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $reader }}
+  namespace: {{ $ns }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $reader }}
+  namespace: {{ $ns }}
+rules:
+  - apiGroups: [""]
+    resources: [secrets]
+    resourceNames: [{{ $name | quote }}]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $reader }}
+  namespace: {{ $ns }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $reader }}
+    namespace: {{ $ns }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $reader }}
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: {{ $reader }}
+  namespace: {{ $ns }}
+  annotations:
+    external-secrets.io/disable-maintenance-checks: "true"
+spec:
+  provider:
+    kubernetes:
+      remoteNamespace: {{ $ns }}
+      server:
+        caProvider:
+          type: ConfigMap
+          name: kube-root-ca.crt
+          key: ca.crt
+      auth:
+        serviceAccount:
+          name: {{ $reader }}
+---
+# DevWorkspace's git credentials: every Secret labelled git-credential is
+# merged into the credential store and the gitconfig of each workspace, so
+# git over https to Forgejo authenticates with the token.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ $name }}-git-credentials
+  namespace: {{ $ns }}
+spec:
+  refreshPolicy: Periodic
+  # Follows a rotation (rotationPeriod) within the hour.
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: {{ $reader }}
+  target:
+    name: {{ $name }}-git-credentials
+    template:
+      engineVersion: v2
+      metadata:
+        labels:
+          controller.devfile.io/git-credential: "true"
+          controller.devfile.io/watch-secret: "true"
+      data:
+        # FORGEJO_URL is the ForgejoInstance's https://<host>: the user and
+        # token go in front of the host.
+        credentials: '{{ "{{" }} .FORGEJO_URL | replace "https://" (printf "https://%s:%s@" .FORGEJO_USERNAME .FORGEJO_TOKEN) {{ "}}" }}'
+  dataFrom:
+    - extract:
+        key: {{ $name }}
+{{- end }}

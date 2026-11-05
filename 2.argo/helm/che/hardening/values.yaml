@@ -550,6 +550,9 @@ teams:
             batlehub:
               server: https://pkg.weebo.poc
               setupApply: false
+            # Needs forgejoTokens.enabled below, the policy that allows it.
+            forgejo:
+              enabled: true
             cheUser:
               username: "{USERNAME}"
               email: "{EMAIL}"
@@ -575,6 +578,14 @@ teams:
             prune: false
             selfHeal: true
           options: [ServerSideApply=true]
+
+# The ForgejoNamespacePolicy che-workspaces (templates/forgejo-policy.yaml):
+# one rule per active user, letting dev-ws-<username> mint a
+# ForgejoAccessToken for <username> only (the token user-app renders with
+# forgejo.enabled). Naming the user is also what lets a site admin's token
+# through, which the operator refuses otherwise.
+forgejoTokens:
+  enabled: true
 
 # The AppProjects of the per-user Applications (templates/che-users-project.yaml).
 #
@@ -604,6 +615,15 @@ cheUsersProject:
       kind: "Namespace"
   # What 2.helm/user-app renders, nothing more.
   namespaceResourceWhitelist:
+    # templates/forgejo-token.yaml (forgejo.enabled).
+    - group: "forgejo.weebo.io"
+      kind: "ForgejoAccessToken"
+    - group: ""
+      kind: "ServiceAccount"
+    - group: "rbac.authorization.k8s.io"
+      kind: "Role"
+    - group: "external-secrets.io"
+      kind: "ExternalSecret"
     - group: "rbac.authorization.k8s.io"
       kind: "RoleBinding"
     - group: "external-secrets.io"

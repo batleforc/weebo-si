@@ -1,0 +1,19 @@
+{{- if .Values.forgejoTokens.enabled }}
+{{- $users := list }}
+{{- range $name, $u := .Values.users }}{{ if $u.active }}{{ $users = append $users $u.username }}{{ end }}{{ end }}
+{{- if $users }}
+# values.yaml, forgejoTokens. Policies add up: weebo-allow (2.argo/helm/forgejo)
+# keeps the forgejo namespace, this one the workspace namespaces.
+apiVersion: forgejo.weebo.io/v1alpha1
+kind: ForgejoNamespacePolicy
+metadata:
+  name: che-workspaces
+spec:
+  rules:
+    {{- range $users }}
+    - namespaces: [{{ printf "dev-ws-%s" . | quote }}]
+      allowedKinds: [ForgejoAccessToken]
+      allowedUsers: [{{ . | quote }}]
+    {{- end }}
+{{- end }}
+{{- end }}

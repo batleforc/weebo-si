@@ -370,6 +370,9 @@ project:
         kind: "WeeboSiTeam"
       - group: "hardening.weebo.io"
         kind: "WeeboSiUser"
+      # 2.argo/helm/che/hardening's che-workspaces (forgejoTokens).
+      - group: "forgejo.weebo.io"
+        kind: "ForgejoNamespacePolicy"
   # che-users (the per-user Applications weebo-si-operator creates) is
   # rendered by 2.argo/helm/che/hardening, next to the WeeboSiUser objects it
   # gives each person a role for: one list of users, both in step.

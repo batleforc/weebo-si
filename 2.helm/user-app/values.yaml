@@ -42,6 +42,18 @@ batlehub:
   # in the image). Off until batlehub RFC 0038 ships.
   setupApply: false
 
+# A Forgejo token in every workspace's git credentials
+# (templates/forgejo-token.yaml). Set by the team template.
+forgejo:
+  enabled: false
+  # The CR and Secret name; the token is named dev-ws-<username>-<name> in
+  # Forgejo (Settings > Applications).
+  name: che-workspace
+  # Changing them issues a new token, which the operator refuses without the
+  # forgejo.weebo.io/allow-disruptive-update annotation.
+  scopes: [write:repository, read:user]
+  rotationPeriod: 720h
+
 # Prefix of Che's own ClusterRoles (the `baseline` level): the namespace
 # che-operator runs in.
 cheNamespace: eclipse-che
