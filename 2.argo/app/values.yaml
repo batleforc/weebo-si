@@ -76,7 +76,7 @@ traefik:
 # only AFTER the app of apps (`main`, created by 1.pulu-conf) has moved to the
 # `bootstrap` project below -- locked while `main` still uses it, the root
 # would stop syncing.
-lockDefaultProject: false
+lockDefaultProject: true
 
 project:
   # The app of apps itself (`main`, 1.pulu-conf). What this chart renders:
