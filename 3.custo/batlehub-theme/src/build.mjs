@@ -13,6 +13,7 @@ import { renderErrors, VARIANTS } from "./errors.mjs";
 import { renderAuthentikCss, renderBackground, renderBrandYaml } from "./authentik.mjs";
 import { icoFromPng, LOGO_FILE, renderCheCss, renderCheLogo, renderManifest, renderProductJson } from "./che.mjs";
 import { CSS_FILE, renderArgoCss } from "./argocd.mjs";
+import { CSS_FILE as DEX_CSS_FILE, FAVICON_FILE as DEX_FAVICON_FILE, LOGO_FILE as DEX_LOGO_FILE, renderDexCss } from "./dex.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = join(root, "dist");
@@ -203,6 +204,19 @@ if (cfg.argocd) {
   for (const f of Object.values(cfg.fonts).flatMap((face) => face.files)) await cp(join(root, "assets/fonts", f.file), join(argocdOut, f.file));
 }
 
+// ── Dex (a theme directory, flat: styles.css and the files it points at) ──────
+let dexOut = null;
+if (cfg.dex) {
+  dexOut = join(dist, "dex");
+  await mkdir(dexOut, { recursive: true });
+  await writeFile(join(dexOut, DEX_CSS_FILE), renderDexCss({ tokens, fonts: cfg.fonts }));
+  // The navbar is always on the dark ground: the cream crab.
+  await cp(join(root, "assets/img/theme/logo-cream.svg"), join(dexOut, DEX_LOGO_FILE));
+  await cp(join(root, "assets/img/favicon.png"), join(dexOut, DEX_FAVICON_FILE));
+  for (const r of RENDITIONS) await writeFile(join(dexOut, `background-${r}.svg`), flowBackground(r));
+  for (const f of Object.values(cfg.fonts).flatMap((face) => face.files)) await cp(join(root, "assets/fonts", f.file), join(dexOut, f.file));
+}
+
 // ── Deploy manifests ────────────────────────────────────────────────────────
 async function walk(dir) {
   const out = [];
@@ -286,6 +300,7 @@ for (const [src, to] of [
   ...(authentikOut ? [[authentikOut.files, d.authentikFilesDir], [authentikOut.brand, d.authentikBrandDir]] : []),
   [cheOut, d.cheDir],
   [argocdOut, d.argocdDir],
+  ...(d.dexDirs || []).map((to) => [dexOut, to]),
 ]) {
   if (!src || !to) continue;
   await rm(join(root, to), { recursive: true, force: true });
@@ -358,4 +373,4 @@ ${home}
   );
 }
 
-console.log(`\nbuilt dist/${d.chartDir ? ` and ${d.chartDir}` : ""}${errorsHtml && d.errorsDir ? ` and ${d.errorsDir}` : ""}${authentikOut ? ` and ${[d.authentikFilesDir, d.authentikBrandDir].filter(Boolean).join(", ")}` : ""}${cheOut && d.cheDir ? ` and ${d.cheDir}` : ""}${argocdOut && d.argocdDir ? ` and ${d.argocdDir}` : ""} — ${files.length} files, themes: ${["auto", "light", "dark"].map((r) => `${name}-${r}`).join(", ")}`);
+console.log(`\nbuilt dist/${d.chartDir ? ` and ${d.chartDir}` : ""}${errorsHtml && d.errorsDir ? ` and ${d.errorsDir}` : ""}${authentikOut ? ` and ${[d.authentikFilesDir, d.authentikBrandDir].filter(Boolean).join(", ")}` : ""}${cheOut && d.cheDir ? ` and ${d.cheDir}` : ""}${argocdOut && d.argocdDir ? ` and ${d.argocdDir}` : ""}${dexOut && d.dexDirs?.length ? ` and ${d.dexDirs.join(", ")}` : ""} — ${files.length} files, themes: ${["auto", "light", "dark"].map((r) => `${name}-${r}`).join(", ")}`);

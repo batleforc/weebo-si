@@ -194,7 +194,15 @@ connectors:
       scopes:
         - openid
         - groups
-      userNameKey: sub`),
+      userNameKey: sub
+# The BatleHub theme of the login and error pages: argocd-dex-theme, rendered
+# by the root app (2.argo/app/templates/argocd-dex-theme.yaml) and mounted
+# below into the image's own web directory. rundex passes this key through.
+frontend:
+  dir: /srv/dex/web
+  theme: batlehub
+  issuer: Argo CD
+  logoURL: theme/logo.svg`),
 						"url":          pulumi.String(fmt.Sprintf("https://%s", argoDNSName)),
 						"exec.enabled": pulumi.Bool(true),
 						// The BatleHub theme: argocd-styles-cm, rendered by the root
@@ -227,6 +235,27 @@ g, authentik Admins, role:admin`),
 				"dex": pulumi.Map{
 					"podAnnotations": pulumi.Map{
 						"inject-certs": pulumi.String("enabled"),
+					},
+					// The BatleHub theme (frontend in dex.config above), next to
+					// the image's stock ones. Optional: until the root app has
+					// rendered argocd-dex-theme, Dex serves an empty theme (its
+					// pages unstyled) rather than failing to start. A plain
+					// directory, no subPath: an update reaches the pod as is.
+					"volumes": pulumi.Array{
+						pulumi.Map{
+							"name": pulumi.String("batlehub-theme"),
+							"configMap": pulumi.Map{
+								"name":     pulumi.String("argocd-dex-theme"),
+								"optional": pulumi.Bool(true),
+							},
+						},
+					},
+					"volumeMounts": pulumi.Array{
+						pulumi.Map{
+							"name":      pulumi.String("batlehub-theme"),
+							"mountPath": pulumi.String("/srv/dex/web/themes/batlehub"),
+							"readOnly":  pulumi.Bool(true),
+						},
 					},
 				},
 				// Metrics ports as declared on each container: controller 8082,

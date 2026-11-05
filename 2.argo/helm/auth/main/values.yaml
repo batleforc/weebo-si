@@ -3,6 +3,12 @@ dex:
   # renovate: datasource=helm depName=dex registryUrl=https://charts.dexidp.io
   version: "0.26.0"
   issuer: "dex.weebo.poc"
+  # The BatleHub theme of its pages (templates/dex/theme.yaml), built by
+  # 3.custo/batlehub-theme into files/dex-theme/. `title` is frontend.issuer:
+  # the tab title and "Log in to <title>".
+  theme:
+    enabled: true
+    title: "Weebo Kube"
   # The weebo connector's issuer and clientID are NOT pinned here: dex reads
   # both from mv/dex/auth (AUTHENTIK_URL / AUTHENTIK_CLIENT_ID), which is
   # written by whoever owns the che application. Hardcoding the issuer meant

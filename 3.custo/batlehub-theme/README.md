@@ -1,9 +1,9 @@
 # batlehub-theme
 
 The BatleHub design system for Forgejo, the error pages, Authentik, the Eclipse Che
-dashboard and Argo CD. Tokens and copy go in; CSS, fonts, images, the Forgejo home page,
-the error-pages templates, the Authentik brand, the Che branding, the Argo CD stylesheet
-and the deploy manifests come out. Node >= 20, no dependencies.
+dashboard, Argo CD and Dex. Tokens and copy go in; CSS, fonts, images, the Forgejo home page,
+the error-pages templates, the Authentik brand, the Che branding, the Argo CD stylesheet,
+the Dex theme and the deploy manifests come out. Node >= 20, no dependencies.
 
 ```
 npm run build    # contrast check, then write dist/
@@ -38,6 +38,7 @@ contrast ratios, a few controls) without a running Forgejo.
 | Che: product name, help-menu links                | `theme.config.mjs` → `che`   |
 | Che: which PatternFly 6 token a token feeds, logo, loader, favicon | `src/che.mjs` |
 | Argo CD: the rules it overrides, sidebar, login page | `src/argocd.mjs`          |
+| Dex: the theme's stylesheet (login, password, approval, device, error pages) | `src/dex.mjs` |
 
 Colours are written as OKLCH and converted to sRGB hex at build time; a value outside the
 sRGB gamut has its chroma reduced until it fits. The build fails if a pair listed under
@@ -82,6 +83,11 @@ dist/che/                             branding.css  product.json  manifest.json
 dist/argocd/                          batlehub.css, and next to it the logos, login
                                       backgrounds and fonts it names
 <deploy.argocdDir>/                   (2.argo/app/files/argocd-theme, committed)
+
+dist/dex/                             styles.css, logo.svg, favicon.png, and next to them
+                                      the backgrounds and fonts it names
+<deploy.dexDirs>/                     (2.argo/app/files/dex-theme and
+                                       2.argo/helm/auth/main/files/dex-theme, committed)
 ```
 
 Each rendition imports the stock `theme-<base>-{dark,light}.css` and overrides it, so any
@@ -145,5 +151,15 @@ Notes:
   is set in `1.pulu-conf` (`task puluconf:up`). Argo CD has no colour variables: the sheet
   repaints its main surfaces rule by rule, each written plain and under `.theme-dark`. A
   class renamed by an upgrade falls back to Argo CD's look.
+- Dex (both: Argo CD's, and the apiserver's in `auth/main`): the files become a ConfigMap
+  (`argocd-dex-theme` from `2.argo/app`, `dex-theme` from `auth/main`) mounted as
+  `/srv/dex/web/themes/batlehub`, inside the web directory the Dex image ships. `frontend`
+  sets `dir: /srv/dex/web`, `theme: batlehub`, `logoURL: theme/logo.svg` and `issuer` (the
+  "Log in to …" title): in `1.pulu-conf`'s `dex.config` for Argo CD's (`task puluconf:up`),
+  in `templates/dex/dex.yaml` for the other. Only the theme is ours: the templates and
+  `static/` stay the image's, so a Dex upgrade cannot leave them behind. The stylesheet
+  replaces the stock theme's, so it paints every `theme-*` class (`test/dex.test.mjs`
+  checks the list in `test/fixtures/`); light by default, dark by `prefers-color-scheme`.
+  Re-check after a Dex minor upgrade.
 - `home.tmpl` relies on `base/head`, `base/footer`, `AppName`, `AppSubUrl`, `.IsSigned`;
   re-check it after a major Forgejo upgrade.

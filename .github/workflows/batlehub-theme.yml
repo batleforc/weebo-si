@@ -3,7 +3,8 @@
 # error-pages dans 2.argo/helm/ingress/sub/files/error-pages, et le brand
 # Authentik dans 2.argo/helm/auth/{main/files/theme,sub/files/brand}, le branding
 # du dashboard Che dans 2.argo/helm/che/sub/files/branding et la feuille de style
-# d'ArgoCD dans 2.argo/app/files/argocd-theme) : ArgoCD
+# d'ArgoCD dans 2.argo/app/files/argocd-theme, le theme des deux Dex dans
+# 2.argo/app/files/dex-theme et 2.argo/helm/auth/main/files/dex-theme) : ArgoCD
 # ne lance pas node. Ce job verifie que les deux n'ont pas diverge -- une source
 # modifiee sans `npm run build`, ou une copie retouchee a la main.
 name: BatleHub theme

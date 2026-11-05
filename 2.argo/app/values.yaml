@@ -57,8 +57,13 @@ che:
 # The BatleHub stylesheet of the Argo CD UI (templates/argocd-theme.yaml), built
 # by 3.custo/batlehub-theme into files/argocd-theme/. ui.cssurl, which loads it,
 # is set where Argo CD is installed (1.pulu-conf).
+#
+# `dex`: the BatleHub theme of Argo CD's Dex (templates/argocd-dex-theme.yaml),
+# from files/dex-theme/. The volume and frontend settings that use it are in
+# 1.pulu-conf too.
 argocdTheme:
   enabled: true
+  dex: true
 
 repo: ""
 branch: ""

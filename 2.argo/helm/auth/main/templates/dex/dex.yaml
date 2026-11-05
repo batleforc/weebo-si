@@ -36,6 +36,16 @@ spec:
           enablePasswordDB: false
           oauth2:
             skipApprovalScreen: true
+          {{- if .Values.dex.theme.enabled }}
+          # The BatleHub theme (templates/dex/theme.yaml). dir is the image's
+          # own web directory: the stock templates and static files, plus the
+          # theme mounted into it below.
+          frontend:
+            dir: /srv/dex/web
+            theme: batlehub
+            issuer: {{ .Values.dex.theme.title | quote }}
+            logoURL: theme/logo.svg
+          {{- end }}
           connectors:
           - type: oidc
             id: weebo
@@ -91,6 +101,17 @@ spec:
             value: "vault:mv/data/dex/auth#AUTHENTIK_CLIENT_ID"
           - name: "KUBE_CLIENT_SECRET"
             value: "vault:mv/data/dex/config#KUBE_CLIENT_SECRET"
+        {{- if .Values.dex.theme.enabled }}
+        volumes:
+          - name: theme
+            configMap:
+              name: dex-theme
+              optional: true
+        volumeMounts:
+          - name: theme
+            mountPath: /srv/dex/web/themes/batlehub
+            readOnly: true
+        {{- end }}
         ingress:
           enabled: true
           annotations:

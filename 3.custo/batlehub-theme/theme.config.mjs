@@ -204,6 +204,12 @@ export default {
   // and its login page (flow background, the brand's faces). Set `argocd: false` to skip.
   argocd: true,
 
+  // Dex, both of them (Argo CD's and the apiserver's): a `batlehub` theme directory for
+  // its login, approval, device and error pages (the flow background, the brand's faces,
+  // crimson square buttons, the crab in the navbar). The page title and "Log in to …"
+  // read frontend.issuer, set where each Dex is configured. Set `dex: false` to skip.
+  dex: true,
+
   // Deploy manifests written to dist/deploy/.
   deploy: {
     namespace: "forgejo",
@@ -234,5 +240,10 @@ export default {
     // Argo CD: the root chart turns this into argocd-styles-cm, which the argo-cd
     // chart mounts at /shared/app/custom; ui.cssurl (1.pulu-conf) points at it.
     argocdDir: "../../2.argo/app/files/argocd-theme",
+    // Dex: each chart turns its copy into a ConfigMap mounted as
+    // /srv/dex/web/themes/batlehub, and sets frontend.dir / theme / logoURL. Argo CD's
+    // Dex from the root chart (argocd-dex-theme, mounted by 1.pulu-conf), the
+    // apiserver's from the auth chart (dex-theme).
+    dexDirs: ["../../2.argo/app/files/dex-theme", "../../2.argo/helm/auth/main/files/dex-theme"],
   },
 };

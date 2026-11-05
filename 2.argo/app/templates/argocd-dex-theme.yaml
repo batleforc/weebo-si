@@ -1,0 +1,36 @@
+{{- if and .Values.argocdTheme.enabled .Values.argocdTheme.dex -}}
+{{- $files := .Files.Glob "files/dex-theme/*" -}}
+{{- if not $files }}
+{{- fail "argocdTheme.dex but files/dex-theme/ is empty: run `npm run build` in 3.custo/batlehub-theme" }}
+{{- end }}
+---
+# The BatleHub theme of Argo CD's Dex (its login page, which lists the weebo
+# and forgejo-actions connectors, and its error pages), built by
+# 3.custo/batlehub-theme. 1.pulu-conf mounts it, optional, as a plain directory
+# at /srv/dex/web/themes/batlehub on argocd-dex-server -- next to the stock
+# themes of the image's own web directory, so the templates always match the
+# binary -- and sets `frontend` in dex.config. No subPath: Dex serves the
+# theme's files from disk on every request, so an update needs no restart.
+#
+# Server-side apply: the two backgrounds inline the halftone plate, past the
+# 256 KiB a client-side apply can keep in last-applied-configuration.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-dex-theme
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+data:
+  {{- range $path, $_ := $files }}
+  {{- if regexMatch "\\.(css|svg)$" $path }}
+  {{ base $path }}: {{ $.Files.Get $path | toJson }}
+  {{- end }}
+  {{- end }}
+binaryData:
+  {{- range $path, $_ := $files }}
+  {{- if not (regexMatch "\\.(css|svg)$" $path) }}
+  {{ base $path }}: {{ $.Files.Get $path | b64enc }}
+  {{- end }}
+  {{- end }}
+{{- end -}}

@@ -1,0 +1,40 @@
+{{- if and .Values.dex.enabled .Values.dex.theme.enabled -}}
+{{- $files := .Files.Glob "files/dex-theme/*" -}}
+{{- if not $files }}
+{{- fail "dex.theme.enabled but files/dex-theme/ is empty: run `npm run build` in 3.custo/batlehub-theme" }}
+{{- end }}
+---
+# The BatleHub theme of this Dex (login, approval, device and error pages),
+# built by 3.custo/batlehub-theme. dex.yaml mounts it, as a plain directory, at
+# /srv/dex/web/themes/batlehub -- next to the stock themes of the image's own
+# web directory, so the templates always match the binary -- and points
+# frontend.dir / theme at it. No subPath: Dex serves the theme's files from
+# disk on every request, so an update reaches the pod without a restart.
+#
+# In the dex namespace, which the dex Application creates: on a fresh cluster
+# this fails until it exists, and the auth app's retry takes it from there.
+# The volume is optional, so Dex starts without it (unstyled) meanwhile.
+#
+# Server-side apply: the two backgrounds inline the halftone plate, past the
+# 256 KiB a client-side apply can keep in last-applied-configuration.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dex-theme
+  namespace: dex
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+data:
+  {{- range $path, $_ := $files }}
+  {{- if regexMatch "\\.(css|svg)$" $path }}
+  {{ base $path }}: {{ $.Files.Get $path | toJson }}
+  {{- end }}
+  {{- end }}
+binaryData:
+  {{- range $path, $_ := $files }}
+  {{- if not (regexMatch "\\.(css|svg)$" $path) }}
+  {{ base $path }}: {{ $.Files.Get $path | b64enc }}
+  {{- end }}
+  {{- end }}
+{{- end -}}
