@@ -79,33 +79,48 @@ spec:
         serviceAccount:
           name: {{ $reader }}
 ---
-# DevWorkspace's git credentials: every Secret labelled git-credential is
-# merged into the credential store and the gitconfig of each workspace, so
-# git over https to Forgejo authenticates with the token.
+# A Che personal access token (che-server's KubernetesPersonalAccessTokenManager,
+# weebo-si/che-server fork): listed in the dashboard, and turned by che-server
+# into the workspace's git credentials at each start. Without che-userid,
+# scm-url or scm-personal-access-token-name che-server deletes the Secret.
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
-  name: {{ $name }}-git-credentials
+  name: {{ $name }}-che-pat
   namespace: {{ $ns }}
 spec:
   refreshPolicy: Periodic
-  # Follows a rotation (rotationPeriod) within the hour.
+  # Follows a rotation (rotationPeriod) within the hour, and puts the Secret
+  # back if che-server deleted it as invalid.
   refreshInterval: 1h
   secretStoreRef:
     kind: SecretStore
     name: {{ $reader }}
   target:
-    name: {{ $name }}-git-credentials
+    name: personal-access-token-{{ $name }}
     template:
       engineVersion: v2
       metadata:
         labels:
-          controller.devfile.io/git-credential: "true"
-          controller.devfile.io/watch-secret: "true"
+          app.kubernetes.io/part-of: che.eclipse.org
+          app.kubernetes.io/component: scm-personal-access-token
+        annotations:
+          # Che's user id is the `sub` of the Dex token: base64url, unpadded,
+          # of the protobuf {1: Authentik sub, 2: connector id}. Authentik's
+          # che-cluster provider has sub_mode user_username, and the
+          # connector is `weebo` (2.argo/helm/auth/main/templates/dex/dex.yaml).
+          # Matches user-profile's `id` in the namespace.
+          {{- $u := .Values.cheUser.username }}
+          {{- $conn := "weebo" }}
+          che.eclipse.org/che-userid: {{ printf "\n%c%s\x12%c%s" (len $u) $u (len $conn) $conn | b64enc | replace "+" "-" | replace "/" "_" | trimSuffix "=" | trimSuffix "=" | quote }}
+          che.eclipse.org/scm-url: {{ .Values.forgejo.url | quote }}
+          che.eclipse.org/scm-provider-name: forgejo
+          # `forgejo`: the fork's fetcher then accepts any server URL, not
+          # only the configured che.forgejo.endpoint.
+          che.eclipse.org/scm-personal-access-token-name: forgejo
+          che.eclipse.org/scm-personal-access-token-id: {{ $name | quote }}
       data:
-        # FORGEJO_URL is the ForgejoInstance's https://<host>: the user and
-        # token go in front of the host.
-        credentials: '{{ "{{" }} .FORGEJO_URL | replace "https://" (printf "https://%s:%s@" .FORGEJO_USERNAME .FORGEJO_TOKEN) {{ "}}" }}'
+        token: '{{ "{{" }} .FORGEJO_TOKEN {{ "}}" }}'
   dataFrom:
     - extract:
         key: {{ $name }}

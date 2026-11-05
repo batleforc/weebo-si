@@ -53,6 +53,9 @@ forgejo:
   # forgejo.weebo.io/allow-disruptive-update annotation.
   scopes: [write:repository, read:user]
   rotationPeriod: 720h
+  # The ForgejoInstance's URL (2.argo/helm/forgejo, operator.instance), as
+  # che-server will see it in the token's scm-url.
+  url: https://git.weebo.poc
 
 # Prefix of Che's own ClusterRoles (the `baseline` level): the namespace
 # che-operator runs in.
