@@ -5,9 +5,9 @@ branch: ""
 ciliumNetworkPolicies:
   enabled: false
 
-karmor:
+kubearmor:
   enabled: true
-  namespace: karmor
+  namespace: kubearmor
   version: 1.7.6
   repoURL: "https://kubearmor.github.io/charts"
   chart: kubearmor-operator

@@ -1,8 +1,8 @@
-{{- if .Values.che.enabled -}}
+{{- if .Values.kubearmor.enabled -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: "karmor-operator"
+  name: "kubearmor-operator"
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -15,12 +15,12 @@ spec:
     syncOptions:
     - ServerSideApply=true
   source:
-    repoURL: {{ .Values.karmor.repoURL }}
-    chart: {{ .Values.karmor.chart }}
-    targetRevision: "{{ .Values.karmor.version }}"
+    repoURL: {{ .Values.kubearmor.repoURL }}
+    chart: {{ .Values.kubearmor.chart }}
+    targetRevision: "{{ .Values.kubearmor.version }}"
     helm:
-      releaseName: "karmor-operator"
+      releaseName: "kubearmor-operator"
   destination:
     name: "in-cluster"
-    namespace: {{ .Values.karmor.namespace }}
+    namespace: {{ .Values.kubearmor.namespace }}
 {{- end -}}
