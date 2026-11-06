@@ -1,0 +1,13 @@
+repo: ""
+project: ""
+branch: ""
+
+ciliumNetworkPolicies:
+  enabled: false
+
+karmor:
+  enabled: true
+  namespace: karmor
+  version: 1.7.6
+  repoURL: "https://kubearmor.github.io/charts"
+  chart: kubearmor-operator

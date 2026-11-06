@@ -1,0 +1,26 @@
+{{- if .Values.che.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: "karmor-operator"
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: {{ .Values.project }}
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - ServerSideApply=true
+  source:
+    repoURL: {{ .Values.karmor.repoURL }}
+    chart: {{ .Values.karmor.chart }}
+    targetRevision: "{{ .Values.karmor.version }}"
+    helm:
+      releaseName: "karmor-operator"
+  destination:
+    name: "in-cluster"
+    namespace: {{ .Values.karmor.namespace }}
+{{- end -}}

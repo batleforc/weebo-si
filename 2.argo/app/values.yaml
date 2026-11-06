@@ -54,6 +54,10 @@ che:
   enabled: true
   project: dev
 
+kubearmor:
+  enabled: true
+  project: security
+
 # The BatleHub stylesheet of the Argo CD UI (templates/argocd-theme.yaml), built
 # by 3.custo/batlehub-theme into files/argocd-theme/. ui.cssurl, which loads it,
 # is set where Argo CD is installed (1.pulu-conf).
@@ -373,6 +377,23 @@ project:
       # 2.argo/helm/che/hardening's che-workspaces (forgejoTokens).
       - group: "forgejo.weebo.io"
         kind: "ForgejoNamespacePolicy"
-  # che-users (the per-user Applications weebo-si-operator creates) is
-  # rendered by 2.argo/helm/che/hardening, next to the WeeboSiUser objects it
-  # gives each person a role for: one list of users, both in step.
+  - name: security
+    includeBaseRepo: true
+    sourceRepo:
+      - https://kubearmor.github.io/charts
+    dest:
+      - server: https://kubernetes.default.svc
+        namespace: "argocd"
+      - server: https://kubernetes.default.svc
+        namespace: "kubearmor"
+    clusterResourceWhitelist:
+      - group: ""
+        kind: "Namespace"
+      - group: "rbac.authorization.k8s.io"
+        kind: "ClusterRole"
+      - group: "rbac.authorization.k8s.io"
+        kind: "ClusterRoleBinding"
+      - group: "admissionregistration.k8s.io"
+        kind: "MutatingWebhookConfiguration"
+      - group: "admissionregistration.k8s.io"
+        kind: "ValidatingWebhookConfiguration"

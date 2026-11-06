@@ -29,6 +29,7 @@ yarn = "latest"
 node = "latest"
 uv = "latest"
 cargo-binstall = "latest"
+"github:kubearmor/kubearmor-client" = { version = "1.4.9" }
 
 [plugins]
 kkrew = "https://github.com/soupglasses/mise-krew"
