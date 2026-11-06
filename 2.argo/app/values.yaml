@@ -386,8 +386,6 @@ project:
         namespace: "argocd"
       - server: https://kubernetes.default.svc
         namespace: "kubearmor"
-      - server: https://kubernetes.default.svc
-        namespace: "dev-ws-batleforc"
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"
