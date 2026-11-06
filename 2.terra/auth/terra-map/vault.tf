@@ -97,6 +97,8 @@ resource "vault_jwt_auth_backend_role" "vault_authentik_weebo_admin" {
   backend        = vault_jwt_auth_backend.vault_authentik.path
   role_name      = "weebo_admin"
   token_policies = ["weebo_admin"]
+  # Without it any user let into the app picks role=weebo_admin and gets path "*".
+  bound_claims = { groups = "weebo_admin" }
 
   user_claim      = "sub"
   role_type       = "oidc"
