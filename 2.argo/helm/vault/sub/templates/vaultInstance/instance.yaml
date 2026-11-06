@@ -99,6 +99,19 @@ spec:
     api_addr: https://openbao.vault:8200
     cluster_addr: "https://${.Env.POD_NAME}:8201"
     ui: true
+    # Every request and response, as JSON on openbao's stdout, picked up by
+    # the cluster's log pipeline (RFC 0007, question 5: before any token
+    # outside Terraform writes policies). Secret values are HMAC'd, never in
+    # clear. Declared here, not by the API: OpenBao 2.7 refuses `bao audit
+    # enable` ("use declarative, config-based audit device management"), so
+    # no token -- root included -- can add or remove an audit device.
+    # A device that cannot write blocks every request: stdout never fills.
+    audit:
+      file:
+        stdout:
+          description: "Every request and response, HMAC'd (RFC 0007)"
+          options:
+            file_path: /dev/stdout
 
   statsdDisabled: true
 
