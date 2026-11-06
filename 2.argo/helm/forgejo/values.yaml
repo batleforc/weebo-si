@@ -222,9 +222,9 @@ operator:
   namespace: weebo-forgejo
   chart:
     name: weebo-forgejo
-    repoURL: oci://ghcr.io/batleforc/charts/weebo-forgejo
-    # renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-forgejo
-    version: 0.7.0
+    repoURL: oci://ghcr.io/weebo-si-operator/charts/weebo-forgejo
+    # renovate: datasource=docker depName=ghcr.io/weebo-si-operator/charts/weebo-forgejo
+    version: 0.8.2
   # One replica, as for the authentik operator: the cluster has one worker,
   # so a second one buys a webhook that dies with the first. The chart's PDB
   # (minAvailable: 1) is turned off with it -- against a single replica it

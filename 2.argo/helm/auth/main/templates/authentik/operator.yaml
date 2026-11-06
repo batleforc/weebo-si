@@ -34,7 +34,7 @@ spec:
         - .spec.versions[].additionalPrinterColumns | select(. == [])
   source:
     chart: weebo-authentik
-    repoURL: oci://ghcr.io/batleforc/charts/weebo-authentik
+    repoURL: oci://ghcr.io/weebo-si-operator/charts/weebo-authentik
     targetRevision: {{ .Values.authentik.operator.version }}
     helm:
       releaseName: authentik

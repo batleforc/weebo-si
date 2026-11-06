@@ -112,7 +112,7 @@ project:
       - https://charts.longhorn.io
       - https://github.com/kubernetes-csi/external-snapshotter
       - https://charts.goauthentik.io
-      - oci://ghcr.io/batleforc/charts/weebo-authentik
+      - oci://ghcr.io/weebo-si-operator/charts/weebo-authentik
       # vault/main's operators (bank-vaults, external-secrets), spelled as
       # their Applications spell them, and local-storage.
       - ghcr.io/external-secrets/charts
@@ -268,11 +268,11 @@ project:
     sourceRepo:
       - oci://ghcr.io/batlehub/batlehub/charts/batlehub
       - oci://code.forgejo.org/forgejo-helm/forgejo
-      - oci://ghcr.io/batleforc/charts/weebo-forgejo
-      - oci://ghcr.io/batleforc/charts/weebo-batlehub
-      - oci://ghcr.io/batleforc/charts/weebo-angos
+      - oci://ghcr.io/weebo-si-operator/charts/weebo-forgejo
+      - oci://ghcr.io/weebo-si-operator/charts/weebo-batlehub
+      - oci://ghcr.io/weebo-si-operator/charts/weebo-angos
       # Phase 1 of RFC 0001: the operator is not deployed yet.
-      - oci://ghcr.io/batleforc/charts/weebo-stalwart
+      - oci://ghcr.io/weebo-si-operator/charts/weebo-stalwart
     dest:
       # batlehub's chart renders an Application of its own -- the upstream
       # chart, pulled from the OCI repo above -- and an Application lives in
