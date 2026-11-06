@@ -31,12 +31,12 @@ batlehub:
     name: batlehub
     repoURL: oci://ghcr.io/batlehub/batlehub/charts/batlehub
     # renovate: datasource=docker depName=ghcr.io/batlehub/batlehub/charts/batlehub
-    version: 1.8.1
+    version: 1.9.0
 
   image:
     registry: ghcr.io/batlehub/batlehub
     # renovate: datasource=docker depName=ghcr.io/batlehub/batlehub
-    tag: 1.8.1
+    tag: 1.9.0
 
   # The apex. Every registry below also answers on `<name>.<dns>` -- see
   # `subdomainRouting` -- so the certificate and the IngressRoute both cover the
