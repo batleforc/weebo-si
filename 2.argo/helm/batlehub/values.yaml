@@ -561,7 +561,7 @@ operator:
     name: weebo-batlehub
     repoURL: oci://ghcr.io/weebo-si-operator/charts/weebo-batlehub
     # renovate: datasource=docker depName=ghcr.io/weebo-si-operator/charts/weebo-batlehub
-    version: 0.5.3
+    version: 0.6.0
   # One replica, as for the other operators: the cluster has one worker, so a
   # second one buys a webhook that dies with the first. The chart's PDB
   # (minAvailable: 1) is turned off with it -- against a single replica it

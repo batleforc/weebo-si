@@ -529,7 +529,7 @@ operator:
     name: weebo-angos
     repoURL: oci://ghcr.io/weebo-si-operator/charts/weebo-angos
     # renovate: datasource=docker depName=ghcr.io/weebo-si-operator/charts/weebo-angos
-    version: 0.3.5
+    version: 0.4.0
   # One replica, as for the other operators: the cluster has one worker, so a
   # second one buys a webhook that dies with the first. The chart's PDB goes
   # with it -- against a single replica it blocks every node drain.
