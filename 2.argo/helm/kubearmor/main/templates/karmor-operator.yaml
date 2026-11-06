@@ -1,0 +1,26 @@
+{{- if .Values.kubearmor.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: "kubearmor-operator"
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: {{ .Values.project }}
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - ServerSideApply=true
+  source:
+    repoURL: {{ .Values.kubearmor.repoURL }}
+    chart: {{ .Values.kubearmor.chart }}
+    targetRevision: "{{ .Values.kubearmor.version }}"
+    helm:
+      releaseName: "kubearmor-operator"
+  destination:
+    name: "in-cluster"
+    namespace: {{ .Values.kubearmor.namespace }}
+{{- end -}}

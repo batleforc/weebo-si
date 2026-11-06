@@ -11,3 +11,5 @@ kubearmor:
   version: 1.7.6
   repoURL: "https://kubearmor.github.io/charts"
   chart: kubearmor-operator
+  kubearmorApp:
+    enabled: true

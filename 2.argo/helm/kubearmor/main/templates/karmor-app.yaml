@@ -1,26 +1,39 @@
-{{- if .Values.kubearmor.enabled -}}
+{{- if .Values.kubearmor.kubearmorApp.enabled -}}
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: "kubearmor-operator"
+  name: kubearmor-app
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-wave: "4"
 spec:
-  project: {{ .Values.project }}
-  syncPolicy:
-    automated: {}
-    syncOptions:
-    - ServerSideApply=true
+  project: "{{ .Values.project }}"
   source:
-    repoURL: {{ .Values.kubearmor.repoURL }}
-    chart: {{ .Values.kubearmor.chart }}
-    targetRevision: "{{ .Values.kubearmor.version }}"
+    repoURL: '{{ .Values.repo }}'
+    targetRevision: '{{ .Values.branch }}'
+    path: '2.argo/helm/kubearmor/sub'
     helm:
-      releaseName: "kubearmor-operator"
+      releaseName: kubearmor-app
+      valuesObject:
+        {{- with .Values }}
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
   destination:
-    name: "in-cluster"
-    namespace: {{ .Values.kubearmor.namespace }}
+    server: 'https://kubernetes.default.svc'
+    namespace: '{{ .Values.kubearmor.namespace }}'
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+    # KubeArmor's CRD is installed by kubearmor-operator (wave 4); skip the
+    # dry-run so the first sync does not fail before it exists.
+    - SkipDryRunOnMissingResource=true
+    - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
 {{- end -}}

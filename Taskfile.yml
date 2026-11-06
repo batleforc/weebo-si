@@ -24,6 +24,14 @@ tasks:
     aliases: [s]
     cmds:
       - sofka {{ .CLI_ARGS }}
+  kubearmor:
+    desc: Run KubeArmor on cluster
+    silent: true
+    env:
+      KUBECONFIG: 0.config/kubeconfig.yaml
+    aliases: [kmor, karmor]
+    cmds:
+      - kubearmor {{ .CLI_ARGS }}
   kubectl:
     desc: "Run kubectl commands on the cluster"
     silent: true
