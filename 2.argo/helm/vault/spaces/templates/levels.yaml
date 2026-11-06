@@ -1,0 +1,13 @@
+{{- range $name, $l := .Values.levels }}
+---
+apiVersion: openbao.weebo.io/v1alpha1
+kind: OpenbaoAccessLevel
+metadata:
+  name: {{ $name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  data: {{ toJson $l.data }}
+  metadata: {{ toJson $l.metadata }}
+  versions: {{ $l.versions | default false }}
+{{- end }}

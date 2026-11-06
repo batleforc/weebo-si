@@ -1,0 +1,58 @@
+# The spaces of OpenBao (RFC 0007), declared to weebo-openbao. Rendered by
+# the Application vault/main templates/openbao/spaces.yaml, which passes
+# `instance` (name, namespaces) from vault/main's openbao.instance: the
+# OpenbaoNamespaces below are those namespaces, nothing else.
+instance:
+  name: main
+  namespaces: []
+
+# Each namespace's types: `orgs` (mount orgs, <org>/<repo>/...) or `users`
+# (mount users, <username>/...). A namespace absent here gets `orgs`.
+types:
+  users: [users]
+
+# The IdP of the namespaces' human logins: Authentik's `openbao` application
+# (auth/sub applications.openbao). Its client secret reaches the operator's
+# namespace through ESO, from mv/weebo-openbao/oidc.
+oidc:
+  backend: authentik
+  discoveryUrl: https://auth.weebo.poc/application/o/openbao/
+  clientId: openbao
+  secret:
+    name: openbao-oidc
+    key: client-secret
+    vaultKey: mv/weebo-openbao/oidc
+  uiRedirect: "https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback?namespace="
+  cliRedirect: "http://localhost:8250/oidc/callback"
+
+# OpenbaoAccessLevel: the capabilities a cell or a rule grants, on data/ and
+# metadata/ of the path; `versions` adds delete/undelete/destroy.
+levels:
+  read:
+    data: [read]
+    metadata: [read, list]
+  write:
+    data: [create, read, update, patch]
+    metadata: [read, list]
+  owner:
+    data: [create, read, update, patch, delete]
+    metadata: [read, list, delete]
+    versions: true
+
+# OpenbaoSpaceLayout `weebo`: role -> namespace of type orgs -> level. An
+# IdP group `<org>_<role>` gets its cells in every namespace listed.
+layout:
+  name: weebo
+  groupAliasTemplate: "{org}_{role}"
+  roles:
+    owner: { prod: owner, preprod: owner, recette: owner, devenv: owner }
+    maintainer: { prod: write, preprod: write, recette: write, devenv: write }
+    dev: { preprod: read, recette: write, devenv: write }
+  users:
+    usernameClaim: preferred_username
+    aliasMetadataKey: username
+
+# OpenbaoOrganization: one per org, its IdP groups named by the layout's
+# template (batleforc-org_owner, ...: auth/sub identity.groups).
+organizations:
+  - batleforc-org

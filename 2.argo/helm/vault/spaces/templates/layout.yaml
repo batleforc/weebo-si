@@ -1,0 +1,16 @@
+{{- with .Values.layout }}
+apiVersion: openbao.weebo.io/v1alpha1
+kind: OpenbaoSpaceLayout
+metadata:
+  name: {{ .name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  instanceRef:
+    name: {{ $.Values.instance.name }}
+  groupAliasTemplate: {{ .groupAliasTemplate | quote }}
+  roles:
+    {{- toYaml .roles | nindent 4 }}
+  users:
+    {{- toYaml .users | nindent 4 }}
+{{- end }}

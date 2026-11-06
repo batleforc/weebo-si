@@ -1,0 +1,42 @@
+{{- if and .Values.openbao.enabled .Values.openbao.spaces.enabled -}}
+---
+# OpenBao's spaces (RFC 0007 phase 4), from vault/spaces: the namespaces of
+# openbao.instance, the access levels, the layout and the organizations, plus
+# the ExternalSecret of the OIDC client secret. Its own Application, synced
+# automatically, apart from vault-app (whose sync restarts openbao): adding
+# an org must not wait on it.
+#
+# No prune: deleting an OpenbaoOrganization revokes its access at once
+# (finalizer, alias first), and an OpenbaoNamespace is never deleted in
+# OpenBao. Removing one from git leaves it until someone deletes it by hand.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openbao-spaces
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  project: {{ .Values.project }}
+  source:
+    repoURL: '{{ .Values.repo }}'
+    path: '2.argo/helm/vault/spaces'
+    targetRevision: '{{ .Values.branch }}'
+    helm:
+      releaseName: openbao-spaces
+      valuesObject:
+        instance:
+          {{- toYaml .Values.openbao.instance | nindent 10 }}
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: {{ .Values.openbao.operator.namespace }}
+  syncPolicy:
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

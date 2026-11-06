@@ -1,0 +1,29 @@
+{{- $o := .Values.oidc }}
+{{- range $ns := .Values.instance.namespaces }}
+---
+apiVersion: openbao.weebo.io/v1alpha1
+kind: OpenbaoNamespace
+metadata:
+  name: {{ $ns }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  instanceRef:
+    name: {{ $.Values.instance.name }}
+  types: {{ toJson (get $.Values.types $ns | default (list "orgs")) }}
+  auth:
+    - name: {{ $o.backend }}
+      oidc:
+        discoveryUrl: {{ $o.discoveryUrl | quote }}
+        clientId: {{ $o.clientId | quote }}
+        clientSecretRef:
+          name: {{ $o.secret.name }}
+          key: {{ $o.secret.key }}
+        redirectUris:
+          - {{ printf "%s%s" $o.uiRedirect $ns | quote }}
+          - {{ $o.cliRedirect | quote }}
+    # For the machine model (OpenbaoAccessGrant): no role until a grant
+    # names it. Defaults: the cluster's apiserver, OpenBao's pod CA and token.
+    - name: kubernetes
+      kubernetes: {}
+{{- end }}

@@ -1,0 +1,5 @@
+apiVersion: v2
+name: openbao-spaces
+description: OpenBao's namespaces, access levels, layout and organizations, as weebo-openbao CRs (RFC 0007)
+type: application
+version: 0.1.0

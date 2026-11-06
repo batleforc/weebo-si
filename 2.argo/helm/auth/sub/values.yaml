@@ -186,6 +186,19 @@ identity:
       - crName: batleforc
         name: batleforc
         isSuperuser: false
+      # batleforc-org's roles in OpenBao (RFC 0007), `<org>_<role>`: the name
+      # IS the alias weebo-openbao gives each org group (OpenbaoSpaceLayout
+      # `weebo`, groupAliasTemplate "{org}_{role}"); renaming one cuts the
+      # access. A plain member with no OpenBao right needs no group.
+      - crName: batleforc-org-owner
+        name: batleforc-org_owner
+        isSuperuser: false
+      - crName: batleforc-org-maintainer
+        name: batleforc-org_maintainer
+        isSuperuser: false
+      - crName: batleforc-org-dev
+        name: batleforc-org_dev
+        isSuperuser: false
   users:
     enabled: false
     items:
@@ -203,6 +216,7 @@ identity:
         groupRefs:
           - weebo_admin
           - batleforc
+          - batleforc-org_owner
       # A plain weebo_user, for checking what a non-moderator gets (Argo CD:
       # its own Application only). Same email as che/hardening's
       # users.batleforc-test. No password in git: onboard it like anyone
@@ -988,6 +1002,53 @@ applications:
             url: "https://vault.weebo.poc/authentik/callback"
           - matchingMode: strict
             url: "http://localhost:8250/authentik/callback"
+          - matchingMode: strict
+            url: "http://localhost:8250/oidc/callback"
+
+  # The OIDC client of OpenBao's NAMESPACES (RFC 0007), distinct from `vault`
+  # above, which stays the root's (admins, Terraform). weebo-openbao enables
+  # a backend `authentik` in each namespace with this client; what a login
+  # opens is decided there, by the groups (`<org>_<role>`), so every user
+  # may sign in. A new application, nothing to adopt.
+  #
+  # The secret goes to mv/weebo-openbao/oidc, from which an ExternalSecret
+  # (vault/spaces) makes the Secret openbao-oidc the operator reads.
+  # Redirect URIs: one per namespace for the UI (OpenBao matches them as
+  # exact strings, query included), the CLI's localhost one. Same list as
+  # vault/spaces' OpenbaoNamespaces.
+  openbao:
+    enabled: false
+    slug: openbao
+    name: openbao
+    metaIcon: "https://maxleriche.net/public/media/techno/vault.png"
+    accessGroup: weebo_user
+    secretTargets:
+      - backend: vault
+        path: weebo-openbao/oidc
+    provider:
+      kind: oauth2
+      oauth2:
+        clientId: openbao
+        authorizationFlow: default-provider-authorization-implicit-consent
+        invalidationFlow: default-provider-invalidation-flow
+        signingKey: "authentik Self-signed Certificate"
+        grantTypes: ["authorization_code"]
+        propertyMappings:
+          - "weebo email"
+          - "weebo groups"
+          - "authentik default OAuth Mapping: OpenID 'profile'"
+          - "authentik default OAuth Mapping: OpenID 'openid'"
+        allowedRedirectUris:
+          - matchingMode: strict
+            url: "https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback?namespace=devenv"
+          - matchingMode: strict
+            url: "https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback?namespace=recette"
+          - matchingMode: strict
+            url: "https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback?namespace=preprod"
+          - matchingMode: strict
+            url: "https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback?namespace=prod"
+          - matchingMode: strict
+            url: "https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback?namespace=users"
           - matchingMode: strict
             url: "http://localhost:8250/oidc/callback"
 

@@ -1,0 +1,13 @@
+{{- range .Values.organizations }}
+---
+apiVersion: openbao.weebo.io/v1alpha1
+kind: OpenbaoOrganization
+metadata:
+  name: {{ . }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  layoutRef:
+    name: {{ $.Values.layout.name }}
+  name: {{ . }}
+{{- end }}

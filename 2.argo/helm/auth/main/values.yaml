@@ -127,6 +127,10 @@ authentik:
         enabled: true
       vault:
         enabled: false
+      # New, not adopted: the OIDC client of OpenBao's namespaces (RFC 0007,
+      # weebo-openbao), its secret at mv/weebo-openbao/oidc.
+      openbao:
+        enabled: true
       # New. The apiserver's admin issuer (1.pulu-init, jwt[1]), behind the
       # admin-step-up flow (blueprints below).
       kube-admin:
