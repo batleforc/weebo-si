@@ -19,7 +19,9 @@ spec:
   defaultNetworkPosture: audit
   defaultVisibility: process,network
   enableStdOutLogs: false
-  enableStdOutAlerts: false
+  # Alerts only, read by the KubeArmor ClickStack dashboard. StdOutLogs (visibility)
+  # stays off: process,network visibility on every pod is a log flood.
+  enableStdOutAlerts: true
   enableStdOutMsgs: false
   seccompEnabled: false
   alertThrottling: true
