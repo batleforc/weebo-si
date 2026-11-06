@@ -113,6 +113,8 @@ project:
       - https://github.com/kubernetes-csi/external-snapshotter
       - https://charts.goauthentik.io
       - oci://ghcr.io/weebo-si-operator/charts/weebo-authentik
+      # RFC 0007: the operator of openbao's namespaces (vault/main, openbao.*).
+      - oci://ghcr.io/weebo-si-operator/charts/weebo-openbao
       # vault/main's operators (bank-vaults, external-secrets), spelled as
       # their Applications spell them, and local-storage.
       - ghcr.io/external-secrets/charts
@@ -151,6 +153,8 @@ project:
         namespace: "external-secrets"
       - server: "https://kubernetes.default.svc"
         namespace: "local-path-storage"
+      - server: "https://kubernetes.default.svc"
+        namespace: "weebo-openbao"
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"
@@ -188,6 +192,21 @@ project:
         kind: "AuthentikInstance"
       - group: "authentik.weebo.io"
         kind: "AuthentikNamespacePolicy"
+      # weebo-openbao (RFC 0007 §6.6): its six kinds are all cluster-scoped,
+      # and only this project may hold them -- they decide who reads which
+      # OpenBao space.
+      - group: "openbao.weebo.io"
+        kind: "OpenbaoInstance"
+      - group: "openbao.weebo.io"
+        kind: "OpenbaoNamespace"
+      - group: "openbao.weebo.io"
+        kind: "OpenbaoAccessLevel"
+      - group: "openbao.weebo.io"
+        kind: "OpenbaoSpaceLayout"
+      - group: "openbao.weebo.io"
+        kind: "OpenbaoOrganization"
+      - group: "openbao.weebo.io"
+        kind: "OpenbaoAccessGrant"
       - group: "authentik.weebo.io"
         kind: "AuthentikUser"
       - group: "authentik.weebo.io"

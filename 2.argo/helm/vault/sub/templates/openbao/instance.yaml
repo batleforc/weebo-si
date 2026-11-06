@@ -1,0 +1,31 @@
+{{- if .Values.openbao.enabled -}}
+{{- $i := .Values.openbao.instance -}}
+# The openbao weebo-openbao administers (RFC 0007 §4.1). Cluster-scoped; the
+# CRD comes with the operator's Application (vault/main), hence the dry-run
+# skip: the first sync retries until it exists.
+apiVersion: openbao.weebo.io/v1alpha1
+kind: OpenbaoInstance
+metadata:
+  name: {{ $i.name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  address: https://openbao.vault:8200
+  # openbao's serving cert is signed by the bank-vaults CA, which bank-vaults
+  # copies into every namespace (caNamespaces: "*"): read in the operator's
+  # own namespace, the only one its Role reads Secrets in.
+  tls:
+    caSecretRef:
+      name: openbao-tls
+      namespace: {{ .Values.openbao.operator.namespace }}
+      key: ca.crt
+  auth:
+    # 2.terra/vault/terra-map/weebo-openbao.tf
+    kubernetes:
+      mount: kubernetes
+      role: weebo-openbao
+  bounds:
+    namespaces:
+      {{- toYaml $i.namespaces | nindent 6 }}
+{{- end -}}

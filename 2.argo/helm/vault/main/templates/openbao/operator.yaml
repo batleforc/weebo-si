@@ -1,0 +1,57 @@
+{{- if .Values.openbao.enabled -}}
+{{- $o := .Values.openbao.operator -}}
+---
+# weebo-openbao, from the chart its repository publishes: its six CRDs (all
+# cluster-scoped), the operator and its admission webhook, whose certificate
+# comes from a self-signed Issuer the chart creates. Its OpenbaoInstance is
+# in sub/templates/openbao.
+#
+# Kubernetes rights (RFC 0007 §6.6): get/list/watch of its own kinds, their
+# status and finalizers, Events. No Secret through the ClusterRole: `get` by
+# name of `releaseSecrets` in its own namespace only -- openbao-tls, which
+# bank-vaults copies everywhere (caNamespaces: "*"), and later openbao-oidc.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: weebo-openbao
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  source:
+    chart: weebo-openbao
+    repoURL: oci://ghcr.io/weebo-si-operator/charts/weebo-openbao
+    targetRevision: {{ $o.version }}
+    helm:
+      releaseName: weebo-openbao
+      valuesObject:
+        # One replica (RFC 0007 §6.6); the kit's leader election allows two
+        # later. The chart's PDB against one replica only blocks drains.
+        replicaCount: 1
+        podDisruptionBudget:
+          enabled: false
+        podAnnotations:
+          io.opentelemetry.discovery.metrics.9090/enabled: "true"
+          io.opentelemetry.discovery.metrics.9090/scraper: "prometheus_simple"
+          io.opentelemetry.discovery.metrics.9090/config: |
+            collection_interval: "30s"
+            endpoint: "`endpoint`"
+            metrics_path: "/metrics"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ $o.namespace }}
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+    automated:
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+{{- end -}}

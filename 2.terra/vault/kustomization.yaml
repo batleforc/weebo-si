@@ -27,3 +27,4 @@ configMapGenerator:
       - ./terra-map/batlehub.tf
       - ./terra-map/forgejo.tf
       - ./terra-map/mail.tf
+      - ./terra-map/weebo-openbao.tf

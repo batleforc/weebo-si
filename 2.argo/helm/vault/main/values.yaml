@@ -26,3 +26,20 @@ vaultInstance:
 repo: ""
 project: ""
 branch: ""
+
+# weebo-openbao (RFC 0007): the operator that creates the orgs' and users'
+# spaces in openbao namespaces. Phase 3: the operator and its OpenbaoInstance
+# only, no namespace yet. Its policy and role are Terraform's
+# (2.terra/vault/terra-map/weebo-openbao.tf), its ingress to openbao is
+# sub/values.yaml networkPolicy.allowedNamespaces.
+openbao:
+  enabled: true
+  operator:
+    # renovate: datasource=docker depName=ghcr.io/weebo-si-operator/charts/weebo-openbao
+    version: 0.1.2
+    namespace: weebo-openbao
+  instance:
+    name: main
+    # Same list as local.spaces_namespaces in weebo-openbao.tf: the policy
+    # grants nothing outside it, this list refuses it before OpenBao does.
+    namespaces: [devenv, recette, preprod, prod, users]

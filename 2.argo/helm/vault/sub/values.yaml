@@ -58,6 +58,9 @@ networkPolicy:
     - traefik
     # Dex auth
     - dex
+    # weebo-openbao (RFC 0007): the operator logs in and writes the spaces'
+    # namespaces. Without it, a VaultUnavailable that does not say why.
+    - weebo-openbao
 
 # CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
 # documents the format). Ingress only, egress stays open; `host` is always let
@@ -89,3 +92,7 @@ ciliumNetworkPolicies:
       ingress:
         - fromEndpoints:
             - {}
+
+# Passed down by vault/main (openbao.*): the OpenbaoInstance of weebo-openbao.
+openbao:
+  enabled: false
