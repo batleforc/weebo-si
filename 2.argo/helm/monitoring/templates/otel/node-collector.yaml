@@ -212,6 +212,12 @@ spec:
               logs:
                 log_record:
                   - 'resource.attributes["{{ .Values.otel.logsAnnotation }}"] == "false"'
+                  # KubeArmor's relay logs every connection it sees at info
+                  # (~400k lines/h). Its alerts are JSON on the same stream but
+                  # never start with "level", so only the zap info lines go; the
+                  # pod annotation would drop the alerts too, and the operator
+                  # owns the Deployment anyway.
+                  - 'resource.attributes["k8s.namespace.name"] == "kubearmor" and resource.attributes["k8s.container.name"] == "kubearmor-relay-server" and HasPrefix(body, "{\"level\":\"info\"")'
                   {{- if .Values.otel.node.minSeverity }}
                   # DEAD unless something upstream of here starts setting a
                   # severity -- see the note on `minSeverity` in values.yaml.

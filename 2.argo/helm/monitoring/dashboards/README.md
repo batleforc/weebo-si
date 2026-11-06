@@ -468,6 +468,22 @@ from HyperDX 2.32.
   ClickHouse labelled `info`, so the error tiles match the `E`/`F` prefix of
   the line itself.
 
+- `kubearmor.json` — KubeArmor: is the enforcer up, and what did it catch.
+  Health from `k8s_cluster`/kubeletstats in the `kubearmor` namespace (the
+  per-node DaemonSet plus relay, controller and operator: desired vs ready,
+  restarts, CPU, memory), the daemon's own warnings, and the namespace's
+  Kubernetes events.
+
+  Alerts are the JSON lines `kubearmor-relay-server` prints once
+  `enableStdOutAlerts: true` is set on the `KubeArmorConfig`
+  (`2.argo/helm/kubearmor/main/templates/config.yaml`). The gateway parses
+  them into `LogAttributes`, so tiles read `LogAttributes['PolicyName']`,
+  `['Action']`, `['Operation']`… and an alert line is recognised by
+  `mapContains(LogAttributes, 'Operation')`, which the relay's own zap logs
+  never carry. **`Action = Audit` is what `Block` would refuse.** Visibility
+  logs (`enableStdOutLogs`) are not shipped on purpose: with `process,network`
+  visibility on every pod they would be the largest log source in the cluster.
+
 ## Round trip: build it in the UI, then commit it
 
 There is no export button. Get the JSON from the API with the same credentials

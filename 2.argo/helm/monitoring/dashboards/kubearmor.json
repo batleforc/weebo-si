@@ -1,0 +1,421 @@
+{
+  "name": "KubeArmor",
+  "tags": [],
+  "tiles": [
+    {
+      "id": "legend",
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 5,
+      "config": {
+        "name": "How to read this dashboard",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "**KubeArmor: is the enforcer up, and what did it catch.** The top row is health (DaemonSet on every node, relay/controller/operator available, restarts); the rest is alerts.\n\nAlerts are the JSON lines `kubearmor-relay-server` prints when `enableStdOutAlerts` is on in the `KubeArmorConfig`; the gateway parses them into `LogAttributes` (`PolicyName`, `Action`, `Operation`, ...). **`Action = Audit` is what `Block` would have refused**, so it is the number to drive to zero before switching a posture or a policy to enforce. Default-posture hits show as `PolicyName = DefaultPosture`. Alerts are throttled to 10/s per node (`maxAlertPerSec`), so a flood is under-counted, never over-counted. Visibility logs (`enableStdOutLogs`) are deliberately not shipped: with `process,network` visibility on every pod they would dwarf every other log in the cluster."
+      }
+    },
+    {
+      "id": "degraded",
+      "x": 0,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Components degraded",
+        "configType": "sql",
+        "sqlTemplate": "WITH w AS (\n  SELECT\n    if(ResourceAttributes['k8s.daemonset.name'] != '', 'DaemonSet', 'Deployment') AS kind,\n    if(kind = 'DaemonSet', ResourceAttributes['k8s.daemonset.name'], ResourceAttributes['k8s.deployment.name']) AS name,\n    argMaxIf(Value, TimeUnix, MetricName IN ('k8s.deployment.desired', 'k8s.daemonset.desired_scheduled_nodes')) AS desired,\n    argMaxIf(Value, TimeUnix, MetricName IN ('k8s.deployment.available', 'k8s.daemonset.ready_nodes')) AS ready\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.deployment.desired', 'k8s.deployment.available', 'k8s.daemonset.desired_scheduled_nodes', 'k8s.daemonset.ready_nodes')\n    AND ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND $__timeFilter(TimeUnix)\n  GROUP BY kind, name\n)\nSELECT countIf(ready < desired) AS \"Degraded\" FROM w WHERE name != ''",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "restarts",
+      "x": 4,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Restarts in range",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(sum(d)) AS \"Restarts\"\nFROM (\n  SELECT greatest(0, max(Value) - min(Value)) AS d\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'k8s.container.restarts' AND ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND $__timeFilter(TimeUnix)\n  GROUP BY ResourceAttributes['k8s.pod.name'], ResourceAttributes['k8s.container.name']\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 3,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "alerts",
+      "x": 8,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Alerts",
+        "configType": "sql",
+        "sqlTemplate": "SELECT sum(greatest(toUInt64OrZero(LogAttributes['log_count']), 1)) AS \"Alerts\"\nFROM default.otel_logs\nWHERE ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND ResourceAttributes['k8s.container.name'] = 'kubearmor-relay-server' AND mapContains(LogAttributes, 'Operation')\n  AND $__timeFilter(Timestamp)",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "audit",
+      "x": 12,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Would block (Audit)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT sum(greatest(toUInt64OrZero(LogAttributes['log_count']), 1)) AS \"Alerts\"\nFROM default.otel_logs\nWHERE ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND ResourceAttributes['k8s.container.name'] = 'kubearmor-relay-server' AND mapContains(LogAttributes, 'Operation')\n  AND LogAttributes['Action'] = 'Audit'\n  AND $__timeFilter(Timestamp)",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "blocked",
+      "x": 16,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Blocked",
+        "configType": "sql",
+        "sqlTemplate": "SELECT sum(greatest(toUInt64OrZero(LogAttributes['log_count']), 1)) AS \"Alerts\"\nFROM default.otel_logs\nWHERE ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND ResourceAttributes['k8s.container.name'] = 'kubearmor-relay-server' AND mapContains(LogAttributes, 'Operation')\n  AND LogAttributes['Action'] = 'Block'\n  AND $__timeFilter(Timestamp)",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "daemon-errors",
+      "x": 20,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "KubeArmor errors/warnings",
+        "configType": "sql",
+        "sqlTemplate": "SELECT sum(greatest(toUInt64OrZero(LogAttributes['log_count']), 1)) AS \"Lines\"\nFROM default.otel_logs\nWHERE ResourceAttributes['k8s.namespace.name'] = 'kubearmor'\n  AND NOT mapContains(LogAttributes, 'Operation')\n  AND lower(SeverityText) IN ('warn', 'warning', 'error', 'fatal', 'critical')\n  AND $__timeFilter(Timestamp)",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 50,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "components",
+      "x": 0,
+      "y": 8,
+      "w": 10,
+      "h": 6,
+      "config": {
+        "name": "Components",
+        "configType": "sql",
+        "sqlTemplate": "WITH w AS (\n  SELECT\n    if(ResourceAttributes['k8s.daemonset.name'] != '', 'DaemonSet', 'Deployment') AS kind,\n    if(kind = 'DaemonSet', ResourceAttributes['k8s.daemonset.name'], ResourceAttributes['k8s.deployment.name']) AS name,\n    argMaxIf(Value, TimeUnix, MetricName IN ('k8s.deployment.desired', 'k8s.daemonset.desired_scheduled_nodes')) AS desired,\n    argMaxIf(Value, TimeUnix, MetricName IN ('k8s.deployment.available', 'k8s.daemonset.ready_nodes')) AS ready\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.deployment.desired', 'k8s.deployment.available', 'k8s.daemonset.desired_scheduled_nodes', 'k8s.daemonset.ready_nodes')\n    AND ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND $__timeFilter(TimeUnix)\n  GROUP BY kind, name\n)\nSELECT\n  kind AS \"Kind\",\n  name AS \"Workload\",\n  if(ready >= desired, 'ok', 'DEGRADED') AS \"Status\",\n  toUInt32(desired) AS \"Desired\",\n  toUInt32(ready) AS \"Ready\"\nFROM w\nWHERE name != ''\nORDER BY \"Status\" ASC, \"Workload\" ASC",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "containers",
+      "x": 10,
+      "y": 8,
+      "w": 14,
+      "h": 6,
+      "config": {
+        "name": "Containers",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ResourceAttributes['k8s.pod.name'] AS \"Pod\",\n  ResourceAttributes['k8s.container.name'] AS \"Container\",\n  if(countIf(MetricName = 'k8s.container.ready') = 0, '', if(argMaxIf(Value, TimeUnix, MetricName = 'k8s.container.ready') = 1, 'ready', 'NOT READY')) AS \"Ready\",\n  toUInt32(greatest(0, maxIf(Value, MetricName = 'k8s.container.restarts') - minIf(Value, MetricName = 'k8s.container.restarts'))) AS \"Restarts\",\n  round(avgIf(Value, MetricName = 'container.cpu.usage'), 3) AS \"CPU avg (cores)\",\n  round(maxIf(Value, MetricName = 'container.memory.working_set') / 1048576) AS \"Memory peak (MiB)\"\nFROM default.otel_metrics_gauge\nWHERE MetricName IN ('k8s.container.ready', 'k8s.container.restarts', 'container.cpu.usage', 'container.memory.working_set')\n  AND ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND $__timeFilter(TimeUnix)\nGROUP BY \"Pod\", \"Container\"\nHAVING \"Container\" != ''\nORDER BY \"Restarts\" DESC, \"Pod\" ASC",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Logs"
+          },
+          "whereTemplate": "ResourceAttributes['k8s.pod.name'] = '{{Pod}}'",
+          "whereLanguage": "sql"
+        }
+      }
+    },
+    {
+      "id": "alerts-by-action",
+      "x": 0,
+      "y": 14,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Alerts by action",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(Timestamp) AS ts, LogAttributes['Action'] AS \"Action\", sum(greatest(toUInt64OrZero(LogAttributes['log_count']), 1)) AS \"Alerts\"\nFROM default.otel_logs\nWHERE ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND ResourceAttributes['k8s.container.name'] = 'kubearmor-relay-server' AND mapContains(LogAttributes, 'Operation')\n  AND $__timeFilter(Timestamp)\nGROUP BY ts, \"Action\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "stacked_bar"
+      }
+    },
+    {
+      "id": "alerts-by-ns",
+      "x": 12,
+      "y": 14,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Alerts by namespace",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(Timestamp) AS ts, LogAttributes['NamespaceName'] AS \"Namespace\", sum(greatest(toUInt64OrZero(LogAttributes['log_count']), 1)) AS \"Alerts\"\nFROM default.otel_logs\nWHERE ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND ResourceAttributes['k8s.container.name'] = 'kubearmor-relay-server' AND mapContains(LogAttributes, 'Operation')\n  AND $__timeFilter(Timestamp)\nGROUP BY ts, \"Namespace\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "stacked_bar"
+      }
+    },
+    {
+      "id": "policies",
+      "x": 0,
+      "y": 20,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Policies hit",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  LogAttributes['PolicyName'] AS \"Policy\",\n  LogAttributes['Action'] AS \"Action\",\n  LogAttributes['Operation'] AS \"Operation\",\n  sum(greatest(toUInt64OrZero(LogAttributes['log_count']), 1)) AS \"Alerts\",\n  uniqExact(LogAttributes['NamespaceName']) AS \"Namespaces\",\n  max(Timestamp) AS \"Last seen\"\nFROM default.otel_logs\nWHERE ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND ResourceAttributes['k8s.container.name'] = 'kubearmor-relay-server' AND mapContains(LogAttributes, 'Operation')\n  AND $__timeFilter(Timestamp)\nGROUP BY \"Policy\", \"Action\", \"Operation\"\nORDER BY \"Alerts\" DESC\nLIMIT 100",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "table",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Logs"
+          },
+          "whereTemplate": "LogAttributes['PolicyName'] = '{{Policy}}' AND LogAttributes['Action'] = '{{Action}}'",
+          "whereLanguage": "sql"
+        }
+      }
+    },
+    {
+      "id": "offenders",
+      "x": 12,
+      "y": 20,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Who triggers them",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  LogAttributes['NamespaceName'] AS \"Namespace\",\n  LogAttributes['PodName'] AS \"Pod\",\n  LogAttributes['ProcessName'] AS \"Process\",\n  sum(greatest(toUInt64OrZero(LogAttributes['log_count']), 1)) AS \"Alerts\",\n  countIf(LogAttributes['Action'] = 'Block') AS \"Blocked\"\nFROM default.otel_logs\nWHERE ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND ResourceAttributes['k8s.container.name'] = 'kubearmor-relay-server' AND mapContains(LogAttributes, 'Operation')\n  AND $__timeFilter(Timestamp)\nGROUP BY \"Namespace\", \"Pod\", \"Process\"\nORDER BY \"Alerts\" DESC\nLIMIT 100",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "table",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Logs"
+          },
+          "whereTemplate": "LogAttributes['PodName'] = '{{Pod}}' AND mapContains(LogAttributes, 'Operation')",
+          "whereLanguage": "sql"
+        }
+      }
+    },
+    {
+      "id": "alert-log",
+      "x": 0,
+      "y": 27,
+      "w": 24,
+      "h": 9,
+      "config": {
+        "name": "Alerts",
+        "source": "Logs",
+        "displayType": "search",
+        "select": "Timestamp, LogAttributes['NamespaceName'] AS namespace, LogAttributes['PodName'] AS pod, LogAttributes['PolicyName'] AS policy, LogAttributes['Action'] AS action, LogAttributes['Operation'] AS operation, LogAttributes['ProcessName'] AS process, LogAttributes['Resource'] AS resource, LogAttributes['Result'] AS result",
+        "where": "ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND ResourceAttributes['k8s.container.name'] = 'kubearmor-relay-server' AND mapContains(LogAttributes, 'Operation')",
+        "whereLanguage": "sql",
+        "orderBy": "Timestamp DESC"
+      }
+    },
+    {
+      "id": "cpu",
+      "x": 0,
+      "y": 36,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "CPU by container (cores)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, ResourceAttributes['k8s.container.name'] AS \"Container\", avg(Value) AS \"Cores\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'container.cpu.usage' AND ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Container\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 3
+        }
+      }
+    },
+    {
+      "id": "mem",
+      "x": 12,
+      "y": 36,
+      "w": 12,
+      "h": 6,
+      "config": {
+        "name": "Memory by container (MiB)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, ResourceAttributes['k8s.container.name'] AS \"Container\", max(Value) / 1048576 AS \"MiB\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'container.memory.working_set' AND ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Container\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0
+        }
+      }
+    },
+    {
+      "id": "daemon-log",
+      "x": 0,
+      "y": 42,
+      "w": 24,
+      "h": 8,
+      "config": {
+        "name": "KubeArmor warnings and errors",
+        "source": "Logs",
+        "displayType": "search",
+        "select": "Timestamp, ResourceAttributes['k8s.pod.name'] AS pod, ResourceAttributes['k8s.container.name'] AS container, SeverityText, Body",
+        "where": "ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND NOT mapContains(LogAttributes, 'Operation') AND lower(SeverityText) IN ('warn', 'warning', 'error', 'fatal', 'critical')",
+        "whereLanguage": "sql",
+        "orderBy": "Timestamp DESC"
+      }
+    },
+    {
+      "id": "events",
+      "x": 0,
+      "y": 50,
+      "w": 24,
+      "h": 7,
+      "config": {
+        "name": "Kubernetes events in kubearmor",
+        "source": "Logs",
+        "displayType": "search",
+        "select": "Timestamp, JSONExtractString(Body, 'object', 'type') AS type, JSONExtractString(Body, 'object', 'reason') AS reason, JSONExtractString(Body, 'object', 'regarding', 'kind') AS kind, JSONExtractString(Body, 'object', 'regarding', 'name') AS object, JSONExtractString(Body, 'object', 'note') AS note",
+        "where": "ResourceAttributes['k8s.namespace.name'] = 'kubearmor' AND mapContains(LogAttributes, 'event.name')",
+        "whereLanguage": "sql",
+        "orderBy": "Timestamp DESC"
+      }
+    }
+  ]
+}
