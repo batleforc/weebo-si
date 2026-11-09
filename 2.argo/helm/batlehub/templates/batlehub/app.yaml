@@ -31,6 +31,14 @@ spec:
     targetRevision: {{ $b.chart.version }}
     helm:
       releaseName: batlehub
+      # The chart coerces only the integer fields it lists before toToml, and
+      # audit.* is not one: from valuesObject they render as 30.0, which the
+      # server refuses. `--set` keeps them integers.
+      parameters:
+        - name: config.audit.access_retention_days
+          value: {{ $b.audit.accessRetentionDays | int | quote }}
+        - name: config.audit.security_retention_days
+          value: {{ $b.audit.securityRetentionDays | int | quote }}
       valuesObject:
         # Deterministic names. The IngressRoute points at the Service by name,
         # and a release-name-derived one would make that route depend on a
