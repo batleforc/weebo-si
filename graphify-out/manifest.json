@@ -378,9 +378,9 @@
     "semantic_hash": ""
   },
   "2.argo/app/values.yaml": {
-    "mtime": 1793993134.9856443,
-    "seen": 1793993442.9478867,
-    "ast_hash": "024784f7a5ded5fddb6a64635e3cf0b9",
+    "mtime": 1794002652.8967204,
+    "seen": 1794240045.8061574,
+    "ast_hash": "00e0022512f161b00756637b3a5b9391",
     "semantic_hash": ""
   },
   "2.argo/helm/angos/Chart.yaml": {
@@ -390,9 +390,9 @@
     "semantic_hash": ""
   },
   "2.argo/helm/angos/values.yaml": {
-    "mtime": 1793572980.4421322,
-    "seen": 1793903263.321253,
-    "ast_hash": "8d0dfebb4aa878778bb94ecc600ac627",
+    "mtime": 1793998467.1234443,
+    "seen": 1794240045.806195,
+    "ast_hash": "68fbcc43566cca884a84b0d15f4be08f",
     "semantic_hash": ""
   },
   "2.argo/helm/auth/main/Chart.yaml": {
@@ -402,9 +402,9 @@
     "semantic_hash": ""
   },
   "2.argo/helm/auth/main/values.yaml": {
-    "mtime": 1793901884.3167672,
-    "seen": 1793903263.3212564,
-    "ast_hash": "c0925a315bc92bc4d718474111979f47",
+    "mtime": 1794005650.2950788,
+    "seen": 1794240045.806235,
+    "ast_hash": "5a164b19900733ea3015158e7fd2a642",
     "semantic_hash": ""
   },
   "2.argo/helm/auth/sub/Chart.yaml": {
@@ -420,9 +420,9 @@
     "semantic_hash": ""
   },
   "2.argo/helm/auth/sub/values.yaml": {
-    "mtime": 1793985984.090932,
-    "seen": 1793993442.9481635,
-    "ast_hash": "41c0d257e0ebf3c5c54fdc97e1923c3e",
+    "mtime": 1794005648.556096,
+    "seen": 1794240045.8063183,
+    "ast_hash": "edea35c1c18f9ea1eb2f485e49dbde58",
     "semantic_hash": ""
   },
   "2.argo/helm/batlehub/Chart.yaml": {
@@ -432,9 +432,9 @@
     "semantic_hash": ""
   },
   "2.argo/helm/batlehub/values.yaml": {
-    "mtime": 1793989145.6566207,
-    "seen": 1793993442.9482076,
-    "ast_hash": "251491aad43a702e41eb23bfeaa71341",
+    "mtime": 1794240014.4409091,
+    "seen": 1794240045.8063593,
+    "ast_hash": "a0a945af651da6e56a3cb8fbdbc77398",
     "semantic_hash": ""
   },
   "2.argo/helm/che/endpoint-gateway/Chart.yaml": {
@@ -558,9 +558,9 @@
     "semantic_hash": ""
   },
   "2.argo/helm/forgejo/values.yaml": {
-    "mtime": 1793985984.0922675,
-    "seen": 1793993442.9495165,
-    "ast_hash": "d1d64955952e9b2e10f4496684b349d3",
+    "mtime": 1793998467.1229753,
+    "seen": 1794240045.8075337,
+    "ast_hash": "08811ea3790bb0942507506a86f09d40",
     "semantic_hash": ""
   },
   "2.argo/helm/hook/main/Chart.yaml": {
@@ -810,9 +810,9 @@
     "semantic_hash": ""
   },
   "2.argo/helm/vault/main/values.yaml": {
-    "mtime": 1792845509.04281,
-    "seen": 1793903263.3213794,
-    "ast_hash": "5ea7fb7998235c18cd75c0918ebc71b5",
+    "mtime": 1794005708.3801475,
+    "seen": 1794240045.8096397,
+    "ast_hash": "3d1a4c18f11e7a8534e99c5d2b0f8374",
     "semantic_hash": ""
   },
   "2.argo/helm/vault/sub/Chart.yaml": {
@@ -858,9 +858,9 @@
     "semantic_hash": ""
   },
   "2.argo/helm/vault/sub/values.yaml": {
-    "mtime": 1793572980.4531322,
-    "seen": 1793903263.321387,
-    "ast_hash": "85958eca7ab8a648b551871cb579740f",
+    "mtime": 1794002844.5936613,
+    "seen": 1794240045.809973,
+    "ast_hash": "202a5e20497085e6034a17d877a44576",
     "semantic_hash": ""
   },
   "2.helm/clickstack/Chart.yaml": {
@@ -954,9 +954,9 @@
     "semantic_hash": ""
   },
   "2.terra/vault/kustomization.yaml": {
-    "mtime": 1793985984.092574,
-    "seen": 1793993442.9524808,
-    "ast_hash": "cb049d09c94929c6d543b27be65eb60d",
+    "mtime": 1794002616.4079926,
+    "seen": 1794240045.8105192,
+    "ast_hash": "27315beda10fefd6bd1041bbc0a14184",
     "semantic_hash": ""
   },
   "2.terra/vault/volume.yaml": {
@@ -1296,9 +1296,9 @@
     "semantic_hash": ""
   },
   "2.argo/helm/monitoring/dashboards/README.md": {
-    "mtime": 1793993438.894799,
-    "seen": 1793993442.9560423,
-    "ast_hash": "599a915a2c062822df73d32ab11c5ef8",
+    "mtime": 1794240019.3908706,
+    "seen": 1794240045.813996,
+    "ast_hash": "6b9077d515803ee9dc591ee0949e904d",
     "semantic_hash": ""
   },
   "2.helm/clickstack/charts/opentelemetry-collector/CONTRIBUTING.md": {
@@ -1905,6 +1905,24 @@
     "mtime": 1793993410.635365,
     "seen": 1793993442.950914,
     "ast_hash": "a597eb0e0a2d655a40fb5c0ead1c2309",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/monitoring/dashboards/batlehub.json": {
+    "mtime": 1794240003.7585363,
+    "seen": 1794240045.808931,
+    "ast_hash": "4daa4050917695d9dafacc6c6ff2ff8a",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/vault/spaces/Chart.yaml": {
+    "mtime": 1794005691.3398182,
+    "seen": 1794240045.8096406,
+    "ast_hash": "541a4a3ec7d93e5c74f3c689833fae9d",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/vault/spaces/values.yaml": {
+    "mtime": 1794005691.3416674,
+    "seen": 1794240045.809642,
+    "ast_hash": "62302c7e171e04655bb88a548243fad7",
     "semantic_hash": ""
   },
   "0.docs/yarn.lock": {

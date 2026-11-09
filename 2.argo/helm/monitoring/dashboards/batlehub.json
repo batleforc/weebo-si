@@ -1,0 +1,725 @@
+{
+  "name": "BatleHub health",
+  "tags": [],
+  "tiles": [
+    {
+      "id": "legend",
+      "config": {
+        "name": "Is the package proxy healthy?** Read the",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "**Is the package proxy healthy?** Read the top row first. **Telemetry age** is seconds since the last `batlehub_*` sample: if it is red, every `batlehub_*` tile below is stale.\n\n**Sources.** `batlehub_*` is the server's own `/metrics`, scraped every 30 s by otel-node through the pod annotations set in `2.argo/helm/batlehub/templates/batlehub/app.yaml`. CPU, memory and restarts are kubeletstats and `k8s_cluster`. Routes are OBI server spans, which carry **no status code for this pod**, so failures are only readable from `batlehub_requests_total`. Log levels are read from the ANSI colour in `Body`, because the collector does not parse this format: every line lands as `info`.\n\n**Counters** are diffed sample by sample, so the first scrape of a series counts for nothing and a pod restart cannot produce a negative. **Failed** means `listing_error` or `integrity_failed`. **Denied** is the release age gate doing its job, not a fault. **Latency** is the quantile the server computes over its own window, and a registry with no traffic is left out rather than drawn at zero.\n\nSeries only exist once they have happened: a registry nobody pulled from, or a blank scan or read-cache tile, means no sample, not zero."
+      },
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 7
+    },
+    {
+      "id": "age",
+      "config": {
+        "name": "Telemetry age (s)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(dateDiff('second', max(TimeUnix), now())) AS \"Telemetry age (s)\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'batlehub_db_pool_size'\n  AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n  AND $__timeFilter(TimeUnix)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 120,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 0,
+      "y": 7,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "missing",
+      "config": {
+        "name": "Replicas missing",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(greatest(0, argMaxIf(Value, TimeUnix, MetricName = 'k8s.deployment.desired')\n                           - argMaxIf(Value, TimeUnix, MetricName = 'k8s.deployment.available'))) AS \"Replicas missing\"\nFROM default.otel_metrics_gauge\nWHERE MetricName IN ('k8s.deployment.desired', 'k8s.deployment.available')\n  AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n  AND ResourceAttributes['k8s.deployment.name'] = 'batlehub'\n  AND $__timeFilter(TimeUnix)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 4,
+      "y": 7,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "restarts",
+      "config": {
+        "name": "Restarts in range",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(sum(r)) AS \"Restarts in range\" FROM (\n  SELECT greatest(0, max(Value) - min(Value)) AS r\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'k8s.container.restarts'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  GROUP BY ResourceAttributes['k8s.pod.name'], ResourceAttributes['k8s.container.name']\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 8,
+      "y": 7,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "failed",
+      "config": {
+        "name": "Failed requests",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt64(sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev)))) AS \"Failed requests\"\nFROM (\n  SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_requests_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)\n)\nWHERE (Attributes['outcome'] LIKE '%error%' OR Attributes['outcome'] = 'integrity_failed')",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 12,
+      "y": 7,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "integrity",
+      "config": {
+        "name": "Integrity mismatches",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt64(sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev)))) AS \"Integrity mismatches\"\nFROM (\n  SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_integrity_checks_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)\n)\nWHERE Attributes['outcome'] = 'mismatch'",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 16,
+      "y": 7,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "degraded",
+      "config": {
+        "name": "Upstreams degraded",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(sum(v)) AS \"Upstreams degraded\" FROM (\n  SELECT argMax(Value, TimeUnix) AS v\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'batlehub_upstream_health_degraded'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  GROUP BY Attributes['registry']\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 20,
+      "y": 7,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "requests",
+      "config": {
+        "name": "Requests",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt64(sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev)))) AS \"Requests\"\nFROM (\n  SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_requests_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)\n)\nWHERE 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 0,
+      "y": 10,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "denied",
+      "config": {
+        "name": "Denied (gates)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt64(sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev)))) AS \"Denied (gates)\"\nFROM (\n  SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_requests_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)\n)\nWHERE Attributes['outcome'] = 'denied'",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 4,
+      "y": 10,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "hit-art",
+      "config": {
+        "name": "Artifact cache hit %",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(100 * hits / nullIf(hits + miss, 0), 1) AS \"Artifact cache hit %\"\nFROM (SELECT\n  (SELECT sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev))) FROM (SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_artifact_cache_hits_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW))) AS hits,\n  (SELECT sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev))) FROM (SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_artifact_cache_misses_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW))) AS miss\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "thousandSeparated": true
+        }
+      },
+      "x": 8,
+      "y": 10,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "hit-meta",
+      "config": {
+        "name": "Metadata cache hit %",
+        "configType": "sql",
+        "sqlTemplate": "SELECT round(100 * hits / nullIf(hits + miss, 0), 1) AS \"Metadata cache hit %\"\nFROM (SELECT\n  (SELECT sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev))) FROM (SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_metadata_cache_hits_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW))) AS hits,\n  (SELECT sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev))) FROM (SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_metadata_cache_misses_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW))) AS miss\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "thousandSeparated": true
+        }
+      },
+      "x": 12,
+      "y": 10,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "auth",
+      "config": {
+        "name": "Auth failures",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt64(sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev)))) AS \"Auth failures\"\nFROM (\n  SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_auth_failures_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)\n)\nWHERE 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 16,
+      "y": 10,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "readcache",
+      "config": {
+        "name": "Read cache live (1 = on)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT argMax(Value, TimeUnix) AS \"Read cache live\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'batlehub_read_cache_live'\n  AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n  AND $__timeFilter(TimeUnix)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "lt",
+            "value": 1,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 20,
+      "y": 10,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "h-traffic",
+      "config": {
+        "name": "Traffic",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "#### Traffic"
+      },
+      "x": 0,
+      "y": 13,
+      "w": 24,
+      "h": 1
+    },
+    {
+      "id": "by-outcome",
+      "config": {
+        "name": "Requests by outcome",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, Attributes['outcome'] AS \"Outcome\", sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev))) AS \"Increase\"\nFROM (\n  SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_requests_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)\n)\nGROUP BY ts, \"Outcome\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 0,
+      "y": 14,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "by-registry",
+      "config": {
+        "name": "Requests by registry",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, Attributes['registry'] AS \"Registry\", sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev))) AS \"Increase\"\nFROM (\n  SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_requests_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)\n)\nGROUP BY ts, \"Registry\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 12,
+      "y": 14,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "registries",
+      "config": {
+        "name": "Per registry",
+        "configType": "sql",
+        "sqlTemplate": "WITH req AS (\n  SELECT Attributes['registry'] AS registry,\n    sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev))) AS total,\n    sumIf(if(rn = 1, 0, if(Value < prev, Value, Value - prev)), (Attributes['outcome'] LIKE '%error%' OR Attributes['outcome'] = 'integrity_failed')) AS failed,\n    sumIf(if(rn = 1, 0, if(Value < prev, Value, Value - prev)), Attributes['outcome'] = 'denied') AS denied\n  FROM (SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_requests_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW))\n  GROUP BY registry\n),\nhit AS (SELECT Attributes['registry'] AS registry, sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev))) AS n FROM (SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_artifact_cache_hits_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)) GROUP BY registry),\nmis AS (SELECT Attributes['registry'] AS registry, sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev))) AS n FROM (SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_artifact_cache_misses_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)) GROUP BY registry),\nupe AS (SELECT Attributes['registry'] AS registry, sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev))) AS n FROM (SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_upstream_errors_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)) GROUP BY registry),\nbyt AS (SELECT Attributes['registry'] AS registry, sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev))) AS n FROM (SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_cached_bytes_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)) GROUP BY registry),\nlat AS (\n  SELECT Attributes['registry'] AS registry,\n    max(ValueAtQuantiles.Value[indexOf(ValueAtQuantiles.Quantile, 0.95)]) * 1000 AS p95\n  FROM default.otel_metrics_summary\n  WHERE MetricName = 'batlehub_request_duration_seconds'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  GROUP BY registry\n)\nSELECT req.registry AS \"Registry\",\n  toUInt64(req.total) AS \"Requests\",\n  toUInt64(req.failed) AS \"Failed\",\n  toUInt64(req.denied) AS \"Denied\",\n  toUInt64(upe.n) AS \"Upstream errors\",\n  round(100 * hit.n / nullIf(hit.n + mis.n, 0), 1) AS \"Hit %\",\n  formatReadableSize(byt.n) AS \"Newly cached\",\n  round(nullIf(lat.p95, 0), 1) AS \"Worst p95 (ms)\"\nFROM req\nLEFT JOIN hit ON hit.registry = req.registry\nLEFT JOIN mis ON mis.registry = req.registry\nLEFT JOIN upe ON upe.registry = req.registry\nLEFT JOIN byt ON byt.registry = req.registry\nLEFT JOIN lat ON lat.registry = req.registry\nORDER BY \"Requests\" DESC",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table"
+      },
+      "x": 0,
+      "y": 20,
+      "w": 24,
+      "h": 8
+    },
+    {
+      "id": "p95",
+      "config": {
+        "name": "Request p95 by registry (ms)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, Attributes['registry'] AS \"Registry\",\n  max(ValueAtQuantiles.Value[indexOf(ValueAtQuantiles.Quantile, 0.95)]) * 1000 AS \"ms\"\nFROM default.otel_metrics_summary\nWHERE MetricName = 'batlehub_request_duration_seconds'\n  AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Registry\"\nHAVING \"ms\" > 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "thousandSeparated": true
+        }
+      },
+      "x": 0,
+      "y": 28,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "routes",
+      "config": {
+        "name": "Busiest routes (OBI)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT SpanName AS \"Route\",\n  count() AS \"Calls\"\nFROM default.otel_traces\nWHERE SpanKind = 'Server'\n  AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND ResourceAttributes['k8s.container.name'] = 'batlehub'\n  AND $__timeFilter(Timestamp)\nGROUP BY \"Route\"\nORDER BY \"Calls\" DESC\nLIMIT 25",
+        "connection": "Local ClickHouse",
+        "source": "Traces",
+        "displayType": "table"
+      },
+      "x": 12,
+      "y": 28,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "h-upstream",
+      "config": {
+        "name": "Upstreams and caches",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "#### Upstreams and caches"
+      },
+      "x": 0,
+      "y": 34,
+      "w": 24,
+      "h": 1
+    },
+    {
+      "id": "up-err",
+      "config": {
+        "name": "Upstream errors by registry",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, Attributes['registry'] AS \"Registry\", sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev))) AS \"Increase\"\nFROM (\n  SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_upstream_errors_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)\n)\nGROUP BY ts, \"Registry\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 0,
+      "y": 35,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "up-p95",
+      "config": {
+        "name": "Upstream p95 by registry (ms)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, Attributes['registry'] AS \"Registry\",\n  max(ValueAtQuantiles.Value[indexOf(ValueAtQuantiles.Quantile, 0.95)]) * 1000 AS \"ms\"\nFROM default.otel_metrics_summary\nWHERE MetricName = 'batlehub_upstream_request_duration_seconds'\n  AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Registry\"\nHAVING \"ms\" > 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "thousandSeparated": true
+        }
+      },
+      "x": 12,
+      "y": 35,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "hit-line",
+      "config": {
+        "name": "Cache hits and misses",
+        "configType": "sql",
+        "sqlTemplate": "SELECT ts, \"Series\", sum(d) AS \"Increase\" FROM (\n  SELECT $__timeInterval(TimeUnix) AS ts, MetricName AS m, \n    replaceRegexpOne(replaceOne(MetricName, 'batlehub_', ''), '_total$', '') AS \"Series\",\n    if(row_number() OVER w = 1, 0, if(Value < lagInFrame(Value) OVER w, Value, Value - lagInFrame(Value) OVER w)) AS d\n  FROM default.otel_metrics_sum\n  WHERE MetricName IN ('batlehub_artifact_cache_hits_total', 'batlehub_artifact_cache_misses_total',\n                       'batlehub_metadata_cache_hits_total', 'batlehub_metadata_cache_misses_total')\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY MetricName, Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)\n)\nGROUP BY ts, \"Series\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 0,
+      "y": 41,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "bytes",
+      "config": {
+        "name": "Bytes newly cached, by registry",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, Attributes['registry'] AS \"Registry\", sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev))) AS \"Increase\"\nFROM (\n  SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_cached_bytes_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)\n)\nGROUP BY ts, \"Registry\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "byte"
+        }
+      },
+      "x": 12,
+      "y": 41,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "h-db",
+      "config": {
+        "name": "Database",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "#### Database"
+      },
+      "x": 0,
+      "y": 47,
+      "w": 24,
+      "h": 1
+    },
+    {
+      "id": "pool",
+      "config": {
+        "name": "Connection pool",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts,\n  replaceOne(MetricName, 'batlehub_db_pool_', '') AS \"Series\",\n  min(Value) AS \"Connections\"\nFROM default.otel_metrics_gauge\nWHERE MetricName IN ('batlehub_db_pool_size', 'batlehub_db_pool_available_connections')\n  AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Series\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 0,
+      "y": 48,
+      "w": 8,
+      "h": 6
+    },
+    {
+      "id": "stmts",
+      "config": {
+        "name": "Statements by verb",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, Attributes['verb'] AS \"Verb\", sum(if(rn = 1, 0, if(Value < prev, Value, Value - prev))) AS \"Increase\"\nFROM (\n  SELECT TimeUnix, Attributes, Value,\n    row_number() OVER w AS rn,\n    lagInFrame(Value) OVER w AS prev\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'batlehub_db_statements_total'\n    AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND $__timeFilter(TimeUnix)\n  WINDOW w AS (PARTITION BY Attributes, ResourceAttributes['k8s.pod.name'] ORDER BY TimeUnix\n               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)\n)\nGROUP BY ts, \"Verb\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 8,
+      "y": 48,
+      "w": 8,
+      "h": 6
+    },
+    {
+      "id": "db-p95",
+      "config": {
+        "name": "Statement p95 by verb (ms)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, Attributes['verb'] AS \"Verb\",\n  max(ValueAtQuantiles.Value[indexOf(ValueAtQuantiles.Quantile, 0.95)]) * 1000 AS \"ms\"\nFROM default.otel_metrics_summary\nWHERE MetricName = 'batlehub_db_statement_duration_seconds'\n  AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Verb\"\nHAVING \"ms\" > 0\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "thousandSeparated": true
+        }
+      },
+      "x": 16,
+      "y": 48,
+      "w": 8,
+      "h": 6
+    },
+    {
+      "id": "h-pods",
+      "config": {
+        "name": "The pods: server, Postgres, Valkey",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "#### The pods: server, Postgres, Valkey"
+      },
+      "x": 0,
+      "y": 54,
+      "w": 24,
+      "h": 1
+    },
+    {
+      "id": "cpu",
+      "config": {
+        "name": "CPU by pod (cores)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, ResourceAttributes['k8s.pod.name'] AS \"Pod\", avg(Value) AS \"CPU cores\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'container.cpu.usage'\n  AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Pod\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 3
+        }
+      },
+      "x": 0,
+      "y": 55,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "mem",
+      "config": {
+        "name": "Memory working set by pod",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts, ResourceAttributes['k8s.pod.name'] AS \"Pod\", avg(Value) AS \"Working set\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'container.memory.working_set'\n  AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Pod\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "byte"
+        }
+      },
+      "x": 12,
+      "y": 55,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "jemalloc",
+      "config": {
+        "name": "Server memory, allocator view",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(TimeUnix) AS ts,\n  replaceOne(replaceOne(MetricName, 'batlehub_memory_', ''), '_bytes', '') AS \"Series\",\n  avg(Value) AS \"Bytes\"\nFROM default.otel_metrics_gauge\nWHERE MetricName LIKE 'batlehub_memory_%'\n  AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Series\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "byte"
+        }
+      },
+      "x": 0,
+      "y": 61,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "podtable",
+      "config": {
+        "name": "Containers",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ResourceAttributes['k8s.pod.name'] AS \"Pod\",\n  ResourceAttributes['k8s.container.name'] AS \"Container\",\n  round(avgIf(Value, MetricName = 'container.cpu.usage'), 3) AS \"CPU avg\",\n  formatReadableSize(maxIf(Value, MetricName = 'container.memory.working_set')) AS \"Mem peak\",\n  toUInt32(maxIf(Value, MetricName = 'k8s.container.restarts')) AS \"Restarts (lifetime)\"\nFROM default.otel_metrics_gauge\nWHERE MetricName IN ('container.cpu.usage', 'container.memory.working_set', 'k8s.container.restarts')\n  AND ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n  AND $__timeFilter(TimeUnix)\nGROUP BY \"Pod\", \"Container\"\nHAVING \"Container\" != ''\nORDER BY \"Pod\", \"Container\"",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table"
+      },
+      "x": 12,
+      "y": 61,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "h-logs",
+      "config": {
+        "name": "Logs",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "#### Logs"
+      },
+      "x": 0,
+      "y": 67,
+      "w": 24,
+      "h": 1
+    },
+    {
+      "id": "loglevel",
+      "config": {
+        "name": "Server warnings and errors",
+        "configType": "sql",
+        "sqlTemplate": "SELECT $__timeInterval(Timestamp) AS ts,\n  if(Body LIKE '%31mERROR%', 'error', 'warn') AS \"Level\",\n  count() AS \"Lines\"\nFROM default.otel_logs\nWHERE ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND ResourceAttributes['k8s.container.name'] = 'batlehub'\n  AND (Body LIKE '%31mERROR%' OR Body LIKE '%33m WARN%')\n  AND $__timeFilter(Timestamp)\nGROUP BY ts, \"Level\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      },
+      "x": 0,
+      "y": 68,
+      "w": 10,
+      "h": 6
+    },
+    {
+      "id": "logs",
+      "x": 10,
+      "y": 68,
+      "w": 14,
+      "h": 6,
+      "config": {
+        "name": "Recent warnings and errors",
+        "source": "Logs",
+        "displayType": "search",
+        "select": "Timestamp, ResourceAttributes['k8s.pod.name'] AS pod, Body",
+        "where": "ResourceAttributes['k8s.namespace.name'] = 'batlehub'\n    AND ResourceAttributes['k8s.container.name'] = 'batlehub'\n  AND (Body LIKE '%31mERROR%' OR Body LIKE '%33m WARN%')",
+        "whereLanguage": "sql",
+        "orderBy": "Timestamp DESC"
+      }
+    }
+  ]
+}

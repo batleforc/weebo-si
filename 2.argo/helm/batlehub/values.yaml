@@ -31,12 +31,12 @@ batlehub:
     name: batlehub
     repoURL: oci://ghcr.io/batlehub/batlehub/charts/batlehub
     # renovate: datasource=docker depName=ghcr.io/batlehub/batlehub/charts/batlehub
-    version: 1.9.0
+    version: 1.10.0
 
   image:
     registry: ghcr.io/batlehub/batlehub
     # renovate: datasource=docker depName=ghcr.io/batlehub/batlehub
-    tag: 1.9.0
+    tag: 1.10.0
 
   # The apex. Every registry below also answers on `<name>.<dns>` -- see
   # `subdomainRouting` -- so the certificate and the IngressRoute both cover the
@@ -662,6 +662,15 @@ ciliumNetworkPolicies:
         - fromEndpoints:
             - matchLabels:
                 k8s:io.kubernetes.pod.namespace: weebo-batlehub
+          toPorts:
+            - ports:
+                - port: "8080"
+                  protocol: TCP
+        # otel-node's scrape of /metrics.
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: monitoring
+                app.kubernetes.io/instance: otel-node
           toPorts:
             - ports:
                 - port: "8080"

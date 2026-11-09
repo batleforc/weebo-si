@@ -139,14 +139,22 @@ spec:
             value: {{ $b.caTrust.certFile | quote }}
           {{- end }}
 
-        {{- if $b.caTrust.enabled }}
-        # The whole of the CA wiring: the Kyverno policy reads this annotation
-        # off the pod template and mounts the bundle. Nothing in this chart
-        # creates the ConfigMap -- trust-manager replicates it into every
-        # namespace.
         podAnnotations:
+          # Opts /metrics into otel-node's discovery, for the "BatleHub health"
+          # dashboard (2.argo/helm/monitoring/dashboards/batlehub.json).
+          io.opentelemetry.discovery.metrics.8080/enabled: "true"
+          io.opentelemetry.discovery.metrics.8080/scraper: "prometheus_simple"
+          io.opentelemetry.discovery.metrics.8080/config: |
+            collection_interval: "30s"
+            endpoint: "`endpoint`"
+            metrics_path: "/metrics"
+          {{- if $b.caTrust.enabled }}
+          # The whole of the CA wiring: the Kyverno policy reads this annotation
+          # off the pod template and mounts the bundle. Nothing in this chart
+          # creates the ConfigMap -- trust-manager replicates it into every
+          # namespace.
           {{ $b.caTrust.annotation }}: "enabled"
-        {{- end }}
+          {{- end }}
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: {{ .Release.Namespace }}

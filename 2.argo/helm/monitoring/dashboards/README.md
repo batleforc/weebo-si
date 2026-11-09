@@ -387,6 +387,29 @@ from HyperDX 2.32.
   Blank `% lim` is the normal state here, not a gap: the Tenant declares no
   resources, so the containers are unbounded.
 
+- `batlehub.json` — the package proxy: verdict rows, traffic and failures per
+  registry, upstream errors and latency, cache hit ratios, the Postgres pool,
+  the pods of the namespace, and the server's warnings and errors.
+
+  The `batlehub_*` tiles need the scrape opted into by the pod annotations in
+  `2.argo/helm/batlehub/templates/batlehub/app.yaml`, an ArgoCD sync of
+  `batlehub`. Pod, route and log tiles work without it.
+
+  **Failures come from the counters only.** OBI's server spans carry no status
+  code for this pod: OBI never parsed the response, and such a span can end at
+  connection close, so its duration overstates the request. The routes table
+  therefore shows call counts only.
+  Failed means `listing_error` or `integrity_failed`; `denied` is the age gate
+  working and is counted apart.
+
+  **Log levels are read from the ANSI colour in `Body`** (`31mERROR`,
+  `33m WARN`), since every line of this format lands with `SeverityText` at
+  `info`. Turning off the server's coloured output empties those two tiles.
+
+  Latency tiles read the quantiles the server computes itself, from
+  `otel_metrics_summary`, not histogram buckets, so they cannot be re-aggregated
+  over time: a bucket shows the worst value seen in it.
+
 - `hardening.json` — weebo-si-hardening: what the operator decided and what
   it *would* decide. A verdict row (telemetry age, would-deny in DryRun,
   denied in Enforce, writes allowed unchecked, Cilium canary, identity API
