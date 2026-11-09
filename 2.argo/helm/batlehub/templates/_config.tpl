@@ -59,6 +59,9 @@ cache:
   type: redis
   url: "${CACHE_URL}"
 {{- end }}
+audit:
+  access_retention_days: {{ $b.audit.accessRetentionDays }}
+  security_retention_days: {{ $b.audit.securityRetentionDays }}
 auth:
   {{- if $b.oidc.enabled }}
   - type: oidc

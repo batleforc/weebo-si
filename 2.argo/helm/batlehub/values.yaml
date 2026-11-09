@@ -275,6 +275,16 @@ batlehub:
     roleMappings:
       "system:serviceaccounts": user
 
+  # ── Audit trail ────────────────────────────────────────────────────────────
+  # How long access_events rows are kept. Access is downloads and metadata
+  # views; security is everything else (sign-ins, tokens, admin actions) and
+  # may not be shorter than access, or the server refuses to load the config.
+  # Expired rows cannot be recovered. Read at startup: the pod rolls on the
+  # config checksum.
+  audit:
+    accessRetentionDays: 30
+    securityRetentionDays: 30
+
   # ── Registries ─────────────────────────────────────────────────────────────
   # Each entry is one `[[registries]]` block: a caching proxy in front of one
   # public upstream, reachable at /proxy/<name>/ and at <name>.pkg.weebo.poc.
