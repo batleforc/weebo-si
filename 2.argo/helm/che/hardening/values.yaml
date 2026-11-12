@@ -569,8 +569,9 @@ teams:
         # `hardening.weebo.io/access: open` on the devfile endpoint (or
         # `kubectl annotate` until the next start). The gate stays in the
         # chain and lets anyone through: for webhooks, CLIs and APIs that
-        # cannot follow a sign-in. Only this team reaches it; another team's
-        # annotation falls back to its default.
+        # cannot follow a sign-in. Only this team reaches it: another team's
+        # Ingress naming it is refused at admission ("not granted"), so that
+        # workspace does not start.
         catalog:
           - { key: open, anonymous: true, delegation: [] }
         default: private
