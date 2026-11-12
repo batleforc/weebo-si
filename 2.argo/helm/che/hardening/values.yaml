@@ -572,8 +572,13 @@ teams:
         # cannot follow a sign-in. Only this team reaches it: another team's
         # Ingress naming it is refused at admission ("not granted"), so that
         # workspace does not start.
+        # `team` and `shared` re-declared, identical to config.features
+        # .endpointAuth.catalog: a team reaches only what it catalogues plus
+        # the cluster default, so without them `access: team` is refused.
         catalog:
           - { key: open, anonymous: true, delegation: [] }
+          - { key: team, anonymous: false, delegation: [Team] }
+          - { key: shared, anonymous: false, delegation: [Team, UsersAndGroups] }
         default: private
     identity:
       authentik:
