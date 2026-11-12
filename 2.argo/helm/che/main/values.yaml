@@ -85,7 +85,7 @@ che:
     enabled: true
     namespace: weebo-si-hardening
     ## renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-si-operator
-    version: 0.3.0
+    version: 0.4.0
     # 1 = no HA (no webhook during a drain, see hardening-operator.yaml).
     replicas: 1
     # WeeboSiConfig/Team/User, rendered by 2.argo/helm/che/hardening and
@@ -129,6 +129,13 @@ che:
       imagePolicy:
         podWebhook:
           failurePolicy: Fail
+      # features.imageRewrite (RFC 0017): its webhooks, on /mutate/v1/pods and
+      # in the DevWorkspace configuration. Off for the upgrade from 0.3.0: in
+      # one step they would be registered while 0.3.0 pods, without the
+      # routes, still answer 404 under failurePolicy: Fail. On once 0.4.0 runs.
+      imageRewrite:
+        webhooks:
+          enabled: false
       # features.kubearmorPolicy. KubeArmor is not installed on this cluster.
       kubearmorPolicy:
         rbac:
