@@ -15,7 +15,7 @@ vaultApp:
 vaultInstance:
   enabled: true
   # renovate: datasource=docker depName=openbao/openbao
-  version: "2.7.1"
+  version: "2.7.2"
   image: openbao/openbao
   hook:
     enabled: true
