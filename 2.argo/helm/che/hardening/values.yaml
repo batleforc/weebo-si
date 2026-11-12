@@ -22,6 +22,17 @@ branch: ""
 # off there is a refused render, not a runtime Degraded.
 operator: {}
 
+# The `errors` middleware endpointAuth.gateway.errorPageMiddleware names
+# (templates/endpoint-auth-error-page.yaml), rendered while endpointAuth is
+# enabled. The ingress chart's error-pages-internal (2.argo/helm/ingress/sub,
+# errorPages): workspace hosts are under weebo.poc. `500` is what forwardAuth
+# answers when it cannot reach the gateway; 502-504 as everywhere else.
+endpointAuthErrorPage:
+  enabled: true
+  status: ["500", "502-504"]
+  service: { name: error-pages-internal, namespace: traefik, port: 8080 }
+  query: "/{status}"
+
 # WeeboSiConfig `cluster`.
 config:
   features:
@@ -397,6 +408,10 @@ config:
         # Keep in step with the gateway's config.enforcement.
         enforcement: Enforce
         allowedMiddlewares: []
+        # templates/endpoint-auth-error-page.yaml (endpointAuthErrorPage
+        # below): in front of forwardAuth, so a gateway outage shows the
+        # BatleHub error page instead of a bare 500.
+        errorPageMiddleware: weebo-si-hardening-endpoint-auth-errors@kubernetescrd
         haproxyPrerequisite: false
       breakGlassIdentities: []
       owner:

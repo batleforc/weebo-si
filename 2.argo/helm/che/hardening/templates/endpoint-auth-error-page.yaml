@@ -1,0 +1,16 @@
+{{- with .Values.endpointAuthErrorPage }}{{ if and .enabled $.Values.config.features.endpointAuth.enabled -}}
+# values.yaml, endpointAuthErrorPage: the `errors` middleware that
+# config.features.endpointAuth.gateway.errorPageMiddleware names, placed in
+# front of the gate's forwardAuth. It has to live here, in the operator's
+# namespace: the operator attaches nothing else in front of the gate. It
+# reuses the BatleHub error pages of the ingress chart (traefik namespace).
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: endpoint-auth-errors
+spec:
+  errors:
+    status: {{ toJson .status }}
+    service: {{ toJson .service }}
+    query: {{ .query | quote }}
+{{- end }}{{ end }}
