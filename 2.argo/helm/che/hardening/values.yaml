@@ -281,6 +281,31 @@ config:
           - "registry.pkg.weebo.poc/quay/devfile/**"
           - "registry.pkg.weebo.poc/quay/eclipse/**"
 
+    # RFC 0017. Upstream image names, as a devfile or DevWorkspace Operator
+    # writes them, pulled through angos instead: a mutating webhook rewrites
+    # them before imagePolicy (above) judges them, so `quay.io/devfile/...`
+    # is admitted as registry.pkg.weebo.poc/quay/devfile/... rather than
+    # refused. One rule per angos cache (2.argo/helm/angos). No switch in
+    # che.hardening.operator: it needs no RBAC, only the operator chart's
+    # imageRewrite.webhooks, on by default.
+    imageRewrite:
+      enabled: true
+      mode: Enforce
+      # The pod webhook only sees workspace namespaces: rewriting the
+      # DevWorkspaces of any other would leave the images DevWorkspace
+      # Operator injects upstream.
+      namespaceSelector:
+        matchLabels:
+          hardening.weebo.io/workspace-namespace: "true"
+      rules:
+        - { from: docker.io, to: registry.pkg.weebo.poc/hub }
+        - { from: quay.io, to: registry.pkg.weebo.poc/quay }
+        - { from: ghcr.io, to: registry.pkg.weebo.poc/ghcr }
+        - { from: registry.access.redhat.com, to: registry.pkg.weebo.poc/redhat }
+        - { from: gcr.io, to: registry.pkg.weebo.poc/gcr }
+        - { from: code.forgejo.org, to: registry.pkg.weebo.poc/forgejo }
+        - { from: codeberg.org, to: registry.pkg.weebo.poc/codeberg }
+
     # RFC 0006. What a workspace's processes may do (exec, files, network,
     # capabilities), through KubeArmor. KubeArmor is not installed here:
     # Auto resolves to nothing and the feature writes nothing. Needs
