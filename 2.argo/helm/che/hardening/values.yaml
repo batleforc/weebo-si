@@ -565,7 +565,14 @@ teams:
                 templateRef: { name: weebo-npmrc, namespace: weebo-si-hardening }
         default: [npm-mirror]
       endpointAuth:
-        catalog: []
+        # `open`: the developer's opt-out, on one endpoint, with
+        # `hardening.weebo.io/access: open` on the devfile endpoint (or
+        # `kubectl annotate` until the next start). The gate stays in the
+        # chain and lets anyone through: for webhooks, CLIs and APIs that
+        # cannot follow a sign-in. Only this team reaches it; another team's
+        # annotation falls back to its default.
+        catalog:
+          - { key: open, anonymous: true, delegation: [] }
         default: private
     identity:
       authentik:
