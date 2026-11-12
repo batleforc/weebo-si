@@ -411,7 +411,7 @@ angos:
       # is baked into the image and would mean building an installer image and
       # rebooting.
       binDir: /var/lib/kubelet/credential-providers
-      installerImage: "alpine:3.22"
+      installerImage: "alpine:3.24"
 
   # Storage maintenance, as two CronJobs -- or, with `operator.enabled`, as two
   # AngosMaintenances on the same schedules (templates/operator/). Not optional in practice: a delete
