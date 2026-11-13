@@ -199,11 +199,6 @@ identity:
       - crName: batleforc-org-dev
         name: batleforc-org_dev
         isSuperuser: false
-      # The throwaway org `test` of RFC 0007 §6.P n°9 (deletion proof): its
-      # OpenbaoOrganization is applied and deleted by hand, outside git.
-      - crName: test-dev
-        name: test_dev
-        isSuperuser: false
   users:
     enabled: false
     items:
@@ -231,12 +226,8 @@ identity:
         name: batleforc-test
         email: batleforc-test@weebo.internal
         isActive: true
-        # batleforc-org_dev only (not maintainer, not owner): the human of
-        # RFC 0007 §6.P n°6; test_dev for n°9.
         groupRefs:
           - weebo_user
-          - batleforc-org_dev
-          - test_dev
 
 # ---------------------------------------------------------------------------
 # Phase 2 -- brand. Mirrors the `authentik_brand.default` half of flow.tf.
