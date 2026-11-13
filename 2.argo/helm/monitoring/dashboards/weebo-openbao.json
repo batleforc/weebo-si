@@ -1,0 +1,530 @@
+{
+  "name": "weebo-openbao",
+  "tags": [],
+  "tiles": [
+    {
+      "id": "legend",
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 5,
+      "config": {
+        "name": "How to read this dashboard",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "displayType": "markdown",
+        "markdown": "**weebo-openbao: is every OpenBao space the operator declares actually in place, and what did it write?** The verdict row is the five alert conditions of RFC 0007 §10.1, read off the metrics that exist: every number but *Telemetry age*, *Leaders now* and *p95* should be **0** in a quiet range.\n\nScraped by otel-node's annotation discovery (`podAnnotations` on the `weebo-openbao` Application, `2.argo/helm/vault/main`), every 30 s. **Read Telemetry age first**: if the scrape stopped, every zero is stale. Totals are the counter's increase *within the selected range*. No metric names a CR (the kit's cardinality rule): *which* CR is in the Events tables. The operator's CRs are cluster-scoped, so their Events live in namespace `default`; the tables find them by `reportingController`. `cause` of a remote write is `created`, `drift` (the remote object differed from the spec and was rewritten) or `deleted`. ClickStack alerts are not provisioned from git: this page is read, not paged."
+      }
+    },
+    {
+      "id": "age",
+      "x": 0,
+      "y": 5,
+      "w": 3,
+      "h": 3,
+      "config": {
+        "name": "Telemetry age (s)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT dateDiff('second', max(TimeUnix), now()) AS \"Seconds\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'weebo_openbao_leader' AND $__timeFilter(TimeUnix)",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 120,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "leader",
+      "x": 3,
+      "y": 5,
+      "w": 3,
+      "h": 3,
+      "config": {
+        "name": "Leaders now (0 = nothing reconciles)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT toUInt64(sum(v)) AS \"Leaders\"\nFROM (\n  SELECT argMax(Value, TimeUnix) AS v, max(TimeUnix) AS last\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'weebo_openbao_leader' AND $__timeFilter(TimeUnix)\n  GROUP BY ResourceAttributes['k8s.pod.name']\n)\nWHERE last >= (SELECT max(TimeUnix) FROM default.otel_metrics_gauge WHERE MetricName = 'weebo_openbao_leader' AND $__timeFilter(TimeUnix)) - INTERVAL 2 MINUTE",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "lt",
+            "value": 1,
+            "color": "chart-error"
+          },
+          {
+            "operator": "gt",
+            "value": 1,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "failed",
+      "x": 6,
+      "y": 5,
+      "w": 3,
+      "h": 3,
+      "config": {
+        "name": "Failed reconciles (>0: a CR is not Ready)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT toUInt64(sum(inc)) AS \"Total\"\nFROM (\n  SELECT\n    argMaxIf(Value, TimeUnix, $__timeFilter(TimeUnix)) AS last,\n    argMinIf(Value, TimeUnix, $__timeFilter(TimeUnix)) AS first,\n    minIf(TimeUnix, $__timeFilter(TimeUnix)) AS t0,\n    countIf($__timeFilter(TimeUnix)) AS n,\n    if(n = 0, 0, greatest(last - if(t0 = min(TimeUnix) AND t0 > (SELECT min(TimeUnix) FROM default.otel_metrics_gauge WHERE MetricName = 'weebo_openbao_leader') + INTERVAL 1 MINUTE, 0, first), 0)) AS inc\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'weebo_openbao_reconcile_total' AND Attributes['result'] = 'error'\n  GROUP BY cityHash64(mapKeys(Attributes), mapValues(Attributes), ResourceAttributes['service.instance.id'])\n)",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "denied",
+      "x": 9,
+      "y": 5,
+      "w": 3,
+      "h": 3,
+      "config": {
+        "name": "PermissionDenied (>0: bootstrap policy changed under the operator)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT toUInt64(sum(inc)) AS \"Total\"\nFROM (\n  SELECT\n    argMaxIf(Value, TimeUnix, $__timeFilter(TimeUnix)) AS last,\n    argMinIf(Value, TimeUnix, $__timeFilter(TimeUnix)) AS first,\n    minIf(TimeUnix, $__timeFilter(TimeUnix)) AS t0,\n    countIf($__timeFilter(TimeUnix)) AS n,\n    if(n = 0, 0, greatest(last - if(t0 = min(TimeUnix) AND t0 > (SELECT min(TimeUnix) FROM default.otel_metrics_gauge WHERE MetricName = 'weebo_openbao_leader') + INTERVAL 1 MINUTE, 0, first), 0)) AS inc\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'weebo_openbao_reconcile_total' AND Attributes['reason'] = 'PermissionDenied'\n  GROUP BY cityHash64(mapKeys(Attributes), mapValues(Attributes), ResourceAttributes['service.instance.id'])\n)",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "drift",
+      "x": 12,
+      "y": 5,
+      "w": 3,
+      "h": 3,
+      "config": {
+        "name": "Drift rewrites (>0: OpenBao was changed outside, or a rewrite loop)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT toUInt64(sum(inc)) AS \"Total\"\nFROM (\n  SELECT\n    argMaxIf(Value, TimeUnix, $__timeFilter(TimeUnix)) AS last,\n    argMinIf(Value, TimeUnix, $__timeFilter(TimeUnix)) AS first,\n    minIf(TimeUnix, $__timeFilter(TimeUnix)) AS t0,\n    countIf($__timeFilter(TimeUnix)) AS n,\n    if(n = 0, 0, greatest(last - if(t0 = min(TimeUnix) AND t0 > (SELECT min(TimeUnix) FROM default.otel_metrics_gauge WHERE MetricName = 'weebo_openbao_leader') + INTERVAL 1 MINUTE, 0, first), 0)) AS inc\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'weebo_openbao_remote_writes_total' AND Attributes['cause'] = 'drift'\n  GROUP BY cityHash64(mapKeys(Attributes), mapValues(Attributes), ResourceAttributes['service.instance.id'])\n)",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ns-writes",
+      "x": 15,
+      "y": 5,
+      "w": 3,
+      "h": 3,
+      "config": {
+        "name": "Writes on OpenbaoNamespace (>0: who can log in may have changed)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT toUInt64(sum(inc)) AS \"Total\"\nFROM (\n  SELECT\n    argMaxIf(Value, TimeUnix, $__timeFilter(TimeUnix)) AS last,\n    argMinIf(Value, TimeUnix, $__timeFilter(TimeUnix)) AS first,\n    minIf(TimeUnix, $__timeFilter(TimeUnix)) AS t0,\n    countIf($__timeFilter(TimeUnix)) AS n,\n    if(n = 0, 0, greatest(last - if(t0 = min(TimeUnix) AND t0 > (SELECT min(TimeUnix) FROM default.otel_metrics_gauge WHERE MetricName = 'weebo_openbao_leader') + INTERVAL 1 MINUTE, 0, first), 0)) AS inc\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'weebo_openbao_remote_writes_total' AND Attributes['kind'] = 'OpenbaoNamespace'\n  GROUP BY cityHash64(mapKeys(Attributes), mapValues(Attributes), ResourceAttributes['service.instance.id'])\n)",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "deletes",
+      "x": 18,
+      "y": 5,
+      "w": 3,
+      "h": 3,
+      "config": {
+        "name": "Remote deletes (>0: something was removed from OpenBao)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT toUInt64(sum(inc)) AS \"Total\"\nFROM (\n  SELECT\n    argMaxIf(Value, TimeUnix, $__timeFilter(TimeUnix)) AS last,\n    argMinIf(Value, TimeUnix, $__timeFilter(TimeUnix)) AS first,\n    minIf(TimeUnix, $__timeFilter(TimeUnix)) AS t0,\n    countIf($__timeFilter(TimeUnix)) AS n,\n    if(n = 0, 0, greatest(last - if(t0 = min(TimeUnix) AND t0 > (SELECT min(TimeUnix) FROM default.otel_metrics_gauge WHERE MetricName = 'weebo_openbao_leader') + INTERVAL 1 MINUTE, 0, first), 0)) AS inc\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'weebo_openbao_remote_writes_total' AND Attributes['cause'] = 'deleted'\n  GROUP BY cityHash64(mapKeys(Attributes), mapValues(Attributes), ResourceAttributes['service.instance.id'])\n)",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p95",
+      "x": 21,
+      "y": 5,
+      "w": 3,
+      "h": 3,
+      "config": {
+        "name": "Reconcile p95 (s)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT\n  if(idx = 0 OR length(bounds) = 0, 0, bounds[least(idx, length(bounds))]) AS \"p95 (s)\"\nFROM (\n  SELECT\n    grp, bounds,\n    arraySum(counts) AS n,\n    arrayFirstIndex(c -> c >= n * 0.95, arrayCumSum(counts)) AS idx\n  FROM (\n    SELECT\n      grp, any(b) AS bounds,\n      sumForEach(arrayMap((l, f) -> greatest(toInt64(l) - toInt64(f), 0), last, first)) AS counts\n    FROM (\n      SELECT\n        '' AS grp,\n        any(ExplicitBounds) AS b,\n        argMax(BucketCounts, TimeUnix) AS last,\n        argMin(BucketCounts, TimeUnix) AS first\n      FROM default.otel_metrics_histogram\n      WHERE MetricName = 'weebo_openbao_reconcile_duration_seconds' AND $__timeFilter(TimeUnix)\n      GROUP BY cityHash64(mapKeys(Attributes), mapValues(Attributes), ResourceAttributes['service.instance.id'])\n    )\n    GROUP BY grp\n  )\n)\nWHERE n > 0",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "duration",
+          "unit": "s",
+          "mantissa": 3
+        }
+      }
+    },
+    {
+      "id": "h-reconcile",
+      "x": 0,
+      "y": 8,
+      "w": 24,
+      "h": 2,
+      "config": {
+        "name": "Reconciles",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "displayType": "markdown",
+        "markdown": "**Reconciles.** `result = error` is a CR that did not reach Ready on that pass; the reason says why. A failing CR is retried with backoff, so a steady trickle of one `kind · reason` is one stuck CR: its name is in *Warning events* below."
+      }
+    },
+    {
+      "id": "rc-time",
+      "x": 0,
+      "y": 10,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Failed reconciles over time (kind · reason; any bar = a CR not Ready)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT ts, grp AS \"Kind · reason\", sum(d) AS \"Failures\"\nFROM (\n  SELECT\n    ts, grp,\n    if(row_number() OVER (PARTITION BY series ORDER BY ts) = 1,\n       if(t0 = born AND born > (SELECT min(TimeUnix) FROM default.otel_metrics_gauge WHERE MetricName = 'weebo_openbao_leader') + INTERVAL 1 MINUTE, v, -1),\n       v - lagInFrame(v) OVER (PARTITION BY series ORDER BY ts)) AS d\n  FROM (\n    SELECT\n      $__timeInterval(TimeUnix) AS ts,\n      cityHash64(mapKeys(Attributes), mapValues(Attributes), ResourceAttributes['service.instance.id']) AS series,\n      any(concat(Attributes['kind'], ' · ', Attributes['reason'])) AS grp,\n      argMax(Value, TimeUnix) AS v,\n      min(TimeUnix) AS t0\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'weebo_openbao_reconcile_total' AND Attributes['result'] = 'error' AND $__timeFilter(TimeUnix)\n    GROUP BY ts, series\n  ) AS b\n  LEFT JOIN (\n    SELECT cityHash64(mapKeys(Attributes), mapValues(Attributes), ResourceAttributes['service.instance.id']) AS series, min(TimeUnix) AS born\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'weebo_openbao_reconcile_total'\n    GROUP BY series\n  ) AS s USING (series)\n)\nWHERE d > 0\nGROUP BY ts, grp\nORDER BY ts",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "rc-range",
+      "x": 12,
+      "y": 10,
+      "w": 7,
+      "h": 7,
+      "config": {
+        "name": "Reconciles in range (kind · result · reason)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT\n  kind AS \"Kind\",\n  result AS \"Result\",\n  reason AS \"Reason\",\n  toUInt64(sum(inc)) AS \"Count\"\nFROM (\n  SELECT\n    any(Attributes['kind']) AS kind,\n    any(Attributes['result']) AS result,\n    any(Attributes['reason']) AS reason,\n    argMaxIf(Value, TimeUnix, $__timeFilter(TimeUnix)) AS last,\n    argMinIf(Value, TimeUnix, $__timeFilter(TimeUnix)) AS first,\n    minIf(TimeUnix, $__timeFilter(TimeUnix)) AS t0,\n    countIf($__timeFilter(TimeUnix)) AS n,\n    if(n = 0, 0, greatest(last - if(t0 = min(TimeUnix) AND t0 > (SELECT min(TimeUnix) FROM default.otel_metrics_gauge WHERE MetricName = 'weebo_openbao_leader') + INTERVAL 1 MINUTE, 0, first), 0)) AS inc\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'weebo_openbao_reconcile_total' AND TRUE\n  GROUP BY cityHash64(mapKeys(Attributes), mapValues(Attributes), ResourceAttributes['service.instance.id'])\n)\nGROUP BY kind, result, reason\nHAVING \"Count\" > 0\nORDER BY \"Count\" DESC\nLIMIT 200",
+        "displayType": "table",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "rc-p95",
+      "x": 19,
+      "y": 10,
+      "w": 5,
+      "h": 7,
+      "config": {
+        "name": "Reconcile p95 by kind",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT\n  grp AS \"Kind\",\n  if(idx = 0 OR length(bounds) = 0, 0, bounds[least(idx, length(bounds))]) AS \"p95 (s)\",\n  n AS \"Reconciles\"\nFROM (\n  SELECT\n    grp, bounds,\n    arraySum(counts) AS n,\n    arrayFirstIndex(c -> c >= n * 0.95, arrayCumSum(counts)) AS idx\n  FROM (\n    SELECT\n      grp, any(b) AS bounds,\n      sumForEach(arrayMap((l, f) -> greatest(toInt64(l) - toInt64(f), 0), last, first)) AS counts\n    FROM (\n      SELECT\n        any(Attributes['kind']) AS grp,\n        any(ExplicitBounds) AS b,\n        argMax(BucketCounts, TimeUnix) AS last,\n        argMin(BucketCounts, TimeUnix) AS first\n      FROM default.otel_metrics_histogram\n      WHERE MetricName = 'weebo_openbao_reconcile_duration_seconds' AND $__timeFilter(TimeUnix)\n      GROUP BY cityHash64(mapKeys(Attributes), mapValues(Attributes), ResourceAttributes['service.instance.id'])\n    )\n    GROUP BY grp\n  )\n)\nWHERE n > 0\nORDER BY \"p95 (s)\" DESC",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "numberFormat": {
+          "output": "duration",
+          "unit": "s",
+          "mantissa": 3
+        }
+      }
+    },
+    {
+      "id": "h-writes",
+      "x": 0,
+      "y": 17,
+      "w": 24,
+      "h": 2,
+      "config": {
+        "name": "Writes to OpenBao",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "displayType": "markdown",
+        "markdown": "**Writes to OpenBao.** In steady state the operator only reads: every bar here is a change. `drift` that comes back every interval for an hour is a rewrite loop (RFC 0003); on `OpenbaoNamespace` it touches the auth backends, i.e. who can log in; `deleted` is an object removed, which is fine when a CR was deleted and the *Deleted / Released* table says so."
+      }
+    },
+    {
+      "id": "rw-time",
+      "x": 0,
+      "y": 19,
+      "w": 16,
+      "h": 7,
+      "config": {
+        "name": "Remote writes over time (kind · cause; drift for 1 h = rewrite loop)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT ts, grp AS \"Kind · cause\", sum(d) AS \"Writes\"\nFROM (\n  SELECT\n    ts, grp,\n    if(row_number() OVER (PARTITION BY series ORDER BY ts) = 1,\n       if(t0 = born AND born > (SELECT min(TimeUnix) FROM default.otel_metrics_gauge WHERE MetricName = 'weebo_openbao_leader') + INTERVAL 1 MINUTE, v, -1),\n       v - lagInFrame(v) OVER (PARTITION BY series ORDER BY ts)) AS d\n  FROM (\n    SELECT\n      $__timeInterval(TimeUnix) AS ts,\n      cityHash64(mapKeys(Attributes), mapValues(Attributes), ResourceAttributes['service.instance.id']) AS series,\n      any(concat(Attributes['kind'], ' · ', Attributes['cause'])) AS grp,\n      argMax(Value, TimeUnix) AS v,\n      min(TimeUnix) AS t0\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'weebo_openbao_remote_writes_total' AND TRUE AND $__timeFilter(TimeUnix)\n    GROUP BY ts, series\n  ) AS b\n  LEFT JOIN (\n    SELECT cityHash64(mapKeys(Attributes), mapValues(Attributes), ResourceAttributes['service.instance.id']) AS series, min(TimeUnix) AS born\n    FROM default.otel_metrics_sum\n    WHERE MetricName = 'weebo_openbao_remote_writes_total'\n    GROUP BY series\n  ) AS s USING (series)\n)\nWHERE d > 0\nGROUP BY ts, grp\nORDER BY ts",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "rw-range",
+      "x": 16,
+      "y": 19,
+      "w": 8,
+      "h": 7,
+      "config": {
+        "name": "Remote writes in range (kind · cause)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT\n  kind AS \"Kind\",\n  cause AS \"Cause\",\n  toUInt64(sum(inc)) AS \"Count\"\nFROM (\n  SELECT\n    any(Attributes['kind']) AS kind,\n    any(Attributes['cause']) AS cause,\n    argMaxIf(Value, TimeUnix, $__timeFilter(TimeUnix)) AS last,\n    argMinIf(Value, TimeUnix, $__timeFilter(TimeUnix)) AS first,\n    minIf(TimeUnix, $__timeFilter(TimeUnix)) AS t0,\n    countIf($__timeFilter(TimeUnix)) AS n,\n    if(n = 0, 0, greatest(last - if(t0 = min(TimeUnix) AND t0 > (SELECT min(TimeUnix) FROM default.otel_metrics_gauge WHERE MetricName = 'weebo_openbao_leader') + INTERVAL 1 MINUTE, 0, first), 0)) AS inc\n  FROM default.otel_metrics_sum\n  WHERE MetricName = 'weebo_openbao_remote_writes_total' AND TRUE\n  GROUP BY cityHash64(mapKeys(Attributes), mapValues(Attributes), ResourceAttributes['service.instance.id'])\n)\nGROUP BY kind, cause\nHAVING \"Count\" > 0\nORDER BY \"Count\" DESC\nLIMIT 200",
+        "displayType": "table",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "h-events",
+      "x": 0,
+      "y": 26,
+      "w": 24,
+      "h": 2,
+      "config": {
+        "name": "Kubernetes events",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "displayType": "markdown",
+        "markdown": "**Kubernetes events** of the operator (otel-cluster's k8sobjects watch), one row per Event with its latest message. This is where the CR names are."
+      }
+    },
+    {
+      "id": "ev-warn",
+      "x": 0,
+      "y": 28,
+      "w": 14,
+      "h": 8,
+      "config": {
+        "name": "Warning events (any row = a CR the operator refused or failed)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "sqlTemplate": "SELECT\n  argMax(Timestamp, Timestamp) AS \"Time\",\n  any(JSONExtractString(o, 'type')) AS \"Type\",\n  any(JSONExtractString(o, 'regarding', 'kind')) AS \"Kind\",\n  any(JSONExtractString(o, 'regarding', 'name')) AS \"Name\",\n  any(JSONExtractString(o, 'reason')) AS \"Reason\",\n  argMax(JSONExtractString(o, 'note'), Timestamp) AS \"Message\"\nFROM (\n  SELECT Timestamp, LogAttributes['object'] AS o, JSONExtractString(o, 'metadata', 'name') AS ev\n  FROM default.otel_logs\n  WHERE $__timeFilter(Timestamp)\n    AND LogAttributes['k8s.resource.name'] = 'events'\n    AND LogAttributes['type'] != 'DELETED'\n    AND LogAttributes['object'] LIKE '%\"reportingController\":\"weebo-openbao-operator\"%'\n    AND (JSONExtractString(o, 'type') = 'Warning')\n)\nGROUP BY ev\nORDER BY \"Time\" DESC\nLIMIT 100",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "ev-del",
+      "x": 14,
+      "y": 28,
+      "w": 10,
+      "h": 8,
+      "config": {
+        "name": "Deleted / Released (a CR gone, its OpenBao objects removed or let go)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "sqlTemplate": "SELECT\n  argMax(Timestamp, Timestamp) AS \"Time\",\n  any(JSONExtractString(o, 'type')) AS \"Type\",\n  any(JSONExtractString(o, 'regarding', 'kind')) AS \"Kind\",\n  any(JSONExtractString(o, 'regarding', 'name')) AS \"Name\",\n  any(JSONExtractString(o, 'reason')) AS \"Reason\",\n  argMax(JSONExtractString(o, 'note'), Timestamp) AS \"Message\"\nFROM (\n  SELECT Timestamp, LogAttributes['object'] AS o, JSONExtractString(o, 'metadata', 'name') AS ev\n  FROM default.otel_logs\n  WHERE $__timeFilter(Timestamp)\n    AND LogAttributes['k8s.resource.name'] = 'events'\n    AND LogAttributes['type'] != 'DELETED'\n    AND LogAttributes['object'] LIKE '%\"reportingController\":\"weebo-openbao-operator\"%'\n    AND (JSONExtractString(o, 'reason') IN ('Deleted', 'Released'))\n)\nGROUP BY ev\nORDER BY \"Time\" DESC\nLIMIT 100",
+        "displayType": "table",
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "h-pod",
+      "x": 0,
+      "y": 36,
+      "w": 24,
+      "h": 2,
+      "config": {
+        "name": "Operator pod",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "displayType": "markdown",
+        "markdown": "**Operator pod** (namespace `weebo-openbao`): leadership, CPU, memory, restarts and its own logs."
+      }
+    },
+    {
+      "id": "leader-time",
+      "x": 0,
+      "y": 38,
+      "w": 6,
+      "h": 6,
+      "config": {
+        "name": "Leader by pod (1 = holds the lease)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  ResourceAttributes['k8s.pod.name'] AS \"Pod\",\n  max(Value) AS \"Leader\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'weebo_openbao_leader' AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Pod\"\nORDER BY ts",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "cpu",
+      "x": 6,
+      "y": 38,
+      "w": 6,
+      "h": 6,
+      "config": {
+        "name": "CPU (cores)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  ResourceAttributes['k8s.pod.name'] AS \"Pod\",\n  avg(Value) AS \"Cores\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'container.cpu.usage'\n  AND ResourceAttributes['k8s.namespace.name'] = 'weebo-openbao'\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Pod\"\nORDER BY ts",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 3
+        }
+      }
+    },
+    {
+      "id": "mem",
+      "x": 12,
+      "y": 38,
+      "w": 6,
+      "h": 6,
+      "config": {
+        "name": "Memory (working set)",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  ResourceAttributes['k8s.pod.name'] AS \"Pod\",\n  avg(Value) AS \"Bytes\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'container.memory.working_set'\n  AND ResourceAttributes['k8s.namespace.name'] = 'weebo-openbao'\n  AND $__timeFilter(TimeUnix)\nGROUP BY ts, \"Pod\"\nORDER BY ts",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "byte",
+          "mantissa": 1
+        }
+      }
+    },
+    {
+      "id": "restarts",
+      "x": 18,
+      "y": 38,
+      "w": 6,
+      "h": 6,
+      "config": {
+        "name": "Restarts in range",
+        "configType": "sql",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "sqlTemplate": "SELECT\n  ResourceAttributes['k8s.pod.name'] AS \"Pod\",\n  ResourceAttributes['k8s.container.name'] AS \"Container\",\n  toUInt64(max(Value) - min(Value)) AS \"Restarts\",\n  toUInt64(argMax(Value, TimeUnix)) AS \"Lifetime\"\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'k8s.container.restarts'\n  AND ResourceAttributes['k8s.namespace.name'] = 'weebo-openbao'\n  AND $__timeFilter(TimeUnix)\nGROUP BY \"Pod\", \"Container\"\nORDER BY \"Restarts\" DESC, \"Pod\" ASC",
+        "displayType": "table",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "logs",
+      "x": 0,
+      "y": 44,
+      "w": 24,
+      "h": 8,
+      "config": {
+        "name": "Operator warnings and errors",
+        "source": "Logs",
+        "displayType": "search",
+        "select": "Timestamp, ResourceAttributes['k8s.pod.name'] AS pod, SeverityText, Body",
+        "where": "ResourceAttributes['k8s.namespace.name'] = 'weebo-openbao' AND lower(SeverityText) IN ('error', 'warn', 'warning', 'fatal')",
+        "whereLanguage": "sql",
+        "orderBy": "Timestamp DESC"
+      }
+    }
+  ]
+}

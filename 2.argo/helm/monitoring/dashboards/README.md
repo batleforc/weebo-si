@@ -507,6 +507,35 @@ from HyperDX 2.32.
   logs (`enableStdOutLogs`) are not shipped on purpose: with `process,network`
   visibility on every pod they would be the largest log source in the cluster.
 
+- `weebo-openbao.json` — the OpenBao spaces operator: is every CR in place,
+  and what did it write into OpenBao. A verdict row carrying the five alert
+  conditions of RFC 0007 §10.1 (failed reconciles, `PermissionDenied`, drift
+  rewrites, writes on `OpenbaoNamespace` — where the auth backends live —
+  and remote deletes) beside telemetry age, leaders and reconcile p95; then
+  reconciles by kind/result/reason, remote writes by kind/cause, the
+  operator's Warning and Deleted/Released Events, and the pod.
+
+  The `weebo_openbao_*` metrics come from otel-node's annotation discovery,
+  opted into by `podAnnotations` on the `weebo-openbao` Application
+  (`2.argo/helm/vault/main`), like weebo-authentik. The RFC's
+  `vault_writes_total{object, action}` was shipped as the kit's
+  `remote_writes_total{kind, cause}`, so the conditions are mapped: `auth`
+  becomes `kind = OpenbaoNamespace`, `delete` becomes `cause = deleted`, and
+  a rewrite loop is `cause = drift` that never stops. *Ready=False for
+  30 min* has no gauge: a failing CR shows as `result = error` on every
+  retry, and its name is in the Warning Events. The CRs are cluster-scoped,
+  so their Events land in namespace `default`; the tables match
+  `reportingController = weebo-openbao-operator`.
+
+  **Counter totals count a series' birth.** A Prometheus labelset first
+  appears already at 1, so `hardening.json`'s `last - first` would drop
+  exactly the rare events this page exists for (a first delete, a first
+  `PermissionDenied`). A series whose first sample ever falls inside the
+  range counts from 0. That lookup reads the metric's whole history, cheap
+  under the 7-day TTL. Births within a minute of the oldest retained
+  `weebo_openbao_leader` sample are treated as the retention edge and not
+  counted, otherwise a 7-day range would report every lifetime total.
+
 ## Round trip: build it in the UI, then commit it
 
 There is no export button. Get the JSON from the API with the same credentials
