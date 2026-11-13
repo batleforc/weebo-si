@@ -365,12 +365,14 @@ operator:
     # else of theirs. The operator logs in there with its own login, as the
     # role of the OpenbaoAccessGrant `forgejo-user-tokens`
     # (2.argo/helm/vault/spaces), whose policy is the same bound on the
-    # OpenBao side. Namespace: where the ForgejoAccessToken CRs live.
+    # OpenBao side. The role is per subject, `grant_<name>_<index>`: this is
+    # the grant's first subject (its status.roles). Namespace: where the
+    # ForgejoAccessToken CRs live.
     additionalMounts:
       - mount: users
         vaultNamespace: users
         auth:
-          kubernetes: { mount: kubernetes, role: grant_forgejo-user-tokens }
+          kubernetes: { mount: kubernetes, role: grant_forgejo-user-tokens_0 }
         pathGrants:
           - namespaces: [forgejo]
             paths: ["+/forgejo-token"]
