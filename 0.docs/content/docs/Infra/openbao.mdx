@@ -5,3 +5,173 @@ description: "Weebo's swiss chest / OpenBAO setup"
 
 
 > Lui qui tien les clés du coffre tient le pouvoir. Approche toi, et si ton arrivée est faite avec le mauvaise accesor, fuit !
+
+## Déploiement
+
+[OpenBao](https://openbao.org/) est déployé par l'opérateur bank-vaults via l'application ArgoCD `2.argo/helm/vault` (projet `infra`). Il est accessible sur `https://vault.weebo.poc` (le DNS `*.weebo.poc` doit résoudre : passer par netbird).
+
+Les espaces des organisations et des utilisateurs sont gérés par l'opérateur maison **weebo-openbao** (RFC 0007 de weebo-operator-kit), déployé par `2.argo/helm/vault/main/templates/openbao/operator.yaml`. Toute sa configuration est déclarée en CRs dans le chart `2.argo/helm/vault/spaces`, rendu par l'application `openbao-spaces` (synchro automatique, **sans prune**).
+
+## Qui vit où
+
+| Namespace OpenBao | Type | Chemin des secrets | Géré par |
+| --- | --- | --- | --- |
+| root | infra | `mv/…`, rôles des opérateurs, `weebo_admin` | Terraform (`2.terra/vault`) |
+| `devenv`, `recette`, `preprod`, `prod` | `orgs` | `<ns>/orgs/<org>/<repo>/<secret…>` | weebo-openbao |
+| `users` | `users` | `users/users/<username>/…` | weebo-openbao |
+
+- **Le root, c'est l'infra.** weebo-openbao n'y écrit rien ; sa policy `weebo_openbao_operator` (`2.terra/vault/terra-map/weebo-openbao.tf`) ne lui ouvre que les cinq namespaces listés.
+- **Ajouter un namespace est un acte du root** : il faut l'ajouter à la fois à `local.spaces_namespaces` du Terraform et à `openbao.instance.namespaces` de `2.argo/helm/vault/main/values.yaml`.
+- Chaque namespace a deux backends d'auth : `authentik` (OIDC, les humains) et `kubernetes` (les machines).
+- L'opérateur ne lit ni n'écrit aucun secret, et ne supprime jamais un namespace, un mount ou un backend.
+
+Les CRs du chart `vault/spaces` :
+
+| Kind | Rôle | Dans `values.yaml` |
+| --- | --- | --- |
+| `OpenbaoNamespace` | un namespace, ses types et ses backends | `types`, `oidc` (la liste vient de `vault/main`) |
+| `OpenbaoAccessLevel` | un niveau : capacités sur `data` et `metadata` | `levels` (`read`, `write`, `owner`, `token-writer`) |
+| `OpenbaoSpaceLayout` | la matrice rôle → namespace → niveau | `layout` |
+| `OpenbaoOrganization` | une organisation | `organizations` |
+| `OpenbaoAccessGrant` | un accès machine | `grants` |
+
+## Le modèle humain
+
+Un membre du groupe Authentik `<org>_<rôle>` reçoit, dans chaque namespace, le niveau que lui donne le layout `weebo` :
+
+| Rôle (groupe) | `devenv` | `recette` | `preprod` | `prod` |
+| --- | --- | --- | --- | --- |
+| `owner` (`<org>_owner`) | owner | owner | owner | owner |
+| `maintainer` (`<org>_maintainer`) | write | write | write | write |
+| `dev` (`<org>_dev`) | write | write | read | — |
+
+- `read` : lire et lister ; `write` : créer, lire, mettre à jour ; `owner` : tout, y compris supprimer et gérer les versions.
+- Un niveau porte sur `<org>/+/*` : un secret vit au moins sous `<org>/<repo>/<secret>`.
+- Un login sans groupe connu n'ouvre rien (seule la policy `default`).
+- **Espace personnel** : dans le namespace `users`, chacun a `users/<username>/…` (`<username>` = le `preferred_username` Authentik), et rien d'autre.
+
+### Ajouter une organisation
+
+1. Ajouter son nom à `organizations` de `2.argo/helm/vault/spaces/values.yaml`.
+2. Créer les trois groupes `<org>_owner`, `<org>_maintainer`, `<org>_dev` dans `identity.groups.items` de `2.argo/helm/auth/sub/values.yaml`.
+
+Le nom du groupe **est** l'alias côté OpenBao : renommer un groupe coupe l'accès.
+
+### Donner un rôle à quelqu'un
+
+Ajouter le groupe à ses `groupRefs` dans `identity.users.items` de `2.argo/helm/auth/sub/values.yaml` (nom du groupe Authentik, pas le `crName`) :
+
+```yaml
+- crName: batleforc
+  username: batleforc
+  groupRefs:
+    - weebo_admin
+    - batleforc-org_owner
+```
+
+Le droit s'applique au prochain login (les groupes sont lus à la connexion).
+
+## Se connecter
+
+Un login n'est valable **que dans le namespace où il a été fait** : un token de `devenv` n'ouvre rien dans `prod`. Le backend s'appelle `authentik` dans chaque namespace.
+
+### CLI
+
+```bash
+export BAO_ADDR=https://vault.weebo.poc
+bao login -namespace=devenv -method=oidc -path=authentik
+
+# un secret d'org
+bao kv put -namespace=devenv -mount=orgs batleforc-org/<repo>/<secret> k=v
+bao kv get -namespace=devenv -mount=orgs batleforc-org/<repo>/<secret>
+
+# son espace personnel
+bao login -namespace=users -method=oidc -path=authentik
+bao kv put -namespace=users -mount=users <username>/<secret> k=v
+```
+
+Le CLI ouvre le navigateur et attend le retour sur `http://localhost:8250/oidc/callback`.
+
+### Interface web
+
+Sur `https://vault.weebo.poc` : choisir le **namespace** (`devenv`, `recette`, `preprod`, `prod` ou `users`), méthode **OIDC**, *mount path* `authentik`.
+
+<Callout type="info">
+Le backend `authentik` du root (sans namespace) reste celui des admins et de l'infra : il ne donne pas accès aux espaces.
+</Callout>
+
+## Le modèle machine : donner un accès à un système
+
+Un système (un opérateur, une CI, un workload) reçoit un accès par une entrée de `grants` dans `2.argo/helm/vault/spaces/values.yaml`, rendue en `OpenbaoAccessGrant` :
+
+| Champ | Sens |
+| --- | --- |
+| `namespace` | le namespace OpenBao où le système se connecte |
+| `auth` | le backend, `kubernetes` par défaut |
+| `subjects` | les ServiceAccounts : `namespace` et `name` (glob `*` en tête ou en fin), ou `namespaceSelector` |
+| `rules` | `mount`, `path` (`+` : un segment, `*` : le reste), `level` |
+
+Le niveau `token-writer` est fait pour les grants qui écrivent une feuille par utilisateur : `create`, `read`, `update`, `delete` sur la donnée et sur la metadata (où le kit pose sa marque de propriété), pas de `list`.
+
+### Le nom du rôle
+
+Le système se connecte **dans le namespace**, sur le backend `kubernetes`, avec le rôle `grant_<nom>_<index>` : **un rôle par sujet**, l'index est la position du sujet dans `subjects` (à partir de 0).
+
+<Callout type="warn">
+Réordonner ou retirer un sujet renomme les rôles des sujets suivants, et casse leur login. Toujours ajouter un sujet **à la fin**, et lire le nom du rôle dans `status.roles` du grant :
+
+`kubectl get openbaoaccessgrant <nom> -o jsonpath='{.status.roles}'`
+</Callout>
+
+### Exemple : forgejo écrit les tokens des utilisateurs
+
+weebo-forgejo écrit le token Forgejo d'un utilisateur dans `users/<username>/forgejo-token`, et rien d'autre. Côté espaces (`vault/spaces/values.yaml`) :
+
+```yaml
+grants:
+  forgejo-user-tokens:
+    namespace: users
+    subjects:
+      - { namespace: weebo-forgejo, name: weebo-forgejo }
+    rules:
+      - { mount: users, path: "+/forgejo-token", level: token-writer }
+```
+
+Côté consommateur (`2.argo/helm/forgejo/values.yaml`, `operator.vault.additionalMounts`) :
+
+```yaml
+additionalMounts:
+  - mount: users
+    vaultNamespace: users
+    auth:
+      kubernetes: { mount: kubernetes, role: grant_forgejo-user-tokens_0 }
+    pathGrants:
+      - namespaces: [forgejo]
+        paths: ["+/forgejo-token"]
+```
+
+Deux bornes indépendantes : la policy du grant dans OpenBao, et les `pathGrants` du kit côté opérateur. L'opérateur weebo-openbao n'écrit rien dans la CR du consommateur : c'est son chart qui porte le nom du rôle.
+
+### Un workload lit le sous-arbre de son namespace
+
+Le jeton `{sa.namespace}` dans un `path` est remplacé par OpenBao, à chaque requête, par le namespace Kubernetes du ServiceAccount connecté. Une règle `{org}/{sa.namespace}/*` (avec `organizations: [<org>]`) laisse un workload du namespace `weebo-si` lire `<org>/weebo-si/*`, et rien d'autre.
+
+Un sujet large (`namespace: "*"`) n'est accepté **que si chaque règle du grant est bornée par `{sa.namespace}`**.
+
+## Exploitation
+
+**Direction : tout échec fige l'état, rien ne s'ouvre.** L'opérateur n'est sur le chemin d'aucun login ni d'aucune lecture de secret.
+
+| Panne | Effet |
+| --- | --- |
+| weebo-openbao arrêté | Tout est figé : rien ne change dans OpenBao, les accès existants continuent. Une nouvelle org ou un nouveau grant attend. |
+| OpenBao scellé ou injoignable | `VaultSealed` / `VaultUnavailable`, aucune écriture. Les espaces resservent dès le descellement. |
+| Authentik (IdP) injoignable | Plus de nouveau login humain ; une config OIDC refusée garde l'ancienne (`AuthConfigRejected`). Les machines ne sont pas touchées. |
+| Secret `openbao-oidc` absent | `SecretUnavailable` sur le seul backend `authentik`, l'ancienne config reste. |
+
+- **Le Secret `openbao-oidc`** (client OIDC de l'application Authentik `openbao`, via ESO depuis `mv/weebo-openbao/oidc`) est **volontairement dans la dernière vague** (5) : une vague Argo attend que la précédente soit saine, un secret manquant ne doit pas bloquer les namespaces.
+- **Ne jamais activer `purgeUnmanagedConfig` sur bank-vaults** : il supprimerait tout ce qu'il ne déclare pas, dont les objets de l'opérateur.
+- **Supprimer une `OpenbaoOrganization`** retire tout de suite ses accès (alias, groupes, policies) dans tous les namespaces, **mais garde ses secrets** sous `<ns>/orgs/<org>/`. Recréer la CR rend l'accès aux mêmes secrets.
+- Retirer un rôle ou une cellule du layout exige l'annotation `openbao.weebo.io/allow-disruptive-update: "true"` sur le layout ; sans elle, `DisruptiveChangeBlocked` et rien n'est supprimé.
+- Retirer un `OpenbaoNamespace` de git ne supprime rien dans OpenBao (pas de prune, et l'opérateur ne supprime jamais un namespace) : c'est un geste humain, en root.
+- Une CR bloquée en `Terminating` (OpenBao scellé) se libère avec `openbao.weebo.io/force-orphan: "true"`, sans rien supprimer dans OpenBao.

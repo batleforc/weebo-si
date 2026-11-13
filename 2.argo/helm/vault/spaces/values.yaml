@@ -64,8 +64,11 @@ organizations:
   - batleforc-org
 
 # OpenbaoAccessGrant (the machine model): a system logs in INSIDE a
-# namespace through its `kubernetes` backend, as role grant_<name>, which the
-# grant's status names. The consumer's chart puts that role in its CR.
+# namespace through its `kubernetes` backend. One role per subject,
+# grant_<name>_<index>, the index being the subject's position (from 0):
+# reordering or removing a subject renames the roles after it, so append new
+# subjects at the end. The consumer's chart puts the role, as the grant's
+# status.roles lists it, in its CR.
 grants:
   # weebo-forgejo writes a user's Forgejo token at users/<username>/forgejo-token
   # and nothing else of theirs (2.argo/helm/forgejo values
