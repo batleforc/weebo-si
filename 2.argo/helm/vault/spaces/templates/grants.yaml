@@ -1,0 +1,19 @@
+{{- range $name, $g := .Values.grants }}
+---
+apiVersion: openbao.weebo.io/v1alpha1
+kind: OpenbaoAccessGrant
+metadata:
+  name: {{ $name }}
+  annotations:
+    # After the levels (1) and the namespaces (2) it uses.
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  instanceRef:
+    name: {{ $.Values.instance.name }}
+  namespace: {{ $g.namespace }}
+  auth: {{ $g.auth | default "kubernetes" }}
+  subjects:
+    {{- toYaml $g.subjects | nindent 4 }}
+  rules:
+    {{- toYaml $g.rules | nindent 4 }}
+{{- end }}

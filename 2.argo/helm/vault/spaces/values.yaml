@@ -38,6 +38,12 @@ levels:
     data: [create, read, update, patch, delete]
     metadata: [read, list, delete]
     versions: true
+  # For grants writing one leaf per user: create/update write it, read
+  # compares before writing, delete removes it when the user leaves, and
+  # metadata carries the operator-kit's ownership custom_metadata. No list.
+  token-writer:
+    data: [create, read, update, delete]
+    metadata: [create, read, update, delete]
 
 # OpenbaoSpaceLayout `weebo`: role -> namespace of type orgs -> level. An
 # IdP group `<org>_<role>` gets its cells in every namespace listed.
@@ -56,3 +62,17 @@ layout:
 # template (batleforc-org_owner, ...: auth/sub identity.groups).
 organizations:
   - batleforc-org
+
+# OpenbaoAccessGrant (the machine model): a system logs in INSIDE a
+# namespace through its `kubernetes` backend, as role grant_<name>, which the
+# grant's status names. The consumer's chart puts that role in its CR.
+grants:
+  # weebo-forgejo writes a user's Forgejo token at users/<username>/forgejo-token
+  # and nothing else of theirs (2.argo/helm/forgejo values
+  # operator.vault.additionalMounts).
+  forgejo-user-tokens:
+    namespace: users
+    subjects:
+      - { namespace: weebo-forgejo, name: weebo-forgejo }
+    rules:
+      - { mount: users, path: "+/forgejo-token", level: token-writer }

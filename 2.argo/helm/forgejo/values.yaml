@@ -359,6 +359,21 @@ operator:
     kubernetesAuthRole: forgejo-operator
     # Only used by targets that do not pin a path.
     pathPrefix: weebo-forgejo
+    # Other KV mounts a CR may write to through `secretTargets[].mount`, only
+    # at the paths their grants open. `users`, in OpenBao's namespace `users`
+    # (RFC 0007): a user's token at users/<username>/forgejo-token and nothing
+    # else of theirs. The operator logs in there with its own login, as the
+    # role of the OpenbaoAccessGrant `forgejo-user-tokens`
+    # (2.argo/helm/vault/spaces), whose policy is the same bound on the
+    # OpenBao side. Namespace: where the ForgejoAccessToken CRs live.
+    additionalMounts:
+      - mount: users
+        vaultNamespace: users
+        auth:
+          kubernetes: { mount: kubernetes, role: grant_forgejo-user-tokens }
+        pathGrants:
+          - namespaces: [forgejo]
+            paths: ["+/forgejo-token"]
 
 # CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
 # documents the format). Ingress only, egress stays open; `host` is always let

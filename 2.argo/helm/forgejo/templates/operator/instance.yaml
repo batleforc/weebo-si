@@ -35,6 +35,10 @@ spec:
       mount: {{ $o.vault.mount }}
       kubernetesAuthRole: {{ $o.vault.kubernetesAuthRole }}
       pathPrefix: {{ $o.vault.pathPrefix }}
+      {{- with $o.vault.additionalMounts }}
+      additionalMounts:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       caSecretRef:
         name: openbao-tls
         namespace: {{ $o.namespace }}
