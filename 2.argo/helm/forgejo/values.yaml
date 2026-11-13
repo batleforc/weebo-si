@@ -224,7 +224,7 @@ operator:
     name: weebo-forgejo
     repoURL: oci://ghcr.io/weebo-si-operator/charts/weebo-forgejo
     # renovate: datasource=docker depName=ghcr.io/weebo-si-operator/charts/weebo-forgejo
-    version: 0.9.0
+    version: 0.10.0
   # One replica, as for the authentik operator: the cluster has one worker,
   # so a second one buys a webhook that dies with the first. The chart's PDB
   # (minAvailable: 1) is turned off with it -- against a single replica it
@@ -366,8 +366,10 @@ operator:
     # role of the OpenbaoAccessGrant `forgejo-user-tokens`
     # (2.argo/helm/vault/spaces), whose policy is the same bound on the
     # OpenBao side. The role is per subject, `grant_<name>_<index>`: this is
-    # the grant's first subject (its status.roles). Namespace: where the
-    # ForgejoAccessToken CRs live.
+    # the grant's first subject (its status.roles). Namespaces: where the
+    # ForgejoAccessToken CRs live. A Che workspace dev-ws-<username> writes
+    # <username>/forgejo-token and no one else's: `{user}` is the value the
+    # namespace pattern captures (kit v0.31.0, 2.helm/user-app).
     additionalMounts:
       - mount: users
         vaultNamespace: users
@@ -376,6 +378,8 @@ operator:
         pathGrants:
           - namespaces: [forgejo]
             paths: ["+/forgejo-token"]
+          - namespaces: ["dev-ws-{user}"]
+            paths: ["{user}/forgejo-token"]
 
 # CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
 # documents the format). Ingress only, egress stays open; `host` is always let

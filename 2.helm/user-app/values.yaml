@@ -56,6 +56,10 @@ forgejo:
   # The ForgejoInstance's URL (2.argo/helm/forgejo, operator.instance), as
   # che-server will see it in the token's scm-url.
   url: https://git.weebo.poc
+  # Also writes the token to OpenBao, users/<username>/forgejo-token (the
+  # instance's additional mount `users`, RFC 0007), next to the Secret Che
+  # reads. Empty: the Secret only.
+  vaultMount: users
 
 # Prefix of Che's own ClusterRoles (the `baseline` level): the namespace
 # che-operator runs in.
