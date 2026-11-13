@@ -36,7 +36,7 @@ openbao:
   enabled: true
   operator:
     # renovate: datasource=docker depName=ghcr.io/weebo-si-operator/charts/weebo-openbao
-    version: 0.1.3
+    version: 0.1.5
     namespace: weebo-openbao
   # Phase 4: the spaces (vault/spaces, its own Application).
   spaces:
