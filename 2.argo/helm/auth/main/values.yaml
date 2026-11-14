@@ -168,7 +168,7 @@ operatorEgress:
   enabled: true
   namespace: auth
   endpointSelector:
-    matchLabels: { app.kubernetes.io/name: weebo-authentik, app.kubernetes.io/instance: authentik }
+    matchLabels: { app.kubernetes.io/name: weebo-authentik }   # unique in auth; Services also need instance
   egress:
     - toEndpoints:
         - matchLabels: { "k8s:io.kubernetes.pod.namespace": traefik, app.kubernetes.io/name: traefik }
