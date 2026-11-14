@@ -6,7 +6,6 @@ metadata:
   name: che-app-bis
   namespace: argocd
   annotations:
-    argocd.argoproj.io/manifest-generate-paths: "."
     argocd.argoproj.io/sync-wave: "1"
 spec:
   project: "{{ .Values.project }}"

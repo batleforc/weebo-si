@@ -6,9 +6,6 @@ metadata:
   name: angos
   namespace: argocd
   annotations:
-    # Only commits under these paths regenerate the manifests: the chart and
-    # its file:// dependency. A new path outside the chart must be added here.
-    argocd.argoproj.io/manifest-generate-paths: ".;/2.helm/weebo-base"
     argocd.argoproj.io/sync-wave: "1"
 spec:
   project: {{ .Values.angos.project }}

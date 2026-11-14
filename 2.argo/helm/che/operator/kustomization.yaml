@@ -2,22 +2,14 @@
 # to the CheCluster CRD and the matching reconcile logic. The upstream
 # eclipse-che Helm chart hardcodes the operator image and ships the upstream
 # CRD (which prunes `gitServices.forgejo`), so the fork's plain manifests are
-# used instead.
+# used instead. The operator image itself is set by the `eclipse-che-operator`
+# Application (spec.source.kustomize.images) from main/values.yaml.
 # https://github.com/batleforc/weebo-che-project/tree/main/deploy/develop
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
   - https://raw.githubusercontent.com/weebo-si/che-operator/develop/deploy/deployment/kubernetes/combined.yaml
-
-# weebo-si fork, built by weebo-si/che-images. `develop` moves nightly: pin a
-# `sha-<short>` tag for a reproducible rollout. Rollback: point
-# 2.argo/helm/che/main/templates/eclipse-che.yaml back at the upstream chart
-# (https://eclipse-che.github.io/che-operator/charts, eclipse-che 7.122.0).
-images:
-  - name: quay.io/eclipse/che-operator
-    newName: ghcr.io/weebo-si/che-operator
-    newTag: develop
 
 patches:
   # The namespace is created by Argo (CreateNamespace + managedNamespaceMetadata

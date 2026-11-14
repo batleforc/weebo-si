@@ -7,7 +7,6 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd.argoproj.io/manifest-generate-paths: "."
     argocd.argoproj.io/sync-wave: "1"
 spec:
   project: {{ .Values.project }}
@@ -25,6 +24,9 @@ spec:
     repoURL: '{{ .Values.repo }}'
     targetRevision: '{{ .Values.branch }}'
     path: '2.argo/helm/che/operator'
+    kustomize:
+      images:
+        - "quay.io/eclipse/che-operator={{ .Values.che.operator.che.image }}:{{ .Values.che.operator.che.tag }}"
   destination:
     name: "in-cluster"
     namespace: {{ .Values.che.namespace }}

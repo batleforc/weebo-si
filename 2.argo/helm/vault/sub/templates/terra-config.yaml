@@ -3,8 +3,6 @@ kind: Application
 metadata:
   name: terra-vault
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/manifest-generate-paths: "."
 spec:
   project: {{ .Values.project }}
   source:
