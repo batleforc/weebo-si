@@ -370,6 +370,10 @@ g, weebo_admin, role:readonly`),
 					"kind":       "Application",
 					"metadata": map[string]interface{}{
 						"name": "main",
+						// 2.argo/app has no dependency outside itself.
+						"annotations": map[string]interface{}{
+							"argocd.argoproj.io/manifest-generate-paths": ".",
+						},
 						"namespace": ns.Metadata.ApplyT(func(metadata metav1.ObjectMeta) (*string, error) {
 							return metadata.Name, nil
 						}).(pulumi.StringPtrOutput),

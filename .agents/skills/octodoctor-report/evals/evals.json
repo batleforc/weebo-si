@@ -1,0 +1,47 @@
+{
+  "skill_name": "octodoctor-report",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run a best-practices check on the Argo CD manifests in ./testdata and summarize the issues.",
+      "expected_output": "Locates or downloads octodoctor, runs it in directory mode against ./testdata, creates testdata/octodoctor-output/{index.html,report.json,report.yaml}, and gives a chat summary of failed/passed/inactive rule counts plus the failed rules ordered by severity with doc links and affected files. Points the user to index.html.",
+      "files": [],
+      "expectations": [
+        "Ran octodoctor in directory mode (-d/--directory) against ./testdata, not export mode",
+        "report.json produced is valid JSON with metadata/summary/results top-level keys matching octodoctor's schema",
+        "The failed/passed/inactive rule counts stated in the chat summary match report.json's summary.rules numbers",
+        "Chat summary lists at least one failed rule along with its severity",
+        "Chat summary tells the user a real, existing path to index.html",
+        "Did not ask the user any clarifying questions before running, since the directory and intent were unambiguous"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Can you audit my local Argo CD install for best practices? It's just running on my current cluster.",
+      "expected_output": "Infers export mode (no directory given), uses whatever kubectl's current context resolves to without asking since it's unambiguous, defaults namespace to argocd, runs octodoctor -e, and summarizes the resulting report. Mentions that secret values are redacted before analysis. Points to the generated index.html.",
+      "files": [],
+      "expectations": [
+        "Ran octodoctor in export mode (-e/--export), not directory mode",
+        "Used whatever kubectl's current context resolves to, without stopping to ask which context to use",
+        "Used the argocd namespace (the default) without asking, since the user didn't name a different one",
+        "Mentions to the user that secret values are redacted/not exposed during export",
+        "report.json produced is valid JSON matching octodoctor's schema",
+        "The failed/passed/inactive rule counts stated in the chat summary match report.json's summary.rules numbers",
+        "Chat summary tells the user a real, existing path to index.html"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I inherited this Argo CD repo at ./testdata/r19 — can you tell me if it's set up well, following best practices?",
+      "expected_output": "Triggers the skill despite no mention of 'octodoctor' or any flag. Runs directory mode against ./testdata/r19 and gives a sensible best-practices summary (this fixture directory has a known mix of pass/fail/inactive Application manifests).",
+      "files": [],
+      "expectations": [
+        "Recognized this as a job for octodoctor even though the user never named the tool or a flag",
+        "Ran octodoctor in directory mode against ./testdata/r19 specifically, not the whole testdata tree",
+        "report.json produced under testdata/r19/octodoctor-output is valid JSON matching octodoctor's schema",
+        "The failed/passed/inactive rule counts stated in the chat summary match report.json's summary.rules numbers",
+        "Response is framed as an answer to a plain best-practices question, not just a raw dump of rule IDs"
+      ]
+    }
+  ]
+}

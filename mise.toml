@@ -30,6 +30,7 @@ node = "latest"
 uv = "latest"
 cargo-binstall = "latest"
 "github:kubearmor/kubearmor-client" = { version = "1.4.9" }
+"github:OctopusDeploy/octodoctor-argocd" = "latest"
 
 [plugins]
 kkrew = "https://github.com/soupglasses/mise-krew"

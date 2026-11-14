@@ -205,6 +205,7 @@ _out
 .tmp
 popeye.html
 kubescape.html
+octodoctor-output/
 import-output
 graphify-out/cache/
 
@@ -222,6 +223,8 @@ graphify-out/cache/
 2.argo/helm/**/charts/weebo-base-*.tgz
 2.helm/netbird-exit-node/Chart.lock
 2.helm/netbird-exit-node/charts/
+
+octodoctor-output/
 
 # >>> wska links in .claude/ (rewritten by wska install)
 /.claude/agents/nr-check
