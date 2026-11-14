@@ -42,7 +42,6 @@ DELETE_NAMES = json.loads(os.environ.get("DELETE_NAMES") or "[]")
 ALERTS = json.loads(os.environ.get("ALERTS") or "[]")
 NTFY_URL = os.environ.get("NTFY_URL", "").strip()
 NTFY_TOKEN = os.environ.get("NTFY_TOKEN", "").strip()
-NTFY_TOPIC = re.compile(r"^[-_A-Za-z0-9]{1,64}$")
 
 # Bookkeeping that comes back on GET but must not be sent back in: mongoose
 # internals, the populated `alerts` array (alerts are derived from tile config,
@@ -353,33 +352,39 @@ def main():
     sync_alerts()
 
 
-def split_ntfy_url(url):
-    """(publish root, topic) of a topic URL. ntfy takes JSON messages POSTed
-    to its root, the topic in the body: that is what lets the title, the
-    priority and the click link come from HyperDX's template variables."""
+def check_ntfy_url(url):
+    """The topic URL, published to as is. Not split into server and topic:
+    a ntfy behind a gateway takes messages only on the URL it handed out
+    (the lab's answers 404 on its root and on /v1/health)."""
     parsed = urllib.parse.urlsplit(url)
-    root, _, topic = parsed.path.rstrip("/").rpartition("/")
     if parsed.scheme not in ("http", "https") or not parsed.netloc:
         fail("NTFY_URL is not an http(s) URL")
-    if not NTFY_TOPIC.match(topic):
-        fail("NTFY_URL does not end with a topic (letters, digits, - and _)")
-    return f"{parsed.scheme}://{parsed.netloc}{root}/", topic
+    return url
 
 
-def webhook_body(topic, priority):
-    # HyperDX JSON-escapes the string variables, so they sit inside quotes.
-    return (
-        f'{{"topic": "{topic}", "priority": {int(priority)}, '
-        '"title": "{{title}}", "message": "{{body}}", "click": "{{link}}", '
-        '"tags": ["{{state}}"]}'
-    )
+# HyperDX JSON-escapes its string variables, so they sit inside quotes; ntfy
+# then renders title, message and click from that JSON (X-Template). A
+# server without templates shows the JSON itself, still readable.
+WEBHOOK_BODY = '{"title": "{{title}}", "message": "{{body}}", "click": "{{link}}"}'
+
+
+def webhook_headers(priority):
+    headers = {
+        "X-Priority": str(int(priority)),
+        "X-Template": "yes",
+        "X-Title": "{{.title}}",
+        "X-Message": "{{.message}}",
+        "X-Click": "{{.click}}",
+    }
+    if NTFY_TOKEN:
+        headers["Authorization"] = f"Bearer {NTFY_TOKEN}"
+    return headers
 
 
 def sync_webhooks(priorities):
     """One generic webhook per ntfy priority, named after MANAGED_TAG. The
     URL is masked on GET, so a managed webhook is always rewritten."""
-    root, topic = split_ntfy_url(NTFY_URL)
-    headers = {"Authorization": f"Bearer {NTFY_TOKEN}"} if NTFY_TOKEN else {}
+    url = check_ntfy_url(NTFY_URL)
     existing = {
         w["name"]: dashboard_id(w)
         for w in get_json("/webhooks?service=generic", "webhooks")
@@ -390,10 +395,10 @@ def sync_webhooks(priorities):
         body = {
             "name": name,
             "service": "generic",
-            "url": root,
+            "url": url,
             "description": "ntfy, provisioned from weebo-si (monitoring chart)",
-            "headers": headers,
-            "body": webhook_body(topic, priority),
+            "headers": webhook_headers(priority),
+            "body": WEBHOOK_BODY,
         }
         if name in existing:
             act(f"update webhook {name!r}", "PUT", f"/webhooks/{existing[name]}", body)

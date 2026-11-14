@@ -61,7 +61,10 @@ tasks:
           | task vault -- kv put -tls-skip-verify -mount=mv monitoring/ntfy - >/dev/null
         echo "stored in mv/monitoring/ntfy"
         kubectl -n monitoring annotate externalsecret clickstack-ntfy force-sync="$(date +%s)" --overwrite
-        kubectl -n argocd patch application monitoring --type merge -p '{"operation":{"sync":{}}}' >/dev/null
+        # A manual sync carries none of the app's syncOptions: without
+        # ServerSideApply the dashboards ConfigMap overflows the
+        # last-applied annotation and the sync fails before its Jobs.
+        kubectl -n argocd patch application monitoring --type merge -p '{"operation":{"initiatedBy":{"username":"task-vault-ntfy"},"sync":{"syncOptions":["ServerSideApply=true","CreateNamespace=true"]}}}' >/dev/null
         echo "monitoring sync started: the clickstack-dashboards Job provisions the alerts (kubectl -n monitoring logs job/clickstack-dashboards)"
 
   ca-bundle:
