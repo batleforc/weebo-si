@@ -362,19 +362,19 @@ def check_ntfy_url(url):
     return url
 
 
-# HyperDX JSON-escapes its string variables, so they sit inside quotes; ntfy
-# then renders title, message and click from that JSON (X-Template). A
-# server without templates shows the JSON itself, still readable.
-WEBHOOK_BODY = '{"title": "{{title}}", "message": "{{body}}", "click": "{{link}}"}'
+# Plain text, the alert's title (name, value, threshold) then its HyperDX
+# link: the lab's endpoint is ntfy-compatible but has no templates (a
+# literal X-Click "{{.click}}" is refused, 422 on action.url), so title,
+# priority and content type are fixed per webhook. {{body}} is left out:
+# HyperDX JSON-escapes it, its line breaks would show as "\n".
+WEBHOOK_BODY = "{{title}}\n{{link}}"
 
 
 def webhook_headers(priority):
     headers = {
-        "X-Priority": str(int(priority)),
-        "X-Template": "yes",
-        "X-Title": "{{.title}}",
-        "X-Message": "{{.message}}",
-        "X-Click": "{{.click}}",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Title": "weebo alert",
+        "Priority": str(int(priority)),
     }
     if NTFY_TOKEN:
         headers["Authorization"] = f"Bearer {NTFY_TOKEN}"
@@ -460,6 +460,9 @@ def sync_alerts():
             act(f"update alert {alert['name']!r}", "PUT", f"/alerts/{current[key]}", body)
         else:
             act(f"create alert {alert['name']!r}", "POST", "/alerts", body)
+    # shortcut: the dashboard PATCH above drops the alerts of its tiles, so
+    # they are recreated on every run (state and history start over); keep
+    # them on a dashboard the Job doesn't rewrite if that history matters.
     for key, alert_id in current.items():
         if key not in wanted:
             act(f"prune alert on tile {key[1]!r} (no longer in values)",
