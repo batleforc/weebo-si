@@ -61,6 +61,9 @@ networkPolicy:
     # weebo-openbao (RFC 0007): the operator logs in and writes the spaces'
     # namespaces. Without it, a VaultUnavailable that does not say why.
     - weebo-openbao
+    # weebo-forgejo: Che workspace tokens in users/<username>/forgejo-token
+    # (additionalMounts of the ForgejoInstance, RFC 0007).
+    - weebo-forgejo
 
 # CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
 # documents the format). Ingress only, egress stays open; `host` is always let
