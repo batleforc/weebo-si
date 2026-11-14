@@ -417,7 +417,7 @@ def sync_webhooks(priorities):
 
 def sync_alerts():
     if not NTFY_URL:
-        print("alerts: no NTFY_URL (task ntfy:set-url), alerts left as they are")
+        print("alerts: no NTFY_URL (task vault:ntfy), alerts left as they are")
         return
     dashboards = {
         d.get("name"): d
