@@ -16,7 +16,9 @@ spec:
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
-    - Replace=true
+    # Server-side apply, not Replace (dropped 2026-11-14): a replace re-PUTs
+    # every object it syncs and can delete/recreate ones it cannot update.
+    - ServerSideApply=true
   destination:
     namespace: auth
     server: https://kubernetes.default.svc
