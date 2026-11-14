@@ -25,6 +25,7 @@ import re
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 API_URL = os.environ["API_URL"].rstrip("/")
@@ -35,6 +36,13 @@ DASHBOARD_DIR = pathlib.Path(os.environ.get("DASHBOARD_DIR", "/dashboards"))
 PRUNE = os.environ.get("PRUNE", "true").lower() == "true"
 DRY_RUN = os.environ.get("DRY_RUN", "false").lower() == "true"
 DELETE_NAMES = json.loads(os.environ.get("DELETE_NAMES") or "[]")
+# Alerts on dashboard tiles, sent to ntfy (clickstack.alerts in values.yaml).
+# NTFY_URL is the topic URL (https://ntfy.example/topic), from Vault through
+# the clickstack-ntfy Secret; unset, alerts are left as they are.
+ALERTS = json.loads(os.environ.get("ALERTS") or "[]")
+NTFY_URL = os.environ.get("NTFY_URL", "").strip()
+NTFY_TOKEN = os.environ.get("NTFY_TOKEN", "").strip()
+NTFY_TOPIC = re.compile(r"^[-_A-Za-z0-9]{1,64}$")
 
 # Bookkeeping that comes back on GET but must not be sent back in: mongoose
 # internals, the populated `alerts` array (alerts are derived from tile config,
@@ -342,6 +350,118 @@ def main():
             )
 
     print("dashboards reconciled")
+    sync_alerts()
+
+
+def split_ntfy_url(url):
+    """(publish root, topic) of a topic URL. ntfy takes JSON messages POSTed
+    to its root, the topic in the body: that is what lets the title, the
+    priority and the click link come from HyperDX's template variables."""
+    parsed = urllib.parse.urlsplit(url)
+    root, _, topic = parsed.path.rstrip("/").rpartition("/")
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        fail("NTFY_URL is not an http(s) URL")
+    if not NTFY_TOPIC.match(topic):
+        fail("NTFY_URL does not end with a topic (letters, digits, - and _)")
+    return f"{parsed.scheme}://{parsed.netloc}{root}/", topic
+
+
+def webhook_body(topic, priority):
+    # HyperDX JSON-escapes the string variables, so they sit inside quotes.
+    return (
+        f'{{"topic": "{topic}", "priority": {int(priority)}, '
+        '"title": "{{title}}", "message": "{{body}}", "click": "{{link}}", '
+        '"tags": ["{{state}}"]}'
+    )
+
+
+def sync_webhooks(priorities):
+    """One generic webhook per ntfy priority, named after MANAGED_TAG. The
+    URL is masked on GET, so a managed webhook is always rewritten."""
+    root, topic = split_ntfy_url(NTFY_URL)
+    headers = {"Authorization": f"Bearer {NTFY_TOKEN}"} if NTFY_TOKEN else {}
+    existing = {
+        w["name"]: dashboard_id(w)
+        for w in get_json("/webhooks?service=generic", "webhooks")
+    }
+    ids = {}
+    for priority in sorted(priorities):
+        name = f"ntfy p{priority} ({MANAGED_TAG})"
+        body = {
+            "name": name,
+            "service": "generic",
+            "url": root,
+            "description": "ntfy, provisioned from weebo-si (monitoring chart)",
+            "headers": headers,
+            "body": webhook_body(topic, priority),
+        }
+        if name in existing:
+            act(f"update webhook {name!r}", "PUT", f"/webhooks/{existing[name]}", body)
+            ids[priority] = existing[name]
+        elif DRY_RUN:
+            print(f"dry-run: would create webhook {name!r}")
+            ids[priority] = "dry-run"
+        else:
+            status, payload, _ = call("POST", "/webhooks", body)
+            if status not in (200, 201):
+                fail(f"failed to create webhook {name!r}", status, payload)
+            ids[priority] = dashboard_id(json.loads(payload)["data"])
+            print(f"create webhook {name!r}")
+    stale = [
+        (name, wid)
+        for name, wid in existing.items()
+        if name.endswith(f"({MANAGED_TAG})") and wid not in ids.values()
+    ]
+    return ids, stale
+
+
+def sync_alerts():
+    if not NTFY_URL:
+        print("alerts: no NTFY_URL (task ntfy:set-url), alerts left as they are")
+        return
+    dashboards = {
+        d.get("name"): d
+        for d in get_json("/dashboards", "dashboards")
+        if MANAGED_TAG in (d.get("tags") or [])
+    }
+    webhooks, stale_webhooks = sync_webhooks({a["priority"] for a in ALERTS})
+    current = {
+        (str(a.get("dashboardId")), a.get("tileId")): dashboard_id(a)
+        for a in get_json(f"/alerts?tag={MANAGED_TAG}", "alerts")
+    }
+    wanted = set()
+    for alert in ALERTS:
+        dashboard = dashboards.get(alert["dashboard"])
+        tiles = {t.get("id") for t in (dashboard or {}).get("tiles", [])}
+        if dashboard is None or alert["tile"] not in tiles:
+            fail(f"alert {alert['name']!r}: no tile {alert['tile']!r} on "
+                 f"managed dashboard {alert['dashboard']!r}")
+        key = (dashboard_id(dashboard), alert["tile"])
+        wanted.add(key)
+        body = {
+            "source": "tile",
+            "dashboardId": key[0],
+            "tileId": key[1],
+            "interval": alert["interval"],
+            "threshold": alert.get("threshold", 0),
+            "thresholdType": "above_exclusive",
+            "numConsecutiveWindows": alert.get("windows", 1),
+            "name": alert["name"],
+            "message": alert["message"],
+            "tags": [MANAGED_TAG],
+            "channel": {"type": "webhook", "webhookId": webhooks[alert["priority"]]},
+        }
+        if key in current:
+            act(f"update alert {alert['name']!r}", "PUT", f"/alerts/{current[key]}", body)
+        else:
+            act(f"create alert {alert['name']!r}", "POST", "/alerts", body)
+    for key, alert_id in current.items():
+        if key not in wanted:
+            act(f"prune alert on tile {key[1]!r} (no longer in values)",
+                "DELETE", f"/alerts/{alert_id}")
+    for name, wid in stale_webhooks:
+        act(f"prune webhook {name!r}", "DELETE", f"/webhooks/{wid}")
+    print("alerts reconciled")
 
 
 if __name__ == "__main__":

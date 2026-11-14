@@ -41,6 +41,29 @@ tasks:
       TOKEN: "{{ .TOKEN }}"
     cmds:
       - task vault -- kv put -tls-skip-verify -mount=mv netbird/vpn-exit-node KUBERNETES_SETUP_KEY={{ .TOKEN }}
+  ntfy:
+    desc: "Type in the ntfy topic URL (and optional access token) the ClickStack alerts go to; stored in Vault at mv/monitoring/ntfy"
+    # Prompted without echo and handed to `kv put` on stdin as JSON: the URL
+    # (which names the topic, a secret of its own) never reaches the shell
+    # history, the process list or this repo. Then refreshes the
+    # ExternalSecret and syncs `monitoring`, whose PostSync Job
+    # (files/clickstack-dashboards.py) writes the webhooks and alerts.
+    interactive: true
+    env:
+      KUBECONFIG: 0.config/kubeconfig.yaml
+    cmds:
+      - |
+        set -eu
+        printf 'ntfy topic URL (https://ntfy.example/topic): '; read -rs url; echo
+        printf 'ntfy access token (empty: none): '; read -rs token; echo
+        case "$url" in http://*/?*|https://*/?*) ;; *) echo "not a topic URL" >&2; exit 1;; esac
+        URL="$url" TOKEN="$token" python3 -I -c 'import json, os; d = {"URL": os.environ["URL"]}; t = os.environ["TOKEN"]; d.update({"TOKEN": t} if t else {}); print(json.dumps(d))' \
+          | task vault -- kv put -tls-skip-verify -mount=mv monitoring/ntfy - >/dev/null
+        echo "stored in mv/monitoring/ntfy"
+        kubectl -n monitoring annotate externalsecret clickstack-ntfy force-sync="$(date +%s)" --overwrite
+        kubectl -n argocd patch application monitoring --type merge -p '{"operation":{"sync":{}}}' >/dev/null
+        echo "monitoring sync started: the clickstack-dashboards Job provisions the alerts (kubectl -n monitoring logs job/clickstack-dashboards)"
+
   ca-bundle:
     desc: "Write the Weebo PKI (root + intermediate CA) to .tmp/weebo-si-ca.pem"
     # Read from Vault rather than from a Kubernetes secret or a committed file:

@@ -111,6 +111,45 @@ clickstack:
     # Names deleted outright, tag or no tag -- the escape hatch for dashboards
     # created in the UI. A name here must not also have a file in dashboards/.
     delete: []
+  # Alerts on tiles of the managed dashboards above, sent to ntfy (RFC 0007
+  # §10.1 for weebo-openbao). The topic URL lives in Vault at
+  # mv/monitoring/ntfy (URL, optional TOKEN): `task ntfy:set-url`. `tile` is a
+  # tile id of the dashboard's JSON; the alert fires when the tile's value is
+  # above `threshold` (default 0) for `windows` consecutive `interval`s.
+  # `priority` is ntfy's, 1 (min) to 5 (max); 2 and below make no sound.
+  alerts:
+    - dashboard: weebo-openbao
+      tile: denied
+      name: "weebo-openbao: PermissionDenied"
+      message: "OpenBao refused the operator: the bootstrap policy changed under it."
+      interval: 5m
+      priority: 5
+    - dashboard: weebo-openbao
+      tile: failed
+      name: "weebo-openbao: reconciles failing for 30 min"
+      message: "A CR of weebo-openbao has not been Ready for 30 minutes."
+      interval: 15m
+      windows: 2
+      priority: 4
+    - dashboard: weebo-openbao
+      tile: drift
+      name: "weebo-openbao: rewrite loop"
+      message: "Drift rewrites for an hour: OpenBao is changed outside, or the operator loops (RFC 0003)."
+      interval: 15m
+      windows: 4
+      priority: 4
+    - dashboard: weebo-openbao
+      tile: ns-writes
+      name: "weebo-openbao: namespace or auth change"
+      message: "An OpenbaoNamespace was written: who can log in may have changed."
+      interval: 5m
+      priority: 3
+    - dashboard: weebo-openbao
+      tile: deletes
+      name: "weebo-openbao: OpenBao objects deleted"
+      message: "The operator removed objects from OpenBao."
+      interval: 15m
+      priority: 2
 
 # Shared ingestion plumbing: one Vault-held key, fanned out to every namespace
 # labelled with otel.ingestLabel, plus the Kubernetes-wide collectors.

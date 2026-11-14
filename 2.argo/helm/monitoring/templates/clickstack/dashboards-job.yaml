@@ -74,6 +74,21 @@ spec:
             # Helm's quoting untouched.
             - name: DELETE_NAMES
               value: {{ .Values.clickstack.dashboards.delete | default list | toJson | quote }}
+            # Alerts on the managed dashboards' tiles, sent to ntfy.
+            - name: ALERTS
+              value: {{ .Values.clickstack.alerts | default list | toJson | quote }}
+            - name: NTFY_URL
+              valueFrom:
+                secretKeyRef:
+                  name: clickstack-ntfy
+                  key: URL
+                  optional: true
+            - name: NTFY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: clickstack-ntfy
+                  key: TOKEN
+                  optional: true
             # Same account clickstack-bootstrap registers -- the only one that
             # exists, and the reason this Job requires bootstrap.enabled.
             - name: ADMIN_EMAIL
