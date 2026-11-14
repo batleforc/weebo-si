@@ -127,7 +127,7 @@ flowchart LR
   n_group_weebo_admin_38219b -->|"accès"| n_ak_clickstack_f02905
   n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_endpoint_gateway_582eb2
   n_ak_endpoint_gateway_582eb2 -->|"client OIDC"| n_c_che_weebo_si_hardening_Application_weebo_si_endpoint_gatew_0d1517
-  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_forgejo_696ffa
+  n_group_weebo_user_58ae05 -->|"accès"| n_ak_forgejo_696ffa
   n_ak_forgejo_696ffa -->|"client OIDC"| n_c_forgejo_forgejo_Application_forgejo_app_1f26bd
   n_group_weebo_admin_38219b -->|"accès"| n_ak_kube_admin_23eb63
   n_group_weebo_admin_38219b -->|"accès"| n_ak_longhorn_dda6d7
@@ -164,7 +164,7 @@ flowchart LR
 | [`che-cluster`](/docs/security/authentication/applications#che-cluster) | oauth2 | `weebo_moderator` | `default-provider-authorization-implicit-consent` | Application/dex (dex)<br/>CheCluster/eclipse-che (eclipse-che) |
 | [`clickstack`](/docs/security/authentication/applications#clickstack) | proxy | `weebo_admin` | `admin-step-up` | IngressRoute monitoring/clickstack |
 | [`endpoint-gateway`](/docs/security/authentication/applications#endpoint-gateway) | oauth2 | `weebo_moderator` | `default-provider-authorization-implicit-consent` | Application/weebo-si-endpoint-gateway (weebo-si-hardening) |
-| [`forgejo`](/docs/security/authentication/applications#forgejo) | oauth2 | `weebo_moderator` | `default-provider-authorization-implicit-consent` | Application/forgejo-app (forgejo) |
+| [`forgejo`](/docs/security/authentication/applications#forgejo) | oauth2 | `weebo_user` | `default-provider-authorization-implicit-consent` | Application/forgejo-app (forgejo) |
 | [`kube-admin`](/docs/security/authentication/applications#kube-admin) | oauth2 public | `weebo_admin` | `admin-step-up` | kubeconfig `Weebo-si-admin`<br/>apiserver jwt[1] |
 | [`longhorn`](/docs/security/authentication/applications#longhorn) | proxy | `weebo_admin` | `admin-step-up` | IngressRoute longhorn/longhorn |
 | [`openbao`](/docs/security/authentication/applications#openbao) | oauth2 | `weebo_user` | `default-provider-authorization-implicit-consent` | OpenbaoNamespace/devenv (weebo-openbao)<br/>OpenbaoNamespace/preprod (weebo-openbao)<br/>OpenbaoNamespace/prod (weebo-openbao)<br/>OpenbaoNamespace/recette (weebo-openbao)<br/>OpenbaoNamespace/users (weebo-openbao) |

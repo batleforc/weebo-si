@@ -370,9 +370,10 @@ flowchart LR
   end
   subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
     n_user_batleforc_01dd2e(["👤 batleforc"])
+    n_user_batleforc_test_74b72b(["👤 batleforc-test"])
   end
   subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
-    n_group_weebo_moderator_a8f585("weebo_moderator")
+    n_group_weebo_user_58ae05("weebo_user")
   end
   subgraph n_sg_Flux_3086f2["Flux"]
     n_flow_default_provider_authorization_implicit_consent_4789aa[/"flux default-provider-authorization-implicit-consent"/]
@@ -380,8 +381,9 @@ flowchart LR
   subgraph n_sg_ns_forgejo_ed1669["ns forgejo"]
     n_c_forgejo_forgejo_Application_forgejo_app_1f26bd["Application/forgejo-app<br/>(forgejo)"]
   end
-  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_moderator_a8f585
-  n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_forgejo_696ffa
+  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_user_58ae05
+  n_user_batleforc_test_74b72b -->|"membre (direct ou hérité)"| n_group_weebo_user_58ae05
+  n_group_weebo_user_58ae05 -->|"accès"| n_ak_forgejo_696ffa
   n_ak_forgejo_696ffa -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
   n_ak_forgejo_696ffa -->|"Vault mv/forgejo/auth → ExternalSecret forgejo/forgejo-oidc → Secret forgejo-oidc"| n_c_forgejo_forgejo_Application_forgejo_app_1f26bd
 ```
@@ -400,8 +402,8 @@ flowchart LR
 | Clé de signature | `authentik Self-signed Certificate` |
 | Flux d'autorisation | `default-provider-authorization-implicit-consent` |
 | Flux d'invalidation | `default-provider-invalidation-flow` |
-| Accès | `weebo_moderator` |
-| Utilisateurs autorisés | `batleforc` |
+| Accès | `weebo_user` |
+| Utilisateurs autorisés | `batleforc`, `batleforc-test` |
 | Secret écrit dans | `forgejo/auth` |
 
 ### Consommateurs

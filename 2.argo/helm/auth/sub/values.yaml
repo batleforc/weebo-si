@@ -779,13 +779,15 @@ applications:
   # The redirect path carries the AUTH SOURCE name -- forgejo.oidc.name in
   # that chart, `authentik` -- so renaming the source is an edit here too.
   # `weebo groups` is what feeds Forgejo's `groupClaimName: groups`, from
-  # which a weebo_admin becomes a site admin at every login.
+  # which a weebo_admin becomes a site admin at every login. Every weebo_user
+  # signs in (moderators and admins are its sub-groups); the account is
+  # created at that first login.
   forgejo:
     enabled: false
     slug: forgejo
     name: forgejo
     metaIcon: "https://maxleriche.net/public/media/techno/forgejo.png"
-    accessGroup: weebo_moderator
+    accessGroup: weebo_user
     secretTargets:
       - backend: vault
         path: forgejo/auth
