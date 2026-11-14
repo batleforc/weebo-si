@@ -36,7 +36,7 @@ openbao:
   enabled: true
   operator:
     # renovate: datasource=docker depName=ghcr.io/weebo-si-operator/charts/weebo-openbao
-    version: 0.1.5
+    version: 0.2.0
     namespace: weebo-openbao
   # Phase 4: the spaces (vault/spaces, its own Application).
   spaces:
@@ -48,14 +48,15 @@ openbao:
     namespaces: [devenv, recette, preprod, prod, users]
 
 # Egress of the operator (RFC 0007 §6.6): DNS and the API server, plus
-# OpenBao, its only remote system. One CiliumNetworkPolicy, 2.helm/weebo-base
-# `operatorEgress`.
-operatorEgress:
+# OpenBao, its only remote system. The operator chart's own
+# CiliumNetworkPolicy (networkPolicy.kind, kit >= 0.32.0), its values passed
+# as is.
+operatorNetworkPolicy:
   enabled: true
-  namespace: weebo-openbao
-  endpointSelector:
-    matchLabels: { app.kubernetes.io/name: weebo-openbao }
+  kind: CiliumNetworkPolicy
   egress:
-    - toEndpoints:
-        - matchLabels: { "k8s:io.kubernetes.pod.namespace": vault, vault_cr: openbao }
-      toPorts: [{ ports: [{ port: "8200", protocol: TCP }] }]
+    enabled: true
+    openbao:
+      - toEndpoints:
+          - matchLabels: { "k8s:io.kubernetes.pod.namespace": vault, vault_cr: openbao }
+        toPorts: [{ ports: [{ port: "8200", protocol: TCP }] }]

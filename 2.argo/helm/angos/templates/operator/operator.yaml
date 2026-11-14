@@ -29,6 +29,8 @@ spec:
     helm:
       releaseName: weebo-angos
       valuesObject:
+        networkPolicy:
+          {{- toYaml .Values.operatorNetworkPolicy | nindent 10 }}
         replicaCount: {{ $o.replicaCount }}
         podDisruptionBudget:
           enabled: {{ gt (int $o.replicaCount) 1 }}

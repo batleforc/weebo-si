@@ -46,4 +46,3 @@ connection straight to some other IP is dropped.
   "egress" $egress
   "reaches" (concat (list (urlParse .Values.angos.s3Url).hostname) (.Values.networkEgress.reaches | default list) | uniq)) -}}
 {{- include "weebo-base.ciliumNetworkPolicies" (dict "ctx" . "extra" $extra) -}}
-{{- include "weebo-base.operatorEgress" . -}}

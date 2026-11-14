@@ -72,8 +72,15 @@ flowchart LR
   subgraph ns_netbird["netbird"]
     n_ns_netbird_45c447["exit-node-ingress"]
   end
+  subgraph ns_vault["vault"]
+    n_ns_vault_da07f8["openbao"]
+  end
+  subgraph ns_weebo_forgejo["weebo-forgejo"]
+    n_ns_weebo_forgejo_29bdd1["tous les pods"]
+  end
   n_ns_batlehub_62b5f7 ==>|"via Traefik : git.weebo.poc"| n_ns_forgejo_881e90
   n_ns_netbird_45c447 ==>|"via Traefik : git.weebo.poc"| n_ns_forgejo_881e90
+  n_ns_weebo_forgejo_29bdd1 -->|"TCP 8200"| n_ns_vault_da07f8
 ```
 
 ## Politiques

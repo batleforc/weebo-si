@@ -28,6 +28,8 @@ spec:
     helm:
       releaseName: weebo-openbao
       valuesObject:
+        networkPolicy:
+          {{- toYaml .Values.operatorNetworkPolicy | nindent 10 }}
         # One replica (RFC 0007 §6.6); the kit's leader election allows two
         # later. The chart's PDB against one replica only blocks drains.
         replicaCount: 1

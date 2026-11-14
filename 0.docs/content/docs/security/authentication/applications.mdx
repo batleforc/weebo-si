@@ -500,6 +500,69 @@ flowchart LR
 |---|---|---|
 | — | `longhorn/IngressRoute/longhorn` | forwardAuth `auth/authentik` sur `longhorn.weebo.poc` |
 
+## openbao
+
+```mermaid
+flowchart LR
+  subgraph n_sg_Authentik__https___auth_weebo_poc__26e1e2["Authentik (https://auth.weebo.poc)"]
+    n_ak_openbao_f73738["openbao<br/>oauth2"]
+  end
+  subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
+    n_user_batleforc_01dd2e(["👤 batleforc"])
+    n_user_batleforc_test_74b72b(["👤 batleforc-test"])
+  end
+  subgraph n_sg_Groupes_Authentik_560804["Groupes Authentik"]
+    n_group_weebo_user_58ae05("weebo_user")
+  end
+  subgraph n_sg_Flux_3086f2["Flux"]
+    n_flow_default_provider_authorization_implicit_consent_4789aa[/"flux default-provider-authorization-implicit-consent"/]
+  end
+  subgraph n_sg_ns_weebo_openbao_5a131c["ns weebo-openbao"]
+    n_c_vault_weebo_openbao_OpenbaoNamespace_devenv_02d532["OpenbaoNamespace/devenv<br/>(vault)"]
+    n_c_vault_weebo_openbao_OpenbaoNamespace_recette_ea2292["OpenbaoNamespace/recette<br/>(vault)"]
+    n_c_vault_weebo_openbao_OpenbaoNamespace_preprod_2620a9["OpenbaoNamespace/preprod<br/>(vault)"]
+    n_c_vault_weebo_openbao_OpenbaoNamespace_prod_4372e7["OpenbaoNamespace/prod<br/>(vault)"]
+    n_c_vault_weebo_openbao_OpenbaoNamespace_users_4963c8["OpenbaoNamespace/users<br/>(vault)"]
+  end
+  n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_user_58ae05
+  n_user_batleforc_test_74b72b -->|"membre (direct ou hérité)"| n_group_weebo_user_58ae05
+  n_group_weebo_user_58ae05 -->|"accès"| n_ak_openbao_f73738
+  n_ak_openbao_f73738 -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
+  n_ak_openbao_f73738 -->|"Vault mv/weebo-openbao/oidc → ExternalSecret weebo-openbao/openbao-oidc → Secret openbao-oidc"| n_c_vault_weebo_openbao_OpenbaoNamespace_devenv_02d532
+  n_ak_openbao_f73738 -->|"Vault mv/weebo-openbao/oidc → ExternalSecret weebo-openbao/openbao-oidc → Secret openbao-oidc"| n_c_vault_weebo_openbao_OpenbaoNamespace_recette_ea2292
+  n_ak_openbao_f73738 -->|"Vault mv/weebo-openbao/oidc → ExternalSecret weebo-openbao/openbao-oidc → Secret openbao-oidc"| n_c_vault_weebo_openbao_OpenbaoNamespace_preprod_2620a9
+  n_ak_openbao_f73738 -->|"Vault mv/weebo-openbao/oidc → ExternalSecret weebo-openbao/openbao-oidc → Secret openbao-oidc"| n_c_vault_weebo_openbao_OpenbaoNamespace_prod_4372e7
+  n_ak_openbao_f73738 -->|"Vault mv/weebo-openbao/oidc → ExternalSecret weebo-openbao/openbao-oidc → Secret openbao-oidc"| n_c_vault_weebo_openbao_OpenbaoNamespace_users_4963c8
+```
+
+| Propriété | Valeur |
+|---|---|
+| Slug | `openbao` |
+| CR | `openbao` |
+| Fournisseur | oauth2 |
+| Émetteur | `https://auth.weebo.poc/application/o/openbao/` |
+| Client | `openbao` (confidential) |
+| Grants | `authorization_code` |
+| Durée du jeton d'accès | `défaut` |
+| Scopes / mappings | `weebo email`<br/>`weebo groups`<br/>`authentik default OAuth Mapping: OpenID 'profile'`<br/>`authentik default OAuth Mapping: OpenID 'openid'` |
+| Redirections | `https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback?namespace=devenv` (strict)<br/>`https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback?namespace=recette` (strict)<br/>`https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback?namespace=preprod` (strict)<br/>`https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback?namespace=prod` (strict)<br/>`https://vault.weebo.poc/ui/vault/auth/authentik/oidc/callback?namespace=users` (strict)<br/>`http://localhost:8250/oidc/callback` (strict) |
+| Clé de signature | `authentik Self-signed Certificate` |
+| Flux d'autorisation | `default-provider-authorization-implicit-consent` |
+| Flux d'invalidation | `default-provider-invalidation-flow` |
+| Accès | `weebo_user` |
+| Utilisateurs autorisés | `batleforc`, `batleforc-test` |
+| Secret écrit dans | `weebo-openbao/oidc` |
+
+### Consommateurs
+
+| App Argo CD | Objet | Chemin du secret |
+|---|---|---|
+| `vault` | `weebo-openbao/OpenbaoNamespace/devenv` | Vault `mv/weebo-openbao/oidc` → ExternalSecret `weebo-openbao/openbao-oidc` → Secret `openbao-oidc` |
+| `vault` | `weebo-openbao/OpenbaoNamespace/recette` | Vault `mv/weebo-openbao/oidc` → ExternalSecret `weebo-openbao/openbao-oidc` → Secret `openbao-oidc` |
+| `vault` | `weebo-openbao/OpenbaoNamespace/preprod` | Vault `mv/weebo-openbao/oidc` → ExternalSecret `weebo-openbao/openbao-oidc` → Secret `openbao-oidc` |
+| `vault` | `weebo-openbao/OpenbaoNamespace/prod` | Vault `mv/weebo-openbao/oidc` → ExternalSecret `weebo-openbao/openbao-oidc` → Secret `openbao-oidc` |
+| `vault` | `weebo-openbao/OpenbaoNamespace/users` | Vault `mv/weebo-openbao/oidc` → ExternalSecret `weebo-openbao/openbao-oidc` → Secret `openbao-oidc` |
+
 ## s3
 
 ```mermaid

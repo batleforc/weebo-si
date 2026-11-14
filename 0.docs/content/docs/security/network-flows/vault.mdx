@@ -50,6 +50,12 @@ flowchart LR
   subgraph ns_vault_operator["vault-operator"]
     n_ns_vault_operator_bf680a["tous les pods"]
   end
+  subgraph ns_weebo_forgejo["weebo-forgejo"]
+    n_ns_weebo_forgejo_29bdd1["tous les pods"]
+  end
+  subgraph ns_weebo_openbao["weebo-openbao"]
+    n_ns_weebo_openbao_640a2d["tous les pods"]
+  end
   n_ns_auth_895bb8 -->|"TCP 8200"| n_ns_vault_da07f8
   n_ns_cert_manager_12e016 -->|"TCP 8200"| n_ns_vault_da07f8
   n_ns_dex_d4c810 -->|"TCP 8200"| n_ns_vault_da07f8
@@ -66,6 +72,8 @@ flowchart LR
   n_ns_vault_operator_bf680a -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_vault_operator_bf680a -->|"TCP 8200"| n_ns_vault_da07f8
   n_ns_vault_operator_bf680a -.->|"tous ports"| n_ns_vault_operator_bf680a
+  n_ns_weebo_forgejo_29bdd1 -->|"TCP 8200"| n_ns_vault_da07f8
+  n_ns_weebo_openbao_640a2d -->|"TCP 8200"| n_ns_vault_da07f8
 ```
 
 ## Flux ouverts par d'autres applications

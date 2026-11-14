@@ -224,7 +224,7 @@ operator:
     name: weebo-forgejo
     repoURL: oci://ghcr.io/weebo-si-operator/charts/weebo-forgejo
     # renovate: datasource=docker depName=ghcr.io/weebo-si-operator/charts/weebo-forgejo
-    version: 0.10.0
+    version: 0.11.0
   # One replica, as for the authentik operator: the cluster has one worker,
   # so a second one buys a webhook that dies with the first. The chart's PDB
   # (minAvailable: 1) is turned off with it -- against a single replica it
@@ -445,17 +445,18 @@ ciliumNetworkPolicies:
             - {}
 
 # Egress of the operator (RFC 0007 §6.6): DNS and the API server, plus Forgejo
-# (git.weebo.poc, through Traefik) and OpenBao (the users mount). One
-# CiliumNetworkPolicy, 2.helm/weebo-base `operatorEgress`.
-operatorEgress:
+# (git.weebo.poc, through Traefik) and OpenBao (the users mount). The operator
+# chart's own CiliumNetworkPolicy (networkPolicy.kind, kit >= 0.32.0).
+operatorNetworkPolicy:
   enabled: true
-  namespace: weebo-forgejo
-  endpointSelector:
-    matchLabels: { app.kubernetes.io/name: weebo-forgejo }
+  kind: CiliumNetworkPolicy
   egress:
-    - toEndpoints:
-        - matchLabels: { "k8s:io.kubernetes.pod.namespace": traefik, app.kubernetes.io/name: traefik }
-      toPorts: [{ ports: [{ port: "8443", protocol: TCP }] }]
-    - toEndpoints:
-        - matchLabels: { "k8s:io.kubernetes.pod.namespace": vault, vault_cr: openbao }
-      toPorts: [{ ports: [{ port: "8200", protocol: TCP }] }]
+    enabled: true
+    forgejo:
+      - toEndpoints:
+          - matchLabels: { "k8s:io.kubernetes.pod.namespace": traefik, app.kubernetes.io/name: traefik }
+        toPorts: [{ ports: [{ port: "8443", protocol: TCP }] }]
+    vault:
+      - toEndpoints:
+          - matchLabels: { "k8s:io.kubernetes.pod.namespace": vault, vault_cr: openbao }
+        toPorts: [{ ports: [{ port: "8200", protocol: TCP }] }]

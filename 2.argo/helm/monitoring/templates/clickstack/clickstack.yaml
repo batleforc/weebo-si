@@ -5,6 +5,7 @@ metadata:
   name: clickstack
   namespace: argocd
   annotations:
+    argocd.argoproj.io/manifest-generate-paths: "."
     argocd.argoproj.io/sync-wave: "2"
   finalizers:
   - resources-finalizer.argocd.argoproj.io

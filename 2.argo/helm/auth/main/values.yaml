@@ -62,7 +62,7 @@ authentik:
     # >= 0.23.0: AuthentikBlueprint (auth/sub, blueprints). 0.23.1: a proxy
     # provider PATCH carries internal_host (a flow change on longhorn /
     # clickstack was refused with a 400 before).
-    version: 0.24.0
+    version: 0.25.0
     replicaCount: 1
   sub:
     enabled: true
@@ -162,17 +162,19 @@ project: ""
 branch: ""
 
 # Egress of the operator (RFC 0007 §6.6): DNS and the API server, plus
-# Authentik (auth.weebo.poc, through Traefik) and OpenBao (secretTargets). One
-# CiliumNetworkPolicy, 2.helm/weebo-base `operatorEgress`.
-operatorEgress:
+# Authentik (auth.weebo.poc, through Traefik) and OpenBao (secretTargets). The
+# operator chart's own CiliumNetworkPolicy (networkPolicy.kind, kit >=
+# 0.32.0).
+operatorNetworkPolicy:
   enabled: true
-  namespace: auth
-  endpointSelector:
-    matchLabels: { app.kubernetes.io/name: weebo-authentik }   # unique in auth; Services also need instance
+  kind: CiliumNetworkPolicy
   egress:
-    - toEndpoints:
-        - matchLabels: { "k8s:io.kubernetes.pod.namespace": traefik, app.kubernetes.io/name: traefik }
-      toPorts: [{ ports: [{ port: "8443", protocol: TCP }] }]
-    - toEndpoints:
-        - matchLabels: { "k8s:io.kubernetes.pod.namespace": vault, vault_cr: openbao }
-      toPorts: [{ ports: [{ port: "8200", protocol: TCP }] }]
+    enabled: true
+    authentik:
+      - toEndpoints:
+          - matchLabels: { "k8s:io.kubernetes.pod.namespace": traefik, app.kubernetes.io/name: traefik }
+        toPorts: [{ ports: [{ port: "8443", protocol: TCP }] }]
+    vault:
+      - toEndpoints:
+          - matchLabels: { "k8s:io.kubernetes.pod.namespace": vault, vault_cr: openbao }
+        toPorts: [{ ports: [{ port: "8200", protocol: TCP }] }]

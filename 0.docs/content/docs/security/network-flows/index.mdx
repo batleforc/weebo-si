@@ -151,6 +151,9 @@ flowchart LR
   subgraph ns_weebo_forgejo["weebo-forgejo"]
     n_ns_weebo_forgejo_29bdd1["tous les pods"]
   end
+  subgraph ns_weebo_openbao["weebo-openbao"]
+    n_ns_weebo_openbao_640a2d["tous les pods"]
+  end
   subgraph ns_weebo_si_hardening["weebo-si-hardening"]
     n_ns_weebo_si_hardening_98b8dc["endpoint-gateway"]
     n_ns_weebo_si_hardening_af5a96["tous les pods"]
@@ -220,6 +223,7 @@ flowchart LR
   n_ns_longhorn_911a87 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_monitoring_f1b4f0 -->|"TCP 9500"| n_ns_longhorn_e4afa5
   n_ns_monitoring_1d4c40 -->|"egress non restreint"| n_entity_open_f65d5d
+  n_ns_monitoring_1d4c40 -.->|"TCP 8080"| n_ns_batlehub_62b5f7
   n_ns_monitoring_1d4c40 -.->|"tous ports"| n_ns_monitoring_1d4c40
   n_ns_monitoring_1d4c40 -.->|"TCP 8081"| n_ns_weebo_si_hardening_973fb2
   n_ns_netbird_45c447 ==>|"via Traefik : registry.pkg.weebo.poc"| n_ns_angos_f1c162
@@ -268,7 +272,9 @@ flowchart LR
   n_ns_weebo_forgejo_29bdd1 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_weebo_forgejo_29bdd1 ==>|"via Traefik : git.weebo.poc"| n_ns_forgejo_881e90
   n_ns_weebo_forgejo_29bdd1 -.->|"TCP 3000"| n_ns_forgejo_90cc22
+  n_ns_weebo_forgejo_29bdd1 -->|"TCP 8200"| n_ns_vault_da07f8
   n_ns_weebo_forgejo_29bdd1 -.->|"tous ports"| n_ns_weebo_forgejo_29bdd1
+  n_ns_weebo_openbao_640a2d -->|"TCP 8200"| n_ns_vault_da07f8
   n_ns_weebo_si_hardening_98b8dc ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
   n_ns_weebo_si_hardening_98b8dc -.->|"TCP 8089"| n_ns_eclipse_che_43d24e
   n_ns_weebo_si_hardening_af5a96 -->|"egress non restreint"| n_entity_open_f65d5d

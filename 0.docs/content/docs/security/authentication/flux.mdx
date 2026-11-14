@@ -25,6 +25,7 @@ flowchart LR
     n_ak_che_cluster_767457["che-cluster"]
     n_ak_endpoint_gateway_582eb2["endpoint-gateway"]
     n_ak_forgejo_696ffa["forgejo"]
+    n_ak_openbao_f73738["openbao"]
     n_ak_s3_a060e5["s3"]
     n_ak_stalwart_576573["stalwart"]
     n_ak_argo_admin_7fdc96["argo-admin"]
@@ -41,6 +42,7 @@ flowchart LR
   n_ak_che_cluster_767457 -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
   n_ak_endpoint_gateway_582eb2 -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
   n_ak_forgejo_696ffa -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
+  n_ak_openbao_f73738 -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
   n_ak_s3_a060e5 -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
   n_ak_stalwart_576573 -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
   n_ak_argo_admin_7fdc96 ==>|"autorisation"| n_flow_admin_step_up_6938b4
@@ -61,8 +63,8 @@ flowchart LR
 | `default-authenticator-webauthn-setup` | stage_configuration | `require_authenticated` | Register a security key | AuthentikFlow `builtin-default-authenticator-webauthn-setup` | — |
 | `default-password-change` | stage_configuration | `require_authenticated` | Change your password | AuthentikFlow `builtin-default-password-change` | — |
 | `default-provider-authorization-explicit-consent` | authorization | `require_authenticated` | %(app)s wants to know who you are | AuthentikFlow `builtin-default-provider-authorization-explicit-consent` | — |
-| `default-provider-authorization-implicit-consent` | authorization | `require_authenticated` | On to %(app)s | AuthentikFlow `builtin-default-provider-authorization-implicit-consent` | `angos`, `argo`, `batlehub`, `che-cluster`, `endpoint-gateway`, `forgejo`, `s3`, `stalwart` |
-| `default-provider-invalidation-flow` | invalidation | `none` | Signed out of %(app)s | AuthentikFlow `builtin-default-provider-invalidation-flow` | `angos`, `argo`, `argo-admin`, `batlehub`, `che-cluster`, `clickstack`, `endpoint-gateway`, `forgejo`, `kube-admin`, `longhorn`, `s3`, `stalwart` |
+| `default-provider-authorization-implicit-consent` | authorization | `require_authenticated` | On to %(app)s | AuthentikFlow `builtin-default-provider-authorization-implicit-consent` | `angos`, `argo`, `batlehub`, `che-cluster`, `endpoint-gateway`, `forgejo`, `openbao`, `s3`, `stalwart` |
+| `default-provider-invalidation-flow` | invalidation | `none` | Signed out of %(app)s | AuthentikFlow `builtin-default-provider-invalidation-flow` | `angos`, `argo`, `argo-admin`, `batlehub`, `che-cluster`, `clickstack`, `endpoint-gateway`, `forgejo`, `kube-admin`, `longhorn`, `openbao`, `s3`, `stalwart` |
 | `default-source-authentication` | authentication | `require_unauthenticated` | Sign in to Weebo | AuthentikFlow `builtin-default-source-authentication` | — |
 | `default-source-enrollment` | enrollment | `none` | Pick a username | AuthentikFlow `builtin-default-source-enrollment` | — |
 | `default-user-settings-flow` | stage_configuration | `require_authenticated` | Your details | AuthentikFlow `builtin-default-user-settings-flow` | — |

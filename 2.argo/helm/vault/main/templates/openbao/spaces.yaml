@@ -15,6 +15,7 @@ metadata:
   name: openbao-spaces
   namespace: argocd
   annotations:
+    argocd.argoproj.io/manifest-generate-paths: "."
     argocd.argoproj.io/sync-wave: "3"
 spec:
   project: {{ .Values.project }}

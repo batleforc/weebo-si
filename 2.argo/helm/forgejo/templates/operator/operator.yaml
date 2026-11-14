@@ -23,6 +23,8 @@ spec:
     helm:
       releaseName: weebo-forgejo
       valuesObject:
+        networkPolicy:
+          {{- toYaml .Values.operatorNetworkPolicy | nindent 10 }}
         replicaCount: {{ $o.replicaCount }}
         podDisruptionBudget:
           enabled: {{ gt (int $o.replicaCount) 1 }}

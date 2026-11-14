@@ -54,6 +54,9 @@ Les politiques d'autres applications qui touchent les namespaces de `monitoring`
 
 ```mermaid
 flowchart LR
+  subgraph ns_batlehub["batlehub"]
+    n_ns_batlehub_62b5f7["tous les pods"]
+  end
   subgraph ns_longhorn["longhorn"]
     n_ns_longhorn_e4afa5["longhorn-manager"]
   end
@@ -69,6 +72,7 @@ flowchart LR
     n_ns_weebo_si_hardening_973fb2["weebo-si-operator"]
   end
   n_ns_monitoring_f1b4f0 -->|"TCP 9500"| n_ns_longhorn_e4afa5
+  n_ns_monitoring_1d4c40 -.->|"TCP 8080"| n_ns_batlehub_62b5f7
   n_ns_monitoring_1d4c40 -.->|"TCP 8081"| n_ns_weebo_si_hardening_973fb2
   n_ns_netbird_45c447 ==>|"via Traefik : clickstack.weebo.poc"| n_ns_monitoring_adae0f
 ```

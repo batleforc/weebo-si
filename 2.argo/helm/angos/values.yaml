@@ -529,7 +529,7 @@ operator:
     name: weebo-angos
     repoURL: oci://ghcr.io/weebo-si-operator/charts/weebo-angos
     # renovate: datasource=docker depName=ghcr.io/weebo-si-operator/charts/weebo-angos
-    version: 0.4.0
+    version: 0.5.0
   # One replica, as for the other operators: the cluster has one worker, so a
   # second one buys a webhook that dies with the first. The chart's PDB goes
   # with it -- against a single replica it blocks every node drain.
@@ -662,11 +662,10 @@ networkEgress:
       - "*.redhat.io"
 
 # Egress of the operator (RFC 0007 §6.6): DNS and the API server, plus nothing
-# else: it renders the registry and never calls it. One CiliumNetworkPolicy,
-# 2.helm/weebo-base `operatorEgress`.
-operatorEgress:
+# else: it renders the registry and never calls it. The operator chart's own
+# CiliumNetworkPolicy (networkPolicy.kind, kit >= 0.32.0).
+operatorNetworkPolicy:
   enabled: true
-  namespace: weebo-angos
-  endpointSelector:
-    matchLabels: { app.kubernetes.io/name: weebo-angos }
-  egress: []
+  kind: CiliumNetworkPolicy
+  egress:
+    enabled: true

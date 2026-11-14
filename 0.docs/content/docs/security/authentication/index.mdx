@@ -33,6 +33,9 @@ flowchart LR
     n_group_weebo_moderator_a8f585("weebo_moderator")
     n_group_weebo_admin_38219b("weebo_admin (superuser)")
     n_group_batleforc_a99536("batleforc")
+    n_group_batleforc_org_owner_78e71b("batleforc-org_owner")
+    n_group_batleforc_org_maintainer_e8bbc5("batleforc-org_maintainer")
+    n_group_batleforc_org_dev_267fd6("batleforc-org_dev")
   end
   subgraph n_sg_Utilisateurs_8705d9["Utilisateurs"]
     n_user_batleforc_01dd2e(["👤 batleforc"])
@@ -49,6 +52,7 @@ flowchart LR
     n_ak_forgejo_696ffa["forgejo<br/>oauth2"]
     n_ak_kube_admin_23eb63["kube-admin<br/>oauth2 public · 2FA"]
     n_ak_longhorn_dda6d7["longhorn<br/>proxy · 2FA"]
+    n_ak_openbao_f73738["openbao<br/>oauth2"]
     n_ak_s3_a060e5["s3<br/>oauth2"]
     n_ak_stalwart_576573["stalwart<br/>oauth2 public"]
   end
@@ -75,6 +79,13 @@ flowchart LR
   subgraph n_sg_ns_forgejo_ed1669["ns forgejo"]
     n_c_forgejo_forgejo_Application_forgejo_app_1f26bd["Application/forgejo-app<br/>(forgejo)"]
   end
+  subgraph n_sg_ns_weebo_openbao_5a131c["ns weebo-openbao"]
+    n_c_vault_weebo_openbao_OpenbaoNamespace_devenv_02d532["OpenbaoNamespace/devenv<br/>(vault)"]
+    n_c_vault_weebo_openbao_OpenbaoNamespace_recette_ea2292["OpenbaoNamespace/recette<br/>(vault)"]
+    n_c_vault_weebo_openbao_OpenbaoNamespace_preprod_2620a9["OpenbaoNamespace/preprod<br/>(vault)"]
+    n_c_vault_weebo_openbao_OpenbaoNamespace_prod_4372e7["OpenbaoNamespace/prod<br/>(vault)"]
+    n_c_vault_weebo_openbao_OpenbaoNamespace_users_4963c8["OpenbaoNamespace/users<br/>(vault)"]
+  end
   subgraph n_sg_ns_s3_a0c176["ns s3"]
     n_c_database_s3_Tenant_main_e7b280["Tenant/main<br/>(database)"]
   end
@@ -100,6 +111,7 @@ flowchart LR
   n_group_weebo_admin_38219b -.->|"inclus dans"| n_group_weebo_moderator_a8f585
   n_user_batleforc_01dd2e -->|"membre"| n_group_weebo_admin_38219b
   n_user_batleforc_01dd2e -->|"membre"| n_group_batleforc_a99536
+  n_user_batleforc_01dd2e -->|"membre"| n_group_batleforc_org_owner_78e71b
   n_user_batleforc_test_74b72b -->|"membre"| n_group_weebo_user_58ae05
   n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_angos_b0924d
   n_ak_angos_b0924d -->|"client OIDC"| n_c_angos_angos_AngosLocalInstance_registry_441d35
@@ -119,6 +131,12 @@ flowchart LR
   n_ak_forgejo_696ffa -->|"client OIDC"| n_c_forgejo_forgejo_Application_forgejo_app_1f26bd
   n_group_weebo_admin_38219b -->|"accès"| n_ak_kube_admin_23eb63
   n_group_weebo_admin_38219b -->|"accès"| n_ak_longhorn_dda6d7
+  n_group_weebo_user_58ae05 -->|"accès"| n_ak_openbao_f73738
+  n_ak_openbao_f73738 -->|"client OIDC"| n_c_vault_weebo_openbao_OpenbaoNamespace_devenv_02d532
+  n_ak_openbao_f73738 -->|"client OIDC"| n_c_vault_weebo_openbao_OpenbaoNamespace_recette_ea2292
+  n_ak_openbao_f73738 -->|"client OIDC"| n_c_vault_weebo_openbao_OpenbaoNamespace_preprod_2620a9
+  n_ak_openbao_f73738 -->|"client OIDC"| n_c_vault_weebo_openbao_OpenbaoNamespace_prod_4372e7
+  n_ak_openbao_f73738 -->|"client OIDC"| n_c_vault_weebo_openbao_OpenbaoNamespace_users_4963c8
   n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_s3_a060e5
   n_ak_s3_a060e5 -->|"client OIDC"| n_c_database_s3_Tenant_main_e7b280
   n_group_weebo_user_58ae05 -->|"accès"| n_ak_stalwart_576573
@@ -149,6 +167,7 @@ flowchart LR
 | [`forgejo`](/docs/security/authentication/applications#forgejo) | oauth2 | `weebo_moderator` | `default-provider-authorization-implicit-consent` | Application/forgejo-app (forgejo) |
 | [`kube-admin`](/docs/security/authentication/applications#kube-admin) | oauth2 public | `weebo_admin` | `admin-step-up` | kubeconfig `Weebo-si-admin`<br/>apiserver jwt[1] |
 | [`longhorn`](/docs/security/authentication/applications#longhorn) | proxy | `weebo_admin` | `admin-step-up` | IngressRoute longhorn/longhorn |
+| [`openbao`](/docs/security/authentication/applications#openbao) | oauth2 | `weebo_user` | `default-provider-authorization-implicit-consent` | OpenbaoNamespace/devenv (weebo-openbao)<br/>OpenbaoNamespace/preprod (weebo-openbao)<br/>OpenbaoNamespace/prod (weebo-openbao)<br/>OpenbaoNamespace/recette (weebo-openbao)<br/>OpenbaoNamespace/users (weebo-openbao) |
 | [`s3`](/docs/security/authentication/applications#s3) | oauth2 | `weebo_moderator` | `default-provider-authorization-implicit-consent` | Tenant/main (s3) |
 | [`stalwart`](/docs/security/authentication/applications#stalwart) | oauth2 public | `weebo_user` | `default-provider-authorization-implicit-consent` | aucun rendu |
 

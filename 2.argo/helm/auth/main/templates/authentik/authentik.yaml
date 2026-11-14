@@ -16,12 +16,14 @@ spec:
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
-    - Replace=true
-    # Without it, Replace=true re-PUTs every object on every sync. Added on
-    # 2026-10-18 when vault-secrets-webhook still mutated Secrets and rejected
-    # every write of the `authentik` Secret (its `vault:` refs, an address
-    # that no longer resolved); secret mutation is now off
-    # (2.argo/helm/vault/main/templates/hook/hook.yaml). Kept: re-PUTting
+    # Server-side apply, not Replace (dropped 2026-11-14): a replace re-PUTs
+    # every object it syncs and can delete/recreate ones it cannot update.
+    - ServerSideApply=true
+    # Only out-of-sync objects are applied. Added on 2026-10-18 when
+    # vault-secrets-webhook still mutated Secrets and rejected every write of
+    # the `authentik` Secret (its `vault:` refs, an address that no longer
+    # resolved); secret mutation is now off
+    # (2.argo/helm/vault/main/templates/hook/hook.yaml). Kept: re-applying
     # unchanged objects buys nothing.
     - ApplyOutOfSyncOnly=true
   destination:

@@ -17,12 +17,16 @@ flowchart TB
   n_group_weebo_moderator_a8f585("weebo_moderator")
   n_group_weebo_admin_38219b("weebo_admin (superuser)")
   n_group_batleforc_a99536("batleforc")
+  n_group_batleforc_org_owner_78e71b("batleforc-org_owner")
+  n_group_batleforc_org_maintainer_e8bbc5("batleforc-org_maintainer")
+  n_group_batleforc_org_dev_267fd6("batleforc-org_dev")
   n_user_batleforc_01dd2e(["👤 batleforc"])
   n_user_batleforc_test_74b72b(["👤 batleforc-test"])
   n_group_weebo_moderator_a8f585 -.->|"inclus dans"| n_group_weebo_user_58ae05
   n_group_weebo_admin_38219b -.->|"inclus dans"| n_group_weebo_moderator_a8f585
   n_user_batleforc_01dd2e -->|"membre"| n_group_weebo_admin_38219b
   n_user_batleforc_01dd2e -->|"membre"| n_group_batleforc_a99536
+  n_user_batleforc_01dd2e -->|"membre"| n_group_batleforc_org_owner_78e71b
   n_user_batleforc_test_74b72b -->|"membre"| n_group_weebo_user_58ae05
 ```
 
@@ -30,7 +34,7 @@ flowchart TB
 
 | Utilisateur | Nom | Email | Groupes directs | Groupes effectifs | Actif |
 |---|---|---|---|---|---|
-| `batleforc` | max | `max@weebo.internal` | `weebo_admin`, `batleforc` | `weebo_admin`, `weebo_moderator`, `weebo_user`, `batleforc` | oui |
+| `batleforc` | max | `max@weebo.internal` | `weebo_admin`, `batleforc`, `batleforc-org_owner` | `weebo_admin`, `weebo_moderator`, `weebo_user`, `batleforc`, `batleforc-org_owner` | oui |
 | `batleforc-test` | batleforc-test | `batleforc-test@weebo.internal` | `weebo_user` | `weebo_user` | oui |
 
 ## Applications Argo CD visibles
@@ -51,14 +55,17 @@ Ces rôles, comme les RoleBindings `labsso:<email>` de l'apiserver, font confian
 
 « ✅ » : la politique d'accès de l'application vise ce groupe ; « ✅ hérité » : elle vise un parent, que ce groupe satisfait.
 
-|  | angos | argo | argo-admin | batlehub | che-cluster | clickstack | endpoint-gateway | forgejo | kube-admin | longhorn | s3 | stalwart |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `weebo_user` | — | ✅ | — | — | — | — | — | — | — | — | — | ✅ |
-| `weebo_moderator` | ✅ | ✅ hérité | — | ✅ | ✅ | — | ✅ | ✅ | — | — | ✅ | ✅ hérité |
-| `weebo_admin` | ✅ hérité | ✅ hérité | ✅ | ✅ hérité | ✅ hérité | ✅ | ✅ hérité | ✅ hérité | ✅ | ✅ | ✅ hérité | ✅ hérité |
-| `batleforc` | — | — | — | — | — | — | — | — | — | — | — | — |
-| 👤 `batleforc` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 👤 `batleforc-test` | — | ✅ | — | — | — | — | — | — | — | — | — | ✅ |
+|  | angos | argo | argo-admin | batlehub | che-cluster | clickstack | endpoint-gateway | forgejo | kube-admin | longhorn | openbao | s3 | stalwart |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `weebo_user` | — | ✅ | — | — | — | — | — | — | — | — | ✅ | — | ✅ |
+| `weebo_moderator` | ✅ | ✅ hérité | — | ✅ | ✅ | — | ✅ | ✅ | — | — | ✅ hérité | ✅ | ✅ hérité |
+| `weebo_admin` | ✅ hérité | ✅ hérité | ✅ | ✅ hérité | ✅ hérité | ✅ | ✅ hérité | ✅ hérité | ✅ | ✅ | ✅ hérité | ✅ hérité | ✅ hérité |
+| `batleforc` | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `batleforc-org_owner` | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `batleforc-org_maintainer` | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `batleforc-org_dev` | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| 👤 `batleforc` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 👤 `batleforc-test` | — | ✅ | — | — | — | — | — | — | — | — | ✅ | — | ✅ |
 
 ## Claims émises
 
@@ -97,6 +104,7 @@ Chaque endroit du rendu (et de la configuration Pulumi d'Argo CD) qui nomme un g
 | `batleforc` | `batlehub` | `batlehub/BatleHubNamespaceClaim/go-batleforc-org` | `spec.group` |
 | `batleforc` | `forgejo` | `forgejo/Application/forgejo-app` | `spec.source.helm.valuesObject.gitea.oauth[0].groupTeamMap` |
 | `batleforc` | `che` | `eclipse-che/CheCluster/eclipse-che` | `spec.components.cheServer.extraProperties.CHE_SYSTEM_ADMIN_NAME` |
+| `batleforc` | `che` | `weebo-si-hardening/ForgejoNamespacePolicy/che-workspaces` | `spec.rules[0].allowedUsers[0]` |
 
 ### Argo CD (`1.pulu-conf`, `policy.csv`)
 

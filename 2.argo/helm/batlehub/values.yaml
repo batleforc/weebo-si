@@ -571,7 +571,7 @@ operator:
     name: weebo-batlehub
     repoURL: oci://ghcr.io/weebo-si-operator/charts/weebo-batlehub
     # renovate: datasource=docker depName=ghcr.io/weebo-si-operator/charts/weebo-batlehub
-    version: 0.6.0
+    version: 0.7.0
   # One replica, as for the other operators: the cluster has one worker, so a
   # second one buys a webhook that dies with the first. The chart's PDB
   # (minAvailable: 1) is turned off with it -- against a single replica it
@@ -696,14 +696,14 @@ ciliumNetworkPolicies:
             - {}
 
 # Egress of the operator (RFC 0007 §6.6): DNS and the API server, plus
-# BatleHub's admin API (pkg.weebo.poc, through Traefik). One
-# CiliumNetworkPolicy, 2.helm/weebo-base `operatorEgress`.
-operatorEgress:
+# BatleHub's admin API (pkg.weebo.poc, through Traefik). The operator chart's
+# own CiliumNetworkPolicy (networkPolicy.kind, kit >= 0.32.0).
+operatorNetworkPolicy:
   enabled: true
-  namespace: weebo-batlehub
-  endpointSelector:
-    matchLabels: { app.kubernetes.io/name: weebo-batlehub }
+  kind: CiliumNetworkPolicy
   egress:
-    - toEndpoints:
-        - matchLabels: { "k8s:io.kubernetes.pod.namespace": traefik, app.kubernetes.io/name: traefik }
-      toPorts: [{ ports: [{ port: "8443", protocol: TCP }] }]
+    enabled: true
+    batlehub:
+      - toEndpoints:
+          - matchLabels: { "k8s:io.kubernetes.pod.namespace": traefik, app.kubernetes.io/name: traefik }
+        toPorts: [{ ports: [{ port: "8443", protocol: TCP }] }]
