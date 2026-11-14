@@ -25,7 +25,9 @@ spec:
   deletionPolicy: Delete
   secretTargets:
     # The Secret the ExternalSecret below turns into Che's credential.
-    - name: {{ $name }}
+    # backend spelled out: the CRD defaults it, and Argo CD would see a diff.
+    - backend: kubernetes
+      name: {{ $name }}
     {{- with .Values.forgejo.vaultMount }}
     # The person's own space in OpenBao; the instance's pathGrants let
     # dev-ws-<username> write there and nowhere else.
