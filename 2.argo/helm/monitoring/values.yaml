@@ -113,7 +113,7 @@ clickstack:
     delete: []
   # Alerts on tiles of the managed dashboards above, sent to ntfy (RFC 0007
   # §10.1 for weebo-openbao). The topic URL lives in Vault at
-  # mv/monitoring/ntfy (URL, optional TOKEN): `task ntfy:set-url`. `tile` is a
+  # mv/monitoring/ntfy (URL, optional TOKEN): `task vault:ntfy`. `tile` is a
   # tile id of the dashboard's JSON; the alert fires when the tile's value is
   # above `threshold` (default 0) for `windows` consecutive `interval`s.
   # `priority` is ntfy's, 1 (min) to 5 (max); 2 and below make no sound.
