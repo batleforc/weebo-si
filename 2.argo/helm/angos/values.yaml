@@ -660,3 +660,13 @@ networkEgress:
     registry.access.redhat.com:
       - "*.redhat.com"
       - "*.redhat.io"
+
+# Egress of the operator (RFC 0007 §6.6): DNS and the API server, plus nothing
+# else: it renders the registry and never calls it. One CiliumNetworkPolicy,
+# 2.helm/weebo-base `operatorEgress`.
+operatorEgress:
+  enabled: true
+  namespace: weebo-angos
+  endpointSelector:
+    matchLabels: { app.kubernetes.io/name: weebo-angos }
+  egress: []

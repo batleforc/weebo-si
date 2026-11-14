@@ -160,3 +160,19 @@ dns:
 repo: ""
 project: ""
 branch: ""
+
+# Egress of the operator (RFC 0007 §6.6): DNS and the API server, plus
+# Authentik (auth.weebo.poc, through Traefik) and OpenBao (secretTargets). One
+# CiliumNetworkPolicy, 2.helm/weebo-base `operatorEgress`.
+operatorEgress:
+  enabled: true
+  namespace: auth
+  endpointSelector:
+    matchLabels: { app.kubernetes.io/name: weebo-authentik, app.kubernetes.io/instance: authentik }
+  egress:
+    - toEndpoints:
+        - matchLabels: { "k8s:io.kubernetes.pod.namespace": traefik, app.kubernetes.io/name: traefik }
+      toPorts: [{ ports: [{ port: "8443", protocol: TCP }] }]
+    - toEndpoints:
+        - matchLabels: { "k8s:io.kubernetes.pod.namespace": vault, vault_cr: openbao }
+      toPorts: [{ ports: [{ port: "8200", protocol: TCP }] }]

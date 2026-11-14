@@ -694,3 +694,16 @@ ciliumNetworkPolicies:
       ingress:
         - fromEndpoints:
             - {}
+
+# Egress of the operator (RFC 0007 §6.6): DNS and the API server, plus
+# BatleHub's admin API (pkg.weebo.poc, through Traefik). One
+# CiliumNetworkPolicy, 2.helm/weebo-base `operatorEgress`.
+operatorEgress:
+  enabled: true
+  namespace: weebo-batlehub
+  endpointSelector:
+    matchLabels: { app.kubernetes.io/name: weebo-batlehub }
+  egress:
+    - toEndpoints:
+        - matchLabels: { "k8s:io.kubernetes.pod.namespace": traefik, app.kubernetes.io/name: traefik }
+      toPorts: [{ ports: [{ port: "8443", protocol: TCP }] }]

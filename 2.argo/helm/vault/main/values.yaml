@@ -46,3 +46,16 @@ openbao:
     # Same list as local.spaces_namespaces in weebo-openbao.tf: the policy
     # grants nothing outside it, this list refuses it before OpenBao does.
     namespaces: [devenv, recette, preprod, prod, users]
+
+# Egress of the operator (RFC 0007 §6.6): DNS and the API server, plus
+# OpenBao, its only remote system. One CiliumNetworkPolicy, 2.helm/weebo-base
+# `operatorEgress`.
+operatorEgress:
+  enabled: true
+  namespace: weebo-openbao
+  endpointSelector:
+    matchLabels: { app.kubernetes.io/name: weebo-openbao }
+  egress:
+    - toEndpoints:
+        - matchLabels: { "k8s:io.kubernetes.pod.namespace": vault, vault_cr: openbao }
+      toPorts: [{ ports: [{ port: "8200", protocol: TCP }] }]

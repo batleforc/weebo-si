@@ -146,3 +146,52 @@ entries:
 {{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+weebo-base.operatorEgress: the egress of a weebo operator (RFC 0007 §6.6),
+one CiliumNetworkPolicy `operator-egress`, on its own switch so it does not
+depend on the chart's ciliumNetworkPolicies.enabled:
+
+  operatorEgress:
+    enabled: true
+    namespace: weebo-forgejo
+    endpointSelector: {matchLabels: {app.kubernetes.io/name: weebo-forgejo}}
+    egress: []          # what the operator reaches besides DNS and the API server
+
+DNS to kube-dns and the API server (`kube-apiserver` entity, 6443) come
+first: Cilium does not match the kit chart's NetworkPolicy `ipBlock` against
+the API server's identity, which is why the operators' own NetworkPolicy
+stays off. Egress only: ingress (webhook, metrics, probes) is unchanged.
+*/}}
+{{- define "weebo-base.operatorEgress" -}}
+{{- $o := .Values.operatorEgress | default dict -}}
+{{- if $o.enabled -}}
+{{- $base := list
+  (dict "toEndpoints" (list (dict "matchLabels" (dict "k8s:io.kubernetes.pod.namespace" "kube-system" "k8s-app" "kube-dns")))
+        "toPorts" (list (dict "ports" (list (dict "port" "53" "protocol" "ANY")))))
+  (dict "toEntities" (list "kube-apiserver")
+        "toPorts" (list (dict "ports" (list (dict "port" "6443" "protocol" "TCP")))))
+-}}
+{{- $p := dict "namespace" $o.namespace "endpointSelector" $o.endpointSelector "allowHost" false "egress" (concat $base ($o.egress | default list)) -}}
+{{- if not (hasKey $o "endpointSelector") -}}
+{{- fail (printf "%s: operatorEgress.endpointSelector is required" .Chart.Name) -}}
+{{- end -}}
+{{- include "weebo-base.validateCiliumPolicy" (dict "chart" .Chart.Name "name" "operator-egress" "policy" $p) }}
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: operator-egress
+  namespace: {{ $o.namespace }}
+  labels:
+    app.kubernetes.io/managed-by: weebo-base
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  endpointSelector:
+    {{- toYaml $o.endpointSelector | nindent 4 }}
+  egress:
+    {{- toYaml $p.egress | nindent 4 }}
+{{- end -}}
+{{- end -}}
