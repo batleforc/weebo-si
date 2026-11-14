@@ -286,6 +286,7 @@ def main():
     names = build_reference_map()
     for name, (source, payload) in desired.items():
         resolve_references(payload, names, source)
+    stale_webhooks = inject_alerts(desired)
 
     # Names are only unique among provisioned dashboards upstream, so group
     # rather than assuming one document per name.
@@ -348,8 +349,11 @@ def main():
                 f"/dashboards/{dashboard_id(dashboard)}",
             )
 
+    # After the dashboards: an alert still pointing at a stale webhook has
+    # just been moved to its new one, or dropped with its tile.
+    for name, wid in stale_webhooks:
+        act(f"prune webhook {name!r}", "DELETE", f"/webhooks/{wid}")
     print("dashboards reconciled")
-    sync_alerts()
 
 
 def check_ntfy_url(url):
@@ -420,33 +424,24 @@ def sync_webhooks(priorities):
     return ids, stale
 
 
-def sync_alerts():
+def inject_alerts(desired):
+    """Put each alert of ALERTS in `config.alert` of its tile, in the
+    dashboard payloads about to be written. HyperDX keeps tile alerts in
+    step with that field on every create and PATCH (syncDashboardAlerts):
+    an alert is upserted by (dashboard, tile), so it keeps its id, state and
+    history; a tile without the field loses its alert. Without NTFY_URL no
+    alert is injected, so the managed dashboards carry none."""
     if not NTFY_URL:
-        print("alerts: no NTFY_URL (task vault:ntfy), alerts left as they are")
-        return
-    dashboards = {
-        d.get("name"): d
-        for d in get_json("/dashboards", "dashboards")
-        if MANAGED_TAG in (d.get("tags") or [])
-    }
+        print("alerts: no NTFY_URL (task vault:ntfy), no alert on the dashboards")
+        return []
     webhooks, stale_webhooks = sync_webhooks({a["priority"] for a in ALERTS})
-    current = {
-        (str(a.get("dashboardId")), a.get("tileId")): dashboard_id(a)
-        for a in get_json(f"/alerts?tag={MANAGED_TAG}", "alerts")
-    }
-    wanted = set()
     for alert in ALERTS:
-        dashboard = dashboards.get(alert["dashboard"])
-        tiles = {t.get("id") for t in (dashboard or {}).get("tiles", [])}
-        if dashboard is None or alert["tile"] not in tiles:
+        _, payload = desired.get(alert["dashboard"], (None, {}))
+        tile = next((t for t in payload.get("tiles", []) if t.get("id") == alert["tile"]), None)
+        if tile is None:
             fail(f"alert {alert['name']!r}: no tile {alert['tile']!r} on "
-                 f"managed dashboard {alert['dashboard']!r}")
-        key = (dashboard_id(dashboard), alert["tile"])
-        wanted.add(key)
-        body = {
-            "source": "tile",
-            "dashboardId": key[0],
-            "tileId": key[1],
+                 f"dashboard {alert['dashboard']!r} in git")
+        tile.setdefault("config", {})["alert"] = {
             "interval": alert["interval"],
             "threshold": alert.get("threshold", 0),
             "thresholdType": "above_exclusive",
@@ -456,21 +451,8 @@ def sync_alerts():
             "tags": [MANAGED_TAG],
             "channel": {"type": "webhook", "webhookId": webhooks[alert["priority"]]},
         }
-        if key in current:
-            act(f"update alert {alert['name']!r}", "PUT", f"/alerts/{current[key]}", body)
-        else:
-            act(f"create alert {alert['name']!r}", "POST", "/alerts", body)
-    # shortcut: the dashboard PATCH above drops the alerts of its tiles, so
-    # they are recreated on every run (state and history start over); keep
-    # them on a dashboard the Job doesn't rewrite if that history matters.
-    for key, alert_id in current.items():
-        if key not in wanted:
-            act(f"prune alert on tile {key[1]!r} (no longer in values)",
-                "DELETE", f"/alerts/{alert_id}")
-    for name, wid in stale_webhooks:
-        act(f"prune webhook {name!r}", "DELETE", f"/webhooks/{wid}")
-    print("alerts reconciled")
-
+        print(f"alert {alert['name']!r} on tile {alert['tile']!r}")
+    return stale_webhooks
 
 if __name__ == "__main__":
     main()
