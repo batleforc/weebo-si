@@ -16,6 +16,7 @@ metadata:
   finalizers:
   - resources-finalizer.argocd.argoproj.io
   annotations:
+    argocd.argoproj.io/manifest-generate-paths: "/2.argo/helm/che/endpoint-gateway"
     # After the operator (wave 1): the gateway watches its CRDs.
     argocd.argoproj.io/sync-wave: "2"
 spec:

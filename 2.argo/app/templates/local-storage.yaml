@@ -5,55 +5,16 @@ metadata:
   name: local-storage
   namespace: argocd
   annotations:
+    argocd.argoproj.io/manifest-generate-paths: "."
     argocd.argoproj.io/sync-wave: "0"
 spec:
   # Not `default`: that project is locked (lockDefaultProject).
   project: {{ .Values.storage.main.project }}
+  # The kustomization (upstream deploy/ + our patches) lives in this repo.
   source:
-    repoURL: 'https://github.com/rancher/local-path-provisioner'
-    path: 'deploy'
-    kustomize:
-      patches:
-      - patch: |-
-          kind: ConfigMap
-          apiVersion: v1
-          metadata:
-            name: local-path-config
-            namespace: local-path-storage
-          data:
-            config.json: |-
-              {
-                      "nodePathMap":[
-                        {
-                          "node":"DEFAULT_PATH_FOR_NON_LISTED_NODES",
-                          "paths":["/var/local-path-provisioner","/var/mnt/longhorn"]
-                        }
-                      ]
-              }
-      # Longhorn's chart also claims the default class (persistence.defaultClass),
-      # so leaving this at "true" left the cluster with two defaults and let the
-      # API server pick between them by creation timestamp -- a PVC with no
-      # storageClassName could land on either, and which one depended on the last
-      # reinstall. Longhorn wins on purpose: it is the class that snapshots,
-      # reports usage per volume and survives a node rebuild. local-path stays
-      # available, but a claim has to name it.
-      - patch: |-
-          apiVersion: storage.k8s.io/v1
-          kind: StorageClass
-          metadata:
-            name: local-path
-            annotations:
-              storageclass.kubernetes.io/is-default-class: "false"
-          provisioner: rancher.io/local-path
-          parameters:
-            nodePath: /var/local-path-provisioner
-      - patch: |-
-          apiVersion: v1
-          kind: Namespace
-          metadata:
-            name: local-path-storage
-            labels:
-              pod-security.kubernetes.io/enforce: privileged
+    repoURL: '{{ .Values.repo }}'
+    path: '2.argo/helm/local-storage'
+    targetRevision: '{{ .Values.branch }}'
 
   destination:
     name: "in-cluster"

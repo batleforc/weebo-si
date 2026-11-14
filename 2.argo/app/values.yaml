@@ -116,10 +116,10 @@ project:
       # RFC 0007: the operator of openbao's namespaces (vault/main, openbao.*).
       - oci://ghcr.io/weebo-si-operator/charts/weebo-openbao
       # vault/main's operators (bank-vaults, external-secrets), spelled as
-      # their Applications spell them, and local-storage.
+      # their Applications spell them. local-storage needs no entry: its
+      # kustomization is in this repo (2.argo/helm/local-storage).
       - ghcr.io/external-secrets/charts
       - ghcr.io/bank-vaults/helm-charts
-      - https://github.com/rancher/local-path-provisioner
     includeBaseRepo: true
     # The namespaces the infra Applications actually manage (live inventory,
     # 2026-11-05), not `*`: a new one is an explicit edit here. kube-system:
