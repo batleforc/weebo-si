@@ -151,6 +151,12 @@ forgejo:
       batleforc:
         batleforc-org:
           - Owners
+        batlehub:
+          - Owners
+        weebo-si:
+          - Owners
+        weebo-si-operator:
+          - Owners
     groupTeamMapRemoval: true
     # Accounts come from Authentik only: no sign-up form, and a first SSO
     # login creates the user. NOT `DISABLE_REGISTRATION`, which also refuses
@@ -254,12 +260,22 @@ operator:
     - name: batleforc-org
       fullName: batleforc
       visibility: public
+    # Same names as the GitHub organizations they mirror.
+    - name: batlehub
+      visibility: public
+    - name: weebo-si
+      visibility: public
+    - name: weebo-si-operator
+      visibility: public
 
   # Pull mirrors of the GitHub repositories (templates/operator/mirrors.yaml),
   # one ForgejoRepository each in `organization`: what a workspace clones and
   # fetches from, through git's insteadOf, while pushes keep going to GitHub.
   # Read-only by nature: Forgejo refuses a push to a pull mirror.
-  # `source` defaults to github.com/batleforc/<name>. A `private` entry needs
+  # `source` defaults to github.com/batleforc/<name>, `organization` per entry
+  # to the one below; moving an entry transfers the repository in Forgejo
+  # (the template adds the disruptive-update annotation the operator asks
+  # for). A `private` entry needs
   # the GitHub token and is left out until githubToken.enabled.
   mirrors:
     organization: batleforc-org
@@ -275,12 +291,12 @@ operator:
       - name: ProxyAuthK8S
       - name: WeeboDevImage
       - name: weebo-os
-      - name: weebo-operator-kit
-      - name: weebo-forgejo
-      - name: weebo-stalwart
-      - name: weebo-authentik
-      - name: weebo-angos
-      - name: weebo-batlehub
+      - { name: weebo-operator-kit, organization: weebo-si-operator }
+      - { name: weebo-forgejo, organization: weebo-si-operator }
+      - { name: weebo-stalwart, organization: weebo-si-operator }
+      - { name: weebo-authentik, organization: weebo-si-operator }
+      - { name: weebo-angos, organization: weebo-si-operator }
+      - { name: weebo-batlehub, organization: weebo-si-operator }
       - name: weebo-base
       - name: weebo-che-project
       - name: weebo-dotfiles-che
@@ -290,6 +306,7 @@ operator:
       # weebo-batlehub's cargo git dependency (github.com/batleforc/batlehub
       # redirects there).
       - name: batlehub
+        organization: batlehub
         source: https://github.com/batlehub/batlehub.git
       - name: openidea
         source: https://github.com/l0ng-ai/openidea.git

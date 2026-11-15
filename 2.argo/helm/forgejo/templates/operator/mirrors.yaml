@@ -47,9 +47,13 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "6"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    {{- if .organization }}
+    # Lets the operator transfer it out of {{ $m.organization }}.
+    forgejo.weebo.io/allow-disruptive-update: "true"
+    {{- end }}
 spec:
   organizationRef:
-    name: {{ $m.organization }}
+    name: {{ .organization | default $m.organization }}
   name: {{ .name }}
   private: {{ .private | default false }}
   migrate:
