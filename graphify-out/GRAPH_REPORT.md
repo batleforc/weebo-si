@@ -1,7 +1,7 @@
 # Graph Report - weebo-si  (2026-11-15)
 
 ## Corpus Check
-- 567 files · ~281,349 words
+- 567 files · ~281,581 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 95 file(s) not represented in the graph (top: (none) 35, .woff2 18, .tpl 16)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f1a7be29`
+- Built from commit: `a69b91d3`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -984,7 +984,7 @@ Nodes (12): description, engines, node, name, private, scripts, build, check (+4
 
 ### Community 104 - "upgrade-talos-cilium.mdx"
 Cohesion: 0.15
-Nodes (12): Avant de commencer, Les pièges propres à ce cluster, Ordre des étapes, Sources, Vérifications après chaque étape, Étape 1 : Talos 1.13.5 → 1.13.12 (faite le 04/11/2026), Étape 2 bis : valeurs Cilium en reset (Cilium reste en 1.18.16), schematic d'upgrade remplacé, Étape 2 : Cilium 1.18.10 → 1.18.16 (faite le 05/11/2026) (+4 more)
+Nodes (12): Avant de commencer, Les pièges propres à ce cluster, Ordre des étapes, Sources, Vérifications après chaque étape, Étape 1 : Talos 1.13.5 → 1.13.12 (faite le 04/11/2026), Étape 2 bis : valeurs Cilium en reset (Cilium reste en 1.18.16), schematic d'upgrade remplacé (faite le 15/11/2026), Étape 2 : Cilium 1.18.10 → 1.18.16 (faite le 05/11/2026) (+4 more)
 
 ### Community 105 - ".oxlintrc.json"
 Cohesion: 0.17
@@ -2583,4 +2583,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `rustfs` be split into smaller, more focused modules?**
   _Cohesion score 0.044444444444444446 - nodes in this community are weakly interconnected._
 - **Why does `authentik()` connect `batlehub-theme` to `authflow.py`, `argorender.py`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._

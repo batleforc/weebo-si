@@ -5,13 +5,13 @@ description: "Passer de Talos 1.13 / Cilium 1.18 à Talos 1.14 / Cilium 1.20 san
 
 Le cluster tourne sur **un seul nœud** (`talos-r2k-rp0`, `37.187.255.5`), qui est à la fois control plane et worker. Chaque redémarrage de Talos ou de l'agent Cilium coupe donc tout le cluster, VM et workspaces compris. On monte une version à la fois et on vérifie entre chaque étape.
 
-État au 15 novembre 2026 (étapes 1 et 2 faites) :
+État au 15 novembre 2026 (étapes 1, 2, 2 bis et 3 faites) :
 
 | Composant | Version | Où elle est fixée |
 | --- | --- | --- |
 | Talos | v1.13.12 | `1.pulu-init/Pulumi.dev.yaml` → `talosVersion` |
 | Kubernetes | v1.36.2 | `1.pulu-init/Pulumi.dev.yaml` → `kubeVersion` |
-| Cilium | v1.18.16 | `1.pulu-init/Pulumi.dev.yaml` → `ciliumVersion`, valeurs dans `1.pulu-init/cilium-values.yaml`, qui décrit toute la release depuis l'étape 2 bis |
+| Cilium | v1.19.10 | `1.pulu-init/Pulumi.dev.yaml` → `ciliumVersion`, valeurs dans `1.pulu-init/cilium-values.yaml`, qui décrit toute la release depuis l'étape 2 bis |
 
 `talosVersion` et `ciliumVersion` dans `1.pulu-conf/Pulumi.dev.yaml` ne servent à rien : `1.pulu-conf/main.go` ne lit que `argoAppsVersion`. Ne pas s'y fier.
 
@@ -21,8 +21,8 @@ Le cluster tourne sur **un seul nœud** (`talos-r2k-rp0`, `37.187.255.5`), qui e
 graph LR
     S0["0. Prérequis<br/>sauvegardes"] --> S1["1. Talos 1.13.12 ✓"]
     S1 --> S2["2. Cilium 1.18.16 ✓"]
-    S2 --> S2b["2 bis. Cilium : reset des valeurs<br/>+ netbird dans le schematic"]
-    S2b --> S3["3. Cilium 1.19.10"]
+    S2 --> S2b["2 bis. Cilium : reset des valeurs<br/>+ netbird dans le schematic ✓"]
+    S2b --> S3["3. Cilium 1.19.10 ✓"]
     S3 --> S4["4. Talos 1.14.6"]
     S4 --> S5["5. Cilium 1.20.5+"]
     S5 --> S6["6. Kubernetes 1.37"]
@@ -249,7 +249,9 @@ Le bug de la 1.18.8 où l'agent plantait au démarrage avec Talos, KPR et le pro
 
 **Retour arrière** : remettre `ciliumVersion: v1.18.10` puis `task pulunit:up`. Si Pulumi échoue, `helm rollback cilium -n kube-system`, puis remettre l'état Pulumi en cohérence.
 
-## Étape 2 bis : valeurs Cilium en reset (Cilium reste en 1.18.16), schematic d'upgrade remplacé
+## Étape 2 bis : valeurs Cilium en reset (Cilium reste en 1.18.16), schematic d'upgrade remplacé (faite le 15/11/2026)
+
+Résultat : release Helm 8, rollouts terminés, `helm get values` égal au fichier, `cilium-config` identique à l'octet près (seules les `podAnnotations` du pod agent ont disparu). Vérifications 1 à 8 OK, sauf la 4 : aucun workspace ne tournait, c'est à refaire au prochain démarrage. Nouveau schematic d'upgrade `cdfbdfff…` (netbird + fuse3). `configurationApply` n'a changé que `install.image`, **sans redémarrage** (même `boot_id`). Le preview suivant est vide (13 inchangées).
 
 Un `up` sans changement de version, pour essayer les deux nouveaux comportements du provider (`Reset`, `Wait: false`) seuls, sans les mélanger avec le passage en 1.19. Il coûte une coupure de plus, courte : l'agent redémarre, parce que la suppression des `podAnnotations` change le template du DaemonSet. Décidé le 15/11/2026 : étape séparée de l'étape 3, pour savoir lequel des deux changements est en cause en cas de problème.
 
@@ -284,7 +286,13 @@ Vérifié le 15/11/2026 avant l'opération :
 
 **Retour arrière** : Cilium : remettre `cilium-values.yaml` et `main.go`, `up --target` sur l'Install, ou en dernier recours `helm rollback cilium -n kube-system`, puis remettre l'état en cohérence. Schematic : sans conséquence tant qu'aucun `talosctl upgrade` n'a utilisé la nouvelle image. Remettre l'ancienne liste dans `main.go` et refaire le `--replace`.
 
-## Étape 3 : Cilium 1.18.16 → 1.19.10
+## Étape 3 : Cilium 1.18.16 → 1.19.10 (faite le 15/11/2026)
+
+Résultat : le `preview` ne montrait que `version`. Helm a fini en 9 s (release 9), et l'`Install` a rendu la main tout de suite grâce à `Wait: false`. Tous les rollouts étaient terminés en moins d'une minute (Envoy passe en 1.38.8). La release est restée égale au fichier. Vérifications OK : Cilium Ok, tunnel vxlan, iptables, socket-LB `cgroup_id 1` en v4 et v6, `src_valid_mark=0`, aucun drop, aucun CEP manquant, Longhorn sain, Hubble relay reconnecté, DNS et HTTPS sortant OK depuis `argocd-repo-server`. Le point 4 (DNS sous `toFQDNs`) reste à faire au prochain démarrage d'un workspace.
+
+Deux choses à savoir pour la prochaine fois :
+- juste après le démarrage de l'agent, `cilium-health status` affiche `0/0 reachable (Probe interval: 0s)` pendant environ 1 min 30, le temps du premier sondage. Ensuite : `1/1`. Ce n'est pas une panne ;
+- en 1.19, le conteneur d'init `config` passe de `capabilities: null` à `drop: [ALL]`, `add: [NET_ADMIN]`. C'est un durcissement, sans effet ici.
 
 À lire avant : [notes de mise à jour 1.19](https://docs.cilium.io/en/v1.19/operations/upgrade/). Ce qui concerne ce cluster :
 

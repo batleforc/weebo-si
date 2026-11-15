@@ -312,9 +312,9 @@
     "semantic_hash": ""
   },
   "1.pulu-init/Pulumi.dev.yaml": {
-    "mtime": 1793833528.024592,
-    "seen": 1793903263.3212318,
-    "ast_hash": "413ea1cdc177e735dde803dfc4c1178e",
+    "mtime": 1794708211.3898883,
+    "seen": 1794708459.5871315,
+    "ast_hash": "dfe4b3482df1842e1581dfcc9dadd2a8",
     "semantic_hash": ""
   },
   "1.pulu-init/Pulumi.yaml": {
@@ -1248,9 +1248,9 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/runbooks/upgrade-talos-cilium.mdx": {
-    "mtime": 1794706644.8645275,
-    "seen": 1794706668.7181702,
-    "ast_hash": "18959481ec58396a4f9bcdaed1591b7f",
+    "mtime": 1794708449.2822015,
+    "seen": 1794708459.5945191,
+    "ast_hash": "1c7d6a4f94754fe40d1de78a51f704a0",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/index.mdx": {
@@ -1764,8 +1764,8 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/index.mdx": {
-    "mtime": 1794702815.8596497,
-    "seen": 1794705183.1121194,
+    "mtime": 1794707178.4180465,
+    "seen": 1794707580.8688755,
     "ast_hash": "d77f29537a49ba26358d050e41d92e8d",
     "semantic_hash": ""
   },
@@ -1824,8 +1824,8 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/meta.json": {
-    "mtime": 1794702815.8620882,
-    "seen": 1794705183.105492,
+    "mtime": 1794707178.4208217,
+    "seen": 1794707580.8616545,
     "ast_hash": "707e70b3b405cb2435d5319d00340159",
     "semantic_hash": ""
   },
@@ -1842,26 +1842,26 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/applications.mdx": {
-    "mtime": 1794702815.8605337,
-    "seen": 1794705183.1121166,
+    "mtime": 1794707178.4190457,
+    "seen": 1794707580.8688717,
     "ast_hash": "67c0c2b80891f12e7bf988edeab6794c",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/flux.mdx": {
-    "mtime": 1794702815.861348,
-    "seen": 1794705183.1121182,
+    "mtime": 1794707178.4200065,
+    "seen": 1794707580.8688734,
     "ast_hash": "f8ea2b54121fcaeeea31b9ae6929dcd8",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/groupes.mdx": {
-    "mtime": 1794702815.8610518,
-    "seen": 1794705183.1121187,
+    "mtime": 1794707178.4197228,
+    "seen": 1794707580.8688745,
     "ast_hash": "3bb6e4b9cdab6573fceafee4b5bf9195",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/kubernetes.mdx": {
-    "mtime": 1794702815.8615212,
-    "seen": 1794705183.1121204,
+    "mtime": 1794707178.4202101,
+    "seen": 1794707580.8688765,
     "ast_hash": "298ce584377650ffceb8b0c879606d84",
     "semantic_hash": ""
   },
@@ -1872,8 +1872,8 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/argocd.mdx": {
-    "mtime": 1794702815.8619812,
-    "seen": 1794705183.1121175,
+    "mtime": 1794707178.420742,
+    "seen": 1794707580.8688726,
     "ast_hash": "f11724f935e62580c8b5a330f90ce122",
     "semantic_hash": ""
   },
