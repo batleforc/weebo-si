@@ -34,8 +34,37 @@ spec:
         - name: forgejo-http
           namespace: {{ .Release.Namespace }}
           port: 3000
+    # The dashboard's repo list polls /repo/search (JSON). Once the session
+    # has expired, Forgejo answers it with a 303 to /user/login AND a
+    # redirect_to=/repo/search?... cookie, so the next SSO login lands on that
+    # JSON. Forgejo has no setting for it (only /user/events is exempt), so
+    # the cookies are dropped here; the endpoint never needs to set one.
+    - kind: Rule
+      match: Host(`{{ .Values.forgejo.dns }}`) && Path(`/repo/search`)
+      priority: 20
+      middlewares:
+        - name: forgejo-no-set-cookie
+      services:
+        - name: forgejo-http
+          namespace: {{ .Release.Namespace }}
+          port: 3000
   tls:
     secretName: forgejo-tls
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: forgejo-no-set-cookie
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: forgejo
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  headers:
+    # An empty value removes the header.
+    customResponseHeaders:
+      Set-Cookie: ""
 ---
 # http://<dns> -> https://<dns>, permanent. Without it plain HTTP falls through
 # to the error-pages catch-all (ingress chart) and answers 404. The service is
