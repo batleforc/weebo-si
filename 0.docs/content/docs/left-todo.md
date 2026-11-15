@@ -94,6 +94,7 @@ description: "What's left to do ?"
   - [ ] podman build/run ?
   - [ ] CI/CD pipelines
   - [ ] Dev Environment
+- [ ] Mise en place [Talosctl-OIDC](https://github.com/qjoly/talosctl-oidc) pour l'administration du cluster (Talosctl + OIDC Authentik)
 
 ## Documentation
 
