@@ -210,9 +210,9 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/runbooks/meta.json": {
-    "mtime": 1794706173.4248803,
-    "seen": 1794706227.3974385,
-    "ast_hash": "a990e3615ba1b2e7709b2c293f09da01",
+    "mtime": 1794710628.9760022,
+    "seen": 1794710654.7900014,
+    "ast_hash": "3d4f46157bc81bba5d360da13b88ef86",
     "semantic_hash": ""
   },
   "0.docs/package.json": {
@@ -312,9 +312,9 @@
     "semantic_hash": ""
   },
   "1.pulu-init/Pulumi.dev.yaml": {
-    "mtime": 1794708211.3898883,
-    "seen": 1794708459.5871315,
-    "ast_hash": "dfe4b3482df1842e1581dfcc9dadd2a8",
+    "mtime": 1794708745.0126662,
+    "seen": 1794709913.2104356,
+    "ast_hash": "b3e9cb298cbea07c77b33725f3b439bf",
     "semantic_hash": ""
   },
   "1.pulu-init/Pulumi.yaml": {
@@ -1242,15 +1242,15 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/runbooks/index.mdx": {
-    "mtime": 1794706173.4269567,
-    "seen": 1794706227.4058857,
-    "ast_hash": "b3f401f899652372446f6751f8be1a21",
+    "mtime": 1794710629.041296,
+    "seen": 1794710654.7969372,
+    "ast_hash": "75358c6a37f47c570ff699c773a1fe31",
     "semantic_hash": ""
   },
   "0.docs/content/docs/runbooks/upgrade-talos-cilium.mdx": {
-    "mtime": 1794708449.2822015,
-    "seen": 1794708459.5945191,
-    "ast_hash": "1c7d6a4f94754fe40d1de78a51f704a0",
+    "mtime": 1794709902.6975448,
+    "seen": 1794709913.218748,
+    "ast_hash": "3a1ad1eb7da887049f5c4c10d40e7f24",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/index.mdx": {
@@ -1959,6 +1959,12 @@
     "mtime": 1794706197.5603867,
     "seen": 1794706227.4058883,
     "ast_hash": "592d5c3a716f647808bb96c0a270eb28",
+    "semantic_hash": ""
+  },
+  "0.docs/content/docs/runbooks/secureboot-faisabilite.mdx": {
+    "mtime": 1794710626.7088118,
+    "seen": 1794710654.797009,
+    "ast_hash": "e6b3d5c9bdbce34bd7cefebf803b4059",
     "semantic_hash": ""
   },
   "0.docs/yarn.lock": {

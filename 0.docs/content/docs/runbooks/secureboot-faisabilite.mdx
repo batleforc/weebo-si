@@ -1,0 +1,69 @@
+---
+title: Secure Boot (faisabilité)
+description: "Peut-on démarrer le nœud en Secure Boot, et qu'est-ce que ça protège vraiment sans TPM : état des lieux du 15/11/2026"
+---
+
+<Callout type="info" title="Rapport, pas une procédure">
+Rien n'a été modifié sur le nœud. Constat fait le 15/11/2026, en Talos 1.14.6, avec `talosctl get securitystate`, `dmesg` et la doc Talos 1.14 « SecureBoot » et « Disk encryption ».
+</Callout>
+
+## En bref
+
+- **Secure Boot seul : faisable**, probablement sans réinstallation, mais avec un accès au BIOS par le KVM OVH et une fenêtre de maintenance. Le nœud démarre déjà en UKI via systemd-boot, ce qui écarte le seul cas que Talos déclare non supporté (GRUB → UKI).
+- **Trusted Boot complet (Secure Boot + chiffrement du disque scellé dans le TPM) : pas faisable aujourd'hui.** Le serveur n'a **pas de TPM**, et la plateforme n'a pas de TPM firmware.
+- **Gain réel limité** pour un serveur loué : celui qui a accès au compte OVH a aussi accès au BIOS par le KVM, et peut désactiver Secure Boot. Le bénéfice principal serait de bloquer une modification hors ligne de l'ESP ou de l'UKI, par exemple depuis le mode rescue OVH, sans être vu.
+
+## Le matériel
+
+| | Constat | Source |
+| --- | --- | --- |
+| Carte mère | Supermicro **X10SRi-F**, BIOS AMI 3.4.V1 (09/03/2023), UEFI 2.4 | `dmesg` (`DMI:`) |
+| CPU | Xeon E5-1650 v3 (Haswell-EP, chipset C612) | `/proc/cpuinfo` |
+| Démarrage | UEFI, **UKI via systemd-boot** (`bootedWithUKI: true`), ESP de 2,2 Go | `get securitystate`, `discoveredvolumes` |
+| Secure Boot | **désactivé** (`secureBoot: false`, « Secure boot disabled ») | `get securitystate`, `dmesg` |
+| Signature des modules | déjà imposée (`module.sig_enforce=1`, `moduleSignatureEnforced: true`) | cmdline |
+| TPM | **absent** : « TPM device is not available », `/sys/class/tpm` vide alors que les pilotes sont compilés dans le noyau | `dmesg` |
+
+Pour le TPM : le C612 n'a pas de TPM firmware (Intel PTT). La X10SRi-F a un connecteur TPM, mais il faut y brancher un module physique (gamme AOM-TPM de Supermicro). Ce serait à demander à OVH, qui ne le propose probablement pas sur cette gamme.
+
+## Ce que Talos fournit
+
+- **Images signées par Sidero** via l'Image Factory. Elles existent pour notre schematic `cdfbdfff…` (vérifié) :
+  - ISO `metal-amd64-secureboot.iso` ;
+  - disques `metal-amd64-secureboot.qcow2` / `.raw.zst` ;
+  - installer `factory.talos.dev/metal-installer-secureboot/<schematic>:v1.14.6`.
+
+  Les extensions (iscsi-tools, netbird, fuse3…) sont incluses et signées avec l'UKI.
+- **Enrôlement des clés** : sur du matériel physique, Talos n'enrôle pas les clés automatiquement (`secure-boot-enroll: if-safe` ne le fait qu'en VM). Deux voies :
+  - booter l'**ISO Secure Boot** par le média virtuel du KVM, avec le firmware en *Setup Mode*, puis choisir « Enroll Secure Boot keys: auto » dans le menu systemd-boot. Seule l'ISO dépose les fichiers `.auth` sur l'ESP ([talos#13470](https://github.com/siderolabs/talos/issues/13470)) ;
+  - ou enrôler à la main dans le BIOS AMI le certificat de signature Sidero ([signing-cert.pem](https://factory.talos.dev/secureboot/signing-cert.pem)), **en ajout** dans `db`. Garder les clés Microsoft déjà présentes : les option ROMs de la carte réseau et du contrôleur sont signées par la CA UEFI de Microsoft.
+- **Réinstallation** : la doc 1.14 précise seulement qu'on ne peut pas passer de GRUB à UKI/Secure Boot sans réinstaller. Le nœud est déjà en UKI. Le passage par un `talosctl upgrade` vers l'installer Secure Boot devrait donc marcher, mais **ce n'est pas documenté explicitement** : à valider sur une VM avant de le faire sur le nœud.
+
+## Ce que ça change au quotidien
+
+- **Plus de kexec** : avec Secure Boot, chaque redémarrage et chaque upgrade repasse par le firmware. Sur une X10, le POST prend plusieurs minutes, donc chaque coupure s'allonge d'autant.
+- **Le lockdown noyau passe en `integrity`** (pas `confidentiality` depuis Talos 1.14, justement pour les outils eBPF). Cilium et OBI devraient continuer à marcher. À vérifier quand même : Cilium (socket-LB, Hubble) et les sondes OBI.
+- **Arguments du noyau** : ils font partie de l'UKI signée. On ne les change plus que par le schematic (déjà le cas pour `net.ifnames=0`).
+- **Mode rescue et réinstallation OVH** : le rescue OVH (netboot) et la tâche `reinstallTalos` (qcow2 non signé, `talosInstallVersion`) ne démarreraient plus avec Secure Boot actif. Il faudrait soit désactiver Secure Boot par le KVM avant un rescue, soit passer `reinstallTalos` sur le qcow2 Secure Boot (ce qui demande aussi l'enrôlement des clés).
+- **Récupération** : si le nœud refuse de démarrer, on désactive Secure Boot dans le BIOS par le KVM. Tout le plan repose sur ce **KVM OVH** : vérifier d'abord qu'il est disponible sur cette offre (onglet IPMI du manager) et qu'il permet de monter une ISO.
+
+## Chiffrement du disque sans TPM
+
+Les clés possibles sans TPM ([doc Disk encryption](https://docs.siderolabs.com/talos/v1.14/configure-your-talos-cluster/storage-and-disk-management/disk-encryption)) :
+
+| Clé | Protège contre | Limite ici |
+| --- | --- | --- |
+| `nodeID` | un disque récupéré hors de la machine (recyclage, RMA) | aucune protection si on a accès à la machine. Le chiffrement d'une partition existante demande de la recréer |
+| `static` | idem, en plus faible | déconseillé pour `STATE` (la phrase de passe est dans `META`) |
+| `kms` | vol du disque **et** de la machine | il faut un serveur KMS **hors du cluster**, joignable avant le déverrouillage. Sur un nœud unique, il ne peut pas tourner dans le cluster lui-même |
+
+Chiffrer `STATE`/`EPHEMERAL` a posteriori oblige à effacer ces partitions : c'est une réinstallation de fait, avec restauration etcd et Longhorn. À traiter comme un projet à part.
+
+## Recommandation
+
+1. **Pas de Secure Boot pour l'instant.** Avec la signature des modules déjà imposée, le gain est mince face au coût : plus de kexec, rescue OVH plus compliqué, dépendance au KVM.
+2. Si on le veut quand même :
+   - confirmer d'abord l'accès KVM avec média virtuel ;
+   - valider sur une VM OVMF le chemin « UKI non signé → `talosctl upgrade` vers l'installer Secure Boot → enrôlement → activation » ;
+   - puis le faire sur le nœud pendant une fenêtre de maintenance, avec un snapshot etcd.
+3. Si l'objectif est la **confidentialité des données sur disque**, c'est un autre chantier : `nodeID` contre le recyclage des disques (faible coût, mais réinstallation), ou un KMS externe. Secure Boot seul n'y répond pas.

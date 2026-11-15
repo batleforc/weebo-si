@@ -5,11 +5,11 @@ description: "Passer de Talos 1.13 / Cilium 1.18 à Talos 1.14 / Cilium 1.20 san
 
 Le cluster tourne sur **un seul nœud** (`talos-r2k-rp0`, `37.187.255.5`), qui est à la fois control plane et worker. Chaque redémarrage de Talos ou de l'agent Cilium coupe donc tout le cluster, VM et workspaces compris. On monte une version à la fois et on vérifie entre chaque étape.
 
-État au 15 novembre 2026 (étapes 1, 2, 2 bis et 3 faites) :
+État au 15 novembre 2026 (étapes 1 à 4 faites) :
 
 | Composant | Version | Où elle est fixée |
 | --- | --- | --- |
-| Talos | v1.13.12 | `1.pulu-init/Pulumi.dev.yaml` → `talosVersion` |
+| Talos | v1.14.6 | `1.pulu-init/Pulumi.dev.yaml` → `talosVersion` |
 | Kubernetes | v1.36.2 | `1.pulu-init/Pulumi.dev.yaml` → `kubeVersion` |
 | Cilium | v1.19.10 | `1.pulu-init/Pulumi.dev.yaml` → `ciliumVersion`, valeurs dans `1.pulu-init/cilium-values.yaml`, qui décrit toute la release depuis l'étape 2 bis |
 
@@ -23,7 +23,7 @@ graph LR
     S1 --> S2["2. Cilium 1.18.16 ✓"]
     S2 --> S2b["2 bis. Cilium : reset des valeurs<br/>+ netbird dans le schematic ✓"]
     S2b --> S3["3. Cilium 1.19.10 ✓"]
-    S3 --> S4["4. Talos 1.14.6"]
+    S3 --> S4["4. Talos 1.14.6 ✓"]
     S4 --> S5["5. Cilium 1.20.5+"]
     S5 --> S6["6. Kubernetes 1.37"]
 ```
@@ -332,7 +332,14 @@ task k-o -- -n kube-system get deploy hubble-relay hubble-ui
 
 **Retour arrière** : `ciliumVersion: v1.18.16` puis `task pulunit:up`. On ne revient jamais en arrière de plus d'une mineure.
 
-## Étape 4 : Talos 1.13.12 → 1.14.6
+## Étape 4 : Talos 1.13.12 → 1.14.6 (faite le 15/11/2026)
+
+Résultat :
+- **preview** : seul le tag de l'installer change dans `configPatches`. La config générée par `GetConfigurationOutput` reste strictement identique (pulumi-talos 0.8.1, format 1.13). Le `up` n'a pas redémarré le nœud (même `boot_id`).
+- **`talosctl upgrade`** : 03:16 → 03:21, environ 5 min de coupure. Noyau 6.18.63, `fuse3` 3.18.3 installée, `netbird` 0.82.0, etcd 3.7.3 (stockage migré en 3.7.0). Les métriques etcd restent sur `127.0.0.1:2381`. etcd ouvre en plus **2383 sur `:::`** (endpoints HTTP, mTLS) : à garder fermé dans le futur pare-feu.
+- **Vérifications** : socket-LB `cgroup_id 1` (#48420 évité), aucun CEP manquant (#49974 évité), 12/12 volumes Longhorn `attached/healthy`, aucune erreur iSCSI (open-iscsi 2.1.13 relit bien les enregistrements 1.13), PVC tous `Bound`, apiserver sans erreur d'`authentication-config`, 100 pods `Running` comme avant, apps Argo inchangées. L'apiserver **refuse maintenant le TLS 1.2**.
+- **Au retour** : 9 pods `Failed` (marqués ainsi par l'arrêt propre du kubelet, leurs remplaçants tournaient déjà) ont été supprimés avec `delete pods -A --field-selector=status.phase=Failed`. **Che était bloqué** : il a démarré pendant que dex répondait 503, son application web s'est arrêtée, mais le processus est resté vivant et non prêt. Il a fallu supprimer son pod, une fois dex prêt.
+- Le test OIDC de bout en bout (`task k-o -- auth whoami`) reste à faire depuis un poste avec navigateur.
 
 À lire avant : [notes de version 1.14.0](https://github.com/siderolabs/talos/releases/tag/v1.14.0). On vise **1.14.6**, le dernier patch au 15/11/2026. Les 1.14.0 et 1.14.1 avaient des routes recréées en boucle ([#14416](https://github.com/siderolabs/talos/issues/14416)), corrigées en 1.14.2.
 
