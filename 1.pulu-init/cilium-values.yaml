@@ -1,3 +1,15 @@
+# This file is the whole release: main.go upgrades with Reset, so Helm starts
+# from the chart defaults plus this file and the Sets, and drops anything else
+# the release carried. The block below is what cilium-cli wrote at install
+# time (and NewHubble later) and only ever lived in the release until
+# 2026-11-15; leaving it out would flip routing, socket-LB and Hubble.
+cluster:
+  name: weebo4-cluster
+routingMode: tunnel
+tunnelProtocol: vxlan
+socketLB:
+  enabled: true
+  hostNamespaceOnly: true
 ipam:
   mode: kubernetes
 kubeProxyReplacement: true
@@ -67,6 +79,12 @@ commonLabels:
 # what its queries read: sourceContext/destinationContext become `source` and
 # `destination`, labelsContext adds `source_namespace`/`destination_namespace`.
 hubble:
+  # Set by the NewHubble resource in main.go, which never runs again once
+  # created; declared here so the Reset upgrade keeps them.
+  relay:
+    enabled: true
+  ui:
+    enabled: true
   metrics:
     enabled:
       - "drop:sourceContext=workload-name|reserved-identity;destinationContext=workload-name|reserved-identity;labelsContext=source_namespace,destination_namespace"

@@ -1,0 +1,74 @@
+---
+title: Config Talos multi-documents (plan)
+description: "Passer la config machine du v1alpha1 monolithique aux documents séparés de Talos 1.14 : inventaire, bloquants, ordre de migration"
+---
+
+<Callout type="warn" title="Plan, pas encore une procédure">
+Rien n'est à exécuter avant la fin de la série [Mise à jour de Talos et Cilium](/docs/runbooks/upgrade-talos-cilium), et avant qu'une version de pulumi-talos embarque la machinery 1.14. Inventaire fait le 15/11/2026, sur la config live du nœud et sur `1.pulu-init/main.go`.
+</Callout>
+
+## De quoi il s'agit
+
+Talos 1.14 découpe la config machine en documents séparés (`kind: …`), un par sujet. La plupart des champs du gros document `v1alpha1` (`machine.*`, `cluster.*`) sont dépréciés. Ils restent supportés pour les clusters mis à jour, mais **les nouveaux champs n'arrivent plus que dans les documents** ([notes de version 1.14.0](https://github.com/siderolabs/talos/releases/tag/v1.14.0), sections *Kubernetes Multi-document Configuration* et *Kernel Multi-document Configuration*).
+
+Deux règles à connaître :
+- **certains couples sont mutuellement exclusifs** : `cluster.discovery` et `DiscoveryServiceConfig`, `cluster.secret`/`id` et `DiscoveryIdentityConfig`, `machine.baseRuntimeSpecOverrides` et `CRIBaseRuntimeSpecConfig`. Ajouter le document sans retirer le champ fait **rejeter toute la config** ;
+- pour les sysctls, la sysfs et les modules, si les deux sources existent, **le document l'emporte** sur le champ v1alpha1.
+
+## Ce qui bloque aujourd'hui
+
+1. **Le provider Pulumi.** pulumi-talos v0.8.1 (dernière version) embarque la machinery 1.13.0 : elle ne connaît pas les nouveaux kinds. Un patch `KubeAuthenticationConfig` ou `SysctlConfig` serait refusé dès la validation locale de `ConfigurationApply`. terraform-provider-talos v0.12.0 (21/09/2026) est passé en machinery 1.14.0, mais pulumi-talos ne l'a pas encore repris. La montée de dépendance est en attente côté pulumi-talos ([#296](https://github.com/pulumiverse/pulumi-talos/pull/296)).
+2. **La série de mises à jour en cours.** Le runbook gèle le provider jusqu'à la fin de cette série : changer de machinery au milieu changerait aussi la config générée par `GetConfigurationOutput`.
+3. **`kubelet.extraMounts` n'a pas d'équivalent** dans le nouveau format ([talos#14365](https://github.com/siderolabs/talos/issues/14365) : « There is no replacement for `extraMounts` in Talos 1.14+ »). On l'utilise pour `/var/local-path-provisioner` (voir plus bas).
+
+Avec la machinery 1.14 et `talosVersion: v1.14.x`, `GetConfigurationOutput` génèrera probablement directement les documents 1.14 : c'est ce que fait `talosctl gen config` pour ce contrat. Le passage se ferait donc en un seul gros diff, au moment de monter le provider, et pas champ par champ. À confirmer sur le premier `preview` avec le nouveau provider.
+
+## Inventaire
+
+Documents déjà séparés aujourd'hui : `HostnameConfig`, `UserVolumeConfig staticdisk`, `ExtensionServiceConfig netbird`, et le pare-feu (`NetworkDefaultActionConfig`, `NetworkRuleConfig`), qui n'est pas encore appliqué tant que `ADMIN_CIDRS` n'est pas défini.
+
+| Utilisé aujourd'hui (v1alpha1) | Document 1.14 | Remarque |
+| --- | --- | --- |
+| `machine.files` (`/var/lib/apiserver/authentication.yaml`) + `cluster.apiServer.extraVolumes` (`/var/lib/apiserver`) + `extraArgs.authentication-config` | `KubeAuthenticationConfig` | **le gain principal** : la config OIDC devient un document natif. Le fichier, le volume et le flag disparaissent, et `machine.files` n'est plus utilisé. Or c'est un changement de `machine.files` qui forçait le redémarrage pendant `pulunit:up` (voir le runbook) |
+| `cluster.apiServer` (image, extraArgs, certSANs, env) | `KubeAPIServerConfig` | |
+| `cluster.apiServer.admissionControl` (PodSecurity) | `KubeAdmissionControlConfig` | |
+| `cluster.apiServer.auditPolicy` | `KubeAuditPolicyConfig` | |
+| `cluster.controllerManager`, `cluster.scheduler`, `cluster.proxy` | `KubeControllerManagerConfig`, `KubeSchedulerConfig`, `KubeProxyConfig` | kube-proxy est désactivé (`cluster.proxy.disabled: true`, Cilium KPR) : vérifier l'équivalent dans `KubeProxyConfig` |
+| `cluster.ca`, `cluster.aggregatorCA` | `KubeAPIServerCAConfig`, `KubeAggregatorCAConfig` | secrets générés par `machine.NewSecrets` |
+| `cluster.secretboxEncryptionSecret` | `KubeEtcdEncryptionConfig` | la 1.14.6 corrige le provider généré pour une clé AES-CBC. Ici, c'est du secretbox seulement |
+| `cluster.network` | `KubeNetworkConfig` | nouveaux `nodeCIDRMaskSizeIPv4/IPv6` (24/64 par défaut) |
+| `cluster.clusterName`, `cluster.controlPlane.endpoint` | `KubeClusterConfig` | |
+| `cluster.discovery`, `cluster.id`, `cluster.secret` | `DiscoveryServiceConfig`, `DiscoveryIdentityConfig` | **exclusifs** avec les champs v1alpha1. L'encodage de l'ID passe de `base64.URLEncoding` à `StdEncoding` |
+| `cluster.extraManifests` | `KubeExternalManifestConfig` | |
+| `cluster.allowSchedulingOnControlPlanes`, `machine.nodeLabels`, `machine.nodeAnnotations` | `KubeNodeConfig` | le taint `NoSchedule` du control plane y est maintenant explicite : vérifier qu'on le retire bien (nœud unique) |
+| `machine.kubelet` (image, extraConfig, `defaultRuntimeSeccompProfileEnabled`, `disableManifestsDirectory`) | `KubeNodeConfig` | |
+| `machine.kubelet.extraArgs` (`image-credential-provider-*`) | `KubeCredentialProviderConfig` | |
+| `machine.kubelet.extraMounts` (`/var/local-path-provisioner`) | **aucun** | voir ci-dessous |
+| `machine.sysctls` (dont `src_valid_mark=0`) | `SysctlConfig` | le document l'emporte en cas de conflit. Revérifier `src_valid_mark` après la bascule (piège DNS Cilium) |
+| `machine.features.kubePrism` | `KubePrismConfig` | supprimer le document désactive KubePrism |
+| `machine.features.hostDNS` | `ResolverConfig.hostDNS` | `forwardKubeDNSToHost` : c'est ce qui interdit `bpf.masquerade` |
+| `machine.registries` | à vérifier dans la référence 1.14 | |
+| `machine.certSANs`, `machine.seccompProfiles`, `machine.features.diskQuotaSupport`, `cluster.etcd` | non listés comme dépréciés dans les notes 1.14.0 | à vérifier dans la [référence de config 1.14](https://docs.siderolabs.com/talos/v1.14/reference/configuration/overview) |
+
+Documents nouveaux à **ne pas** ajouter, ou à décider à part :
+- `SecurityProfileConfig` avec `workloadIsolation: true` : il casse la voie iSCSI dont Longhorn a besoin (voir le runbook).
+- `FilesystemTrimConfig` : absent sur un cluster mis à jour, donc pas de fstrim périodique. À ajouter volontairement si on le veut, en pensant à Longhorn (`/dev/sdb`, `UserVolumeConfig staticdisk`).
+
+## `/var/local-path-provisioner`
+
+Le kubelet monte `/var/local-path-provisioner` sur lui-même pour que local-path-provisioner (`2.argo/app/templates/local-storage.yaml`) y crée ses PV. La réponse de Sidero ([talos#14365](https://github.com/siderolabs/talos/issues/14365)) : un `UserVolumeConfig` avec `type: directory`, monté sous `/var/mnt/<nom>`, est visible du kubelet sans `extraMounts`. Les PV existants vivent sous l'ancien chemin. Il faut donc :
+1. lister les PV `local-path` et leurs consommateurs ;
+2. créer le `UserVolumeConfig` (`type: directory`, par exemple `local-path` → `/var/mnt/local-path`) ;
+3. faire pointer local-path-provisioner sur le nouveau chemin, puis migrer ou recréer les PV ;
+4. seulement ensuite, retirer `extraMounts`.
+
+Tant que ce n'est pas fait, on garde le format v1alpha1 pour le kubelet. Les deux formats peuvent coexister, sauf pour les couples exclusifs listés plus haut.
+
+## Ordre proposé
+
+1. Finir la série de mises à jour (Talos 1.14.x, Cilium 1.20.x, Kubernetes 1.37).
+2. Attendre une version de pulumi-talos avec la machinery 1.14, et lire ses notes (nouvelles ressources `talos_machine` / `talos_cluster` côté Terraform).
+3. Migrer `/var/local-path-provisioner` (section ci-dessus), indépendamment du provider.
+4. Monter le provider seul, sans autre changement. Lire le `preview --diff` de `configurationApply` document par document, en le comparant au tableau d'inventaire. Points d'arrêt : un couple exclusif présent en double, la perte de `src_valid_mark=0`, de la config OIDC, du taint retiré ou de `hostDNS`, ou tout `reinstall`.
+5. Si le provider ne génère pas les documents de lui-même : migrer par blocs, avec des patches qui ajoutent le document et suppriment le champ v1alpha1 dans le même `up`. Ordre conseillé : `KubeAuthenticationConfig` d'abord, pour ne plus avoir de `machine.files` ; puis `SysctlConfig`, les documents de l'apiserver, `KubeNodeConfig`, et la découverte en dernier (exclusive).
+6. Vérifications du runbook de mise à jour après chaque `up`, plus `task k-o -- auth whoami` (OIDC).

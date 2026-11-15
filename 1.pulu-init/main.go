@@ -208,6 +208,9 @@ func main() {
 						"siderolabs/crun",
 						"siderolabs/wasmedge",
 						"siderolabs/fuse3",
+						// Runs the ExtensionServiceConfig "netbird" below; the node's
+						// VPN peer, and the apid/apiserver fallback in the firewall.
+						"siderolabs/netbird",
 					},
 				},
 			},
@@ -1191,6 +1194,13 @@ func main() {
 		// the apiserver. Without it there is no firewall at all: a block policy
 		// with no admin source would lock talosctl out, and on a single node
 		// the only way back is a reinstall.
+		//
+		// netbirdCIDRs is the second way in, should ADMIN_CIDRS go stale (new
+		// home IP): peers reach the node's own netbird address on wt0 with
+		// their netbird IP. It is the account's network as the node sees it
+		// (`talosctl get addresses`, wt0: 100.64.45.25/16 and a /64 v6); it is
+		// not a substitute for ADMIN_CIDRS, since it dies with the extension.
+		netbirdCIDRs := []string{"100.64.0.0/16", "fd67:3c3d:53b7:8bb7::/64"}
 		if adminCIDRs := strings.FieldsFunc(os.Getenv("ADMIN_CIDRS"), func(r rune) bool {
 			return r == ',' || r == ' '
 		}); len(adminCIDRs) == 0 {
@@ -1217,14 +1227,14 @@ func main() {
 					// (exit-node-ingress) masquerades admins in from the VPN.
 					"name":         "apid",
 					"portSelector": map[string]interface{}{"ports": []int{50000}, "protocol": "tcp"},
-					"ingress":      subnets(adminCIDRs, podSubnets),
+					"ingress":      subnets(adminCIDRs, netbirdCIDRs, podSubnets),
 				},
 				{
 					// kubectl, and every in-cluster client of
 					// kubernetes.default (ArgoCD, operators, cilium...).
 					"name":         "kube-apiserver",
 					"portSelector": map[string]interface{}{"ports": []int{6443}, "protocol": "tcp"},
-					"ingress":      subnets(adminCIDRs, podSubnets),
+					"ingress":      subnets(adminCIDRs, netbirdCIDRs, podSubnets),
 				},
 				{
 					// metrics-server, kubeletstats, `kubectl logs/exec`
@@ -1317,6 +1327,14 @@ func main() {
 				pulumi.Sprintf("k8sServiceHost=%s", serverNetwork.Routing.Ipv4.Ip),
 			},
 			Values: pulumi.String(string(ciliumValues)),
+			// Helm's --reset-values: the release becomes the chart defaults +
+			// cilium-values.yaml + Sets. The provider default (reset-then-reuse)
+			// kept every value ever set, so a key removed from the file stayed.
+			Reset:          pulumi.Bool(true),
+			Reusethenreuse: pulumi.Bool(false),
+			// cilium-cli's status wait can hang forever after Helm finishes
+			// (seen on 1.18.16); the runbook waits on the rollouts instead.
+			Wait: pulumi.Bool(false),
 		}, pulumi.DependsOn([]pulumi.Resource{
 			kubeconfig,
 			fileKubeconfig,
