@@ -15,7 +15,7 @@ longhorn:
 snapshotCrds:
   enabled: true
   # renovate: datasource=github-tags depName=kubernetes-csi/external-snapshotter
-  version: v8.6.0
+  version: v8.7.0
 
 # https://oneuptime.com/blog/post/2026-03-03-set-up-longhorn-storage-on-talos-linux/view
 

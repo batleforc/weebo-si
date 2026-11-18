@@ -17,7 +17,7 @@ spec:
       serviceAccountName: "authentik"
       containers:
         - name: terraform
-          image: hashicorp/terraform:1.17.0
+          image: hashicorp/terraform:1.17.2
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
@@ -88,7 +88,7 @@ spec:
     spec:
       containers:
         - name: create-in-vault
-          image: hashicorp/terraform:1.17.0
+          image: hashicorp/terraform:1.17.2
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh

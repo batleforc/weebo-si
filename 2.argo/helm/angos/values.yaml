@@ -8,7 +8,7 @@ angos:
   image:
     registry: ghcr.io/project-angos/angos
     # renovate: datasource=docker depName=ghcr.io/project-angos/angos
-    tag: 1.12.4
+    tag: 1.12.5
   dns: registry.pkg.weebo.poc
   # Pinned: the operator's default (valkey-operator 0.8.0) is 9.0.0, whose
   # Debian 13.2 base carries 4 critical CVEs fixed in later patches.
@@ -16,7 +16,7 @@ angos:
     image:
       repository: docker.io/valkey/valkey
       # renovate: datasource=docker depName=docker.io/valkey/valkey
-      tag: "9.0.7"
+      tag: "9.1.3"
   # `[auth.token_service]`, whose secret_key comes from Vault and whose realm
   # is built from `dns` above. The ceiling angos enforces is 86400.
   tokenService:
@@ -289,7 +289,7 @@ angos:
     image:
       registry: quay.io/oauth2-proxy/oauth2-proxy
       # renovate: datasource=docker depName=quay.io/oauth2-proxy/oauth2-proxy
-      tag: v7.15.5
+      tag: v7.15.6
     # The cookie the ingress splits on, so a rename here is a rename in the
     # IngressRoute rule -- they are read from the same value on purpose.
     # oauth2-proxy chunks oversized cookies into `<name>_0`, `<name>_1`, which
@@ -395,12 +395,12 @@ angos:
       # the same `[auth.oidc]` section names, and upstream calls this contrib
       # binary experimental, so drifting them apart buys nothing.
       # renovate: datasource=github-releases depName=project-angos/angos
-      version: v1.8.0
+      version: v1.12.5
       # sha256 of the release asset, checked against the cosign bundle
       # published beside it (keyless, identity project-angos/angos): the
       # installer refuses to write a binary it cannot match.
       sha256:
-        amd64: "744bfa7b7556613f0fedfa9bb9b155f2a7bdeb67deff26c9ff8dd7068769f2f9"
+        amd64: "cfe0594d5431fe8f2b636b9e8f6e320ea0b134d9ef0c5693a8623625ac076659"
         # Left empty on purpose: every node here is amd64, and an unchecked
         # arm64 install would be a download on trust. Fill it before adding an
         # arm64 node, or that node's installer fails loudly.
@@ -411,7 +411,7 @@ angos:
       # is baked into the image and would mean building an installer image and
       # rebooting.
       binDir: /var/lib/kubelet/credential-providers
-      installerImage: "alpine:3.22"
+      installerImage: "alpine:3.24"
 
   # Storage maintenance, as two CronJobs -- or, with `operator.enabled`, as two
   # AngosMaintenances on the same schedules (templates/operator/). Not optional in practice: a delete
@@ -541,12 +541,12 @@ operator:
     name: registry
     # 0.3.2 is tested against angos 1.12.2 and 1.12.3, and refuses any other
     # tag unless the instance is annotated `angos.weebo.io/approved-upgrade`
-    # with that exact tag. 1.12.4 is what runs today and the store is never
+    # with that exact tag. 1.12.5 is what runs today and the store is never
     # walked back, hence the approval. Keep it equal to `angos.image.tag` when
     # Renovate bumps that, or the instance goes `Ready=False` on the new tag
     # instead of rolling -- that is the gate working, not a bug. Empty once
     # the operator's tested list covers the tag.
-    approvedUpgrade: "1.12.4"
+    approvedUpgrade: "1.12.5"
     # Kept as it is in the chart (`us-east-`, truncated): it identifies the
     # store. Correcting it is a storage change, for after the cutover.
     s3Region: us-east-
