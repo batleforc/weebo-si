@@ -1,46 +1,57 @@
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+# Mounts the cluster CA bundle (ConfigMap weebo.poc) over /etc/ssl/certs in every
+# container of a pod annotated `inject-certs: enabled`.
+#
+# A policies.kyverno.io MutatingPolicy since 2026-11-18: Kyverno 1.20 no longer
+# executes kyverno.io ClusterPolicy. Same behaviour as the ClusterPolicy it
+# replaces: admission only (no mutateExisting), failurePolicy Fail (the
+# default), and rules auto-generated for the same four controllers the old
+# `pod-policies.kyverno.io/autogen-controllers` annotation named, so their pod
+# templates keep getting the volume too.
+apiVersion: policies.kyverno.io/v1
+kind: MutatingPolicy
 metadata:
   name: add-certificates-volume
   annotations:
     policies.kyverno.io/title: Add Certificates as a Volume
-    policies.kyverno.io/category: Sample
     policies.kyverno.io/subject: Pod,Volume
-    kyverno.io/kyverno-version: 1.6.0
-    kyverno.io/kubernetes-version: "1.21"
-    policies.kyverno.io/minversion: 1.5.0
-    pod-policies.kyverno.io/autogen-controllers: DaemonSet,Deployment,Job,StatefulSet
-    policies.kyverno.io/description: In some cases you would need to trust custom CA certificates for all the containers of a Pod. It makes sense to be in a ConfigMap so that you can automount them by only setting an annotation. This policy adds a volume to all containers in a Pod containing the certificate if the annotation called `inject-certs` with value `enabled` is found.
+    policies.kyverno.io/description: >-
+      Adds the cluster CA bundle as a volume mounted at /etc/ssl/certs in all
+      containers of a pod annotated `inject-certs: enabled`.
 spec:
-  background: false
-  rules:
-    - name: add-ssl-certs
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      preconditions:
-        all:
-          - key: "{{"{{"}}request.object.metadata.annotations.\"inject-certs\" || \"\"}}"
-            operator: Equals
-            value: enabled
-          - key: "{{"{{"}}request.operation || 'BACKGROUND'}}"
-            operator: AnyIn
-            value:
-              - CREATE
-              - UPDATE
-      mutate:
-        foreach:
-          - list: request.object.spec.containers
-            patchStrategicMerge:
-              spec:
-                containers:
-                  - name: "{{"{{"}} element.name }}"
-                    volumeMounts:
-                      - name: etc-ssl-certs
-                        mountPath: /etc/ssl/certs
-                volumes:
-                  - name: etc-ssl-certs
-                    configMap:
-                      name: weebo.poc
+  failurePolicy: Fail
+  evaluation:
+    admission:
+      enabled: true
+  autogen:
+    podControllers:
+      controllers: [daemonsets, deployments, jobs, statefulsets]
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  matchConditions:
+    - name: inject-certs-annotation
+      expression: >-
+        has(object.metadata.annotations) &&
+        object.metadata.annotations[?'inject-certs'].orValue('') == 'enabled'
+  mutations:
+    - patchType: ApplyConfiguration
+      applyConfiguration:
+        expression: >-
+          Object{
+            spec: Object.spec{
+              containers: object.spec.containers.map(c, Object.spec.containers{
+                name: c.name,
+                volumeMounts: [Object.spec.containers.volumeMounts{
+                  name: "etc-ssl-certs",
+                  mountPath: "/etc/ssl/certs"
+                }]
+              }),
+              volumes: [Object.spec.volumes{
+                name: "etc-ssl-certs",
+                configMap: Object.spec.volumes.configMap{name: "weebo.poc"}
+              }]
+            }
+          }

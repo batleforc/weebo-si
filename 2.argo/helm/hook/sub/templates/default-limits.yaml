@@ -12,13 +12,22 @@
 # the cluster down, bring it back in any order, and it converges either way --
 # which is the whole point, and something an explicit namespace list could not
 # do without being edited every time a namespace is added.
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+#
+# A policies.kyverno.io GeneratingPolicy since 2026-11-18 (Kyverno 1.20 no longer
+# executes kyverno.io ClusterPolicy). The ClusterPolicy had to pin
+# failurePolicy: Ignore -- a generate rule on Namespace makes Kyverno register a
+# webhook on namespace CREATE, and Fail would let a Kyverno that is down block
+# namespace creation cluster-wide, deadlocking the bootstrap this policy is
+# written to survive. A GeneratingPolicy has no such field because Kyverno
+# always registers its webhook as Ignore (GetFailurePolicy in kyverno/api), so
+# that guarantee now comes for free: a namespace created while Kyverno is
+# unavailable gets no LimitRange until generateExisting backfills it.
+apiVersion: policies.kyverno.io/v1
+kind: GeneratingPolicy
 metadata:
   name: default-container-limits
   annotations:
     policies.kyverno.io/title: Default container resources per namespace
-    policies.kyverno.io/category: Resource governance
     policies.kyverno.io/subject: Namespace,LimitRange
     policies.kyverno.io/description: >-
       Generates a LimitRange giving containers a default memory limit and a
@@ -26,41 +35,43 @@ metadata:
       against unbounded workloads, not a substitute for real per-workload
       requests and limits.
 spec:
-  # MUST stay Ignore. A generate rule on Namespace makes Kyverno register a
-  # webhook on namespace CREATE; left at the default Fail, a Kyverno that is
-  # down or not yet up blocks namespace creation cluster-wide -- which would
-  # deadlock the very bootstrap this policy is written to survive. Ignore means
-  # a namespace created while Kyverno is unavailable simply gets no LimitRange
-  # until generateExisting backfills it.
-  failurePolicy: Ignore
-  # Required for generateExisting to reconcile namespaces that already exist.
-  background: true
-  rules:
-    - name: add-default-limitrange
-      match:
-        any:
-          - resources:
-              kinds:
-                - Namespace
-      exclude:
-        any:
-          - resources:
-              namespaces:
-                {{- range $ns := .Values.defaultLimits.excludeNamespaces }}
-                - {{ $ns | quote }}
-                {{- end }}
-      generate:
-        apiVersion: v1
-        kind: LimitRange
-        name: default-resources
-        namespace: "{{ `{{request.object.metadata.name}}` }}"
-        # Recreate the LimitRange if it is deleted or edited out of band, and
-        # remove it again when this policy goes away -- so a teardown leaves
-        # nothing behind.
-        synchronize: true
-        generateExisting: true
-        data:
+  evaluation:
+    # Recreate the LimitRange if it is deleted or edited out of band, and remove
+    # it again when this policy goes away -- so a teardown leaves nothing behind.
+    synchronize:
+      enabled: true
+    orphanDownstreamOnPolicyDelete:
+      enabled: false
+    # Backfills the namespaces that already exist, whenever the policy is
+    # (re)created -- the ordering-free convergence described above.
+    generateExisting:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [namespaces]
+  # excludeNamespaces, matched against the namespace name: an entry ending in
+  # `*` is a prefix.
+  matchConditions:
+    {{- range $i, $ns := .Values.defaultLimits.excludeNamespaces }}
+    - name: not-excluded-{{ $i }}
+      {{- if hasSuffix "*" $ns }}
+      expression: '!object.metadata.name.startsWith({{ trimSuffix "*" $ns | quote }})'
+      {{- else }}
+      expression: 'object.metadata.name != {{ $ns | quote }}'
+      {{- end }}
+    {{- end }}
+  generate:
+    - template:
+        interpolate: cel
+        value: |
+          apiVersion: v1
+          kind: LimitRange
           metadata:
+            name: default-resources
+            namespace: (( object.metadata.name ))
             labels:
               app.kubernetes.io/managed-by: kyverno
           spec:

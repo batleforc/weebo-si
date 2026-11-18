@@ -33,59 +33,100 @@
 # (what the `inject-certs` policy does) because RustFS reads this file by name
 # and finds its default roots in webpki, not on disk -- so replacing the image's
 # trust store would buy nothing and hide what is going on.
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+#
+# A policies.kyverno.io MutatingPolicy since 2026-11-18 (Kyverno 1.20 no longer
+# executes kyverno.io ClusterPolicy). Autogen is switched off with an empty
+# controller list: left to its default it also writes rules for StatefulSets,
+# and the tenant's StatefulSet carries the same labels -- the very mutation of
+# the operator's object ruled out above.
+apiVersion: policies.kyverno.io/v1
+kind: MutatingPolicy
 metadata:
   name: add-rustfs-tenant-ca
   annotations:
     policies.kyverno.io/title: Mount the cluster CA into RustFS tenants
-    policies.kyverno.io/category: TLS
     policies.kyverno.io/subject: Pod,Volume
     policies.kyverno.io/description: >-
       RustFS tenant pods are built by the rustfs operator from a Tenant CR that
       cannot declare volumes. This adds the trust-manager CA bundle as a file so
       RUSTFS_EXTRA_CA_CERT has something to point at.
 spec:
-  background: false
-  rules:
-    - name: add-ca-bundle
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-              namespaces:
-                - {{ .Values.rustfsCaTrust.namespace | quote }}
-              # Both labels, not just managed-by: the operator's own Deployment
-              # and its console pod live in the same namespace, and they carry
-              # app.kubernetes.io/name=rustfs-operator with a container named
-              # `operator` / `console`. A strategic merge on a container name
-              # they do not have would ADD a container rather than patch one,
-              # so the selector has to exclude them rather than rely on the
-              # patch being a no-op.
-              selector:
-                matchLabels:
-                  app.kubernetes.io/name: rustfs
-                  app.kubernetes.io/managed-by: rustfs-operator
-      mutate:
-        patchStrategicMerge:
-          spec:
-            volumes:
-              - name: weebo-ca
-                secret:
-                  # Distributed to every namespace by the trust-manager Bundle
-                  # in the ingress chart, so it is already in s3 -- nothing has
-                  # to copy it here.
-                  secretName: {{ .Values.rustfsCaTrust.bundleSecret | quote }}
-                  items:
-                    - key: {{ .Values.rustfsCaTrust.bundleKey | quote }}
-                      path: {{ .Values.rustfsCaTrust.bundleKey | quote }}
-            containers:
-              # Merged by name into the container the operator builds; the
-              # sidecar-free tenant pod has this one only.
-              - name: rustfs
-                volumeMounts:
-                  - name: weebo-ca
-                    mountPath: {{ .Values.rustfsCaTrust.mountPath | quote }}
-                    readOnly: true
+  failurePolicy: Fail
+  evaluation:
+    admission:
+      enabled: true
+  autogen:
+    podControllers:
+      controllers: []
+  matchConstraints:
+    resourceRules:
+      # CREATE only: a pod's volumes are immutable afterwards, so there is
+      # nothing to do on UPDATE -- and the JSONPatch below is not idempotent.
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE]
+        resources: [pods]
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: {{ .Values.rustfsCaTrust.namespace | quote }}
+    # Both labels, not just managed-by: the operator's own Deployment and its
+    # console pod live in the same namespace, and they carry
+    # app.kubernetes.io/name=rustfs-operator with a container named `operator` /
+    # `console`. An apply configuration on a container name they do not have
+    # would ADD a container rather than patch one, so the selector has to
+    # exclude them rather than rely on the patch being a no-op.
+    objectSelector:
+      matchLabels:
+        app.kubernetes.io/name: rustfs
+        app.kubernetes.io/managed-by: rustfs-operator
+  matchConditions:
+    # Guards the JSONPatch against a reinvocation adding the volume twice.
+    - name: volume-not-there-yet
+      expression: >-
+        !has(object.spec.volumes) ||
+        !object.spec.volumes.exists(v, v.name == "weebo-ca")
+  variables:
+    - name: caVolume
+      expression: >-
+        {
+          "name": dyn("weebo-ca"),
+          "secret": dyn({
+            "secretName": dyn({{ .Values.rustfsCaTrust.bundleSecret | quote }}),
+            "items": dyn([{
+              "key": {{ .Values.rustfsCaTrust.bundleKey | quote }},
+              "path": {{ .Values.rustfsCaTrust.bundleKey | quote }}
+            }])
+          })
+        }
+  mutations:
+    # A JSONPatch, not an apply configuration: `secret.items` is atomic, which
+    # an apply configuration refuses to set. The Secret holds main-ca.jks and
+    # main-ca.p12 too, so dropping `items` would not be the same mount.
+    # Distributed to every namespace by the trust-manager Bundle in the ingress
+    # chart.
+    - patchType: JSONPatch
+      jsonPatch:
+        expression: >-
+          [
+            has(object.spec.volumes)
+              ? JSONPatch{op: "add", path: "/spec/volumes/-", value: variables.caVolume}
+              : JSONPatch{op: "add", path: "/spec/volumes", value: [variables.caVolume]}
+          ]
+    # Merged by name into the container the operator builds; the sidecar-free
+    # tenant pod has this one only.
+    - patchType: ApplyConfiguration
+      applyConfiguration:
+        expression: >-
+          Object{
+            spec: Object.spec{
+              containers: [Object.spec.containers{
+                name: "rustfs",
+                volumeMounts: [Object.spec.containers.volumeMounts{
+                  name: "weebo-ca",
+                  mountPath: {{ .Values.rustfsCaTrust.mountPath | quote }},
+                  readOnly: true
+                }]
+              }]
+            }
+          }
 {{- end -}}
