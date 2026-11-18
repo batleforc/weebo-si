@@ -9,16 +9,18 @@ metadata:
 spec:
   image: {{ printf "%s:%s" .Values.batlehub.valkey.image.repository .Values.batlehub.valkey.image.tag | quote }}
   shards: {{ .Values.batlehub.valkey.shards }}
-  replicas: {{ .Values.batlehub.valkey.replicas }}
+  replicasPerShard: {{ .Values.batlehub.valkey.replicasPerShard }}
   podDisruptionBudget:
     mode: Disabled
   persistence:
     size: {{ .Values.batlehub.valkey.storage.size }}
     storageClassName: {{ .Values.batlehub.valkey.storage.storageClassName }}
-  users:
-    - name: batlehub
-      passwordSecret:
-        name: batlehub-valkey-cred
-        keys: [pwd]
-      permissions: "+@all ~* &*"
+  acl:
+    users:
+      - name: batlehub
+        password:
+          secret:
+            name: batlehub-valkey-cred
+            keys: [pwd]
+        permissions: "+@all ~* &*"
 {{- end -}}
