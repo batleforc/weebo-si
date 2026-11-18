@@ -184,6 +184,8 @@ project:
         kind: "Certificate"
       - group: "policies.kyverno.io"
         kind: "MutatingPolicy"
+      - group: "policies.kyverno.io"
+        kind: "GeneratingPolicy"
       - group: "kyverno.io"
         kind: "ClusterPolicy"
       - group: "scheduling.k8s.io"
