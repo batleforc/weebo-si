@@ -101,9 +101,13 @@ spec:
               # Paired with cleanupController above.
               cleanuppolicies: false
               clustercleanuppolicies: false
-              # Everything below stays. clusterpolicies holds the two live
-              # policies; updaterequests is the queue the background controller
-              # drives generate through, so losing it breaks the LimitRanges.
+              # Everything below stays. clusterpolicies, policies and
+              # policyexceptions hold nothing since the move to
+              # policies.kyverno.io (2026-11-18), but Kyverno 1.20 still serves
+              # them and its check-legacy-policies hook reads them; dropping a
+              # CRD under a live informer is the failure loop described above.
+              # updaterequests is the queue the background controller drives
+              # generate through, so losing it breaks the LimitRanges.
               clusterpolicies: true
               policies: true
               updaterequests: true
@@ -129,15 +133,11 @@ spec:
                     - kube-system
                     - vault-infra
 
-        # NOT attempted: dropping the policies.kyverno.io group (11 CRDs,
-        # 1308 KiB, 17.1% of every CRD schema in this cluster, zero objects --
-        # it is the newer CEL policy API and everything here uses the classic
-        # kyverno.io/ClusterPolicy). The chart cannot express it at 3.8.1: those
-        # CRDs come from the `kyverno-api` subchart, whose Chart.yaml condition
-        # is `crds.install` -- the very same condition as the `crds` subchart
-        # that provides ClusterPolicy and UpdateRequest. Turning it off takes
-        # Kyverno's own API with it. The `crds.groups.policies.*` keys in
-        # values.yaml look like the answer and are vestigial: the crds subchart
-        # only has templates for kyverno.io, reports.kyverno.io and
-        # wgpolicyk8s.io, and nothing reads them. Re-check on a chart bump.
+        # The policies.kyverno.io group (the `kyverno-api` subchart) is the one
+        # in use since 2026-11-18: Kyverno 1.20 (chart 3.10) no longer executes
+        # kyverno.io ClusterPolicy, so add-certificates-volume,
+        # add-rustfs-tenant-ca (MutatingPolicy) and default-container-limits
+        # (GeneratingPolicy) live there, in hook/sub. Its CRDs share the
+        # `crds.install` condition with the kyverno.io ones, so neither group
+        # can be dropped alone.
 {{- end -}}
