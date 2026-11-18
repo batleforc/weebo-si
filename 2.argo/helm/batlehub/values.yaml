@@ -156,6 +156,18 @@ batlehub:
     # hand every time CNPG moves -- with a downgrade (an image older than the
     # data directory) as the failure mode. Migrations are run by batlehub
     # itself at startup and need no extension, so the app role suffices.
+    # ── Backup ── barman-cloud to the `batlehub-backup` bucket, through
+    # weebo-base.cnpgBackup (2.helm/weebo-base/templates/_cnpg.tpl): WAL
+    # archived continuously plus a base backup each night, so any point of the
+    # last `retention` can be restored. Keys in mv/batlehub/backup
+    # (2.terra/vault/terra-map/s3.tf).
+    backup:
+      enabled: true
+      bucket: batlehub-backup
+      vaultKey: mv/batlehub/backup
+      pg:
+        schedule: "0 0 2 * * *"
+        retention: 7d
 
   # ── Valkey ─────────────────────────────────────────────────────────────────
   # The metadata cache and the rate-limit counters. `memory` is the default and

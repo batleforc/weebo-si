@@ -1,0 +1,28 @@
+{{- if and .Values.cnpgOperator.enabled .Values.barmanCloudPlugin.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cnpg-barman-cloud
+  namespace: argocd
+  annotations:
+    # After cnpg-operator: the plugin registers itself with the operator.
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true
+  source:
+    chart: plugin-barman-cloud
+    repoURL: {{ .Values.cnpgOperator.repoURL }}
+    targetRevision: {{ .Values.barmanCloudPlugin.version }}
+    helm:
+      releaseName: barman-cloud
+  destination:
+    namespace: {{ .Release.Namespace }}
+    name: "in-cluster"
+{{- end }}

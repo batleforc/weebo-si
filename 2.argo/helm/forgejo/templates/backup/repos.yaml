@@ -1,0 +1,130 @@
+{{- $b := .Values.forgejo.backup -}}
+{{- if and .Values.forgejo.enabled $b.enabled -}}
+---
+# restic's repository password. It encrypts every snapshot: keep a copy off
+# the cluster.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: forgejo-restic
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  refreshPolicy: Periodic
+  refreshInterval: 24h
+  secretStoreRef:
+    name: cred-store
+  target:
+    name: forgejo-restic
+  data:
+  - secretKey: password
+    remoteRef:
+      key: {{ $b.resticVaultKey }}
+      property: password
+---
+# A restic snapshot of the forgejo-data volume into
+# s3://<bucket>/repos, then the retention. Mounted read-only next to the
+# running Forgejo: the volume is ReadWriteOnce, which binds it to a node, not a
+# pod -- hence the affinity to the Forgejo pod.
+#
+# Taken live, not from a Longhorn snapshot: git writes objects before the refs
+# that point at them, so a copy taken mid-push holds at worst a few
+# unreferenced objects. Restoring: `restic restore latest --target <dir>` into
+# a fresh volume, with RESTIC_REPOSITORY / RESTIC_PASSWORD set as below.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: forgejo-backup-repos
+  namespace: {{ .Release.Namespace }}
+spec:
+  schedule: {{ $b.repos.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 3600
+      template:
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            # Forgejo's `git` user: /data/git and /data/gitea are 0700.
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - topologyKey: kubernetes.io/hostname
+                  labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: forgejo
+                      app.kubernetes.io/instance: forgejo
+          containers:
+            - name: restic
+              image: "{{ $b.repos.image.repository }}:{{ $b.repos.image.tag }}"
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              env:
+                - name: RESTIC_REPOSITORY
+                  value: "s3:https://{{ .Values.forgejo.s3.endpoint }}/{{ $b.bucket }}/repos"
+                - name: RESTIC_CACERT
+                  value: /etc/ssl/weebo/ca.crt
+                - name: RESTIC_CACHE_DIR
+                  value: /cache
+                - name: RESTIC_HOST
+                  value: forgejo
+                - name: RESTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef: { name: forgejo-restic, key: password }
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef: { name: forgejo-pg-backup-cred, key: accesskey }
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef: { name: forgejo-pg-backup-cred, key: secretkey }
+              command: ["/bin/sh", "-ec"]
+              args:
+                - |
+                  # First run: the repository does not exist yet. `cat config`
+                  # also fails on a network error, and then `init` fails too.
+                  restic cat config >/dev/null 2>&1 || restic init
+                  # lost+found is root's; tmp is scratch. restic exits 3 on an
+                  # unreadable file, which fails the Job: wanted.
+                  restic backup /data --exclude /data/lost+found --exclude /data/tmp
+                  restic forget --prune \
+                    --keep-daily {{ $b.repos.keep.daily }} \
+                    --keep-weekly {{ $b.repos.keep.weekly }}
+              volumeMounts:
+                - name: data
+                  mountPath: /data
+                  readOnly: true
+                - name: cache
+                  mountPath: /cache
+                - name: weebo-ca
+                  mountPath: /etc/ssl/weebo
+                  readOnly: true
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: {{ .Values.forgejo.persistence.claimName }}
+                readOnly: true
+            - name: cache
+              emptyDir: {}
+            # The internal CA (trust-manager target, in every namespace):
+            # s3-main.weebo.poc is signed by it.
+            - name: weebo-ca
+              secret:
+                secretName: weebo.poc
+                items:
+                  - key: main-ca.crt
+                    path: ca.crt
+{{- end -}}

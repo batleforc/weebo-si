@@ -65,3 +65,21 @@ resource "vault_kubernetes_auth_backend_role" "forgejo-operator" {
   token_ttl                        = 3600
   token_policies                   = [vault_policy.forgejo_operator_policy.name]
 }
+
+# Le mot de passe du depot restic des sauvegardes de Forgejo (2.argo/helm/forgejo,
+# backup.resticVaultKey). restic chiffre tout avec : le perdre rend le depot illisible,
+# il doit donc survivre a une perte du cluster ailleurs que dans ce Vault.
+resource "random_password" "forgejo-backup-restic" {
+  length  = 64
+  special = false
+}
+
+resource "vault_kv_secret_v2" "forgejo-backup-restic" {
+  mount = "mv"
+  name  = "forgejo/restic"
+  data_json = jsonencode(
+    {
+      password = random_password.forgejo-backup-restic.result
+    }
+  )
+}

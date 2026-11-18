@@ -29,4 +29,7 @@ spec:
       # there is exactly one place this password exists on the cluster.
       secret:
         name: batlehub-pg-cred
+  {{- include "weebo-base.cnpgClusterSpec" (dict "cluster" "batlehub-pg" "backup" .Values.batlehub.postgres.backup) | nindent 2 }}
+
+{{ include "weebo-base.cnpgBackup" (dict "ctx" . "cluster" "batlehub-pg" "secretStore" "cred-store" "backup" .Values.batlehub.postgres.backup) }}
 {{- end -}}

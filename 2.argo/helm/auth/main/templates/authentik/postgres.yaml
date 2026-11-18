@@ -90,4 +90,7 @@ spec:
       owner: {{ $pg.owner }}
       secret:
         name: authentik-pg-cred
+  {{- include "weebo-base.cnpgClusterSpec" (dict "cluster" "authentik-pg" "backup" $pg.backup) | nindent 2 }}
+
+{{ include "weebo-base.cnpgBackup" (dict "ctx" . "namespace" "auth" "cluster" "authentik-pg" "secretStore" "authentik-db" "backup" $pg.backup) }}
 {{- end -}}

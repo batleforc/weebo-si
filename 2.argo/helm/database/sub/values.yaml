@@ -55,6 +55,16 @@ s3:
       - name: batlehub
       - name: angos
       - name: forgejo
+      # Backups, one bucket per application (barman-cloud under pg/, restic
+      # under repos/ for forgejo): an application's own keys never reach its
+      # backups. `vaultKey` overrides mv/<name>/s3 -- the keys have to sit under
+      # the application's namespace, the only place its External Secrets read.
+      - name: forgejo-backup
+        vaultKey: forgejo/backup
+      - name: batlehub-backup
+        vaultKey: batlehub/backup
+      - name: authentik-backup
+        vaultKey: auth/backup
       # Stalwart's BlobStore (2.argo/helm/mail), keys in mv/mail/s3.
       - name: mail
 

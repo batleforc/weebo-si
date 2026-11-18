@@ -536,6 +536,30 @@ from HyperDX 2.32.
   `weebo_openbao_leader` sample are treated as the retention edge and not
   counted, otherwise a 7-day range would report every lifetime total.
 
+- `backups.json` — are the backups healthy? Six verdicts (databases seen,
+  oldest backup, failing, oldest WAL archive, WAL archive failures, shortest
+  recovery window), a row per CNPG Cluster, a row per backup CronJob, the
+  trends behind them, and the errors the backup components logged. Two ntfy
+  alerts sit on *Failing* and *Oldest backup* (`clickstack.alerts`).
+
+  Databases are read from the CNPG exporter on 9187, opted into otel-node's
+  discovery by `weebo-base.cnpgClusterSpec` (`inheritedMetadata` on the
+  Cluster), and from the barman-cloud plugin's
+  `barman_cloud_cloudnative_pg_io_*` gauges, which the instance manager
+  serves on the same port. The tiles match those names with `LIKE '%…'`, so
+  CNPG's own `cnpg_collector_*` twins count too. A Cluster appears as soon as
+  `cnpg_collector_up` does, so one that has never been backed up reads
+  *9999 h* instead of being missing.
+
+  Files backups are any CronJob whose name contains `backup`, read from the
+  k8s_cluster Job metrics: the run time is the Job name's suffix (minutes
+  since the epoch, which is how a CronJob names its Jobs), the result its
+  succeeded/failed pod counts. Only the Jobs the CronJob still keeps are
+  visible, so *Oldest backup* is honest only while a successful Job stays in
+  its history (`successfulJobsHistoryLimit: 1` is enough). A Job created by
+  hand (`kubectl create job --from=cronjob/…`) has no numeric suffix and is
+  ignored.
+
 ## Round trip: build it in the UI, then commit it
 
 There is no export button. Get the JSON from the API with the same credentials

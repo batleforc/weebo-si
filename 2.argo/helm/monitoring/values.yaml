@@ -144,6 +144,23 @@ clickstack:
       message: "An OpenbaoNamespace was written: who can log in may have changed."
       interval: 5m
       priority: 3
+    # dashboards/backups.json: a backup that failed, or none for a night and a
+    # bit. Hourly, two windows: a 02:00 run still in progress does not page.
+    - dashboard: Backups
+      tile: failing
+      name: "Backups: a backup failed"
+      message: "A database or a backup CronJob failed its last backup. See the Backups dashboard."
+      interval: 1h
+      windows: 2
+      priority: 4
+    - dashboard: Backups
+      tile: oldest
+      name: "Backups: older than 26 h"
+      message: "A database or a backup CronJob has no good backup since yesterday (9999 h = never)."
+      interval: 1h
+      threshold: 26
+      windows: 2
+      priority: 4
     - dashboard: weebo-openbao
       tile: deletes
       name: "weebo-openbao: OpenBao objects deleted"

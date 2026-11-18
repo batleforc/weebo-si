@@ -8,6 +8,9 @@ path "${vault_mount.main-vault.path}/data/{{identity.entity.aliases.${data.vault
 path "${vault_mount.main-vault.path}/data/+/s3" {
   capabilities = ["read", "list"]
 }
+path "${vault_mount.main-vault.path}/data/+/backup" {
+  capabilities = ["read", "list"]
+}
 EOT
 }
 
@@ -78,6 +81,42 @@ resource "vault_kv_secret_v2" "forgejo-s3" {
     {
       accesskey = random_string.forgejo-accessKey.result
       secretkey = random_string.forgejo-secretKey.result
+    }
+  )
+}
+
+# Les sauvegardes des bases CNPG (weebo-base.cnpgBackup) : bucket, user et
+# policy `<app>-backup` de 2.argo/helm/database/sub (s3.mainInstance.creds,
+# entree `vaultKey`). La clef vit sous mv/<namespace>/backup : c'est le seul
+# endroit que le namespace de l'application sait lire (mv_reader_policy).
+locals {
+  backup_buckets = {
+    forgejo  = "forgejo"
+    batlehub = "batlehub"
+    auth     = "authentik"
+  }
+}
+
+resource "random_string" "backup-accessKey" {
+  for_each = local.backup_buckets
+  length   = 42
+  special  = false
+}
+
+resource "random_string" "backup-secretKey" {
+  for_each = local.backup_buckets
+  length   = 42
+  special  = false
+}
+
+resource "vault_kv_secret_v2" "backup-s3" {
+  for_each = local.backup_buckets
+  mount    = "mv"
+  name     = "${each.key}/backup"
+  data_json = jsonencode(
+    {
+      accesskey = random_string.backup-accessKey[each.key].result
+      secretkey = random_string.backup-secretKey[each.key].result
     }
   )
 }

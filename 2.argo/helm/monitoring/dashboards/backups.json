@@ -1,0 +1,347 @@
+{
+  "name": "Backups",
+  "tags": [],
+  "tiles": [
+    {
+      "id": "legend",
+      "config": {
+        "name": "How to read this",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "**Are the backups healthy?** Two kinds of backup land in RustFS, one bucket per application (`<app>-backup`):\n\n- **Databases** (`authentik-pg`, `batlehub-pg`, `forgejo-pg`): the barman-cloud plugin archives the WAL continuously and takes a base backup every night at 02:00. Any point inside the *recovery window* (7 days) can be restored. Read from the CNPG exporter (port 9187) and the plugin's `barman_cloud_cloudnative_pg_io_*` metrics.\n- **Files** (Forgejo's repositories, restic): every CronJob whose name contains `backup`. Read from the Kubernetes Job metrics, so only the Jobs the CronJob still keeps (its history limits) are seen.\n\n**Thresholds.** Oldest backup 26\\/50&nbsp;h (one missed night is amber) &nbsp;·&nbsp; WAL archive 15&nbsp;min\\/1&nbsp;h &nbsp;·&nbsp; recovery window under 1&nbsp;day. *Failing* counts a database whose last failed backup is newer than its last good one, plus a backup CronJob whose latest run failed.\n\n**Read *Databases* first.** It counts the clusters whose exporter answered in the range: if it is lower than 3, a database is missing from every other tile, and its silence reads green. *Oldest backup* reads 9999 for a database that has never had one. A time picker ending in the past makes every age look old: that is not an outage.\n\n**Restoring** is in the comments of `2.helm/weebo-base/templates/_cnpg.tpl` (databases) and `2.argo/helm/forgejo/templates/backup/repos.yaml` (repositories)."
+      },
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 6
+    },
+    {
+      "id": "databases",
+      "config": {
+        "name": "Databases",
+        "configType": "sql",
+        "sqlTemplate": "WITH\npg_raw AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    replaceRegexpOne(ResourceAttributes['k8s.pod.name'], '-[0-9]+$', '') AS cluster,\n    MetricName AS m,\n    argMax(Value, TimeUnix) AS v\n  FROM default.otel_metrics_gauge\n  WHERE $__timeFilter(TimeUnix)\n    AND (MetricName = 'cnpg_collector_up'\n      OR MetricName = 'cnpg_pg_stat_archiver_seconds_since_last_archival'\n      OR MetricName LIKE '%last_available_backup_timestamp'\n      OR MetricName LIKE '%first_recoverability_point'\n      OR MetricName LIKE '%last_failed_backup_timestamp')\n  GROUP BY ns, cluster, m\n),\npg AS (\n  SELECT\n    ns, cluster,\n    maxIf(v, m LIKE '%last_available_backup_timestamp') AS last_ok,\n    maxIf(v, m LIKE '%first_recoverability_point')      AS first_rp,\n    maxIf(v, m LIKE '%last_failed_backup_timestamp')    AS last_fail,\n    maxIf(v, m = 'cnpg_pg_stat_archiver_seconds_since_last_archival') AS wal_age,\n    if(last_ok > 0, (toUnixTimestamp(now()) - last_ok) / 3600, 9999) AS age_h\n  FROM pg_raw\n  GROUP BY ns, cluster\n  HAVING countIf(m = 'cnpg_collector_up') > 0\n)\nSELECT toUInt32(count()) AS \"Databases\" FROM pg",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0
+        },
+        "colorRules": [
+          {
+            "operator": "lt",
+            "value": 3,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "lt",
+            "value": 1,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 0,
+      "y": 6,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "oldest",
+      "config": {
+        "name": "Oldest backup",
+        "configType": "sql",
+        "sqlTemplate": "WITH\npg_raw AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    replaceRegexpOne(ResourceAttributes['k8s.pod.name'], '-[0-9]+$', '') AS cluster,\n    MetricName AS m,\n    argMax(Value, TimeUnix) AS v\n  FROM default.otel_metrics_gauge\n  WHERE $__timeFilter(TimeUnix)\n    AND (MetricName = 'cnpg_collector_up'\n      OR MetricName = 'cnpg_pg_stat_archiver_seconds_since_last_archival'\n      OR MetricName LIKE '%last_available_backup_timestamp'\n      OR MetricName LIKE '%first_recoverability_point'\n      OR MetricName LIKE '%last_failed_backup_timestamp')\n  GROUP BY ns, cluster, m\n),\npg AS (\n  SELECT\n    ns, cluster,\n    maxIf(v, m LIKE '%last_available_backup_timestamp') AS last_ok,\n    maxIf(v, m LIKE '%first_recoverability_point')      AS first_rp,\n    maxIf(v, m LIKE '%last_failed_backup_timestamp')    AS last_fail,\n    maxIf(v, m = 'cnpg_pg_stat_archiver_seconds_since_last_archival') AS wal_age,\n    if(last_ok > 0, (toUnixTimestamp(now()) - last_ok) / 3600, 9999) AS age_h\n  FROM pg_raw\n  GROUP BY ns, cluster\n  HAVING countIf(m = 'cnpg_collector_up') > 0\n),\njobs AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    ResourceAttributes['k8s.job.name'] AS job,\n    replaceRegexpOne(job, '-[0-9]+$', '') AS cron,\n    toUInt64OrZero(extract(job, '-([0-9]+)$')) * 60 AS sched,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.job.successful_pods') AS ok,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.job.failed_pods')     AS ko,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.job.active_pods')     AS running,\n    multiIf(ok >= 1, 'ok', running > 0, 'running', ko > 0, 'FAILED', 'pending') AS st\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.job.successful_pods', 'k8s.job.failed_pods', 'k8s.job.active_pods')\n    AND $__timeFilter(TimeUnix)\n    AND ResourceAttributes['k8s.job.name'] LIKE '%backup%'\n  GROUP BY ns, job\n  HAVING sched > 1000000000\n),\ncrons AS (\n  SELECT\n    ns, cron,\n    max(sched) AS last_run,\n    argMax(st, sched) AS last_st,\n    maxIf(sched, st = 'ok') AS last_ok,\n    if(last_ok > 0, (toUnixTimestamp(now()) - last_ok) / 3600, 9999) AS age_h,\n    count() AS kept,\n    countIf(st = 'FAILED') AS failed\n  FROM jobs\n  GROUP BY ns, cron\n)\nSELECT round(greatest(\n  ifNull((SELECT max(age_h) FROM pg), 0),\n  ifNull((SELECT max(age_h) FROM crons), 0)\n), 1) AS \"Oldest backup\"",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "unit": " h"
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 26,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 50,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 4,
+      "y": 6,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "failing",
+      "config": {
+        "name": "Failing",
+        "configType": "sql",
+        "sqlTemplate": "WITH\npg_raw AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    replaceRegexpOne(ResourceAttributes['k8s.pod.name'], '-[0-9]+$', '') AS cluster,\n    MetricName AS m,\n    argMax(Value, TimeUnix) AS v\n  FROM default.otel_metrics_gauge\n  WHERE $__timeFilter(TimeUnix)\n    AND (MetricName = 'cnpg_collector_up'\n      OR MetricName = 'cnpg_pg_stat_archiver_seconds_since_last_archival'\n      OR MetricName LIKE '%last_available_backup_timestamp'\n      OR MetricName LIKE '%first_recoverability_point'\n      OR MetricName LIKE '%last_failed_backup_timestamp')\n  GROUP BY ns, cluster, m\n),\npg AS (\n  SELECT\n    ns, cluster,\n    maxIf(v, m LIKE '%last_available_backup_timestamp') AS last_ok,\n    maxIf(v, m LIKE '%first_recoverability_point')      AS first_rp,\n    maxIf(v, m LIKE '%last_failed_backup_timestamp')    AS last_fail,\n    maxIf(v, m = 'cnpg_pg_stat_archiver_seconds_since_last_archival') AS wal_age,\n    if(last_ok > 0, (toUnixTimestamp(now()) - last_ok) / 3600, 9999) AS age_h\n  FROM pg_raw\n  GROUP BY ns, cluster\n  HAVING countIf(m = 'cnpg_collector_up') > 0\n),\njobs AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    ResourceAttributes['k8s.job.name'] AS job,\n    replaceRegexpOne(job, '-[0-9]+$', '') AS cron,\n    toUInt64OrZero(extract(job, '-([0-9]+)$')) * 60 AS sched,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.job.successful_pods') AS ok,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.job.failed_pods')     AS ko,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.job.active_pods')     AS running,\n    multiIf(ok >= 1, 'ok', running > 0, 'running', ko > 0, 'FAILED', 'pending') AS st\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.job.successful_pods', 'k8s.job.failed_pods', 'k8s.job.active_pods')\n    AND $__timeFilter(TimeUnix)\n    AND ResourceAttributes['k8s.job.name'] LIKE '%backup%'\n  GROUP BY ns, job\n  HAVING sched > 1000000000\n),\ncrons AS (\n  SELECT\n    ns, cron,\n    max(sched) AS last_run,\n    argMax(st, sched) AS last_st,\n    maxIf(sched, st = 'ok') AS last_ok,\n    if(last_ok > 0, (toUnixTimestamp(now()) - last_ok) / 3600, 9999) AS age_h,\n    count() AS kept,\n    countIf(st = 'FAILED') AS failed\n  FROM jobs\n  GROUP BY ns, cron\n)\nSELECT toUInt32(\n  (SELECT count() FROM pg WHERE last_fail > last_ok)\n  + (SELECT count() FROM crons WHERE last_st = 'FAILED')\n) AS \"Failing\"",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 8,
+      "y": 6,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "wal-age",
+      "config": {
+        "name": "Oldest WAL archive",
+        "configType": "sql",
+        "sqlTemplate": "WITH\npg_raw AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    replaceRegexpOne(ResourceAttributes['k8s.pod.name'], '-[0-9]+$', '') AS cluster,\n    MetricName AS m,\n    argMax(Value, TimeUnix) AS v\n  FROM default.otel_metrics_gauge\n  WHERE $__timeFilter(TimeUnix)\n    AND (MetricName = 'cnpg_collector_up'\n      OR MetricName = 'cnpg_pg_stat_archiver_seconds_since_last_archival'\n      OR MetricName LIKE '%last_available_backup_timestamp'\n      OR MetricName LIKE '%first_recoverability_point'\n      OR MetricName LIKE '%last_failed_backup_timestamp')\n  GROUP BY ns, cluster, m\n),\npg AS (\n  SELECT\n    ns, cluster,\n    maxIf(v, m LIKE '%last_available_backup_timestamp') AS last_ok,\n    maxIf(v, m LIKE '%first_recoverability_point')      AS first_rp,\n    maxIf(v, m LIKE '%last_failed_backup_timestamp')    AS last_fail,\n    maxIf(v, m = 'cnpg_pg_stat_archiver_seconds_since_last_archival') AS wal_age,\n    if(last_ok > 0, (toUnixTimestamp(now()) - last_ok) / 3600, 9999) AS age_h\n  FROM pg_raw\n  GROUP BY ns, cluster\n  HAVING countIf(m = 'cnpg_collector_up') > 0\n)\nSELECT round(max(if(wal_age < 0, 99999, wal_age)) / 60, 1) AS \"Oldest WAL archive\" FROM pg",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "unit": " min"
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 15,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 60,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 12,
+      "y": 6,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "wal-failures",
+      "config": {
+        "name": "WAL archive failures",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(sum(d)) AS \"WAL archive failures\"\nFROM (\n  SELECT greatest(0, max(Value) - min(Value)) AS d\n  FROM default.otel_metrics_sum\n  WHERE MetricName LIKE 'cnpg_pg_stat_archiver_failed_count%' AND $__timeFilter(TimeUnix)\n  GROUP BY ResourceAttributes['k8s.pod.name']\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 10,
+            "color": "chart-error"
+          }
+        ]
+      },
+      "x": 16,
+      "y": 6,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "window",
+      "config": {
+        "name": "Shortest recovery window",
+        "configType": "sql",
+        "sqlTemplate": "WITH\npg_raw AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    replaceRegexpOne(ResourceAttributes['k8s.pod.name'], '-[0-9]+$', '') AS cluster,\n    MetricName AS m,\n    argMax(Value, TimeUnix) AS v\n  FROM default.otel_metrics_gauge\n  WHERE $__timeFilter(TimeUnix)\n    AND (MetricName = 'cnpg_collector_up'\n      OR MetricName = 'cnpg_pg_stat_archiver_seconds_since_last_archival'\n      OR MetricName LIKE '%last_available_backup_timestamp'\n      OR MetricName LIKE '%first_recoverability_point'\n      OR MetricName LIKE '%last_failed_backup_timestamp')\n  GROUP BY ns, cluster, m\n),\npg AS (\n  SELECT\n    ns, cluster,\n    maxIf(v, m LIKE '%last_available_backup_timestamp') AS last_ok,\n    maxIf(v, m LIKE '%first_recoverability_point')      AS first_rp,\n    maxIf(v, m LIKE '%last_failed_backup_timestamp')    AS last_fail,\n    maxIf(v, m = 'cnpg_pg_stat_archiver_seconds_since_last_archival') AS wal_age,\n    if(last_ok > 0, (toUnixTimestamp(now()) - last_ok) / 3600, 9999) AS age_h\n  FROM pg_raw\n  GROUP BY ns, cluster\n  HAVING countIf(m = 'cnpg_collector_up') > 0\n)\nSELECT round(min(if(first_rp > 0, (toUnixTimestamp(now()) - first_rp) / 86400, 0)), 1) AS \"Shortest recovery window\" FROM pg",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "unit": " d"
+        },
+        "colorRules": [
+          {
+            "operator": "lt",
+            "value": 1,
+            "color": "chart-warning"
+          }
+        ]
+      },
+      "x": 20,
+      "y": 6,
+      "w": 4,
+      "h": 3
+    },
+    {
+      "id": "per-database",
+      "config": {
+        "name": "Every database",
+        "configType": "sql",
+        "sqlTemplate": "WITH\npg_raw AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    replaceRegexpOne(ResourceAttributes['k8s.pod.name'], '-[0-9]+$', '') AS cluster,\n    MetricName AS m,\n    argMax(Value, TimeUnix) AS v\n  FROM default.otel_metrics_gauge\n  WHERE $__timeFilter(TimeUnix)\n    AND (MetricName = 'cnpg_collector_up'\n      OR MetricName = 'cnpg_pg_stat_archiver_seconds_since_last_archival'\n      OR MetricName LIKE '%last_available_backup_timestamp'\n      OR MetricName LIKE '%first_recoverability_point'\n      OR MetricName LIKE '%last_failed_backup_timestamp')\n  GROUP BY ns, cluster, m\n),\npg AS (\n  SELECT\n    ns, cluster,\n    maxIf(v, m LIKE '%last_available_backup_timestamp') AS last_ok,\n    maxIf(v, m LIKE '%first_recoverability_point')      AS first_rp,\n    maxIf(v, m LIKE '%last_failed_backup_timestamp')    AS last_fail,\n    maxIf(v, m = 'cnpg_pg_stat_archiver_seconds_since_last_archival') AS wal_age,\n    if(last_ok > 0, (toUnixTimestamp(now()) - last_ok) / 3600, 9999) AS age_h\n  FROM pg_raw\n  GROUP BY ns, cluster\n  HAVING countIf(m = 'cnpg_collector_up') > 0\n),\nsize AS (\n  SELECT\n    replaceRegexpOne(ResourceAttributes['k8s.pod.name'], '-[0-9]+$', '') AS cluster,\n    sum(v) AS bytes\n  FROM (\n    SELECT ResourceAttributes, Attributes['datname'] AS db, argMax(Value, TimeUnix) AS v\n    FROM default.otel_metrics_gauge\n    WHERE MetricName = 'cnpg_pg_database_size_bytes' AND $__timeFilter(TimeUnix)\n      AND Attributes['datname'] NOT IN ('postgres', 'template0', 'template1')\n    GROUP BY ResourceAttributes, db\n  )\n  GROUP BY cluster\n)\nSELECT\n  p.ns AS \"Namespace\",\n  p.cluster AS \"Cluster\",\n  multiIf(p.last_ok = 0, 'NEVER BACKED UP',\n          p.last_fail > p.last_ok, 'LAST BACKUP FAILED',\n          p.age_h > 26, 'STALE',\n          p.wal_age < 0 OR p.wal_age > 3600, 'WAL NOT ARCHIVED',\n          'ok') AS \"Status\",\n  if(p.last_ok > 0, toString(toDateTime(toUInt32(p.last_ok))), '-') AS \"LastBackup\",\n  round(p.age_h, 1) AS \"Age(h)\",\n  if(p.first_rp > 0, round((toUnixTimestamp(now()) - p.first_rp) / 86400, 1), 0) AS \"Window(d)\",\n  if(p.last_fail > 0, toString(toDateTime(toUInt32(p.last_fail))), '-') AS \"LastFailure\",\n  round(p.wal_age / 60, 1) AS \"WALAge(min)\",\n  round(s.bytes / 1048576, 1) AS \"Size(MiB)\"\nFROM pg AS p\nLEFT JOIN size AS s ON p.cluster = s.cluster\nORDER BY \"Age(h)\" DESC",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Logs"
+          },
+          "whereTemplate": "ResourceAttributes['k8s.namespace.name'] = '{{Namespace}}' AND ResourceAttributes['k8s.pod.name'] LIKE '{{Cluster}}-%'",
+          "whereLanguage": "sql"
+        }
+      },
+      "x": 0,
+      "y": 9,
+      "w": 24,
+      "h": 5
+    },
+    {
+      "id": "per-cronjob",
+      "config": {
+        "name": "Backup CronJobs",
+        "configType": "sql",
+        "sqlTemplate": "WITH\njobs AS (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    ResourceAttributes['k8s.job.name'] AS job,\n    replaceRegexpOne(job, '-[0-9]+$', '') AS cron,\n    toUInt64OrZero(extract(job, '-([0-9]+)$')) * 60 AS sched,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.job.successful_pods') AS ok,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.job.failed_pods')     AS ko,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.job.active_pods')     AS running,\n    multiIf(ok >= 1, 'ok', running > 0, 'running', ko > 0, 'FAILED', 'pending') AS st\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.job.successful_pods', 'k8s.job.failed_pods', 'k8s.job.active_pods')\n    AND $__timeFilter(TimeUnix)\n    AND ResourceAttributes['k8s.job.name'] LIKE '%backup%'\n  GROUP BY ns, job\n  HAVING sched > 1000000000\n),\ncrons AS (\n  SELECT\n    ns, cron,\n    max(sched) AS last_run,\n    argMax(st, sched) AS last_st,\n    maxIf(sched, st = 'ok') AS last_ok,\n    if(last_ok > 0, (toUnixTimestamp(now()) - last_ok) / 3600, 9999) AS age_h,\n    count() AS kept,\n    countIf(st = 'FAILED') AS failed\n  FROM jobs\n  GROUP BY ns, cron\n)\nSELECT\n  ns AS \"Namespace\",\n  cron AS \"CronJob\",\n  last_st AS \"LastRun\",\n  toString(toDateTime(toUInt32(last_run))) AS \"Scheduled\",\n  if(last_ok > 0, toString(toDateTime(toUInt32(last_ok))), '-') AS \"LastSuccess\",\n  round(age_h, 1) AS \"Age(h)\",\n  toUInt32(kept) AS \"JobsKept\",\n  toUInt32(failed) AS \"Failed\"\nFROM crons\nORDER BY \"Age(h)\" DESC",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Logs"
+          },
+          "whereTemplate": "ResourceAttributes['k8s.namespace.name'] = '{{Namespace}}' AND ResourceAttributes['k8s.pod.name'] LIKE '{{CronJob}}-%'",
+          "whereLanguage": "sql"
+        }
+      },
+      "x": 0,
+      "y": 14,
+      "w": 24,
+      "h": 4
+    },
+    {
+      "id": "age-trend",
+      "config": {
+        "name": "Age of the last base backup",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  replaceRegexpOne(ResourceAttributes['k8s.pod.name'], '-[0-9]+$', '') AS cluster,\n  (toUnixTimestamp(max(TimeUnix)) - max(Value)) / 3600 AS v\nFROM default.otel_metrics_gauge\nWHERE MetricName LIKE '%last_available_backup_timestamp' AND $__timeFilter(TimeUnix) AND Value > 0\nGROUP BY ts, cluster\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "unit": " h"
+        }
+      },
+      "x": 0,
+      "y": 18,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "wal-trend",
+      "config": {
+        "name": "WAL archive lag",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  replaceRegexpOne(ResourceAttributes['k8s.pod.name'], '-[0-9]+$', '') AS cluster,\n  max(Value) / 60 AS v\nFROM default.otel_metrics_gauge\nWHERE MetricName = 'cnpg_pg_stat_archiver_seconds_since_last_archival' AND $__timeFilter(TimeUnix) AND Value >= 0\nGROUP BY ts, cluster\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "unit": " min"
+        }
+      },
+      "x": 12,
+      "y": 18,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "window-trend",
+      "config": {
+        "name": "Recovery window",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(TimeUnix) AS ts,\n  replaceRegexpOne(ResourceAttributes['k8s.pod.name'], '-[0-9]+$', '') AS cluster,\n  (toUnixTimestamp(max(TimeUnix)) - max(Value)) / 86400 AS v\nFROM default.otel_metrics_gauge\nWHERE MetricName LIKE '%first_recoverability_point' AND $__timeFilter(TimeUnix) AND Value > 0\nGROUP BY ts, cluster\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "unit": " d"
+        }
+      },
+      "x": 0,
+      "y": 24,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "size-trend",
+      "config": {
+        "name": "Database size",
+        "configType": "sql",
+        "sqlTemplate": "SELECT ts, cluster, sum(v) / 1048576 AS v\nFROM (\n  SELECT\n    $__timeInterval(TimeUnix) AS ts,\n    replaceRegexpOne(ResourceAttributes['k8s.pod.name'], '-[0-9]+$', '') AS cluster,\n    Attributes['datname'] AS db,\n    avg(Value) AS v\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'cnpg_pg_database_size_bytes' AND $__timeFilter(TimeUnix)\n    AND Attributes['datname'] NOT IN ('postgres', 'template0', 'template1')\n  GROUP BY ts, cluster, db\n)\nGROUP BY ts, cluster\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "line",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 1,
+          "unit": " MiB"
+        }
+      },
+      "x": 12,
+      "y": 24,
+      "w": 12,
+      "h": 6
+    },
+    {
+      "id": "errors",
+      "config": {
+        "name": "Errors from the backup components",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  Timestamp AS \"Time\",\n  ResourceAttributes['k8s.namespace.name'] AS \"Namespace\",\n  ResourceAttributes['k8s.pod.name'] AS \"Pod\",\n  ResourceAttributes['k8s.container.name'] AS \"Container\",\n  substring(Body, 1, 400) AS \"Message\"\nFROM default.otel_logs\nWHERE $__timeFilter(Timestamp)\n  AND (ResourceAttributes['k8s.container.name'] IN ('plugin-barman-cloud', 'restic')\n    OR (ResourceAttributes['k8s.namespace.name'] = 'database'\n        AND ResourceAttributes['k8s.pod.name'] LIKE 'barman-cloud%'))\n  AND (lower(SeverityText) IN ('error', 'fatal', 'critical')\n    OR Body ILIKE '%error%' OR Body ILIKE '%fatal%')\nORDER BY Timestamp DESC\nLIMIT 200",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "table",
+        "alternateRowBackground": true
+      },
+      "x": 0,
+      "y": 30,
+      "w": 24,
+      "h": 6
+    }
+  ]
+}

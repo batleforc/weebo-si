@@ -40,6 +40,18 @@ authentik:
         memory: 256Mi
       limits:
         memory: 1Gi
+    # ── Backup ── barman-cloud to the `authentik-backup` bucket, through
+    # weebo-base.cnpgBackup (2.helm/weebo-base/templates/_cnpg.tpl): WAL
+    # archived continuously plus a base backup each night, so any point of the
+    # last `retention` can be restored. Keys in mv/auth/backup
+    # (2.terra/vault/terra-map/s3.tf).
+    backup:
+      enabled: true
+      bucket: authentik-backup
+      vaultKey: mv/auth/backup
+      pg:
+        schedule: "0 0 2 * * *"
+        retention: 7d
   # The files of the BatleHub brand (fonts, logos, flow backgrounds), built by
   # 3.custo/batlehub-theme into files/theme/ and mounted on the server
   # (templates/authentik/theme.yaml). The brand CSS that uses them is set by

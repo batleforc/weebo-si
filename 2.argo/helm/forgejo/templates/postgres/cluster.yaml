@@ -25,4 +25,7 @@ spec:
       # from generating a `forgejo-pg-app` Secret of its own.
       secret:
         name: forgejo-pg-cred
+  {{- include "weebo-base.cnpgClusterSpec" (dict "cluster" "forgejo-pg" "backup" .Values.forgejo.backup) | nindent 2 }}
+
+{{ include "weebo-base.cnpgBackup" (dict "ctx" . "cluster" "forgejo-pg" "secretStore" "cred-store" "backup" .Values.forgejo.backup) }}
 {{- end -}}

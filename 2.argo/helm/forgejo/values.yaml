@@ -94,6 +94,51 @@ forgejo:
       size: 10Gi
       storageClassName: longhorn
 
+  # ── Backups ────────────────────────────────────────────────────────────────
+  # Both halves of Forgejo's state, into the `forgejo-backup` bucket of the
+  # RustFS tenant (2.argo/helm/database/sub, s3.mainInstance.creds), with its
+  # own keys (mv/forgejo/backup, 2.terra/vault/terra-map/s3.tf):
+  #
+  #   pg/     forgejo-pg, by the barman-cloud plugin (2.argo/helm/database/main),
+  #           through weebo-base.cnpgBackup (2.helm/weebo-base/templates/_cnpg.tpl):
+  #           WAL archived continuously plus a base backup on `schedule`, so a
+  #           restore can stop at any point in time inside `retention`.
+  #   repos/  the forgejo-data volume, by restic (templates/backup/repos.yaml):
+  #           repositories, app.ini (SECRET_KEY, which decrypts the 2FA and
+  #           mirror credentials stored in the database) and jwt/ (the OAuth2
+  #           signing key). Encrypted with mv/forgejo/restic -- keep a copy of
+  #           that password off the cluster, or the snapshots go with it.
+  #
+  # The `forgejo` bucket itself (LFS, attachments, packages) is not copied:
+  # it already lives in RustFS, which these backups land in too.
+  #
+  # Same RustFS, same node: this covers a broken database, a deleted
+  # repository, a bad upgrade -- not the loss of the node or its disks.
+  backup:
+    enabled: true
+    bucket: forgejo-backup
+    vaultKey: mv/forgejo/backup
+    resticVaultKey: mv/forgejo/restic
+    pg:
+      # Six-field cron, seconds first (ScheduledBackup).
+      schedule: "0 0 2 * * *"
+      # Base backups and the WAL needed to replay from the oldest one: any
+      # point of the last 7 days. Time-based only (barman has no count), so
+      # that is ~8 base backups -- ~26 MB each, gzipped.
+      retention: 7d
+    repos:
+      schedule: "30 2 * * *"
+      # restic forget --keep-*: today's snapshot, plus the last one of the
+      # previous week (1 to 7 days old). weekly: 1 alone would be today's
+      # again. Snapshots are deduplicated: the second costs only what changed.
+      keep:
+        daily: 1
+        weekly: 2
+      image:
+        repository: docker.io/restic/restic
+        # renovate: datasource=docker depName=docker.io/restic/restic
+        tag: "0.18.1"
+
   # ── Admin ──────────────────────────────────────────────────────────────────
   # A local admin, for the day Authentik is down or before the OIDC source
   # works. Username and password come from mv/forgejo/admin; `keepUpdated`
