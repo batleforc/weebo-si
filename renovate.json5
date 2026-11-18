@@ -129,6 +129,11 @@
       ],
     },
     {
+      description: 'kyverno chart 3.10 ships Kyverno 1.20, which no longer enforces legacy kyverno.io ClusterPolicy/Policy -- and add-certificates-volume, add-rustfs-tenant-ca and default-container-limits are all legacy. Its pre-upgrade hook refused the bump (2026-11-18). Lift once they are migrated to policies.kyverno.io (https://kyverno.io/docs/guides/migration-to-cel/).',
+      matchDepNames: ['kyverno'],
+      allowedVersions: '<3.10.0',
+    },
+    {
       description: 'Docs site: one PR for the whole lockfile',
       matchFileNames: ['0.docs/**'],
       groupName: 'docs site',
