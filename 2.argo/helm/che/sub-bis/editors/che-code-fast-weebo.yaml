@@ -78,7 +78,7 @@ events:
 components:
   - name: che-code-injector
     container:
-      image: registry.pkg.weebo.poc/ghcr/weebo-si/che-code:sha-55a18ad
+      image: registry.pkg.weebo.poc/ghcr/weebo-si/che-code:sha-8004bc9
       command:
         - /entrypoint-init-container.sh
       volumeMounts:

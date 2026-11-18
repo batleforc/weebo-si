@@ -38,6 +38,7 @@ che:
       che-code-angos: true # weebo/che-code/latest
       che-code-insiders-weebo: true # weebo/che-code-weebo/next
       che-code-fast-weebo: true # weebo/che-code-fast/latest
+      che-code-external-node-weebo: true # weebo/che-code-external-node/latest
       # che-incubator editors served through angos (header of each file).
       che-web-terminal: true # weebo/che-web-terminal/latest
       che-herdr: true # weebo/che-herdr/latest
@@ -73,7 +74,7 @@ che:
     devworkspace:
       repoURL: https://github.com/devfile/devworkspace-operator
       # renovate: datasource=github-tags depName=devfile/devworkspace-operator
-      version: v1.0.0
+      version: v1.1.0
   # weebo-si-operator from batleforc/weebo-si-hardening, pulled as an OCI chart.
   # The chart version is also the image tag (appVersion).
   hardening:
