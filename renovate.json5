@@ -71,13 +71,13 @@
   customManagers: [
     {
       customType: 'regex',
-      description: 'Upstream chart/image versions pinned as plain values keys and consumed by ArgoCD Application templates (targetRevision) or image templates',
+      description: 'Upstream chart/image versions pinned as plain values keys and consumed by ArgoCD Application templates (targetRevision) or image templates. `tag:` too: an image under `registry:` instead of `repository:` (angos, oauth2-proxy, batlehub, forgejo, stalwart cli) is invisible to helm-values. Where helm-values also finds it (valkey, curl, openbao), both managers land on the same branch.',
       managerFilePatterns: [
         '2.argo/helm/**/values.yaml',
         '2.helm/**/values.yaml',
       ],
       matchStrings: [
-        '#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+?))?(?:\\s+versioning=(?<versioning>\\S+?))?\\s*\\n\\s*version:\\s*["\']?(?<currentValue>[^"\'\\s]+)',
+        '#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+?))?(?:\\s+versioning=(?<versioning>\\S+?))?\\s*\\n\\s*(?:version|tag):\\s*["\']?(?<currentValue>[^"\'\\s]+)',
       ],
       // Empty template => fall back to each datasource's own default versioning.
       versioningTemplate: '{{#if versioning}}{{{versioning}}}{{/if}}',
@@ -97,7 +97,7 @@
       groupName: 'clickhouse',
     },
     {
-      description: 'ClickHouse version is load-bearing for the ClickStack dashboard SQL -- tiles are validated against 25.8 and silently fail on other majors',
+      description: 'ClickHouse version is load-bearing for the ClickStack dashboard SQL -- tiles are validated against the pinned major.minor (26.8 since 2026-11-18) and can silently fail on another',
       matchDepNames: ['clickhouse/clickhouse-server', 'clickhouse/clickhouse-keeper'],
       matchUpdateTypes: ['major', 'minor'],
       dependencyDashboardApproval: true,
@@ -119,6 +119,14 @@
       description: 'mongodb-kubernetes 1.13+ ships the Ops Manager 9 agent (109.x), which treats MongoDB 5.0 as end of life; ClickStack Mongo is still 5.0. Lift once the MongoDBCommunity runs 6.0 or later.',
       matchDepNames: ['mongodb-kubernetes'],
       allowedVersions: '<1.13.0',
+    },
+    {
+      description: 'angos: the registry image and the credential-provider binary move together, and each bump has two edits Renovate cannot make -- the operator refuses an untested tag unless approvedUpgrade names it, and the installer refuses a binary whose sha256 is not pinned.',
+      matchDepNames: ['ghcr.io/project-angos/angos', 'project-angos/angos'],
+      groupName: 'angos',
+      prBodyNotes: [
+        'Before merging, in `2.argo/helm/angos/values.yaml`: set `operator.instance.approvedUpgrade` to the new tag (unless the weebo-angos operator now lists it as tested), and `angos.kubeOidc.credentialProvider.sha256.amd64` to the hash of `angos-credential-provider-linux-amd64` from the release, after `cosign verify-blob` against its `.cosign.bundle`.',
+      ],
     },
     {
       description: 'Docs site: one PR for the whole lockfile',

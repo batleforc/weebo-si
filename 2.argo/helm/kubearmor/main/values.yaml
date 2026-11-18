@@ -8,6 +8,7 @@ ciliumNetworkPolicies:
 kubearmor:
   enabled: true
   namespace: kubearmor
+  # renovate: datasource=helm depName=kubearmor-operator registryUrl=https://kubearmor.github.io/charts
   version: 1.7.6
   repoURL: "https://kubearmor.github.io/charts"
   chart: kubearmor-operator

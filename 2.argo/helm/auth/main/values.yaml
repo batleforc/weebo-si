@@ -58,10 +58,10 @@ authentik:
     enabled: false
   operator:
     enabled: true
-    # renovate: datasource=docker depName=ghcr.io/weebo-si-operator/charts/weebo-authentik
     # >= 0.23.0: AuthentikBlueprint (auth/sub, blueprints). 0.23.1: a proxy
     # provider PATCH carries internal_host (a flow change on longhorn /
     # clickstack was refused with a 400 before).
+    # renovate: datasource=docker depName=ghcr.io/weebo-si-operator/charts/weebo-authentik
     version: 0.25.1
     replicaCount: 1
   sub:
