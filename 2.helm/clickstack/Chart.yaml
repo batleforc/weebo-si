@@ -1,24 +1,35 @@
 annotations:
+  artifacthub.io/category: monitoring-logging
   artifacthub.io/license: MIT
   artifacthub.io/links: |
     - name: Chart Source
-      url: https://github.com/hyperdxio/helm-charts
+      url: https://github.com/ClickHouse/ClickStack-helm-charts
     - name: Upstream Project
       url: https://github.com/hyperdxio/hyperdx
+    - name: Upgrade Guide
+      url: https://github.com/ClickHouse/ClickStack-helm-charts/blob/main/docs/UPGRADE.md
 apiVersion: v2
-appVersion: 2.39.1
+appVersion: 2.46.0
 dependencies:
 - alias: otel-collector
   condition: otel-collector.enabled
   name: opentelemetry-collector
-  repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+  repository: oci://ghcr.io/open-telemetry/opentelemetry-helm-charts
   version: ~0.146.0
 description: A Helm chart for ClickStack - Full-stack observability with ClickHouse,
   OpenTelemetry, and HyperDX
 home: https://clickhouse.com/docs/use-cases/observability/clickstack
+icon: https://raw.githubusercontent.com/hyperdxio/hyperdx/main/packages/app/public/favicons/clickstack/favicon.svg
+keywords:
+- observability
+- opentelemetry
+- clickhouse
+- logs
+- traces
+- metrics
 name: clickstack
 sources:
+- https://github.com/ClickHouse/ClickStack-helm-charts
 - https://github.com/hyperdxio/hyperdx
-- https://github.com/hyperdxio/helm-charts
 type: application
-version: 3.4.0
+version: 3.7.0

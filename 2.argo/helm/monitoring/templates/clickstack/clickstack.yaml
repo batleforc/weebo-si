@@ -21,9 +21,11 @@ spec:
         fullnameOverride: clickstack
         hyperdx:
           existingSecret: true
-          frontendUrl: "https://{{ .Values.clickstack.domain }}"
           secrets: {}
           config:
+            # Chart 3.6+ fails on the old hyperdx.frontendUrl key. The
+            # clickstack-secret's FRONTEND_URL also sets it and wins (envFrom order).
+            FRONTEND_URL: "https://{{ .Values.clickstack.domain }}"
             # Read by the gateway collector's clickhouse exporter, which
             # interpolates it as ${env:HYPERDX_OTEL_EXPORTER_TABLES_TTL:-720h}
             # in the config HyperDX pushes over OpAMP. It lands in the CREATE
