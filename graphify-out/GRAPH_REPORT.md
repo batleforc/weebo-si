@@ -1,17 +1,17 @@
 # Graph Report - weebo-si  (2026-11-18)
 
 ## Corpus Check
-- 569 files · ~283,992 words
+- 569 files · ~284,256 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 97 file(s) not represented in the graph (top: (none) 36, .woff2 18, .tpl 16)
+- Unclassified: 95 file(s) not represented in the graph (top: (none) 35, .woff2 18, .tpl 16)
 
 ## Summary
-- 5717 nodes · 6201 edges · 536 communities (499 shown, 37 thin omitted)
+- 5747 nodes · 6230 edges · 551 communities (515 shown, 36 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 31 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `aa37b19d`
+- Built from commit: `b0417df5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -220,7 +220,7 @@
 - auth/sub/Chart.yaml
 - backend
 - attributes
-- che
+- batleforc
 - che
 - endpoint-gateway
 - forgejo
@@ -294,7 +294,7 @@
 - jaeger-compact
 - jaeger-grpc
 - argorender.py
-- ports
+- jaeger-thrift
 - networkPolicy
 - otlp-http
 - attrs
@@ -336,7 +336,7 @@
 - affinity
 - serviceAccount
 - storageclass
-- batlehub-theme
+- color.mjs
 - re
 - talosctl
 - identity
@@ -373,7 +373,7 @@
 - kubernetes.mdx
 - instance
 - pdb
-- fumadocs-mdx
+- spec
 - cilium
 - docs:pages:preview
 - network-flows/auth.mdx
@@ -426,10 +426,10 @@
 - kubearmor/main/Chart.yaml
 - kubearmor/sub/Chart.yaml
 - upstream
-- health-check
+- selector_name
 - kubearmor
 - default-authenticator-static-setup
-- react-router.config.ts
+- che
 - vault
 - container
 - container
@@ -487,14 +487,14 @@
 - matchLabels
 - monitoring.mdx
 - kubectl
-- builtin
+- default-authenticator-webauthn-setup
 - podWebhook
-- serviceAccount
+- externalConfig
 - auth
 - secscan
 - 6. Conception détaillée
 - 7. Sécurité
-- _NoRedirect
+- weebo
 - network-flows/angos.mdx
 - network-flows/batlehub.mdx
 - che.mdx
@@ -515,31 +515,46 @@
 - authentication/index.mdx
 - 10. Exploitation
 - components
+- endpointAuthErrorPage
 - hook
 - spaces/values.yaml
 - argo-admin
 - default-provider-invalidation-flow
 - default-source-authentication
 - secureboot-faisabilite.mdx
-- otlp
-- configMap
-- extraEnvsFrom
+- source
+- logs
+- caSecretRef
+- vault
 - metrics
 - default-source-enrollment
 - podSecurityContext
 - kubearmor
 - octodoctor best-practices report
+- weeboGroups
 - layout
 - memory_limiter
 - protocols
 - protocols
+- builtin
 - caSecret
 - chart
 - maintainer
+- zipkin
+- secrets
+- token
 - logs
 - readers
 - traces
 - templateNamespace
+- logsCollection
+- ports
+- ingress
+- default-password-change
+- default-provider-authorization-implicit-consent
+- default-user-settings-flow
+- ports
+- podDisruptionBudget
 
 ## God Nodes (most connected - your core abstractions)
 1. `main()` - 32 edges
@@ -560,15 +575,15 @@
   0.docs/content/docs/rfc/0005-proxyauthk8s-agent-weebo-si.md → 1.pulu-init/main.go
 - `4. Apiserver : second authenticator JWT (`1.pulu-init/main.go`)` --references--> `authenticationConfig()`  [INFERRED]
   0.docs/content/docs/runbooks/bascule-weebo-si.mdx → 1.pulu-init/main.go
+- `What to edit` --references--> `authentik()`  [INFERRED]
+  3.custo/batlehub-theme/README.md → 0.task/scripts/authflow.py
 - `Ce qui change` --references--> `argocd()`  [INFERRED]
   0.docs/content/docs/runbooks/durcissement-argocd.mdx → 0.task/scripts/authflow.py
-- `Questions ouvertes` --references--> `variables()`  [INFERRED]
-  0.docs/content/docs/rfc/0002-liaison.md → 3.custo/batlehub-theme/src/variables.mjs
 
 ## Import Cycles
 - None detected.
 
-## Communities (536 total, 37 thin omitted)
+## Communities (551 total, 36 thin omitted)
 
 ### Community 0 - "Upgrade guidelines"
 Cohesion: 0.04
@@ -604,7 +619,7 @@ Nodes (39): authentik, enabled, branch, email, enabled, name, email, enabled (+3
 
 ### Community 8 - "opentelemetry-collector/values.yaml"
 Cohesion: 0.05
-Nodes (41): additionalLabels, affinity, alternateConfig, annotations, dnsConfig, dnsPolicy, enableConfigChecksumAnnotation, extraContainers (+33 more)
+Nodes (39): additionalLabels, affinity, alternateConfig, annotations, dnsConfig, dnsPolicy, enableConfigChecksumAnnotation, extraContainers (+31 more)
 
 ### Community 9 - "flows"
 Cohesion: 0.05
@@ -632,7 +647,7 @@ Nodes (32): browse, delete, pull, push, repositories, access, scan, upstreams (+
 
 ### Community 15 - "0.docs/package.json"
 Cohesion: 0.09
-Nodes (28): devDependencies, oxlint@^1.67.0, @react-router/dev@^7.15.1, react-router-devtools@^6.2.0, serve@^14.2.6, tailwindcss@^4.3.0, @tailwindcss/vite@^4.3.0, @types/mdx@^2.0.13 (+20 more)
+Nodes (30): fumadocs-mdx@15.4.9, devDependencies, oxlint@^1.67.0, @react-router/dev@^7.15.1, react-router-devtools@^6.2.0, serve@^14.2.6, tailwindcss@^4.3.0, @tailwindcss/vite@^4.3.0 (+22 more)
 
 ### Community 16 - "cilium-values.yaml"
 Cohesion: 0.05
@@ -643,16 +658,16 @@ Cohesion: 0.07
 Nodes (32): cmds, dir, env, KUBECONFIG, PULUMI_BACKEND_URL, PULUMI_CONFIG_PASSPHRASE, VAULT_ADDR, VAULT_CACERT (+24 more)
 
 ### Community 18 - "networkProfiles"
-Cohesion: 0.20
-Nodes (10): networkProfiles, workspaceSelection, workspaceSelection, baseline, default, enabled, mode, onNotGranted (+2 more)
+Cohesion: 0.25
+Nodes (8): variants, networkProfiles, baseline, catalog, default, enabled, mode, onNotGranted
 
 ### Community 19 - "RoleBinding vault-issuer"
 Cohesion: 0.07
 Nodes (30): kubernetes.io/service-account.name, Role vault-issuer, RoleBinding vault-issuer, Secret vault-issuer, annotations, name, namespace, apiVersion (+22 more)
 
 ### Community 20 - "netflow.py"
-Cohesion: 0.10
-Nodes (20): nid(), all_edges(), backends(), cilium_edges(), cilium_peer(), esc(), is_template(), k8s_edges() (+12 more)
+Cohesion: 0.19
+Nodes (10): nid(), all_edges(), backends(), esc(), main(), mermaid(), node_id(), page() (+2 more)
 
 ### Community 21 - "ingress"
 Cohesion: 0.07
@@ -667,8 +682,8 @@ Cohesion: 0.06
 Nodes (33): addons, extraAddons, level, teamLevel, batlehub, server, setupApply, cheNamespace (+25 more)
 
 ### Community 24 - "docs.tsx"
-Cohesion: 0.14
-Nodes (12): baseOptions(), NavLogo(), gitConfig, getPageMarkdownUrl(), clientLoader, loader(), Page(), Home() (+4 more)
+Cohesion: 0.13
+Nodes (13): MDXProvidedComponents, useMDXComponents, baseOptions(), NavLogo(), gitConfig, getPageMarkdownUrl(), clientLoader, loader() (+5 more)
 
 ### Community 25 - "bundle.yaml"
 Cohesion: 0.08
@@ -691,8 +706,8 @@ Cohesion: 0.07
 Nodes (27): annotations, containerSecurityContext, defaultConnections, defaultSources, deploymentAnnotations, env, existingConfigConnectionsKey, existingConfigSecret (+19 more)
 
 ### Community 31 - "source.ts"
-Cohesion: 0.15
-Nodes (11): appName, docsContentRoute, docsImageRoute, docsRoute, getLLMText(), source, loader(), loader() (+3 more)
+Cohesion: 0.13
+Nodes (12): appName, docsContentRoute, docsImageRoute, docsRoute, getLLMText(), source, loader(), loader() (+4 more)
 
 ### Community 32 - "tasks"
 Cohesion: 0.10
@@ -719,8 +734,8 @@ Cohesion: 0.09
 Nodes (21): Alternatives considérées, Ce qu'on a mesuré (2026-10-18, sur 24 h), Changelog, Dans le kit (règle des deux opérateurs), Design, Décisions, Exploitation, Inconvénients et risques (+13 more)
 
 ### Community 38 - "color.mjs"
-Cohesion: 0.18
-Nodes (21): AK_THEMES, akVariables(), flowOnly(), renderAuthentikCss(), rules(), swatch(), byte(), clamp01() (+13 more)
+Cohesion: 0.17
+Nodes (18): AK_THEMES, akVariables(), flowOnly(), renderAuthentikCss(), rules(), swatch(), byte(), hex() (+10 more)
 
 ### Community 39 - "vault"
 Cohesion: 0.10
@@ -771,8 +786,8 @@ Cohesion: 0.08
 Nodes (25): enabled, angos, argo, argo-admin, che, clickstack, endpoint-gateway, forgejo (+17 more)
 
 ### Community 51 - "build.mjs"
-Cohesion: 0.09
-Nodes (22): renderBackground(), css, dist, files, flowBackground(), fontFaces, keys, logoFor (+14 more)
+Cohesion: 0.10
+Nodes (16): renderBackground(), css, dist, files, flowBackground(), fontFaces, keys, logoFor (+8 more)
 
 ### Community 52 - "compilerOptions"
 Cohesion: 0.11
@@ -787,12 +802,12 @@ Cohesion: 0.10
 Nodes (20): annotations, artifacthub.io/category, artifacthub.io/license, artifacthub.io/links, apiVersion, appVersion, dependencies, alias (+12 more)
 
 ### Community 55 - "root.tsx"
-Cohesion: 0.19
-Nodes (7): DefaultSearchDialog(), initOrama(), ErrorBoundary(), NotFound(), 6.P Preuve avec un vrai client, @orama/orama@^3.1.18, @orama/orama
+Cohesion: 0.14
+Nodes (11): DefaultSearchDialog(), initOrama(), ErrorBoundary(), NotFound(), 6.1 `2.argo/helm/ingress/main/templates/traefik/traefik.yaml`, 6.2 `2.argo/helm/ingress/sub`, 6.3 `2.argo/helm/forgejo`, 6.4 DNS et Netbird (+3 more)
 
 ### Community 56 - "dependencies"
 Cohesion: 0.12
-Nodes (15): dependencies, isbot@^5.1.40, lucide-react@^1.17.0, next-themes@^0.4.6, react@^19.2.6, react-dom@^19.2.6, @react-router/node@^7.15.1, tailwind-merge@^3.6.0 (+7 more)
+Nodes (16): dependencies, fumadocs-ui@16.17.7, isbot@^5.1.40, next-themes@^0.4.6, @orama/orama@^3.1.18, react@^19.2.6, react-dom@^19.2.6, @react-router/node@^7.15.1 (+8 more)
 
 ### Community 57 - "kubearmorPolicy"
 Cohesion: 0.12
@@ -835,12 +850,12 @@ Cohesion: 0.12
 Nodes (16): nodePort, port, nodePort, port, service, annotations, console, endpoint (+8 more)
 
 ### Community 67 - "authentik.test.mjs"
-Cohesion: 0.16
-Nodes (13): renderBrandYaml(), tokens, parseOklch(), css, tokens, css, tokens, tokens (+5 more)
+Cohesion: 0.17
+Nodes (12): renderBrandYaml(), tokens, parseOklch(), css, tokens, css, tokens, t() (+4 more)
 
 ### Community 68 - "mermaid.tsx"
-Cohesion: 0.16
-Nodes (12): getMDXComponents(), MDXProvidedComponents, useMDXComponents, cache, cachePromise(), Mermaid(), MermaidContent(), MermaidZoom() (+4 more)
+Cohesion: 0.17
+Nodes (12): getMDXComponents(), cache, cachePromise(), Mermaid(), MermaidContent(), MermaidZoom(), naturalWidth(), ZOOM_RANGE (+4 more)
 
 ### Community 69 - "kind"
 Cohesion: 0.12
@@ -871,8 +886,8 @@ Cohesion: 0.14
 Nodes (14): enabled, issuerRef, issuerRefKind, name, dns, certificate, createWithCRD, domain (+6 more)
 
 ### Community 76 - "brand"
-Cohesion: 0.12
-Nodes (17): brand, brandingDefaultFlowBackground, brandingFavicon, brandingLogo, brandingTitle, crName, default, domain (+9 more)
+Cohesion: 0.14
+Nodes (14): brand, brandingDefaultFlowBackground, brandingFavicon, brandingLogo, brandingTitle, crName, default, domain (+6 more)
 
 ### Community 77 - "image"
 Cohesion: 0.38
@@ -899,8 +914,8 @@ Cohesion: 0.15
 Nodes (14): additionalArgs, resources, schedule, resources, tasks, cpu, memory, cpu (+6 more)
 
 ### Community 83 - "ports"
-Cohesion: 0.22
-Nodes (9): enabled, enabled, enabled, ports, jaeger-compact, jaeger-grpc, jaeger-thrift, zipkin (+1 more)
+Cohesion: 0.10
+Nodes (20): containerPort, enabled, protocol, servicePort, enabled, enabled, enabled, ports (+12 more)
 
 ### Community 84 - "rustfs/values.yaml"
 Cohesion: 0.14
@@ -911,8 +926,8 @@ Cohesion: 0.14
 Nodes (14): name, namespace, gatewayApi, enabled, existingGateway, gatewayClass, hostname, listeners (+6 more)
 
 ### Community 86 - "RFC 0006 — Ingress public et interne : deux Traefik"
-Cohesion: 0.05
-Nodes (41): 10.1 Observabilité, 10.2 Modes de défaillance, 10.3 Performances et capacité, 10. Exploitation, 11. Autres sujets, 12. Alternatives écartées, 13. Déploiement et compatibilité, 14. Plan de test (+33 more)
+Cohesion: 0.06
+Nodes (35): 10.1 Observabilité, 10.2 Modes de défaillance, 10.3 Performances et capacité, 10. Exploitation, 11. Autres sujets, 12. Alternatives écartées, 13. Déploiement et compatibilité, 14. Plan de test (+27 more)
 
 ### Community 87 - "project"
 Cohesion: 0.20
@@ -951,12 +966,12 @@ Cohesion: 0.15
 Nodes (12): apiVersion, kind, app.kubernetes.io/component, app.kubernetes.io/created-by, app.kubernetes.io/instance, app.kubernetes.io/managed-by, app.kubernetes.io/name, app.kubernetes.io/part-of (+4 more)
 
 ### Community 96 - "presets"
-Cohesion: 0.11
-Nodes (18): enabled, enabled, enabled, enabled, extractAllPodAnnotations, extractAllPodLabels, enabled, enabled (+10 more)
+Cohesion: 0.15
+Nodes (13): enabled, enabled, enabled, enabled, extractAllPodAnnotations, extractAllPodLabels, enabled, presets (+5 more)
 
 ### Community 97 - "hyperdx"
-Cohesion: 0.08
-Nodes (26): enabled, spec, hyperdx, autoscaling, ingress, networkPolicy, podDisruptionBudget, ports (+18 more)
+Cohesion: 0.13
+Nodes (15): enabled, spec, hyperdx, autoscaling, networkPolicy, podDisruptionBudget, promql, serviceAccount (+7 more)
 
 ### Community 98 - "spec"
 Cohesion: 0.11
@@ -991,8 +1006,8 @@ Cohesion: 0.17
 Nodes (11): categories, env, builtin, ignorePatterns, plugins, version, $schema, settings (+3 more)
 
 ### Community 106 - "react-router.config.ts"
-Cohesion: 0.22
-Nodes (5): [dist], htmlFiles(), [fallback, shim, out], html, js
+Cohesion: 0.18
+Nodes (7): getUrl, prerender(), [dist], htmlFiles(), [fallback, shim, out], html, js
 
 ### Community 107 - "default"
 Cohesion: 0.18
@@ -1004,7 +1019,7 @@ Nodes (12): maintenance, prune, scrub, enabled, jobs, timeZone, args, enabled (+
 
 ### Community 109 - "valkey"
 Cohesion: 0.22
-Nodes (9): image, valkey, registry, repository, tag, enabled, image, replicas (+1 more)
+Nodes (9): image, valkey, registry, repository, tag, enabled, image, replicasPerShard (+1 more)
 
 ### Community 110 - "foundation"
 Cohesion: 0.17
@@ -1019,8 +1034,8 @@ Cohesion: 0.18
 Nodes (12): email_verified, items, attributes, crName, email, groupRefs, isActive, isSuperuser (+4 more)
 
 ### Community 113 - "matchLabels"
-Cohesion: 0.11
-Nodes (19): config, features, imageRewrite, policyGuard, enabled, mode, namespaceSelector, rules (+11 more)
+Cohesion: 0.12
+Nodes (17): namespaceSelector, imageRewrite, policyGuard, enabled, mode, namespaceSelector, rules, hardening.weebo.io/workspace-namespace (+9 more)
 
 ### Community 114 - "che-code-fast-weebo.yaml"
 Cohesion: 0.29
@@ -1079,12 +1094,12 @@ Cohesion: 0.22
 Nodes (9): ecosystem, sources, registryConfig, catalog, default, enabled, mode, namespaceSelection (+1 more)
 
 ### Community 128 - "podSecurity"
-Cohesion: 0.15
-Nodes (13): podSecurity, namespaceSelection, namespaceSelection, annotation, namespaceSelection, backend, ceiling, default (+5 more)
+Cohesion: 0.25
+Nodes (8): podSecurity, backend, ceiling, default, enabled, mode, namespaceSelector, version
 
 ### Community 129 - "gateway"
-Cohesion: 0.18
-Nodes (13): gateway, service, allowedMiddlewares, clusterDomain, dialect, enforcement, errorPageMiddleware, externalUrl (+5 more)
+Cohesion: 0.25
+Nodes (8): gateway, allowedMiddlewares, clusterDomain, dialect, enforcement, errorPageMiddleware, externalUrl, haproxyPrerequisite
 
 ### Community 130 - "hardening"
 Cohesion: 0.18
@@ -1123,16 +1138,16 @@ Cohesion: 0.20
 Nodes (10): storage, path, size, storageClassName, bucket, region, url, filesystem (+2 more)
 
 ### Community 139 - "networkProfiles"
-Cohesion: 0.14
-Nodes (14): imagePolicy, default, enabled, mode, onNotGranted, platform, variables, builtin (+6 more)
+Cohesion: 0.15
+Nodes (13): imagePolicy, default, enabled, mode, onNotGranted, platform, variables, workspaceSelection (+5 more)
 
 ### Community 140 - "key"
-Cohesion: 0.18
-Nodes (11): name, namespace, catalog, default, enabled, mode, namespaceSelection, namespaceSelector (+3 more)
+Cohesion: 0.17
+Nodes (12): default, enabled, mode, namespaceSelection, onMissingTarget, dwocPin, namespaceSelection, namespaceSelection (+4 more)
 
 ### Community 141 - "key"
-Cohesion: 0.25
-Nodes (8): anonymous, delegation, key, patterns, variants, catalog, catalog, catalog
+Cohesion: 0.22
+Nodes (9): anonymous, delegation, key, name, namespace, patterns, catalog, catalog (+1 more)
 
 ### Community 142 - "endpointAuth"
 Cohesion: 0.20
@@ -1163,8 +1178,8 @@ Cohesion: 0.20
 Nodes (9): apiVersion, kind, metadata, name, namespace, rules, apiGroups, resources (+1 more)
 
 ### Community 149 - "internalTelemetryViaOTLP"
-Cohesion: 0.12
-Nodes (18): logs, metrics, internalTelemetryViaOTLP, endpoint, headers, logs, metrics, traces (+10 more)
+Cohesion: 0.20
+Nodes (10): internalTelemetryViaOTLP, endpoint, headers, metrics, traces, endpoint, headers, enabled (+2 more)
 
 ### Community 150 - "bascule-weebo-si.mdx"
 Cohesion: 0.15
@@ -1239,8 +1254,8 @@ Cohesion: 0.09
 Nodes (23): storage.wiredTiger.engineConfig.journalCompressor, modes, spec, name, db, name, authentication, additionalMongodConfig (+15 more)
 
 ### Community 168 - "otel-collector"
-Cohesion: 0.20
-Nodes (10): mountPath, name, readOnly, otel-collector, enabled, extraVolumeMounts, mode, podAnnotations (+2 more)
+Cohesion: 0.10
+Nodes (20): name, optional, name, configMapRef, secretRef, mountPath, name, readOnly (+12 more)
 
 ### Community 169 - "cheUsersProject"
 Cohesion: 0.14
@@ -1287,8 +1302,8 @@ Cohesion: 0.25
 Nodes (8): authentication, crName, designation, enabled, name, slug, title, deviceCode
 
 ### Community 180 - "authflow.py"
-Cohesion: 0.11
-Nodes (29): ancestors(), apiserver(), app_label(), argo_page(), argo_visibility(), bindings(), Chart, code() (+21 more)
+Cohesion: 0.12
+Nodes (26): ancestors(), app_label(), argo_page(), argo_visibility(), authentik(), bindings(), Chart, code() (+18 more)
 
 ### Community 181 - "requests"
 Cohesion: 0.25
@@ -1299,8 +1314,8 @@ Cohesion: 0.14
 Nodes (13): branch, ciliumNetworkPolicies, enabled, kubearmor, chart, enabled, kubearmorApp, namespace (+5 more)
 
 ### Community 183 - "foundation"
-Cohesion: 0.07
-Nodes (30): enabled, key, name, namespace, foundation, enabled, namespacePolicy, secretStore (+22 more)
+Cohesion: 0.18
+Nodes (11): foundation, enabled, namespacePolicy, secretStore, url, allowedNamespaces, enabled, enabled (+3 more)
 
 ### Community 184 - "angos/values.yaml"
 Cohesion: 0.25
@@ -1386,9 +1401,9 @@ Nodes (14): accessGroup, enabled, metaIcon, name, provider, secretTargets, slug,
 Cohesion: 0.20
 Nodes (10): arch, firstPublicationDate, iconData, iconMediatype, provider, publisher, repository, title (+2 more)
 
-### Community 205 - "che"
-Cohesion: 0.05
-Nodes (44): extraAddons, level, prune, selfHeal, active, che, email, team (+36 more)
+### Community 205 - "batleforc"
+Cohesion: 0.15
+Nodes (15): active, che, email, team, active, che, email, team (+7 more)
 
 ### Community 206 - "che"
 Cohesion: 0.29
@@ -1411,8 +1426,8 @@ Cohesion: 0.14
 Nodes (14): levels, owner, read, token-writer, write, data, metadata, versions (+6 more)
 
 ### Community 211 - "weeboEmail"
-Cohesion: 0.13
-Nodes (15): scopeMappings, weeboEmail, weeboGroups, crName, description, enabled, expression, name (+7 more)
+Cohesion: 0.25
+Nodes (8): scopeMappings, weeboEmail, crName, description, enabled, expression, name, scopeName
 
 ### Community 212 - "argo"
 Cohesion: 0.25
@@ -1567,8 +1582,8 @@ Cohesion: 0.40
 Nodes (5): caTrust, bundleConfigMap, bundleKey, enabled, mountPath
 
 ### Community 250 - "hex"
-Cohesion: 0.26
-Nodes (10): cheVariables(), icoFromPng(), loader(), LOGO_FILE, renderCheCss(), renderCheLogo(), renderManifest(), renderProductJson() (+2 more)
+Cohesion: 0.23
+Nodes (11): cheVariables(), icoFromPng(), loader(), LOGO_FILE, renderCheCss(), renderCheLogo(), renderManifest(), renderProductJson() (+3 more)
 
 ### Community 251 - "netbird-exit-node/Chart.yaml"
 Cohesion: 0.18
@@ -1659,8 +1674,8 @@ Cohesion: 0.33
 Nodes (6): config, exporters, extensions, debug, health_check, endpoint
 
 ### Community 273 - "clickstack-dashboards.py"
-Cohesion: 0.14
-Nodes (17): act(), build_reference_map(), call(), check_ntfy_url(), check_raw_sql_tiles(), dashboard_id(), fail(), get_json() (+9 more)
+Cohesion: 0.12
+Nodes (18): act(), build_reference_map(), call(), check_ntfy_url(), check_raw_sql_tiles(), dashboard_id(), fail(), get_json() (+10 more)
 
 ### Community 274 - "applications.mdx"
 Cohesion: 0.07
@@ -1682,9 +1697,9 @@ Nodes (6): containerPort, enabled, hostPort, protocol, servicePort, jaeger-grpc
 Cohesion: 0.19
 Nodes (9): render(), Render, run(), walk(), yaml_docs(), policies(), upstream_hosts(), hosts_of() (+1 more)
 
-### Community 279 - "ports"
-Cohesion: 0.12
-Nodes (17): containerPort, enabled, hostPort, protocol, servicePort, containerPort, protocol, servicePort (+9 more)
+### Community 279 - "jaeger-thrift"
+Cohesion: 0.33
+Nodes (6): containerPort, enabled, hostPort, protocol, servicePort, jaeger-thrift
 
 ### Community 280 - "networkPolicy"
 Cohesion: 0.33
@@ -1795,8 +1810,8 @@ Cohesion: 0.14
 Nodes (13): toEndpoints, toPorts, branch, batlehub, enabled, operatorNetworkPolicy, egress, enabled (+5 more)
 
 ### Community 307 - "resourceQuotas"
-Cohesion: 0.15
-Nodes (13): limitRangeRef, quotaRef, resourceQuotas, name, namespace, name, namespace, catalog (+5 more)
+Cohesion: 0.14
+Nodes (14): limitRangeRef, quotaRef, resourceQuotas, name, namespace, name, namespace, catalog (+6 more)
 
 ### Community 308 - "serviceAccount"
 Cohesion: 0.40
@@ -1850,21 +1865,21 @@ Nodes (5): serviceAccount, annotations, automount, create, name
 Cohesion: 0.40
 Nodes (5): storageclass, dataStorageSize, logStorageSize, name, pvcAnnotations
 
-### Community 321 - "batlehub-theme"
-Cohesion: 0.33
-Nodes (5): authentik(), batlehub-theme, Deploy, Output, What to edit
+### Community 321 - "color.mjs"
+Cohesion: 0.21
+Nodes (13): batlehub-theme, Deploy, Output, What to edit, clamp01(), contrast(), encode(), inGamut() (+5 more)
 
 ### Community 322 - "re"
-Cohesion: 0.22
-Nodes (8): 1. Pousser les charts, 2. Appliquer Pulumi, 3. Verrouiller default, Ce qui change, Retour arrière, À vérifier à la main, argocd(), go_string()
+Cohesion: 0.17
+Nodes (12): 1. Pousser les charts, 2. Appliquer Pulumi, 3. Verrouiller default, Ce qui change, Retour arrière, À vérifier à la main, apiserver(), argocd() (+4 more)
 
 ### Community 323 - "talosctl"
 Cohesion: 0.40
 Nodes (5): TALOSCONFIG, aliases, cmds, env, talosctl
 
 ### Community 324 - "identity"
-Cohesion: 0.18
-Nodes (11): allowedGroupRefs, groupRefs, allowedProjects, allowedRepoUrls, applicationNamespace, identity, authentik, che (+3 more)
+Cohesion: 0.22
+Nodes (9): allowedProjects, allowedRepoUrls, applicationNamespace, config, features, identity, che, enabled (+1 more)
 
 ### Community 325 - "KUBECONFIG"
 Cohesion: 0.13
@@ -1994,9 +2009,9 @@ Nodes (5): approvedUpgrade, credentialsSecret, name, s3Region, instance
 Cohesion: 0.50
 Nodes (4): pdb, create, maxUnavailable, minAvailable
 
-### Community 358 - "fumadocs-mdx"
-Cohesion: 0.50
-Nodes (3): fumadocs-mdx@15.4.9, docs, fumadocs-mdx
+### Community 358 - "spec"
+Cohesion: 0.07
+Nodes (29): enabled, policies.kyverno.io/description, policies.kyverno.io/subject, policies.kyverno.io/title, apiVersion, expression, podControllers, admission (+21 more)
 
 ### Community 359 - "cilium"
 Cohesion: 0.50
@@ -2019,8 +2034,8 @@ Cohesion: 0.22
 Nodes (8): ciliumNetworkPolicies, enabled, policies, cidr, fromCIDRSet, netpol, enabled, ingress
 
 ### Community 369 - "hardening/values.yaml"
-Cohesion: 0.18
-Nodes (10): branch, endpointAuthErrorPage, enabled, query, status, forgejoTokens, enabled, operator (+2 more)
+Cohesion: 0.29
+Nodes (6): branch, forgejoTokens, enabled, operator, repo, teams
 
 ### Community 370 - "auth"
 Cohesion: 0.67
@@ -2118,9 +2133,9 @@ Nodes (10): apiVersion, appVersion, dependencies, name, repository, version, des
 Cohesion: 0.25
 Nodes (8): editors, custom, default, upstream, hide, hideAll, known, show
 
-### Community 421 - "health-check"
-Cohesion: 0.40
-Nodes (5): containerPort, enabled, protocol, servicePort, health-check
+### Community 421 - "selector_name"
+Cohesion: 0.15
+Nodes (10): cilium_edges(), cilium_peer(), is_template(), k8s_edges(), peers_of(), open_egress(), ports_of(), selector_name() (+2 more)
 
 ### Community 422 - "kubearmor"
 Cohesion: 0.33
@@ -2129,6 +2144,10 @@ Nodes (6): aliases, cmds, desc, env, silent, kubearmor
 ### Community 423 - "default-authenticator-static-setup"
 Cohesion: 0.50
 Nodes (4): default-authenticator-static-setup, authentication, designation, name
+
+### Community 424 - "che"
+Cohesion: 0.17
+Nodes (12): prune, selfHeal, destination, name, project, syncPolicy, namespace, server (+4 more)
 
 ### Community 425 - "vault"
 Cohesion: 0.67
@@ -2358,17 +2377,17 @@ Nodes (4): Flux, Flux ouverts par d'autres applications, Légende, Politiques
 Cohesion: 0.33
 Nodes (6): aliases, cmds, desc, env, silent, kubectl
 
-### Community 482 - "builtin"
-Cohesion: 0.11
-Nodes (19): default-authenticator-webauthn-setup, default-password-change, default-provider-authorization-implicit-consent, default-user-settings-flow, authentication, designation, name, authentication (+11 more)
+### Community 482 - "default-authenticator-webauthn-setup"
+Cohesion: 0.50
+Nodes (4): default-authenticator-webauthn-setup, authentication, designation, name
 
 ### Community 483 - "podWebhook"
 Cohesion: 0.67
 Nodes (3): podWebhook, imagePolicy, failurePolicy
 
-### Community 484 - "serviceAccount"
-Cohesion: 0.50
-Nodes (4): serviceAccount, annotations, create, name
+### Community 484 - "externalConfig"
+Cohesion: 0.22
+Nodes (9): extraAddons, level, access, externalConfig, branch, enabled, path, repoURL (+1 more)
 
 ### Community 485 - "auth"
 Cohesion: 0.50
@@ -2385,6 +2404,10 @@ Nodes (7): 6.1 authentik Weebo5 : deux clients (`1.argo/terra/auth/terra-map/pro
 ### Community 488 - "7. Sécurité"
 Cohesion: 0.29
 Nodes (7): 7.1 Modèle de menace, 7.2 Authentification et autorisation, 7.3 Entrées et injection, 7.4 Secrets et cryptographie, 7.5 Abus et épuisement des ressources, 7.6 Défenses existantes qui tiennent toujours, 7. Sécurité
+
+### Community 489 - "weebo"
+Cohesion: 0.22
+Nodes (9): allowedGroupRefs, groupRefs, authentik, weebo, displayName, features, identity, namespaceSelector (+1 more)
 
 ### Community 490 - "network-flows/angos.mdx"
 Cohesion: 0.40
@@ -2466,6 +2489,10 @@ Nodes (4): 10.1 Observabilité, 10.2 Modes de défaillance, 10.3 Performances et
 Cohesion: 0.29
 Nodes (7): app.kubernetes.io/component, app.kubernetes.io/part-of, controller.devfile.io/container-contribution, components, attributes, name, volume
 
+### Community 511 - "endpointAuthErrorPage"
+Cohesion: 0.28
+Nodes (9): endpointAuthErrorPage, enabled, query, service, status, service, name, namespace (+1 more)
+
 ### Community 512 - "hook"
 Cohesion: 0.67
 Nodes (3): hook, enabled, project
@@ -2490,17 +2517,21 @@ Nodes (4): default-source-authentication, authentication, designation, name
 Cohesion: 0.29
 Nodes (6): Ce que Talos fournit, Ce que ça change au quotidien, Chiffrement du disque sans TPM, En bref, Le matériel, Recommandation
 
-### Community 518 - "otlp"
-Cohesion: 0.33
-Nodes (6): appProtocol, containerPort, enabled, protocol, servicePort, otlp
+### Community 518 - "source"
+Cohesion: 0.25
+Nodes (8): source, path, repoUrl, targetRevision, values, batlehub, forgejo, project
 
-### Community 519 - "configMap"
-Cohesion: 0.40
-Nodes (5): name, optional, configMap, name, extraVolumes
+### Community 519 - "logs"
+Cohesion: 0.25
+Nodes (8): logs, metrics, logs, enabled, endpoint, headers, enabled, annotationDiscovery
 
-### Community 520 - "extraEnvsFrom"
-Cohesion: 0.40
-Nodes (5): name, configMapRef, secretRef, extraEnvsFrom, name
+### Community 520 - "caSecretRef"
+Cohesion: 0.38
+Nodes (7): enabled, key, name, namespace, tls, caSecretRef, caSecretRef
+
+### Community 521 - "vault"
+Cohesion: 0.29
+Nodes (7): vault, address, enabled, kubernetesAuthMount, kubernetesAuthRole, mount, pathPrefix
 
 ### Community 522 - "metrics"
 Cohesion: 0.40
@@ -2522,6 +2553,10 @@ Nodes (3): kubearmor, enabled, project
 Cohesion: 0.29
 Nodes (6): octodoctor best-practices report, Step 1: locate or download the binary, Step 2: directory mode, Step 3: cluster export mode, Step 4: run it and read the exit code, Step 5: summarize the report
 
+### Community 527 - "weeboGroups"
+Cohesion: 0.29
+Nodes (7): weeboGroups, crName, description, enabled, expression, name, scopeName
+
 ### Community 528 - "layout"
 Cohesion: 0.33
 Nodes (6): layout, groupAliasTemplate, name, users, aliasMetadataKey, usernameClaim
@@ -2538,6 +2573,10 @@ Nodes (6): endpoint, endpoint, protocols, grpc, http, otlp
 Cohesion: 0.33
 Nodes (6): protocols, thrift_compact, thrift_http, jaeger, endpoint, endpoint
 
+### Community 532 - "builtin"
+Cohesion: 0.33
+Nodes (6): theme, builtin, enabled, css, enabled, flows
+
 ### Community 533 - "caSecret"
 Cohesion: 0.40
 Nodes (5): key, name, caSecret, name, instance
@@ -2549,6 +2588,18 @@ Nodes (5): name, repoURL, version, chart, chart
 ### Community 535 - "maintainer"
 Cohesion: 0.40
 Nodes (5): devenv, preprod, prod, recette, maintainer
+
+### Community 536 - "zipkin"
+Cohesion: 0.33
+Nodes (6): zipkin, containerPort, enabled, hostPort, protocol, servicePort
+
+### Community 537 - "secrets"
+Cohesion: 0.33
+Nodes (6): secrets, CLICKHOUSE_ADMIN_PASSWORD, CLICKHOUSE_APP_PASSWORD, CLICKHOUSE_PASSWORD, HYPERDX_API_KEY, MONGODB_PASSWORD
+
+### Community 538 - "token"
+Cohesion: 0.40
+Nodes (5): token, refreshInterval, secretName, vaultKey, vaultProperty
 
 ### Community 539 - "logs"
 Cohesion: 0.50
@@ -2566,25 +2617,53 @@ Nodes (4): traces, exporters, processors, receivers
 Cohesion: 0.40
 Nodes (5): resourceQuotas, rbac, templateNamespace, create, name
 
+### Community 543 - "logsCollection"
+Cohesion: 0.40
+Nodes (5): enabled, includeCollectorLogs, maxRecombineLogSize, storeCheckpoints, logsCollection
+
+### Community 544 - "ports"
+Cohesion: 0.40
+Nodes (5): containerPort, protocol, servicePort, ports, metrics
+
+### Community 545 - "ingress"
+Cohesion: 0.40
+Nodes (5): ingress, additionalIngresses, annotations, enabled, spec
+
+### Community 546 - "default-password-change"
+Cohesion: 0.50
+Nodes (4): default-password-change, authentication, designation, name
+
+### Community 547 - "default-provider-authorization-implicit-consent"
+Cohesion: 0.50
+Nodes (4): default-provider-authorization-implicit-consent, authentication, designation, name
+
+### Community 548 - "default-user-settings-flow"
+Cohesion: 0.50
+Nodes (4): default-user-settings-flow, authentication, designation, name
+
+### Community 549 - "ports"
+Cohesion: 0.50
+Nodes (4): ports, api, app, opamp
+
 ## Knowledge Gaps
 - **3 isolated node(s):** `0.pulumi-conf`, `kubernetes-ovh-go`, `weebo.poc/requestid`
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3699 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **37 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3716 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **36 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `contrast()` connect `color.mjs` to `batlehub-theme`, `authentik.test.mjs`, `build.mjs`?**
-  _High betweenness centrality (0.006) - this node is a cross-community bridge._
+- **Why does `What to edit` connect `color.mjs` to `authflow.py`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
 - **Are the 3 inferred relationships involving `main()` (e.g. with `.edge()` and `.node()`) actually correct?**
   _`main()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `0.pulumi-conf`, `kubernetes-ovh-go`, `weebo.poc/requestid` to the rest of the system?**
   _3 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Upgrade guidelines` be split into smaller, more focused modules?**
   _Cohesion score 0.04081632653061224 - nodes in this community are weakly interconnected._
-- **Why does `authentik()` connect `batlehub-theme` to `authflow.py`, `argorender.py`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
+- **Why does `contrast()` connect `color.mjs` to `authentik.test.mjs`, `build.mjs`, `color.mjs`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
 - **Should `rustfs` be split into smaller, more focused modules?**
   _Cohesion score 0.044444444444444446 - nodes in this community are weakly interconnected._
-- **Why does `What to edit` connect `batlehub-theme` to `color.mjs`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
+- **Why does `authentik()` connect `authflow.py` to `color.mjs`, `argorender.py`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
