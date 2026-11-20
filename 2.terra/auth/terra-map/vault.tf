@@ -44,7 +44,7 @@ resource "authentik_application" "vault" {
   slug              = "vault"
   protocol_provider = authentik_provider_oauth2.vault.id
   meta_icon         = "https://maxleriche.net/public/media/techno/vault.png"
-  meta_launch_url   = "https://vault.weebo.poc/ui/vault/auth?with=authentik%2F&role=weebo_admin"
+  meta_launch_url   = "https://vault.weebo.poc/ui/vault/auth?with=authentik&role=weebo_admin"
 }
 
 resource "vault_jwt_auth_backend" "vault_authentik" {
