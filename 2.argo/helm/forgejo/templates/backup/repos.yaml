@@ -80,6 +80,9 @@ spec:
                   value: /etc/ssl/weebo/ca.crt
                 - name: RESTIC_CACHE_DIR
                   value: /cache
+                # Temporary pack files: the root filesystem is read-only.
+                - name: TMPDIR
+                  value: /cache
                 - name: RESTIC_HOST
                   value: forgejo
                 - name: RESTIC_PASSWORD
