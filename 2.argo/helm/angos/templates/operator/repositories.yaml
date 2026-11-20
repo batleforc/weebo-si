@@ -23,6 +23,10 @@ spec:
     - url: {{ . | quote }}
     {{- end }}
   {{- end }}
+  {{- with $repo.retention }}
+  retention:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   access:
     {{- range $verb := list "pull" "browse" "push" "delete" }}
     {{ $verb }}: {{ index ($repo.access | default dict) $verb | default list | toJson }}

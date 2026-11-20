@@ -8,7 +8,7 @@ angos:
   image:
     registry: ghcr.io/project-angos/angos
     # renovate: datasource=docker depName=ghcr.io/project-angos/angos
-    tag: 1.12.5
+    tag: 1.13.0
   dns: registry.pkg.weebo.poc
   # Pinned: the operator's default (valkey-operator 0.8.0) is 9.0.0, whose
   # Debian 13.2 base carries 4 critical CVEs fixed in later patches.
@@ -145,6 +145,12 @@ angos:
     # removes anything.
     weebo:
       scan: false
+      # OR with `angos.retention`: every tag stays. This is the only copy of
+      # what the cluster builds, and a node that has the image cached never
+      # pulls it, so "unpulled for 7 days" says nothing about a running image.
+      # Untagged manifests still go.
+      retention:
+        rules: ['image.tag != null']
       access:
         pull: ["provider:weebo", "provider:kube"]
         browse: ["provider:weebo"]
@@ -168,6 +174,17 @@ angos:
     jobs: ["group:weebo_admin"]
     # Admin actions that are not repository-specific, like the `/v2/_catalog` listing
     admin: ["group:weebo_admin"]
+
+  # `[global.retention_policy]`, for every repository: an image a rule matches
+  # is kept, `angos prune` deletes the rest. So an untagged manifest goes at the
+  # next prune, and a tag goes once it is older than 7 days AND unpulled for 7
+  # days. A child of a multi-arch index and a referrer of a live image are
+  # pinned by their parent, never judged here. `last_pulled_at` needs pull
+  # times recorded, which the instance turns on with it (`updatePullTime`).
+  # Empty = no retention: prune then deletes nothing.
+  retention:
+    rules:
+      - 'image.tag != null && (image.pushed_at > now() - days(7) || image.last_pulled_at > now() - days(7))'
 
   # Vulnerability scanning, off everywhere by default. A manifest pushed into a
   # repository carrying `scan: true` enqueues a job; the job asks the service
@@ -395,12 +412,12 @@ angos:
       # the same `[auth.oidc]` section names, and upstream calls this contrib
       # binary experimental, so drifting them apart buys nothing.
       # renovate: datasource=github-releases depName=project-angos/angos
-      version: v1.12.5
+      version: v1.13.0
       # sha256 of the release asset, checked against the cosign bundle
       # published beside it (keyless, identity project-angos/angos): the
       # installer refuses to write a binary it cannot match.
       sha256:
-        amd64: "cfe0594d5431fe8f2b636b9e8f6e320ea0b134d9ef0c5693a8623625ac076659"
+        amd64: "5af705421eed23e4a2a24f9bdb3dbf23854850c2538cde0bd57ec29c3152ab1d"
         # Left empty on purpose: every node here is amd64, and an unchecked
         # arm64 install would be a download on trust. Fill it before adding an
         # arm64 node, or that node's installer fails loudly.
@@ -541,12 +558,12 @@ operator:
     name: registry
     # 0.3.2 is tested against angos 1.12.2 and 1.12.3, and refuses any other
     # tag unless the instance is annotated `angos.weebo.io/approved-upgrade`
-    # with that exact tag. 1.12.5 is what runs today and the store is never
+    # with that exact tag. 1.13.0 is what runs today and the store is never
     # walked back, hence the approval. Keep it equal to `angos.image.tag` when
     # Renovate bumps that, or the instance goes `Ready=False` on the new tag
     # instead of rolling -- that is the gate working, not a bug. Empty once
     # the operator's tested list covers the tag.
-    approvedUpgrade: "1.12.5"
+    approvedUpgrade: "1.13.0"
     # Kept as it is in the chart (`us-east-`, truncated): it identifies the
     # store. Correcting it is a storage change, for after the cutover.
     s3Region: us-east-
@@ -578,7 +595,11 @@ operator:
       suspend: false
     prune:
       suspend: false
-      dryRun: false
+      # Dry run until 2026-11-28: pull times are recorded only from the
+      # `angos.retention` rollout on, so before 7 days of them every tag pushed
+      # over a week ago reads as never pulled and would be deleted. Read the
+      # `DRY RUN: would delete` lines of the last run, then set false.
+      dryRun: true
 
 # CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
 # documents the format). Ingress only, like openbao-ingress: egress stays open.

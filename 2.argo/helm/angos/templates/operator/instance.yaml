@@ -109,6 +109,12 @@ spec:
         {{- toYaml $a.policy.jobs | nindent 8 }}
       admin:
         {{- toYaml $a.policy.admin | nindent 8 }}
+    {{- with $a.retention.rules }}
+    updatePullTime: true
+    retention:
+      rules:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
   {{- if $a.caTrust.enabled }}
   # The internal CA beside the system store: s3-main.weebo.poc is signed by it,
   # the upstreams by public roots, and the Bundle carries both.
