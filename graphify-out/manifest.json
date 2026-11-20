@@ -390,9 +390,9 @@
     "semantic_hash": ""
   },
   "2.argo/helm/angos/values.yaml": {
-    "mtime": 1795036556.6858695,
-    "seen": 1795036578.475742,
-    "ast_hash": "59307c9af4fe835a1e816d6cd370d438",
+    "mtime": 1795211586.3200362,
+    "seen": 1795211605.8966677,
+    "ast_hash": "977d6178d88634f9b766e7b7eee726c7",
     "semantic_hash": ""
   },
   "2.argo/helm/auth/main/Chart.yaml": {
@@ -1650,8 +1650,8 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/meta.json": {
-    "mtime": 1795040286.601906,
-    "seen": 1795041740.1000772,
+    "mtime": 1795204976.991287,
+    "seen": 1795211605.8951948,
     "ast_hash": "f19ecf4551267145389a4e0a1fbd3c0a",
     "semantic_hash": ""
   },
@@ -1662,80 +1662,80 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/angos.mdx": {
-    "mtime": 1795040286.5996315,
-    "seen": 1795041740.107615,
+    "mtime": 1795204976.9893563,
+    "seen": 1795211605.9033287,
     "ast_hash": "c502d0a3d0a465797af7d8a31ebfa4eb",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/auth.mdx": {
-    "mtime": 1795040286.5998504,
-    "seen": 1795041740.1076162,
+    "mtime": 1795204976.9895747,
+    "seen": 1795211605.90333,
     "ast_hash": "7a41e41dbec4a3bd4c7f0e7a2776c0bb",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/batlehub.mdx": {
-    "mtime": 1795040286.6000326,
-    "seen": 1795041740.1076174,
+    "mtime": 1795204976.9897542,
+    "seen": 1795211605.903331,
     "ast_hash": "57d61ae9abf3e26cf13fc80ce897b33d",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/che.mdx": {
-    "mtime": 1795040286.600535,
-    "seen": 1795041740.107618,
+    "mtime": 1795204976.9900331,
+    "seen": 1795211605.903332,
     "ast_hash": "f66eb97002fed722d7e545e2e97a5ff4",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/database.mdx": {
-    "mtime": 1795040286.6008444,
-    "seen": 1795041740.1076188,
+    "mtime": 1795204976.9902253,
+    "seen": 1795211605.9033334,
     "ast_hash": "edea3cca4c805b379bbaf6f63c65fe7a",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/forgejo.mdx": {
-    "mtime": 1795040286.6010232,
-    "seen": 1795041740.1076195,
+    "mtime": 1795204976.9904003,
+    "seen": 1795211605.9033346,
     "ast_hash": "a765446b6252e40483433c8b4b9d331a",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/hook.mdx": {
-    "mtime": 1795040286.60111,
-    "seen": 1795041740.1076202,
+    "mtime": 1795204976.9904985,
+    "seen": 1795211605.9033356,
     "ast_hash": "642edb5fd0afa4e0722e9d90765056ab",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/index.mdx": {
-    "mtime": 1795040286.599403,
-    "seen": 1795041740.1076214,
+    "mtime": 1795204976.9891212,
+    "seen": 1795211605.903337,
     "ast_hash": "cea900b97432f3c87d123a191cc50a8e",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/ingress.mdx": {
-    "mtime": 1795040286.6012142,
-    "seen": 1795041740.1076221,
+    "mtime": 1795204976.990594,
+    "seen": 1795211605.903338,
     "ast_hash": "e1bf26885f677e142821a3c41bc2b4fa",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/main-storage.mdx": {
-    "mtime": 1795040286.6013255,
-    "seen": 1795041740.1076226,
+    "mtime": 1795204976.9907014,
+    "seen": 1795211605.903339,
     "ast_hash": "641ebbd0d5b7de750b0406800e3c9198",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/monitoring.mdx": {
-    "mtime": 1795040286.6014817,
-    "seen": 1795041740.1076236,
+    "mtime": 1795204976.9908605,
+    "seen": 1795211605.9033399,
     "ast_hash": "89ac76627867fa103401785c8c55e79a",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/vault.mdx": {
-    "mtime": 1795040286.60167,
-    "seen": 1795041740.1076245,
+    "mtime": 1795204976.9910564,
+    "seen": 1795211605.9033408,
     "ast_hash": "40839669567b22878a887ff1225d9b62",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/vpn.mdx": {
-    "mtime": 1795040286.6018357,
-    "seen": 1795041740.1076252,
+    "mtime": 1795204976.9912183,
+    "seen": 1795211605.9033418,
     "ast_hash": "01ae2361db3c56e548bf8b65afaefe51",
     "semantic_hash": ""
   },
@@ -1764,8 +1764,8 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/index.mdx": {
-    "mtime": 1795040296.19353,
-    "seen": 1795041740.1075761,
+    "mtime": 1795204987.149638,
+    "seen": 1795211605.903289,
     "ast_hash": "d77f29537a49ba26358d050e41d92e8d",
     "semantic_hash": ""
   },
@@ -1824,8 +1824,8 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/meta.json": {
-    "mtime": 1795040296.1958477,
-    "seen": 1795041740.1000752,
+    "mtime": 1795204987.1519966,
+    "seen": 1795211605.895193,
     "ast_hash": "707e70b3b405cb2435d5319d00340159",
     "semantic_hash": ""
   },
@@ -1842,26 +1842,26 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/applications.mdx": {
-    "mtime": 1795040296.1944046,
-    "seen": 1795041740.107572,
+    "mtime": 1795204987.1505334,
+    "seen": 1795211605.9032834,
     "ast_hash": "67c0c2b80891f12e7bf988edeab6794c",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/flux.mdx": {
-    "mtime": 1795040296.1951807,
-    "seen": 1795041740.1075742,
+    "mtime": 1795204987.1512978,
+    "seen": 1795211605.9032865,
     "ast_hash": "f8ea2b54121fcaeeea31b9ae6929dcd8",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/groupes.mdx": {
-    "mtime": 1795040296.1949062,
-    "seen": 1795041740.107575,
+    "mtime": 1795204987.1510432,
+    "seen": 1795211605.903288,
     "ast_hash": "3bb6e4b9cdab6573fceafee4b5bf9195",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/kubernetes.mdx": {
-    "mtime": 1795040296.1953824,
-    "seen": 1795041740.1075768,
+    "mtime": 1795204987.151465,
+    "seen": 1795211605.9032898,
     "ast_hash": "298ce584377650ffceb8b0c879606d84",
     "semantic_hash": ""
   },
@@ -1872,9 +1872,9 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/argocd.mdx": {
-    "mtime": 1795040296.1957784,
-    "seen": 1795041740.1075733,
-    "ast_hash": "fb1b217f006e96f192785a781c41e6fa",
+    "mtime": 1795204987.1519039,
+    "seen": 1795211605.9032853,
+    "ast_hash": "7a6fb2028ea6776a591b0555387e190c",
     "semantic_hash": ""
   },
   "2.argo/helm/kubearmor/main/Chart.yaml": {
