@@ -595,11 +595,7 @@ operator:
       suspend: false
     prune:
       suspend: false
-      # Dry run until 2026-11-28: pull times are recorded only from the
-      # `angos.retention` rollout on, so before 7 days of them every tag pushed
-      # over a week ago reads as never pulled and would be deleted. Read the
-      # `DRY RUN: would delete` lines of the last run, then set false.
-      dryRun: true
+      dryRun: false
 
 # CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl
 # documents the format). Ingress only, like openbao-ingress: egress stays open.
