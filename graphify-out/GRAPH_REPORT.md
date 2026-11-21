@@ -1,17 +1,17 @@
 # Graph Report - weebo-si  (2026-11-21)
 
 ## Corpus Check
-- 578 files · ~293,978 words
+- 578 files · ~294,088 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 96 file(s) not represented in the graph (top: (none) 35, .woff2 18, .tpl 17)
 
 ## Summary
-- 5840 nodes · 6320 edges · 560 communities (523 shown, 37 thin omitted)
+- 5839 nodes · 6319 edges · 560 communities (523 shown, 37 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 29 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4af641e9`
+- Built from commit: `fc77a4de`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -562,7 +562,7 @@
 - default-provider-authorization-implicit-consent
 - default-user-settings-flow
 - metrics
-- serviceAccount
+- ports
 - ui
 
 ## God Nodes (most connected - your core abstractions)
@@ -700,7 +700,7 @@ Nodes (24): jks, pkcs12, apiVersion, key, metadata, key, kind, weebo.si/source-c
 
 ### Community 26 - "vault/sub/values.yaml"
 Cohesion: 0.05
-Nodes (43): bankVault, enabled, ns, version, branch, ciliumNetworkPolicies, enabled, policies (+35 more)
+Nodes (42): bankVault, enabled, ns, version, branch, ciliumNetworkPolicies, enabled, policies (+34 more)
 
 ### Community 27 - "kubeconfig.oidc-template.yaml"
 Cohesion: 0.08
@@ -980,11 +980,11 @@ Nodes (13): enabled, enabled, enabled, enabled, extractAllPodAnnotations, extrac
 
 ### Community 97 - "hyperdx"
 Cohesion: 0.13
-Nodes (15): enabled, spec, hyperdx, autoscaling, networkPolicy, podDisruptionBudget, ports, promql (+7 more)
+Nodes (15): enabled, spec, hyperdx, autoscaling, networkPolicy, podDisruptionBudget, promql, serviceAccount (+7 more)
 
 ### Community 98 - "spec"
-Cohesion: 0.18
-Nodes (13): keeper, spec, accessModes, resources, storageClassName, spec, name, policy (+5 more)
+Cohesion: 0.16
+Nodes (14): cluster, keeper, spec, accessModes, resources, storageClassName, spec, name (+6 more)
 
 ### Community 99 - "rustfs/Chart.yaml"
 Cohesion: 0.15
@@ -2523,8 +2523,8 @@ Cohesion: 0.29
 Nodes (6): Ce que Talos fournit, Ce que ça change au quotidien, Chiffrement du disque sans TPM, En bref, Le matériel, Recommandation
 
 ### Community 518 - "clickhouse"
-Cohesion: 0.25
-Nodes (8): clickhouse, cluster, enabled, nativePort, port, prometheus, enabled, port
+Cohesion: 0.29
+Nodes (7): clickhouse, enabled, nativePort, port, prometheus, enabled, port
 
 ### Community 519 - "logs"
 Cohesion: 0.25
@@ -2678,9 +2678,9 @@ Nodes (4): default-user-settings-flow, authentication, designation, name
 Cohesion: 0.40
 Nodes (5): containerPort, enabled, protocol, servicePort, metrics
 
-### Community 558 - "serviceAccount"
+### Community 558 - "ports"
 Cohesion: 0.50
-Nodes (4): serviceAccount, annotations, create, name
+Nodes (4): ports, api, app, opamp
 
 ### Community 559 - "ui"
 Cohesion: 0.50
@@ -2688,23 +2688,23 @@ Nodes (4): ui, enabled, nativeAuth, scope
 
 ## Knowledge Gaps
 - **3 isolated node(s):** `0.pulumi-conf`, `kubernetes-ovh-go`, `weebo.poc/requestid`
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3784 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3783 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **37 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `What to edit` connect `authentik` to `color.mjs`?**
-  _High betweenness centrality (0.003) - this node is a cross-community bridge._
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
 - **Are the 3 inferred relationships involving `main()` (e.g. with `.edge()` and `.node()`) actually correct?**
   _`main()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `0.pulumi-conf`, `kubernetes-ovh-go`, `weebo.poc/requestid` to the rest of the system?**
   _3 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Upgrade guidelines` be split into smaller, more focused modules?**
   _Cohesion score 0.04081632653061224 - nodes in this community are weakly interconnected._
-- **Why does `authentik()` connect `authentik` to `authflow.py`, `argorender.py`?**
-  _High betweenness centrality (0.003) - this node is a cross-community bridge._
+- **Why does `contrast()` connect `color.mjs` to `authentik`, `authentik.test.mjs`, `build.mjs`?**
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
 - **Should `rustfs` be split into smaller, more focused modules?**
   _Cohesion score 0.044444444444444446 - nodes in this community are weakly interconnected._
-- **Why does `contrast()` connect `color.mjs` to `authentik`, `authentik.test.mjs`, `build.mjs`?**
-  _High betweenness centrality (0.003) - this node is a cross-community bridge._
+- **Why does `authentik()` connect `authentik` to `authflow.py`, `argorender.py`?**
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
