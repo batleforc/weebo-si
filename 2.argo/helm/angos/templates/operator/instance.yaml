@@ -130,6 +130,10 @@ spec:
       mountPath: {{ $a.caTrust.mountPath | quote }}
       readOnly: true
   {{- end }}
+  {{- with $o.instance.worker }}
+  worker:
+    enabled: {{ .enabled }}
+  {{- end }}
   {{- if $a.scanner.enabled }}
   # `[global.scan]`: the chart's scanner StatefulSet (templates/angos/
   # scanner.yaml), which pulls as the AngosIdentity of scanner-identity.yaml.

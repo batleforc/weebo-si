@@ -30,7 +30,8 @@ spec:
   {{- $scan := and $.Values.angos.scanner.enabled $repo.scan }}
   {{- if $scan }}
   scan:
-    default: Scan
+    rules:
+      {{- toYaml (required "angos.scanner.rules" $.Values.angos.scanner.rules) | nindent 6 }}
   {{- end }}
   access:
     {{- range $verb := list "pull" "browse" "push" "delete" }}
