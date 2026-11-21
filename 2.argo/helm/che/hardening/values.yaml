@@ -40,7 +40,8 @@ config:
     # DevWorkspaceOperatorConfig, so a devfile cannot bring its own.
     dwocPin:
       enabled: true
-      mode: DryRun
+      # DryRun from 2026-10 to 2026-11-21 without a single refusal logged.
+      mode: Enforce
       # Workspace namespaces only, like networkProfiles.
       namespaceSelector:
         matchLabels:
@@ -248,7 +249,8 @@ config:
     # in depth. Enforce only once networkProfiles has converged.
     policyGuard:
       enabled: true
-      mode: DryRun
+      # networkProfiles Active; DryRun until 2026-11-21 without a refusal.
+      mode: Enforce
       # Workspace namespaces only: unscoped, it would gate every
       # NetworkPolicy write in the cluster (argocd, vault, s3...).
       namespaceSelector:
@@ -318,11 +320,12 @@ config:
         - { from: codeberg.org, to: registry.pkg.weebo.poc/codeberg }
 
     # RFC 0006. What a workspace's processes may do (exec, files, network,
-    # capabilities), through KubeArmor. KubeArmor is not installed here:
-    # Auto resolves to nothing and the feature writes nothing. Needs
+    # capabilities), through KubeArmor (2.argo/helm/kubearmor, BPF-LSM
+    # enforcer). DryRun since 2026-11-21: read a day of `karmor logs` before
+    # Enforce (runbook bascule-weebo-si, Thursday). Needs
     # operator.kubearmorPolicy.rbac.enabled.
     kubearmorPolicy:
-      enabled: false
+      enabled: true
       mode: DryRun
       catalog:
         - key: base
@@ -342,15 +345,30 @@ config:
           network: Audit
           capabilities: Audit
       templates:
-        # Starting point: audit reads of the pod's ServiceAccount token.
+        # What a workspace should never do. Not the ServiceAccount token: every
+        # workspace reads it for kubectl. Each rule goes Block on its own on
+        # Thursday, after a day of `karmor logs`.
         weebo-armor-base:
           apiVersion: security.kubearmor.com/v1
           kind: KubeArmorPolicy
           spec:
             file:
+              matchPaths:
+                - path: /etc/shadow
+                  action: Audit
               matchDirectories:
-                - dir: /var/run/secrets/kubernetes.io/serviceaccount/
+                - dir: /usr/bin/
                   recursive: true
+                  readOnly: true
+                  action: Audit
+                - dir: /usr/sbin/
+                  recursive: true
+                  readOnly: true
+                  action: Audit
+            capabilities:
+              matchCapabilities:
+                - capability: net_raw
+                  action: Audit
             action: Audit
 
     # RFC 0007. Package-manager configuration (.npmrc, pip.conf...) mounted
@@ -468,7 +486,7 @@ config:
     # `weebo-si-operator pods audit --all-namespaces`. Needs
     # operator.podSecurity.rbac.enabled.
     podSecurity:
-      enabled: false
+      enabled: true
       mode: DryRun
       namespaceSelector:
         matchLabels:
@@ -554,8 +572,11 @@ teams:
             patterns: ["ghcr.io/batleforc/weebodevimage/**"]
         default: [angos, weebo-devimages]
       kubearmorPolicy:
-        catalog: []
-        default: []
+        # Same key as the cluster catalogue's.
+        catalog:
+          - key: base
+            templateRef: { name: weebo-armor-base, namespace: weebo-si-hardening }
+        default: [base]
       registryConfig:
         catalog:
           - key: npm-mirror

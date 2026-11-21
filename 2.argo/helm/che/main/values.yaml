@@ -125,10 +125,10 @@ che:
       imagePolicy:
         podWebhook:
           failurePolicy: Fail
-      # features.kubearmorPolicy. KubeArmor is not installed on this cluster.
+      # features.kubearmorPolicy: KubeArmor runs (2.argo/helm/kubearmor).
       kubearmorPolicy:
         rbac:
-          enabled: false
+          enabled: true
       # features.registryConfig: create/update/delete on secrets
       # cluster-wide (read RFC 0007's Security considerations first).
       registryConfig:
@@ -136,11 +136,11 @@ che:
           enabled: false
         failurePolicy: Ignore
       # features.podSecurity (RFC 0013): patch on namespaces, for the
-      # pod-security.kubernetes.io/* labels. Off until the feature is
-      # rolled out in the config chart (DryRun first, then the pods audit).
+      # pod-security.kubernetes.io/* labels. On with the feature in DryRun;
+      # run the pods audit before Enforce.
       podSecurity:
         rbac:
-          enabled: false
+          enabled: true
       # features.resourceQuotas (RFC 0014): write on resourcequotas and
       # limitranges cluster-wide, plus the pod-less namespace that holds the
       # quota templates (a quota is live where it lives, so never in the
