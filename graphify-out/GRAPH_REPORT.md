@@ -1,17 +1,17 @@
 # Graph Report - weebo-si  (2026-11-21)
 
 ## Corpus Check
-- 578 files · ~293,346 words
+- 578 files · ~293,352 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 96 file(s) not represented in the graph (top: (none) 35, .woff2 18, .tpl 17)
 
 ## Summary
-- 5837 nodes · 6317 edges · 550 communities (512 shown, 38 thin omitted)
+- 5840 nodes · 6320 edges · 558 communities (520 shown, 38 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 29 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `072935bd`
+- Built from commit: `26c7d092`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -487,7 +487,7 @@
 - matchLabels
 - monitoring.mdx
 - kubectl
-- builtin
+- default-authenticator-webauthn-setup
 - podWebhook
 - che
 - auth
@@ -542,6 +542,7 @@
 - maintainer
 - zipkin
 - secrets
+- caSecretRef
 - logs
 - readers
 - traces
@@ -551,8 +552,15 @@
 - ingress
 - podSecurityContext
 - waitForMongodb
+- vault
+- weeboGroups
 - podDisruptionBudget
+- builtin
+- token
 - chart
+- default-password-change
+- default-provider-authorization-implicit-consent
+- default-user-settings-flow
 - ui
 
 ## God Nodes (most connected - your core abstractions)
@@ -582,7 +590,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (550 total, 38 thin omitted)
+## Communities (558 total, 38 thin omitted)
 
 ### Community 0 - "Upgrade guidelines"
 Cohesion: 0.04
@@ -758,7 +766,7 @@ Nodes (20): breakGlassIdentities, default, enabled, endpointSelection, hosts, mo
 
 ### Community 44 - "mainInstance"
 Cohesion: 0.06
-Nodes (34): branch, ciliumNetworkPolicies, enabled, policies, name, vaultKey, endpointSelector, ingress (+26 more)
+Nodes (35): branch, ciliumNetworkPolicies, enabled, policies, name, vaultKey, enabled, endpointSelector (+27 more)
 
 ### Community 45 - "requestid_test.go"
 Cohesion: 0.07
@@ -885,8 +893,8 @@ Cohesion: 0.14
 Nodes (14): enabled, issuerRef, issuerRefKind, name, dns, certificate, createWithCRD, domain (+6 more)
 
 ### Community 76 - "brand"
-Cohesion: 0.12
-Nodes (17): brand, brandingDefaultFlowBackground, brandingFavicon, brandingLogo, brandingTitle, crName, default, domain (+9 more)
+Cohesion: 0.14
+Nodes (14): brand, brandingDefaultFlowBackground, brandingFavicon, brandingLogo, brandingTitle, crName, default, domain (+6 more)
 
 ### Community 77 - "image"
 Cohesion: 0.38
@@ -1313,8 +1321,8 @@ Cohesion: 0.14
 Nodes (13): branch, ciliumNetworkPolicies, enabled, kubearmor, chart, enabled, kubearmorApp, namespace (+5 more)
 
 ### Community 183 - "foundation"
-Cohesion: 0.07
-Nodes (30): enabled, key, name, namespace, foundation, enabled, namespacePolicy, secretStore (+22 more)
+Cohesion: 0.18
+Nodes (11): foundation, enabled, namespacePolicy, secretStore, url, allowedNamespaces, enabled, enabled (+3 more)
 
 ### Community 184 - "angos/values.yaml"
 Cohesion: 0.25
@@ -1425,8 +1433,8 @@ Cohesion: 0.14
 Nodes (14): levels, owner, read, token-writer, write, data, metadata, versions (+6 more)
 
 ### Community 211 - "weeboEmail"
-Cohesion: 0.13
-Nodes (15): scopeMappings, weeboEmail, weeboGroups, crName, description, enabled, expression, name (+7 more)
+Cohesion: 0.25
+Nodes (8): scopeMappings, weeboEmail, crName, description, enabled, expression, name, scopeName
 
 ### Community 212 - "argo"
 Cohesion: 0.25
@@ -1930,7 +1938,7 @@ Nodes (8): background_color, display, icons, name, scope, short_name, start_url,
 
 ### Community 337 - "angos/values.yaml"
 Cohesion: 0.13
-Nodes (16): endpointSelector, ingress, namespace, endpointSelector, namespace, ciliumNetworkPolicies, enabled, policies (+8 more)
+Nodes (16): enabled, endpointSelector, ingress, namespace, endpointSelector, namespace, policies, fromEndpoints (+8 more)
 
 ### Community 338 - "endpoints"
 Cohesion: 0.18
@@ -2249,8 +2257,8 @@ Cohesion: 0.33
 Nodes (6): cookiesAuthEnabled, discoverable, secure, type, urlRewriteSupported, attributes
 
 ### Community 451 - "angos/values.yaml"
-Cohesion: 0.22
-Nodes (8): branch, enabled, operatorNetworkPolicy, egress, enabled, kind, project, repo
+Cohesion: 0.18
+Nodes (10): branch, ciliumNetworkPolicies, enabled, enabled, operatorNetworkPolicy, egress, enabled, kind (+2 more)
 
 ### Community 452 - "resources"
 Cohesion: 0.29
@@ -2372,9 +2380,9 @@ Nodes (3): Flux, Légende, Politiques
 Cohesion: 0.33
 Nodes (6): aliases, cmds, desc, env, silent, kubectl
 
-### Community 482 - "builtin"
-Cohesion: 0.11
-Nodes (19): default-authenticator-webauthn-setup, default-password-change, default-provider-authorization-implicit-consent, default-user-settings-flow, authentication, designation, name, authentication (+11 more)
+### Community 482 - "default-authenticator-webauthn-setup"
+Cohesion: 0.50
+Nodes (4): default-authenticator-webauthn-setup, authentication, designation, name
 
 ### Community 483 - "podWebhook"
 Cohesion: 0.67
@@ -2588,6 +2596,10 @@ Nodes (6): zipkin, containerPort, enabled, hostPort, protocol, servicePort
 Cohesion: 0.33
 Nodes (6): secrets, CLICKHOUSE_ADMIN_PASSWORD, CLICKHOUSE_APP_PASSWORD, CLICKHOUSE_PASSWORD, HYPERDX_API_KEY, MONGODB_PASSWORD
 
+### Community 538 - "caSecretRef"
+Cohesion: 0.38
+Nodes (7): enabled, key, name, namespace, tls, caSecretRef, caSecretRef
+
 ### Community 539 - "logs"
 Cohesion: 0.50
 Nodes (4): exporters, processors, receivers, logs
@@ -2624,9 +2636,37 @@ Nodes (4): podSecurityContext, fsGroup, runAsGroup, runAsUser
 Cohesion: 0.67
 Nodes (3): waitForMongodb, image, pullPolicy
 
+### Community 548 - "vault"
+Cohesion: 0.29
+Nodes (7): vault, address, enabled, kubernetesAuthMount, kubernetesAuthRole, mount, pathPrefix
+
+### Community 549 - "weeboGroups"
+Cohesion: 0.29
+Nodes (7): weeboGroups, crName, description, enabled, expression, name, scopeName
+
+### Community 551 - "builtin"
+Cohesion: 0.33
+Nodes (6): theme, builtin, enabled, css, enabled, flows
+
+### Community 552 - "token"
+Cohesion: 0.40
+Nodes (5): token, refreshInterval, secretName, vaultKey, vaultProperty
+
 ### Community 553 - "chart"
 Cohesion: 0.60
 Nodes (5): chart, name, repoURL, version, chart
+
+### Community 554 - "default-password-change"
+Cohesion: 0.50
+Nodes (4): default-password-change, authentication, designation, name
+
+### Community 555 - "default-provider-authorization-implicit-consent"
+Cohesion: 0.50
+Nodes (4): default-provider-authorization-implicit-consent, authentication, designation, name
+
+### Community 556 - "default-user-settings-flow"
+Cohesion: 0.50
+Nodes (4): default-user-settings-flow, authentication, designation, name
 
 ### Community 559 - "ui"
 Cohesion: 0.50
@@ -2634,14 +2674,14 @@ Nodes (4): ui, enabled, nativeAuth, scope
 
 ## Knowledge Gaps
 - **3 isolated node(s):** `0.pulumi-conf`, `kubernetes-ovh-go`, `weebo.poc/requestid`
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3782 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3784 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **38 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `What to edit` connect `authentik` to `color.mjs`?**
-  _High betweenness centrality (0.003) - this node is a cross-community bridge._
+- **Why does `fumadocs-core` connect `source.ts` to `root.tsx`, `0.docs/package.json`, `fumadocs-mdx`, `docs.tsx`, `react-router.config.ts`?**
+  _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **Are the 3 inferred relationships involving `main()` (e.g. with `.edge()` and `.node()`) actually correct?**
   _`main()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `0.pulumi-conf`, `kubernetes-ovh-go`, `weebo.poc/requestid` to the rest of the system?**
@@ -2649,8 +2689,8 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Upgrade guidelines` be split into smaller, more focused modules?**
   _Cohesion score 0.04081632653061224 - nodes in this community are weakly interconnected._
 - **Why does `contrast()` connect `color.mjs` to `authentik`, `authentik.test.mjs`, `build.mjs`?**
-  _High betweenness centrality (0.003) - this node is a cross-community bridge._
+  _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **Should `rustfs` be split into smaller, more focused modules?**
   _Cohesion score 0.044444444444444446 - nodes in this community are weakly interconnected._
-- **Why does `authentik()` connect `authentik` to `authflow.py`, `argorender.py`?**
-  _High betweenness centrality (0.003) - this node is a cross-community bridge._
+- **Why does `What to edit` connect `authentik` to `color.mjs`?**
+  _High betweenness centrality (0.002) - this node is a cross-community bridge._
