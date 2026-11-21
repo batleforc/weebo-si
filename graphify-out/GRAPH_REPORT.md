@@ -1,17 +1,17 @@
 # Graph Report - weebo-si  (2026-11-21)
 
 ## Corpus Check
-- 578 files · ~293,352 words
+- 578 files · ~293,978 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 96 file(s) not represented in the graph (top: (none) 35, .woff2 18, .tpl 17)
 
 ## Summary
-- 5840 nodes · 6320 edges · 558 communities (520 shown, 38 thin omitted)
+- 5840 nodes · 6320 edges · 560 communities (523 shown, 37 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 29 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `26c7d092`
+- Built from commit: `4af641e9`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -426,7 +426,7 @@
 - kubearmor/main/Chart.yaml
 - kubearmor/sub/Chart.yaml
 - upstream
-- netflow.py
+- selector_name
 - kubearmor
 - default-authenticator-static-setup
 - users
@@ -515,7 +515,7 @@
 - authentication/index.mdx
 - 10. Exploitation
 - components
-- ports
+- netflow.py
 - hook
 - spaces/values.yaml
 - argo-admin
@@ -526,7 +526,7 @@
 - logs
 - grype
 - otlp
-- _NoRedirect
+- configMap
 - default-source-enrollment
 - extraEnvsFrom
 - kubearmor
@@ -561,6 +561,8 @@
 - default-password-change
 - default-provider-authorization-implicit-consent
 - default-user-settings-flow
+- metrics
+- serviceAccount
 - ui
 
 ## God Nodes (most connected - your core abstractions)
@@ -590,7 +592,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (558 total, 38 thin omitted)
+## Communities (560 total, 37 thin omitted)
 
 ### Community 0 - "Upgrade guidelines"
 Cohesion: 0.04
@@ -698,7 +700,7 @@ Nodes (24): jks, pkcs12, apiVersion, key, metadata, key, kind, weebo.si/source-c
 
 ### Community 26 - "vault/sub/values.yaml"
 Cohesion: 0.05
-Nodes (42): bankVault, enabled, ns, version, branch, ciliumNetworkPolicies, enabled, policies (+34 more)
+Nodes (43): bankVault, enabled, ns, version, branch, ciliumNetworkPolicies, enabled, policies (+35 more)
 
 ### Community 27 - "kubeconfig.oidc-template.yaml"
 Cohesion: 0.08
@@ -766,7 +768,7 @@ Nodes (20): breakGlassIdentities, default, enabled, endpointSelection, hosts, mo
 
 ### Community 44 - "mainInstance"
 Cohesion: 0.06
-Nodes (35): branch, ciliumNetworkPolicies, enabled, policies, name, vaultKey, enabled, endpointSelector (+27 more)
+Nodes (34): branch, ciliumNetworkPolicies, enabled, policies, name, vaultKey, endpointSelector, ingress (+26 more)
 
 ### Community 45 - "requestid_test.go"
 Cohesion: 0.07
@@ -921,8 +923,8 @@ Cohesion: 0.15
 Nodes (14): additionalArgs, resources, schedule, resources, tasks, cpu, memory, cpu (+6 more)
 
 ### Community 83 - "ports"
-Cohesion: 0.14
-Nodes (14): enabled, enabled, enabled, containerPort, enabled, protocol, servicePort, ports (+6 more)
+Cohesion: 0.22
+Nodes (9): enabled, enabled, enabled, ports, jaeger-compact, jaeger-grpc, jaeger-thrift, zipkin (+1 more)
 
 ### Community 84 - "rustfs/values.yaml"
 Cohesion: 0.14
@@ -978,7 +980,7 @@ Nodes (13): enabled, enabled, enabled, enabled, extractAllPodAnnotations, extrac
 
 ### Community 97 - "hyperdx"
 Cohesion: 0.13
-Nodes (15): enabled, spec, hyperdx, autoscaling, networkPolicy, podDisruptionBudget, promql, serviceAccount (+7 more)
+Nodes (15): enabled, spec, hyperdx, autoscaling, networkPolicy, podDisruptionBudget, ports, promql (+7 more)
 
 ### Community 98 - "spec"
 Cohesion: 0.18
@@ -1261,8 +1263,8 @@ Cohesion: 0.14
 Nodes (14): storage.wiredTiger.engineConfig.journalCompressor, modes, spec, authentication, additionalMongodConfig, members, security, statefulSet (+6 more)
 
 ### Community 168 - "otel-collector"
-Cohesion: 0.13
-Nodes (15): name, optional, mountPath, name, readOnly, configMap, name, otel-collector (+7 more)
+Cohesion: 0.20
+Nodes (10): mountPath, name, readOnly, otel-collector, enabled, extraVolumeMounts, mode, podAnnotations (+2 more)
 
 ### Community 169 - "cheUsersProject"
 Cohesion: 0.14
@@ -1310,7 +1312,7 @@ Nodes (8): authentication, crName, designation, enabled, name, slug, title, devi
 
 ### Community 180 - "authflow.py"
 Cohesion: 0.11
-Nodes (29): ancestors(), apiserver(), app_label(), argo_page(), argo_visibility(), bindings(), Chart, code() (+21 more)
+Nodes (25): ancestors(), app_label(), argo_page(), argo_visibility(), bindings(), Chart, code(), collect() (+17 more)
 
 ### Community 181 - "requests"
 Cohesion: 0.25
@@ -1681,8 +1683,8 @@ Cohesion: 0.33
 Nodes (6): config, exporters, extensions, debug, health_check, endpoint
 
 ### Community 273 - "clickstack-dashboards.py"
-Cohesion: 0.14
-Nodes (17): act(), build_reference_map(), call(), check_ntfy_url(), check_raw_sql_tiles(), dashboard_id(), fail(), get_json() (+9 more)
+Cohesion: 0.12
+Nodes (18): act(), build_reference_map(), call(), check_ntfy_url(), check_raw_sql_tiles(), dashboard_id(), fail(), get_json() (+10 more)
 
 ### Community 274 - "applications.mdx"
 Cohesion: 0.07
@@ -1701,8 +1703,8 @@ Cohesion: 0.33
 Nodes (6): containerPort, enabled, hostPort, protocol, servicePort, jaeger-grpc
 
 ### Community 278 - "argorender.py"
-Cohesion: 0.19
-Nodes (9): render(), Render, run(), walk(), yaml_docs(), policies(), upstream_hosts(), hosts_of() (+1 more)
+Cohesion: 0.32
+Nodes (5): render(), Render, run(), walk(), yaml_docs()
 
 ### Community 279 - "jaeger-thrift"
 Cohesion: 0.33
@@ -1877,8 +1879,8 @@ Cohesion: 0.33
 Nodes (5): authentik(), batlehub-theme, Deploy, Output, What to edit
 
 ### Community 322 - "re"
-Cohesion: 0.22
-Nodes (8): 1. Pousser les charts, 2. Appliquer Pulumi, 3. Verrouiller default, Ce qui change, Retour arrière, À vérifier à la main, argocd(), go_string()
+Cohesion: 0.17
+Nodes (12): 1. Pousser les charts, 2. Appliquer Pulumi, 3. Verrouiller default, Ce qui change, Retour arrière, À vérifier à la main, apiserver(), argocd() (+4 more)
 
 ### Community 323 - "talosctl"
 Cohesion: 0.40
@@ -2140,9 +2142,9 @@ Nodes (10): apiVersion, appVersion, dependencies, name, repository, version, des
 Cohesion: 0.25
 Nodes (8): editors, custom, default, upstream, hide, hideAll, known, show
 
-### Community 421 - "netflow.py"
-Cohesion: 0.10
-Nodes (20): nid(), all_edges(), backends(), cilium_edges(), cilium_peer(), esc(), is_template(), k8s_edges() (+12 more)
+### Community 421 - "selector_name"
+Cohesion: 0.15
+Nodes (10): cilium_edges(), cilium_peer(), is_template(), k8s_edges(), peers_of(), open_egress(), ports_of(), selector_name() (+2 more)
 
 ### Community 422 - "kubearmor"
 Cohesion: 0.33
@@ -2337,8 +2339,8 @@ Cohesion: 0.33
 Nodes (6): forgejo, enabled, endpoint, oauth, secretName, vaultKey
 
 ### Community 471 - "monitoring-ingress"
-Cohesion: 0.29
-Nodes (7): fromEndpoints, toPorts, enabled, endpointSelector, ingress, namespace, monitoring-ingress
+Cohesion: 0.33
+Nodes (6): fromEndpoints, toPorts, endpointSelector, ingress, namespace, monitoring-ingress
 
 ### Community 472 - "adminMode"
 Cohesion: 0.33
@@ -2373,8 +2375,8 @@ Cohesion: 0.20
 Nodes (10): reaches, matchLabels, app, app.kubernetes.io/name, io.kubernetes.pod.namespace, k8s-app, endpointSelector, hosts (+2 more)
 
 ### Community 480 - "monitoring.mdx"
-Cohesion: 0.50
-Nodes (3): Flux, Légende, Politiques
+Cohesion: 0.40
+Nodes (4): Flux, Flux ouverts par d'autres applications, Légende, Politiques
 
 ### Community 481 - "kubectl"
 Cohesion: 0.33
@@ -2492,9 +2494,9 @@ Nodes (4): 10.1 Observabilité, 10.2 Modes de défaillance, 10.3 Performances et
 Cohesion: 0.29
 Nodes (7): app.kubernetes.io/component, app.kubernetes.io/part-of, controller.devfile.io/container-contribution, components, attributes, name, volume
 
-### Community 511 - "ports"
-Cohesion: 0.50
-Nodes (4): ports, api, app, opamp
+### Community 511 - "netflow.py"
+Cohesion: 0.16
+Nodes (14): nid(), all_edges(), backends(), esc(), main(), mermaid(), node_id(), page() (+6 more)
 
 ### Community 512 - "hook"
 Cohesion: 0.67
@@ -2535,6 +2537,10 @@ Nodes (7): grype, trivy, repository, tag, engineImages, repository, tag
 ### Community 521 - "otlp"
 Cohesion: 0.33
 Nodes (6): appProtocol, containerPort, enabled, protocol, servicePort, otlp
+
+### Community 522 - "configMap"
+Cohesion: 0.40
+Nodes (5): name, optional, configMap, name, extraVolumes
 
 ### Community 523 - "default-source-enrollment"
 Cohesion: 0.50
@@ -2668,6 +2674,14 @@ Nodes (4): default-provider-authorization-implicit-consent, authentication, desi
 Cohesion: 0.50
 Nodes (4): default-user-settings-flow, authentication, designation, name
 
+### Community 557 - "metrics"
+Cohesion: 0.40
+Nodes (5): containerPort, enabled, protocol, servicePort, metrics
+
+### Community 558 - "serviceAccount"
+Cohesion: 0.50
+Nodes (4): serviceAccount, annotations, create, name
+
 ### Community 559 - "ui"
 Cohesion: 0.50
 Nodes (4): ui, enabled, nativeAuth, scope
@@ -2675,22 +2689,22 @@ Nodes (4): ui, enabled, nativeAuth, scope
 ## Knowledge Gaps
 - **3 isolated node(s):** `0.pulumi-conf`, `kubernetes-ovh-go`, `weebo.poc/requestid`
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3784 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **38 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **37 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `fumadocs-core` connect `source.ts` to `root.tsx`, `0.docs/package.json`, `fumadocs-mdx`, `docs.tsx`, `react-router.config.ts`?**
-  _High betweenness centrality (0.002) - this node is a cross-community bridge._
+- **Why does `What to edit` connect `authentik` to `color.mjs`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
 - **Are the 3 inferred relationships involving `main()` (e.g. with `.edge()` and `.node()`) actually correct?**
   _`main()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `0.pulumi-conf`, `kubernetes-ovh-go`, `weebo.poc/requestid` to the rest of the system?**
   _3 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Upgrade guidelines` be split into smaller, more focused modules?**
   _Cohesion score 0.04081632653061224 - nodes in this community are weakly interconnected._
-- **Why does `contrast()` connect `color.mjs` to `authentik`, `authentik.test.mjs`, `build.mjs`?**
-  _High betweenness centrality (0.002) - this node is a cross-community bridge._
+- **Why does `authentik()` connect `authentik` to `authflow.py`, `argorender.py`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
 - **Should `rustfs` be split into smaller, more focused modules?**
   _Cohesion score 0.044444444444444446 - nodes in this community are weakly interconnected._
-- **Why does `What to edit` connect `authentik` to `color.mjs`?**
-  _High betweenness centrality (0.002) - this node is a cross-community bridge._
+- **Why does `contrast()` connect `color.mjs` to `authentik`, `authentik.test.mjs`, `build.mjs`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
