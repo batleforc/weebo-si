@@ -131,6 +131,14 @@ spec:
         # Secret.
         CHE_INTEGRATION_FORGEJO_OAUTH__ENDPOINT: {{ .Values.che.forgejo.endpoint | quote }}
         {{- end }}
+        {{- if and .Values.che.forgejo.enabled .Values.che.forgejo.secondEndpoint }}
+        # The fork's second Forgejo slot (che.integration.forgejo.oauth_endpoint_2),
+        # with no OAuth client: recognised, read anonymously, PAT for the
+        # private repositories. Slot 1 is `endpoint` above (or the gitServices
+        # Secret); che-operator only writes slot 2 when a second gitServices
+        # Secret exists, so keep a single OAuth Secret while this is set.
+        CHE_INTEGRATION_FORGEJO_OAUTH__ENDPOINT__2: {{ .Values.che.forgejo.secondEndpoint | quote }}
+        {{- end }}
       deployment:
         containers:
           - name: che

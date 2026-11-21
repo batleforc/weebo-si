@@ -1,0 +1,28 @@
+{{- $o := .Values.operator -}}
+{{- if and .Values.forgejo.enabled $o.enabled -}}
+{{- range $key, $app := $o.oauth2Applications }}
+---
+# An OAuth2 application on the default ForgejoInstance, for an app that signs
+# in with Forgejo. Its credentials go to Vault only (values.yaml,
+# operator.oauth2Applications).
+apiVersion: forgejo.weebo.io/v1alpha1
+kind: ForgejoOAuth2Application
+metadata:
+  name: {{ $key }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  instanceRef:
+    name: main
+  name: {{ required (printf "operator.oauth2Applications.%s.name" $key) $app.name | quote }}
+  confidentialClient: true
+  redirectUris:
+    {{- required (printf "operator.oauth2Applications.%s.redirectUris" $key) $app.redirectUris | toYaml | nindent 4 }}
+  secretTargets:
+    - backend: vault
+      name: {{ $key }}
+      path: {{ required (printf "operator.oauth2Applications.%s.vaultPath" $key) $app.vaultPath | quote }}
+{{- end }}
+{{- end -}}

@@ -384,7 +384,31 @@ operator:
   #
   # The release namespace is added by the template, not listed here.
   allowList:
-    extraRules: []
+    extraRules:
+      # An OAuth2 application with no ownerRef belongs to the site admin,
+      # whose credentials the webhook only lets out when a rule names it
+      # (operator.oauth2Applications). Scoped to that kind alone, so the
+      # namespace still cannot mint the admin an access token.
+      - effect: Allow
+        namespaces: [forgejo]
+        allowedKinds: [ForgejoOAuth2Application]
+        allowedUsers: ["@instance-admin"]
+
+  # OAuth2 applications for apps that sign in with Forgejo
+  # (templates/operator/oauth2-applications.yaml), one
+  # ForgejoOAuth2Application each, in this chart's namespace. The operator
+  # writes FORGEJO_CLIENT_ID / FORGEJO_CLIENT_SECRET to `vaultPath` in the
+  # `mv` mount, where the consumer's ExternalSecret reads them. Forgejo
+  # regenerates the secret on every update of the application, so the
+  # operator only updates it when the spec changes.
+  oauth2Applications:
+    # Eclipse Che's "sign in with Forgejo" (che.forgejo.oauth in
+    # 2.argo/helm/che/main/values.yaml, read by che/sub forgejo-secret.yaml).
+    che:
+      name: eclipse-che
+      redirectUris:
+        - https://cde.dev.weebo.poc/api/oauth/callback
+      vaultPath: eclipse-che/forgejo
 
   # The site-admin token the instance authenticates with. Forgejo has no way
   # to be handed one at install, so templates/operator/token.yaml mints it
@@ -421,6 +445,13 @@ operator:
     kubernetesAuthRole: forgejo-operator
     # Only used by targets that do not pin a path.
     pathPrefix: weebo-forgejo
+    # Paths of `mv` this chart's CRs may write outside
+    # weebo-forgejo/<namespace>/. Exact paths only: the consumer's
+    # ExternalSecret can read nothing but mv/<its namespace>/*.
+    pathGrants:
+      # operator.oauth2Applications.che, read by Che's forgejo-secret.yaml.
+      - namespaces: [forgejo]
+        paths: [eclipse-che/forgejo]
     # Other KV mounts a CR may write to through `secretTargets[].mount`, only
     # at the paths their grants open. `users`, in OpenBao's namespace `users`
     # (RFC 0007): a user's token at users/<username>/forgejo-token and nothing

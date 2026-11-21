@@ -24,8 +24,11 @@ che:
     # endpoint alone is declared to che-server. See main/values.yaml.
     oauth: false
     secretName: forgejo-oauth-config
-    endpoint: https://git.batleforc.fr
+    endpoint: https://git.weebo.poc
     vaultKey: mv/eclipse-che/forgejo
+    # A second Forgejo, recognised without OAuth (empty: none). See
+    # templates/che-cluster.yaml.
+    secondEndpoint: https://git.batleforc.fr
   # IDE control lives in 2.argo/helm/che/main/values.yaml (che.editors),
   # which overrides these defaults. Only `upstream.known` belongs here.
   editors:
