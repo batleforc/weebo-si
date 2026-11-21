@@ -229,6 +229,17 @@ angos:
     # grype scans concurrently inside one replica. trivy refreshes its database
     # during a scan, grype once a day at startup.
     engine: trivy
+    # The engine itself, mounted on the scanner's PATH (templates/angos/
+    # scanner.yaml). Only the one `engine` names is pulled.
+    engineImages:
+      trivy:
+        repository: docker.io/aquasec/trivy
+        # renovate: datasource=docker depName=docker.io/aquasec/trivy
+        tag: "0.76.2"
+      grype:
+        repository: docker.io/anchore/grype
+        # renovate: datasource=docker depName=docker.io/anchore/grype
+        tag: "v0.122.1"
     # A StatefulSet, not a Deployment, because each replica needs its own cache
     # volume: the two scanners lock theirs and neither is safe to share.
     replicas: 1
