@@ -294,6 +294,7 @@ flowchart LR
   n_group_weebo_admin_38219b -->|"accès"| n_ak_clickstack_f02905
   n_ak_clickstack_f02905 ==>|"autorisation"| n_flow_admin_step_up_6938b4
   n_ak_clickstack_f02905 -->|"forwardAuth auth/authentik"| n_route_clickstack_weebo_poc_99dbd2
+  n_ak_clickstack_f02905 -->|"forwardAuth monitoring/clickstack-api-auth"| n_route_clickstack_weebo_poc_99dbd2
 ```
 
 | Propriété | Valeur |
@@ -314,6 +315,7 @@ flowchart LR
 | App Argo CD | Objet | Chemin du secret |
 |---|---|---|
 | — | `monitoring/IngressRoute/clickstack` | forwardAuth `auth/authentik` sur `clickstack.weebo.poc` |
+| — | `monitoring/IngressRoute/clickstack` | forwardAuth `monitoring/clickstack-api-auth` sur `clickstack.weebo.poc` |
 
 ## endpoint-gateway
 

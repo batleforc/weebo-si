@@ -37,6 +37,22 @@ spec:
           namespace: auth
       {{- end }}
     {{- if $preauth }}
+    # HyperDX's API calls. Same gate, but an expired session gets a 401 instead
+    # of a 302 into the login flow (clickstack-api-auth below): HyperDX's own
+    # fetch of /api/me used to follow that 302 to auth.weebo.poc, overwrite the
+    # page's pending flow in the authentik session, and land the browser on
+    # /api/me after login.
+    - kind: Rule
+      match: Host(`{{ .Values.clickstack.domain }}`) && PathPrefix(`/api/`)
+      priority: 12
+      services:
+        - name: {{ $service }}
+          namespace: {{ .Release.Namespace }}
+          port: {{ $port }}
+          passHostHeader: true
+      middlewares:
+        - name: clickstack-api-origin
+        - name: clickstack-api-auth
     - kind: Rule
       match: Host(`{{ .Values.clickstack.domain }}`) && PathPrefix(`/outpost.goauthentik.io/`)
       priority: 15
@@ -63,4 +79,37 @@ spec:
     {{- end }}
   tls:
     secretName: clickstack-tls
+{{- if $preauth }}
+---
+# The outpost's nginx endpoint answers 401 when unauthenticated, where the
+# traefik one redirects; it reads the request URL from X-Original-URL alone,
+# which Traefik does not send. Any URL of the host will do: it only has to
+# parse and not be an /outpost.goauthentik.io path.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: clickstack-api-origin
+  namespace: {{ .Release.Namespace }}
+spec:
+  headers:
+    customRequestHeaders:
+      X-Original-URL: "https://{{ .Values.clickstack.domain }}/api/"
+---
+# Same session check as auth/authentik (one outpost cookie), 401 instead of a
+# redirect. Still the only authentication in front of preauth on this path.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: clickstack-api-auth
+  namespace: {{ .Release.Namespace }}
+spec:
+  forwardAuth:
+    address: http://authentik-server.auth.svc.cluster.local/outpost.goauthentik.io/auth/nginx
+    trustForwardHeader: true
+    authResponseHeaders:
+      - X-authentik-username
+      - X-authentik-groups
+      - X-authentik-email
+      - X-authentik-uid
+{{- end }}
 {{- end -}}

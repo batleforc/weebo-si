@@ -164,7 +164,7 @@ flowchart LR
 | [`argo-admin`](/docs/security/authentication/applications#argo-admin) | oauth2 | `weebo_admin` | `admin-step-up` | ConfigMap/argocd-cm (argocd) |
 | [`batlehub`](/docs/security/authentication/applications#batlehub) | oauth2 | `weebo_moderator` | `default-provider-authorization-implicit-consent` | Application/batlehub-app (batlehub) |
 | [`che-cluster`](/docs/security/authentication/applications#che-cluster) | oauth2 | `weebo_moderator` | `default-provider-authorization-implicit-consent` | Application/dex (dex)<br/>CheCluster/eclipse-che (eclipse-che) |
-| [`clickstack`](/docs/security/authentication/applications#clickstack) | proxy | `weebo_admin` | `admin-step-up` | IngressRoute monitoring/clickstack |
+| [`clickstack`](/docs/security/authentication/applications#clickstack) | proxy | `weebo_admin` | `admin-step-up` | IngressRoute monitoring/clickstack<br/>IngressRoute monitoring/clickstack |
 | [`endpoint-gateway`](/docs/security/authentication/applications#endpoint-gateway) | oauth2 | `weebo_moderator` | `default-provider-authorization-implicit-consent` | Application/weebo-si-endpoint-gateway (weebo-si-hardening) |
 | [`forgejo`](/docs/security/authentication/applications#forgejo) | oauth2 | `weebo_user` | `default-provider-authorization-implicit-consent` | Application/forgejo-app (forgejo) |
 | [`kube-admin`](/docs/security/authentication/applications#kube-admin) | oauth2 public | `weebo_admin` | `admin-step-up` | kubeconfig `Weebo-si-admin`<br/>apiserver jwt[1] |
