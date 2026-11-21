@@ -79,8 +79,8 @@ ciliumNetworkPolicies:
   enabled: true
   policies:
     # Operators only: webhooks (apiserver = host) and nothing else.
+    # Wave 3 of the default deny, 2026-11-21.
     database-ingress:
-      enabled: false
       namespace: database
       endpointSelector: {}
       ingress:

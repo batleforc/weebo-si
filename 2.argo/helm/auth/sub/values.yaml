@@ -1099,8 +1099,8 @@ ciliumNetworkPolicies:
   # still off one by one below.
   enabled: true
   policies:
+    # Wave 3 of the default deny, 2026-11-21.
     auth-ingress:
-      enabled: false
       namespace: auth
       endpointSelector: {}
       # The weebo-authentik operator drives authentik's API by its public name.
@@ -1130,6 +1130,18 @@ ciliumNetworkPolicies:
                 - port: "8000"
                   protocol: TCP
                 - port: "5432"
+                  protocol: TCP
+        # otel-node's scrape of the postgres exporter (weebo-base.cnpgClusterSpec)
+        # and of the weebo-authentik operator's metrics.
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: monitoring
+                app.kubernetes.io/instance: otel-node
+          toPorts:
+            - ports:
+                - port: "9187"
+                  protocol: TCP
+                - port: "9090"
                   protocol: TCP
     # dex.weebo.poc. The apiserver reaches it through Traefik too: the node
     # resolves the name to its own IP (machine.network.extraHostEntries).

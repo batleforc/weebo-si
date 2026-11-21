@@ -5,7 +5,7 @@ description: "Les flux autorisés par les politiques réseau de auth"
 
 {/* Généré par `task docs:netflow` (0.task/scripts/netflow.py). Ne pas éditer à la main. */}
 
-Les flux que les politiques de l'application Argo CD `auth` autorisent. Namespaces : `dex`.
+Les flux que les politiques de l'application Argo CD `auth` autorisent. Namespaces : `auth`, `dex`.
 
 ## Légende
 
@@ -24,15 +24,28 @@ flowchart LR
   n_entity_open_f65d5d(["tout : internet + cluster"])
   subgraph ns_auth["auth"]
     n_ns_auth_3aba95["authentik / server (chart authentik)"]
+    n_ns_auth_895bb8["tous les pods"]
+  end
+  subgraph ns_database["database"]
+    n_ns_database_7191e8["cloudnative-pg"]
   end
   subgraph ns_dex["dex"]
     n_ns_dex_d4c810["tous les pods"]
   end
+  subgraph ns_monitoring["monitoring"]
+    n_ns_monitoring_1d4c40["tous les pods"]
+  end
   subgraph ns_traefik["traefik"]
     n_ns_traefik_d50a8d["traefik"]
   end
+  n_ns_auth_895bb8 -->|"egress non restreint"| n_entity_open_f65d5d
+  n_ns_auth_895bb8 ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
+  n_ns_auth_895bb8 -->|"tous ports"| n_ns_auth_895bb8
+  n_ns_database_7191e8 -->|"TCP 5432, TCP 8000"| n_ns_auth_895bb8
   n_ns_dex_d4c810 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_dex_d4c810 ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
+  n_ns_monitoring_1d4c40 -->|"TCP 9090, TCP 9187"| n_ns_auth_895bb8
+  n_ns_traefik_d50a8d -->|"TCP 9000, TCP 9443"| n_ns_auth_895bb8
   n_ns_traefik_d50a8d -->|"TCP 5556"| n_ns_dex_d4c810
 ```
 
@@ -42,6 +55,13 @@ Les politiques d'autres applications qui touchent les namespaces de `auth`.
 
 ```mermaid
 flowchart LR
+  subgraph ns_auth["auth"]
+    n_ns_auth_3aba95["authentik / server (chart authentik)"]
+    n_ns_auth_895bb8["tous les pods"]
+  end
+  subgraph ns_batlehub["batlehub"]
+    n_ns_batlehub_62b5f7["tous les pods"]
+  end
   subgraph ns_dex["dex"]
     n_ns_dex_bea24e["dex (chart dex)"]
     n_ns_dex_d4c810["tous les pods"]
@@ -49,20 +69,40 @@ flowchart LR
   subgraph ns_eclipse_che["eclipse-che"]
     n_ns_eclipse_che_43d24e["tous les pods"]
   end
+  subgraph ns_forgejo["forgejo"]
+    n_ns_forgejo_90cc22["tous les pods"]
+  end
+  subgraph ns_monitoring["monitoring"]
+    n_ns_monitoring_1d4c40["tous les pods"]
+  end
   subgraph ns_netbird["netbird"]
     n_ns_netbird_45c447["exit-node-ingress"]
+  end
+  subgraph ns_s3["s3"]
+    n_ns_s3_0ff49c["tous les pods"]
   end
   subgraph ns_vault["vault"]
     n_ns_vault_da07f8["openbao"]
   end
+  subgraph ns_weebo_si_hardening["weebo-si-hardening"]
+    n_ns_weebo_si_hardening_98b8dc["endpoint-gateway"]
+  end
+  n_ns_auth_895bb8 -->|"TCP 8080"| n_ns_monitoring_1d4c40
+  n_ns_auth_895bb8 -->|"TCP 8200"| n_ns_vault_da07f8
+  n_ns_batlehub_62b5f7 ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
   n_ns_dex_d4c810 -->|"TCP 8200"| n_ns_vault_da07f8
   n_ns_eclipse_che_43d24e ==>|"via Traefik : dex.weebo.poc"| n_ns_dex_bea24e
+  n_ns_forgejo_90cc22 ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
+  n_ns_netbird_45c447 ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
   n_ns_netbird_45c447 ==>|"via Traefik : dex.weebo.poc"| n_ns_dex_bea24e
+  n_ns_s3_0ff49c ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
+  n_ns_weebo_si_hardening_98b8dc ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
 ```
 
 ## Politiques
 
 | Namespace | Politique | Type | État | Chart |
 |---|---|---|---|---|
+| auth | `auth-ingress` | Cilium | déployée | `2.argo/helm/auth/sub` |
 | dex | `dex-ingress` | Cilium | déployée | `2.argo/helm/auth/sub` |
 

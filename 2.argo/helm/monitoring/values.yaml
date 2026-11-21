@@ -292,8 +292,8 @@ ciliumNetworkPolicies:
   # still off one by one below.
   enabled: true
   policies:
+    # Wave 3 of the default deny, 2026-11-21.
     monitoring-ingress:
-      enabled: false
       namespace: monitoring
       endpointSelector: {}
       ingress:

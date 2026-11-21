@@ -26,7 +26,7 @@ flowchart LR
     n_ns_cert_manager_12e016["tous les pods"]
   end
   n_ns_cert_manager_12e016 -->|"egress non restreint"| n_entity_open_f65d5d
-  n_ns_cert_manager_12e016 -.->|"tous ports"| n_ns_cert_manager_12e016
+  n_ns_cert_manager_12e016 -->|"tous ports"| n_ns_cert_manager_12e016
 ```
 
 ## Flux ouverts par d'autres applications
@@ -48,5 +48,5 @@ flowchart LR
 
 | Namespace | Politique | Type | État | Chart |
 |---|---|---|---|---|
-| cert-manager | `cert-manager-ingress` | Cilium | proposée | `2.argo/helm/ingress/sub` |
+| cert-manager | `cert-manager-ingress` | Cilium | déployée | `2.argo/helm/ingress/sub` |
 

@@ -110,7 +110,8 @@ pushTsig:
 # these, ciliumNetworkPolicies.enabled included.
 # Traefik keeps its own policy (traefik.networkPolicy above).
 ciliumNetworkPolicies:
-  enabled: false
+  # Default deny, by waves (0.docs/content/docs/left-todo.md): wave 3, 2026-11-21.
+  enabled: true
   policies:
     # cert-manager and trust-manager webhooks, called by the apiserver.
     cert-manager-ingress:
