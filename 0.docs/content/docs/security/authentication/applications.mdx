@@ -33,11 +33,13 @@ flowchart LR
     n_flow_default_provider_authorization_implicit_consent_4789aa[/"flux default-provider-authorization-implicit-consent"/]
   end
   subgraph n_sg_ns_angos_16e398["ns angos"]
+    n_c_angos_angos_AngosIdentity_scanner_da9c4e["AngosIdentity/scanner<br/>(angos)"]
     n_c_angos_angos_AngosLocalInstance_registry_441d35["AngosLocalInstance/registry<br/>(angos)"]
   end
   n_user_batleforc_01dd2e -->|"membre (direct ou hérité)"| n_group_weebo_moderator_a8f585
   n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_angos_b0924d
   n_ak_angos_b0924d -->|"autorisation"| n_flow_default_provider_authorization_implicit_consent_4789aa
+  n_ak_angos_b0924d -->|"Vault mv/angos/auth → ExternalSecret angos/angos-operator → Secret angos-operator"| n_c_angos_angos_AngosIdentity_scanner_da9c4e
   n_ak_angos_b0924d -->|"Vault mv/angos/auth → ExternalSecret angos/angos-operator → Secret angos-operator"| n_c_angos_angos_AngosLocalInstance_registry_441d35
 ```
 
@@ -63,6 +65,7 @@ flowchart LR
 
 | App Argo CD | Objet | Chemin du secret |
 |---|---|---|
+| `angos` | `angos/AngosIdentity/scanner` | Vault `mv/angos/auth` → ExternalSecret `angos/angos-operator` → Secret `angos-operator` |
 | `angos` | `angos/AngosLocalInstance/registry` | Vault `mv/angos/auth` → ExternalSecret `angos/angos-operator` → Secret `angos-operator` |
 
 ## argo

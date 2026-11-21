@@ -1,0 +1,173 @@
+---
+title: Restaurer Authentik
+description: "Remettre en place la base authentik-pg depuis barman-cloud, sans SSO pendant l'opération, puis laisser l'opérateur weebo-authentik reconverger"
+---
+
+`authentik-pg` contient tout l'état d'Authentik : utilisateurs, groupes, applications, flows, appareils MFA, sessions, file de tâches, événements et la trace des élévations admin. Pas de Redis, pas de volume à restaurer. La clé `AUTHENTIK_SECRET_KEY` (`mv/main-config`) ne bouge pas.
+
+**Pendant l'opération, le SSO tombe.** On ne peut plus se connecter à Argo CD, Forgejo, Che, batlehub, angos, ClickStack, Longhorn, ni au contexte kube `Weebo-si`. Seul le kubeconfig Talos fonctionne : `task k -- …`. Les sessions déjà ouvertes dans les applications tiennent jusqu'à leur expiration.
+
+## Ce que la restauration fait revenir en arrière
+
+Tout ce qui a changé dans Authentik après le point restauré est perdu :
+
+- **objets déclarés dans Git** (CR `Authentik*`) : rien à faire. L'opérateur weebo-authentik les recrée ou les corrige dès qu'il repart (`drift corrected` dans ses logs) ;
+- **objets dont le CR a été supprimé** après le point : ils réapparaissent dans Authentik sans CR. L'opérateur ne les connaît plus. Les supprimer dans l'UI ;
+- **appareils MFA enrôlés** après le point : à réenrôler. Pour un `weebo_admin` dont le seul appareil date d'après le point, l'élévation admin (`admin-step-up`) devient impossible. Prévoir une clé de récupération (runbook [onboarding](/docs/runbooks/onboarding-utilisateur)) ;
+- **sessions** : celles d'avant le point redeviennent valides, celles d'après disparaissent ;
+- **réglages faits à la main en base**, hors Git : `event_retention` du tenant (90 jours). Il revient avec la base si le point date d'après le 2026-10-18 ;
+- **l'application `vault`** gérée par Terraform (Application `terra-authentik`) : elle se réapplique à la prochaine exécution.
+
+## Avant de commencer
+
+- Le point de restauration (voir [l'index](/docs/runbooks/restauration#choisir-le-point-de-restauration)).
+- Le `serverName` actuel : `authentik.postgres.backup.pg.serverName` dans `2.argo/helm/auth/main/values.yaml`, ou `authentik-pg` s'il est absent. Le nouveau : `authentik-pg-r1`, ou `-r<N+1>`.
+- Prévenir les utilisateurs : coupure de 10 à 20 minutes.
+
+## 1. Geler Argo CD et arrêter Authentik
+
+Le Cluster est dans l'Application `auth`, qui rend dans `argocd` et place ses objets dans `auth`. Le serveur et le worker sont dans `authentik`, l'opérateur dans `authentik-operator` :
+
+```sh
+for app in main auth authentik authentik-operator terra-authentik; do
+  task k -- -n argocd patch application "$app" --type merge -p '{"spec":{"syncPolicy":{"automated":null}}}'
+done
+task k -- -n auth scale deploy authentik-server authentik-worker authentik-weebo-authentik --replicas=0
+```
+
+Vérifier : `task k -- -n auth get pods` ne montre plus que `authentik-pg-1`, plus les outposts éventuels.
+
+## 2. Sauvegarde à la demande
+
+Seulement si `authentik-pg-1` répond encore :
+
+```yaml
+# /tmp/authentik-before.yaml
+apiVersion: postgresql.cnpg.io/v1
+kind: Backup
+metadata:
+  name: authentik-pg-before-restore
+  namespace: auth
+spec:
+  cluster:
+    name: authentik-pg
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+```
+
+```sh
+task k -- apply -f /tmp/authentik-before.yaml
+task k -- -n auth get backup authentik-pg-before-restore -w   # attendre completed
+```
+
+## 3. Remplacer le Cluster
+
+```sh
+task k -- -n auth delete cluster authentik-pg
+```
+
+```yaml
+# /tmp/authentik-pg.yaml
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: authentik-pg
+  namespace: auth
+spec:
+  instances: 1
+  storage:
+    size: 10Gi
+    storageClass: longhorn
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  inheritedMetadata:
+    annotations:
+      io.opentelemetry.discovery.metrics.9187/enabled: "true"
+      io.opentelemetry.discovery.metrics.9187/scraper: "prometheus_simple"
+      io.opentelemetry.discovery.metrics.9187/config: |
+        collection_interval: "60s"
+        endpoint: "`endpoint`"
+        metrics_path: "/metrics"
+  bootstrap:
+    recovery:
+      source: origin
+      # Resets the app role's password to the Vault one (mv/main-config).
+      database: authentik
+      owner: authentik
+      secret:
+        name: authentik-pg-cred
+      # recoveryTarget:
+      #   targetTime: "2026-11-21T09:55:00Z"
+  externalClusters:
+    - name: origin
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: authentik-pg-backup
+          serverName: authentik-pg      # the CURRENT serverName: read from
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: authentik-pg-backup
+        serverName: authentik-pg-r1     # the NEW one: archived into
+```
+
+```sh
+task k -- apply -f /tmp/authentik-pg.yaml
+task k -- -n auth get cluster authentik-pg -w   # Cluster in healthy state
+```
+
+En cas d'échec : `task k -- -n auth logs -l cnpg.io/cluster=authentik-pg --all-containers --tail=50`. Pour revenir en arrière, recommencer cette étape avec `recoveryTarget.backupID` sur `authentik-pg-before-restore`.
+
+## 4. Reporter dans Git
+
+Dans `2.argo/helm/auth/main/values.yaml`, sous `authentik.postgres.backup.pg` :
+
+```yaml
+        serverName: authentik-pg-r1
+```
+
+Commit et push. Ensuite, remettre le `bootstrap` tel que Git le rend :
+
+```sh
+task k -- -n auth patch cluster authentik-pg --type merge -p '{"spec":{
+  "bootstrap":{"recovery":null,"initdb":{"database":"authentik","owner":"authentik","secret":{"name":"authentik-pg-cred"}}},
+  "externalClusters":null}}'
+```
+
+## 5. Dégeler et relancer
+
+```sh
+task k -- -n argocd patch application main --type merge -p '{"spec":{"syncPolicy":{"automated":{}}}}'
+```
+
+`main` remet l'auto-sync des quatre Applications, qui remettent les Deployments à 1 replica. Le serveur applique ses migrations au démarrage si la base date d'une version plus ancienne. Vérifier :
+
+```sh
+task k -- -n argocd get application auth authentik authentik-operator terra-authentik
+task k -- -n auth get pods
+task k -- -n auth logs deploy/authentik-weebo-authentik --tail=100 | grep -iE "error|drift corrected"
+task k -- get authentikapplications,authentikusers,authentikgroups -A   # Ready
+```
+
+Puis, dans un navigateur privé :
+
+1. se connecter à `https://auth.weebo.poc` ;
+2. ouvrir Argo CD via **Weebo admin (2FA)** : le second facteur doit être demandé et accepté ;
+3. dans l'admin Authentik, Outposts : chaque outpost est `healthy`. Un outpost créé après le point a un jeton qui ne correspond plus : le supprimer et laisser l'opérateur le recréer.
+
+## 6. Première sauvegarde du nouveau dossier
+
+```sh
+sed 's/authentik-pg-before-restore/authentik-pg-after-restore/' /tmp/authentik-before.yaml | tee /tmp/authentik-after.yaml
+task k -- apply -f /tmp/authentik-after.yaml
+task k -- -n auth get objectstore authentik-pg-backup -o jsonpath='{.status.serverRecoveryWindow}'
+```
+
+Attendu : une entrée `authentik-pg-r1`. Dans 7 jours, supprimer `pg/authentik-pg/` dans la console RustFS (bucket `authentik-backup`).

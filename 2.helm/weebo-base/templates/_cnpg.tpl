@@ -26,6 +26,7 @@ weebo-base.cnpgBackup: the objects next to the Cluster.
     pg:
       schedule: "0 0 2 * * *"     # six fields, seconds first
       retention: 7d               # barman recovery window, [dwm]
+      # serverName: forgejo-pg-r1 # set after a restore, see the runbook
     # optional: endpoint (s3-main.weebo.poc), caSecret {name, key}
 
   `namespace` defaults to the release's: pass it when the chart renders into
@@ -51,6 +52,12 @@ plugins:
     isWALArchiver: true
     parameters:
       barmanObjectName: {{ required "cnpgClusterSpec: cluster name" .cluster }}-backup
+      {{- /* Folder under s3://<bucket>/pg/, the cluster name by default. A
+      restored Cluster has to archive into a fresh one: barman refuses a
+      non-empty archive (0.docs/content/docs/runbooks/restauration). */}}
+      {{- with .backup.pg.serverName }}
+      serverName: {{ . }}
+      {{- end }}
 {{- end }}
 {{- end -}}
 

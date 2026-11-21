@@ -1,0 +1,153 @@
+---
+title: Restaurer une sauvegarde
+description: "Ce qui est sauvegardé, où, comment choisir un point de restauration, le test de restauration sans toucher à la prod, et la restauration en place"
+---
+
+Une sauvegarde qui n'a jamais été restaurée ne vaut rien. Ce dossier décrit deux opérations :
+
+- **le test de restauration** : la base est restaurée à côté de la prod, sous un autre nom, puis vérifiée et supprimée. L'application n'est pas touchée. À faire une fois par mois, et après chaque changement de CNPG, du plugin barman-cloud ou de RustFS ;
+- **la restauration en place** : la base de l'application est remplacée par une copie restaurée. C'est une coupure de service, réservée aux vrais incidents (base corrompue, données supprimées, mise à jour ratée).
+
+Une page par application donne les commandes exactes de la restauration en place :
+
+- [Forgejo](/docs/runbooks/restauration/forgejo) : base et volume des dépôts ;
+- [Authentik](/docs/runbooks/restauration/authentik) : le SSO tombe pendant l'opération ;
+- [batlehub](/docs/runbooks/restauration/batlehub).
+
+## Ce qui est sauvegardé
+
+Tout va dans le tenant RustFS (`s3-main.weebo.poc`), un bucket par application, avec ses propres clés (`mv/<namespace>/backup`, écrites par `2.terra/vault/terra-map/s3.tf`). Le mécanisme commun est `weebo-base.cnpgBackup` (`2.helm/weebo-base/templates/_cnpg.tpl`).
+
+| Application | Base CNPG | Bucket | Autre chose |
+| --- | --- | --- | --- |
+| Forgejo | `forgejo/forgejo-pg` | `forgejo-backup` | volume `forgejo-data` par restic, dans `repos/` |
+| Authentik | `auth/authentik-pg` | `authentik-backup` | |
+| batlehub | `batlehub/batlehub-pg` | `batlehub-backup` | |
+| Stalwart | `mail-pg` | **aucun** | pas encore sauvegardé |
+
+Pour chaque base, le plugin barman-cloud écrit sous `s3://<bucket>/pg/<serverName>/` :
+
+- `base/` : une sauvegarde complète chaque nuit à 02:00 (`ScheduledBackup` `<cluster>-daily`) ;
+- `wals/` : les WAL, archivés en continu (au plus 5 minutes de retard).
+
+Ensemble, elles permettent de revenir à **n'importe quel instant des 7 derniers jours** (`retention: 7d`). `serverName` vaut le nom du Cluster, sauf après une restauration en place (voir plus bas).
+
+**Limites.** Les sauvegardes sont dans le même RustFS, sur le même nœud, que ce qu'elles protègent. Elles couvrent une base cassée, une suppression, une mise à jour ratée. Elles ne couvrent pas la perte du nœud ou de ses disques. Le mot de passe restic (`mv/forgejo/restic`) doit aussi exister hors du cluster : sans lui, les snapshots des dépôts sont illisibles.
+
+## Choisir le point de restauration
+
+La fenêtre disponible et la dernière sauvegarde réussie, base par base :
+
+```sh
+task k -- get objectstores.barmancloud.cnpg.io -A \
+  -o custom-columns=NS:.metadata.namespace,NAME:.metadata.name,WINDOW:.status.serverRecoveryWindow
+task k -- get backups.postgresql.cnpg.io -A
+```
+
+`firstRecoverabilityPoint` est l'instant le plus ancien que l'on peut atteindre. Trois choix :
+
+- **le plus récent** : pas de `recoveryTarget`. Tous les WAL archivés sont rejoués. Seules les dernières minutes, pas encore archivées, sont perdues ;
+- **un instant précis** (par exemple juste avant une suppression) : `recoveryTarget.targetTime`, en UTC, par exemple `"2026-11-21T09:55:00Z"`. Cet instant doit être postérieur à la fin de la première sauvegarde complète de la fenêtre ;
+- **une sauvegarde précise** : `recoveryTarget.backupID`. Elle se lit dans `status.backupId` du `Backup`.
+
+## Test de restauration
+
+Il ne touche à rien : la copie s'appelle `<cluster>-restore`, n'archive aucun WAL (pas de bloc `plugins`) et lit le dossier du Cluster d'origine. L'exemple porte sur `forgejo-pg`. Pour une autre base, remplacer le namespace, le nom, la taille et le `serverName`.
+
+1. Créer la copie. Le fichier se garde hors du dépôt, par exemple dans `/tmp/restore-test.yaml` :
+
+   ```yaml
+   apiVersion: postgresql.cnpg.io/v1
+   kind: Cluster
+   metadata:
+     name: forgejo-pg-restore
+     namespace: forgejo
+   spec:
+     instances: 1
+     storage:
+       size: 10Gi
+       storageClass: longhorn
+     bootstrap:
+       recovery:
+         source: origin
+         # recoveryTarget:
+         #   targetTime: "2026-11-21T09:55:00Z"
+     externalClusters:
+       - name: origin
+         plugin:
+           name: barman-cloud.cloudnative-pg.io
+           parameters:
+             barmanObjectName: forgejo-pg-backup
+             # The folder being read: the source Cluster's serverName.
+             serverName: forgejo-pg
+   ```
+
+   ```sh
+   task k -- apply -f /tmp/restore-test.yaml
+   task k -- -n forgejo get cluster forgejo-pg-restore -w
+   ```
+
+   Attendu : `Cluster in healthy state` en quelques minutes. Un pod `forgejo-pg-restore-1-full-recovery-*` tourne avant. En cas d'échec, ses logs donnent la raison (clés S3, certificat, fenêtre dépassée) :
+
+   ```sh
+   task k -- -n forgejo logs -l cnpg.io/cluster=forgejo-pg-restore --all-containers --tail=50
+   ```
+
+2. Comparer avec la prod. La requête de vérification de chaque application est dans la table ci-dessous. Les chiffres doivent être égaux, ou légèrement inférieurs si la prod a écrit depuis le point restauré :
+
+   ```sh
+   Q="select count(*) from repository"
+   task k -- -n forgejo exec forgejo-pg-restore-1 -c postgres -- psql -d forgejo -tAc "$Q"
+   task k -- -n forgejo exec forgejo-pg-1 -c postgres -- psql -d forgejo -tAc "$Q"
+   ```
+
+   | Base | `-d` | Requête |
+   | --- | --- | --- |
+   | `forgejo-pg` | `forgejo` | `select count(*) from repository` |
+   | `authentik-pg` | `authentik` | `select count(*) from authentik_core_user` |
+   | `batlehub-pg` | `batlehub` | `select count(*) from pg_stat_user_tables` puis le `count(*)` de la plus grosse table |
+
+3. Supprimer la copie. Ses PVC partent avec elle :
+
+   ```sh
+   task k -- delete -f /tmp/restore-test.yaml
+   ```
+
+4. Noter le résultat dans le journal en bas de cette page.
+
+Pour Forgejo, tester aussi le volume. La procédure restic est dans [sa page](/docs/runbooks/restauration/forgejo#tester-les-dépôts).
+
+## Restauration en place : le déroulé commun
+
+Chaque page d'application déroule ces étapes avec ses propres noms :
+
+1. **Geler Argo CD.** On gèle l'Application racine `main`, puis les Applications de l'application concernée. Sans ce gel, `selfHeal` relance les pods et recrée le Cluster au mauvais moment.
+2. **Arrêter l'application**, pour qu'elle n'écrive plus et ne reste pas en échec en boucle.
+3. **Faire une sauvegarde à la demande** si la base répond encore. C'est le chemin de retour si la restauration se passe mal.
+4. **Supprimer le Cluster**, ce qui supprime aussi ses PVC. L'`ObjectStore`, ses clés et le `ScheduledBackup` restent.
+5. **Recréer le Cluster depuis la sauvegarde**, sous le même nom pour que l'application n'ait rien à changer, mais en archivant dans un **nouveau dossier**. barman refuse d'archiver dans un dossier qui contient déjà des WAL (`Expected empty archive`). La convention de nommage : `<cluster>-r1`, puis `-r2` à la restauration suivante.
+6. **Reporter dans Git** le nouveau dossier (`backup.pg.serverName`) et remettre le `bootstrap` du Cluster à l'identique de Git.
+7. **Dégeler Argo CD**, qui relance l'application.
+8. **Faire une sauvegarde complète tout de suite.** Le nouveau dossier n'en contient aucune, donc il n'existe aucun point de restauration avant la première. Le `ScheduledBackup` ne la fait qu'à sa création.
+9. **Après 7 jours sans souci, supprimer l'ancien dossier** `pg/<ancien serverName>/` depuis la console RustFS. Plus rien ne l'élague.
+
+Le gel et le dégel, communs à toutes les pages. `main` est en auto-sync sans `selfHeal` (`{"automated":{}}`, posé par `1.pulu-conf`), et c'est cette valeur que le dégel remet :
+
+```sh
+# Geler : la racine d'abord, sinon elle réécrit les autres au prochain commit.
+for app in main <apps…>; do
+  task k -- -n argocd patch application "$app" --type merge -p '{"spec":{"syncPolicy":{"automated":null}}}'
+done
+
+# Dégeler : les Applications filles reprennent leur syncPolicy de Git à la
+# première sync de main.
+task k -- -n argocd patch application main --type merge -p '{"spec":{"syncPolicy":{"automated":{}}}}'
+```
+
+Si une sync manuelle est nécessaire, elle passe par `kubectl patch` avec `operation.sync`. Penser à l'option `ServerSideApply` : `operation.sync` ignore les `syncOptions` de l'Application.
+
+## Journal des tests
+
+| Date | Base | Point restauré | Résultat | Durée | Remarques |
+| --- | --- | --- | --- | --- | --- |
+| | | | | | |

@@ -1,0 +1,266 @@
+---
+title: Restaurer Forgejo
+description: "Remettre en place la base forgejo-pg depuis barman-cloud et le volume forgejo-data depuis restic, ensemble ou séparément"
+---
+
+L'état de Forgejo a deux moitiés, sauvegardées séparément dans le bucket `forgejo-backup` :
+
+| Moitié | Contenu | Sauvegarde | Points disponibles |
+| --- | --- | --- | --- |
+| `forgejo-pg` | utilisateurs, issues, PR, droits, état 2FA chiffré | barman-cloud, `pg/<serverName>/` | n'importe quel instant des 7 derniers jours |
+| volume `forgejo-data` | dépôts git, `app.ini` (dont `SECRET_KEY`, qui déchiffre les secrets 2FA et miroirs stockés en base), `jwt/` (clé de signature OAuth2) | restic, CronJob `forgejo-backup-repos` à 02:30, `repos/` | le snapshot du jour et celui de la semaine passée |
+
+Le bucket `forgejo` (LFS, pièces jointes, paquets) n'est pas copié : il est déjà dans RustFS.
+
+**Que restaurer ?**
+
+| Incident | Base | Volume |
+| --- | --- | --- |
+| base corrompue, données supprimées dans l'UI, migration ratée | oui | non |
+| dépôt supprimé, historique réécrit par erreur | non, ou les deux au même instant si le dépôt doit réapparaître dans l'UI | oui |
+| volume perdu | dernier point | dernier snapshot |
+
+Restaurer les deux moitiés **au même instant** évite les incohérences. Le snapshot restic date de 02:30 environ (`restic snapshots` donne l'heure exacte) : viser cet instant avec la base. Si on garde la base la plus récente avec un volume de 02:30, les pushs faits depuis manquent aux dépôts. Forgejo affiche alors des dépôts vides ou en retard, à repousser depuis un clone.
+
+## Avant de commencer
+
+- `task k -- …` (kubeconfig Talos) : il ne dépend ni d'Authentik ni d'Argo CD.
+- Le point de restauration choisi (voir [l'index](/docs/runbooks/restauration#choisir-le-point-de-restauration)).
+- Le `serverName` actuel de la base : `backup.pg.serverName` dans `2.argo/helm/forgejo/values.yaml`, ou `forgejo-pg` s'il est absent. Le nouveau en découle : `forgejo-pg-r1`, ou `-r<N+1>`.
+
+## 1. Geler Argo CD et arrêter Forgejo
+
+Le Cluster est dans l'Application `forgejo`, le Deployment dans `forgejo-app` :
+
+```sh
+for app in main forgejo forgejo-app; do
+  task k -- -n argocd patch application "$app" --type merge -p '{"spec":{"syncPolicy":{"automated":null}}}'
+done
+task k -- -n forgejo scale deploy forgejo --replicas=0
+task k -- -n forgejo patch cronjob forgejo-backup-repos -p '{"spec":{"suspend":true}}'
+```
+
+Vérifier : `task k -- -n forgejo get pods` ne montre plus que `forgejo-pg-1`.
+
+## 2. La base
+
+Sauter cette section si seul le volume est restauré.
+
+### 2a. Sauvegarde à la demande
+
+Seulement si `forgejo-pg-1` répond encore :
+
+```yaml
+# /tmp/forgejo-before.yaml
+apiVersion: postgresql.cnpg.io/v1
+kind: Backup
+metadata:
+  name: forgejo-pg-before-restore
+  namespace: forgejo
+spec:
+  cluster:
+    name: forgejo-pg
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+```
+
+```sh
+task k -- apply -f /tmp/forgejo-before.yaml
+task k -- -n forgejo get backup forgejo-pg-before-restore -w   # attendre completed
+```
+
+### 2b. Remplacer le Cluster
+
+```sh
+task k -- -n forgejo delete cluster forgejo-pg
+task k -- -n forgejo get pvc   # forgejo-pg-1 a disparu, forgejo-data est toujours là
+```
+
+```yaml
+# /tmp/forgejo-pg.yaml
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: forgejo-pg
+  namespace: forgejo
+spec:
+  instances: 1
+  storage:
+    size: 10Gi
+    storageClass: longhorn
+  inheritedMetadata:
+    annotations:
+      io.opentelemetry.discovery.metrics.9187/enabled: "true"
+      io.opentelemetry.discovery.metrics.9187/scraper: "prometheus_simple"
+      io.opentelemetry.discovery.metrics.9187/config: |
+        collection_interval: "60s"
+        endpoint: "`endpoint`"
+        metrics_path: "/metrics"
+  bootstrap:
+    recovery:
+      source: origin
+      # Resets the app role's password to the Vault one.
+      database: forgejo
+      owner: forgejo
+      secret:
+        name: forgejo-pg-cred
+      # recoveryTarget:
+      #   targetTime: "2026-11-21T02:30:00Z"
+  externalClusters:
+    - name: origin
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: forgejo-pg-backup
+          serverName: forgejo-pg        # the CURRENT serverName: read from
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: forgejo-pg-backup
+        serverName: forgejo-pg-r1       # the NEW one: archived into
+```
+
+```sh
+task k -- apply -f /tmp/forgejo-pg.yaml
+task k -- -n forgejo get cluster forgejo-pg -w   # Cluster in healthy state
+```
+
+En cas d'échec, regarder les logs du pod `forgejo-pg-1-full-recovery-*` (voir [l'index](/docs/runbooks/restauration#test-de-restauration)). Pour revenir en arrière, recommencer 2b avec `recoveryTarget.backupID` sur `forgejo-pg-before-restore`.
+
+### 2c. Reporter dans Git
+
+Dans `2.argo/helm/forgejo/values.yaml`, sous `forgejo.backup.pg` :
+
+```yaml
+      serverName: forgejo-pg-r1
+```
+
+Commit et push. Ensuite, remettre le `bootstrap` du Cluster tel que Git le rend : la partie `recovery` n'est lue qu'à la création, et laisser les deux méthodes coexister ferait refuser la sync suivante.
+
+```sh
+task k -- -n forgejo patch cluster forgejo-pg --type merge -p '{"spec":{
+  "bootstrap":{"recovery":null,"initdb":{"database":"forgejo","owner":"forgejo","secret":{"name":"forgejo-pg-cred"}}},
+  "externalClusters":null}}'
+```
+
+## 3. Le volume
+
+Sauter cette section si seule la base est restaurée. Le Job écrit **par-dessus** `forgejo-data` : `--delete` retire les fichiers absents du snapshot. Forgejo doit être arrêté (étape 1), et le volume est en ReadWriteOnce.
+
+```yaml
+# /tmp/forgejo-restic-restore.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: forgejo-restore-repos
+  namespace: forgejo
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: restic
+          image: docker.io/restic/restic:0.18.1   # same tag as values.yaml
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: SNAPSHOT
+              value: latest                       # or an ID from `restic snapshots`
+            - name: RESTIC_REPOSITORY
+              value: s3:https://s3-main.weebo.poc/forgejo-backup/repos
+            - name: RESTIC_CACERT
+              value: /etc/ssl/weebo/ca.crt
+            - name: RESTIC_CACHE_DIR
+              value: /cache
+            - name: TMPDIR
+              value: /cache
+            - name: RESTIC_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: forgejo-restic, key: password }
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef: { name: forgejo-pg-backup-cred, key: accesskey }
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef: { name: forgejo-pg-backup-cred, key: secretkey }
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              restic snapshots
+              restic restore "$SNAPSHOT:/data" --target /data --delete \
+                --exclude /lost+found --exclude /tmp --verify
+          volumeMounts:
+            - { name: data, mountPath: /data }
+            - { name: cache, mountPath: /cache }
+            - { name: weebo-ca, mountPath: /etc/ssl/weebo, readOnly: true }
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: forgejo-data
+        - name: cache
+          emptyDir: {}
+        - name: weebo-ca
+          secret:
+            secretName: weebo.poc
+            items:
+              - { key: main-ca.crt, path: ca.crt }
+```
+
+```sh
+task k -- apply -f /tmp/forgejo-restic-restore.yaml
+task k -- -n forgejo logs -f job/forgejo-restore-repos
+task k -- -n forgejo delete job forgejo-restore-repos
+```
+
+Attendu : la liste des snapshots, puis `Summary: Restored … files` sans erreur de vérification.
+
+## 4. Dégeler et relancer
+
+```sh
+task k -- -n argocd patch application main --type merge -p '{"spec":{"syncPolicy":{"automated":{}}}}'
+task k -- -n forgejo patch cronjob forgejo-backup-repos -p '{"spec":{"suspend":false}}'
+```
+
+`main` remet l'auto-sync de `forgejo` et `forgejo-app`, qui remettent le Deployment à 1 replica. Vérifier :
+
+```sh
+task k -- -n argocd get application forgejo forgejo-app   # Synced / Healthy
+task k -- -n forgejo get pods                             # forgejo et forgejo-pg-1 Running
+```
+
+Puis, dans `https://git.weebo.poc` : se connecter via Authentik, ouvrir un dépôt et son historique, vérifier qu'un compte avec 2FA se connecte. Si le 2FA échoue, `app.ini` et la base ne viennent pas du même `SECRET_KEY` : restaurer le volume.
+
+## 5. Première sauvegarde du nouveau dossier
+
+Seulement si la base a été restaurée : le dossier `forgejo-pg-r1` est vide.
+
+```sh
+sed 's/forgejo-pg-before-restore/forgejo-pg-after-restore/' /tmp/forgejo-before.yaml | tee /tmp/forgejo-after.yaml
+task k -- apply -f /tmp/forgejo-after.yaml
+task k -- -n forgejo get objectstore forgejo-pg-backup -o jsonpath='{.status.serverRecoveryWindow}'
+```
+
+Attendu : une entrée `forgejo-pg-r1` avec un `firstRecoverabilityPoint`. Le dashboard ClickStack `Backups` la suit à partir de là. Dans 7 jours, supprimer `pg/forgejo-pg/` (l'ancien dossier) dans la console RustFS.
+
+## Tester les dépôts
+
+C'est le pendant du [test de restauration](/docs/runbooks/restauration#test-de-restauration) pour le volume, sans toucher à `forgejo-data`. Partir du Job de l'étape 3 et y faire ces changements :
+
+- nom `forgejo-test-repos` ;
+- volume `data` en `emptyDir: {}` au lieu du PVC ;
+- commande : `restic snapshots && restic check --read-data-subset=10% && restic restore latest:/data --target /data && ls -R /data/git | head -50`.
+
+Attendu : `no errors were found`, puis la liste des organisations et des dépôts. Supprimer le Job ensuite.

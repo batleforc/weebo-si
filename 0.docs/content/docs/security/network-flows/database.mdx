@@ -51,23 +51,15 @@ flowchart LR
   subgraph ns_angos["angos"]
     n_ns_angos_ece4d4["angos / server"]
   end
-  subgraph ns_auth["auth"]
-    n_ns_auth_895bb8["tous les pods"]
-  end
   subgraph ns_batlehub["batlehub"]
     n_ns_batlehub_62b5f7["tous les pods"]
   end
   subgraph ns_database["database"]
-    n_ns_database_89cec4["clickhouse-operator"]
     n_ns_database_7191e8["cloudnative-pg"]
-    n_ns_database_a3a908["mongodb-kubernetes-operator"]
     n_ns_database_7ef0dc["valkey-operator"]
   end
   subgraph ns_forgejo["forgejo"]
     n_ns_forgejo_90cc22["tous les pods"]
-  end
-  subgraph ns_monitoring["monitoring"]
-    n_ns_monitoring_1d4c40["tous les pods"]
   end
   subgraph ns_netbird["netbird"]
     n_ns_netbird_45c447["exit-node-ingress"]
@@ -77,11 +69,8 @@ flowchart LR
   end
   n_ns_angos_ece4d4 ==>|"via Traefik : s3-main.weebo.poc"| n_ns_s3_aa1591
   n_ns_batlehub_62b5f7 ==>|"via Traefik : s3-main.weebo.poc"| n_ns_s3_aa1591
-  n_ns_database_89cec4 -.->|"TCP 2181, TCP 8123, TCP 9000, TCP 9001, TCP 9002, TCP 9123"| n_ns_monitoring_1d4c40
-  n_ns_database_7191e8 -.->|"TCP 5432, TCP 8000"| n_ns_auth_895bb8
   n_ns_database_7191e8 -.->|"TCP 5432, TCP 8000"| n_ns_batlehub_62b5f7
   n_ns_database_7191e8 -.->|"TCP 5432, TCP 8000"| n_ns_forgejo_90cc22
-  n_ns_database_a3a908 -.->|"TCP 27017"| n_ns_monitoring_1d4c40
   n_ns_database_7ef0dc -.->|"TCP 6379"| n_ns_batlehub_62b5f7
   n_ns_forgejo_90cc22 ==>|"via Traefik : s3-main.weebo.poc"| n_ns_s3_aa1591
   n_ns_netbird_45c447 ==>|"via Traefik : s3-main.weebo.poc"| n_ns_s3_aa1591

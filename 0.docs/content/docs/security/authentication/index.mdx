@@ -57,6 +57,7 @@ flowchart LR
     n_ak_stalwart_576573["stalwart<br/>oauth2 public"]
   end
   subgraph n_sg_ns_angos_16e398["ns angos"]
+    n_c_angos_angos_AngosIdentity_scanner_da9c4e["AngosIdentity/scanner<br/>(angos)"]
     n_c_angos_angos_AngosLocalInstance_registry_441d35["AngosLocalInstance/registry<br/>(angos)"]
   end
   subgraph n_sg_Argo_CD_7a7c93["Argo CD"]
@@ -114,6 +115,7 @@ flowchart LR
   n_user_batleforc_01dd2e -->|"membre"| n_group_batleforc_org_owner_78e71b
   n_user_batleforc_test_74b72b -->|"membre"| n_group_weebo_user_58ae05
   n_group_weebo_moderator_a8f585 -->|"accès"| n_ak_angos_b0924d
+  n_ak_angos_b0924d -->|"client OIDC"| n_c_angos_angos_AngosIdentity_scanner_da9c4e
   n_ak_angos_b0924d -->|"client OIDC"| n_c_angos_angos_AngosLocalInstance_registry_441d35
   n_group_weebo_user_58ae05 -->|"accès"| n_ak_argo_358618
   n_ak_argo_358618 -->|"connecteur OIDC"| n_argodex_97df58
@@ -157,7 +159,7 @@ flowchart LR
 
 | Application | Type | Accès | Flux d'autorisation | Consommateurs |
 |---|---|---|---|---|
-| [`angos`](/docs/security/authentication/applications#angos) | oauth2 public | `weebo_moderator` | `default-provider-authorization-implicit-consent` | AngosLocalInstance/registry (angos) |
+| [`angos`](/docs/security/authentication/applications#angos) | oauth2 public | `weebo_moderator` | `default-provider-authorization-implicit-consent` | AngosIdentity/scanner (angos)<br/>AngosLocalInstance/registry (angos) |
 | [`argo`](/docs/security/authentication/applications#argo) | oauth2 | `weebo_user` | `default-provider-authorization-implicit-consent` | ConfigMap/argocd-cm (argocd) |
 | [`argo-admin`](/docs/security/authentication/applications#argo-admin) | oauth2 | `weebo_admin` | `admin-step-up` | ConfigMap/argocd-cm (argocd) |
 | [`batlehub`](/docs/security/authentication/applications#batlehub) | oauth2 | `weebo_moderator` | `default-provider-authorization-implicit-consent` | Application/batlehub-app (batlehub) |

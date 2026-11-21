@@ -33,7 +33,7 @@ flowchart LR
     n_ns_monitoring_f1b4f0["opentelemetry-collector / component=agent-collector"]
   end
   n_ns_local_path_storage_78f2b1 -->|"egress non restreint"| n_entity_open_f65d5d
-  n_ns_local_path_storage_78f2b1 -.->|"tous ports"| n_ns_local_path_storage_78f2b1
+  n_ns_local_path_storage_78f2b1 -->|"tous ports"| n_ns_local_path_storage_78f2b1
   n_ns_longhorn_911a87 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_monitoring_f1b4f0 -->|"TCP 9500"| n_ns_longhorn_e4afa5
 ```
@@ -57,6 +57,6 @@ flowchart LR
 
 | Namespace | Politique | Type | État | Chart |
 |---|---|---|---|---|
-| local-path-storage | `local-path-storage-ingress` | Cilium | proposée | `2.argo/helm/storage` |
+| local-path-storage | `local-path-storage-ingress` | Cilium | déployée | `2.argo/helm/storage` |
 | longhorn | `longhorn-manager-metrics` | Kubernetes | déployée | `2.argo/helm/storage` |
 

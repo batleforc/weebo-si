@@ -1,0 +1,167 @@
+---
+title: Restaurer batlehub
+description: "Remettre en place la base batlehub-pg depuis barman-cloud, vider le cache Valkey et republier ce qui a été publié après le point restauré"
+---
+
+`batlehub-pg` contient les métadonnées des registres : paquets publiés, versions, tokens, journaux d'audit. Les octets eux-mêmes (tarballs, crates, modules go) sont dans le bucket S3 de batlehub et ne sont pas restaurés. Le cache Valkey (`batlehub-valkey`) ne contient que des copies.
+
+## Ce que la restauration fait revenir en arrière
+
+- **paquets publiés après le point** : la base ne les connaît plus, mais leurs octets restent dans le bucket, orphelins. Il faut les republier depuis leur CI. Une republication de la même version peut être refusée si batlehub détecte l'objet existant : dans ce cas, publier une version suivante ;
+- **paquets supprimés ou dépréciés après le point** : ils réapparaissent. Refaire l'opération ;
+- **tokens créés après le point** : invalides, à recréer. Les jetons OIDC (Kubernetes, GitHub Actions) ne sont pas stockés et continuent de fonctionner ;
+- **registres** (`BatleHubRegistry`) : déclarés dans Git, l'opérateur weebo-batlehub les remet en place.
+
+## Avant de commencer
+
+- Le point de restauration (voir [l'index](/docs/runbooks/restauration#choisir-le-point-de-restauration)).
+- Le `serverName` actuel : `batlehub.postgres.backup.pg.serverName` dans `2.argo/helm/batlehub/values.yaml`, ou `batlehub-pg` s'il est absent. Le nouveau : `batlehub-pg-r1`, ou `-r<N+1>`.
+
+## 1. Geler Argo CD et arrêter batlehub
+
+Le Cluster est dans l'Application `batlehub`, le Deployment dans `batlehub-app` :
+
+```sh
+for app in main batlehub batlehub-app; do
+  task k -- -n argocd patch application "$app" --type merge -p '{"spec":{"syncPolicy":{"automated":null}}}'
+done
+task k -- -n batlehub scale deploy batlehub --replicas=0
+```
+
+L'opérateur weebo-batlehub réconcilie le Deployment en mode external. S'il le relance (`task k -- -n batlehub get pods` montre un pod `batlehub-*`), le mettre à 0 aussi : `task k -- -n weebo-batlehub scale deploy --all --replicas=0`, après avoir gelé l'Application `weebo-batlehub`.
+
+## 2. Sauvegarde à la demande
+
+Seulement si `batlehub-pg-1` répond encore :
+
+```yaml
+# /tmp/batlehub-before.yaml
+apiVersion: postgresql.cnpg.io/v1
+kind: Backup
+metadata:
+  name: batlehub-pg-before-restore
+  namespace: batlehub
+spec:
+  cluster:
+    name: batlehub-pg
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+```
+
+```sh
+task k -- apply -f /tmp/batlehub-before.yaml
+task k -- -n batlehub get backup batlehub-pg-before-restore -w   # attendre completed
+```
+
+## 3. Remplacer le Cluster
+
+```sh
+task k -- -n batlehub delete cluster batlehub-pg
+```
+
+```yaml
+# /tmp/batlehub-pg.yaml
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: batlehub-pg
+  namespace: batlehub
+spec:
+  instances: 1
+  storage:
+    size: 10Gi
+    storageClass: longhorn
+  inheritedMetadata:
+    annotations:
+      io.opentelemetry.discovery.metrics.9187/enabled: "true"
+      io.opentelemetry.discovery.metrics.9187/scraper: "prometheus_simple"
+      io.opentelemetry.discovery.metrics.9187/config: |
+        collection_interval: "60s"
+        endpoint: "`endpoint`"
+        metrics_path: "/metrics"
+  bootstrap:
+    recovery:
+      source: origin
+      # Resets the app role's password to the Vault one.
+      database: batlehub
+      owner: batlehub
+      secret:
+        name: batlehub-pg-cred
+      # recoveryTarget:
+      #   targetTime: "2026-11-21T09:55:00Z"
+  externalClusters:
+    - name: origin
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: batlehub-pg-backup
+          serverName: batlehub-pg       # the CURRENT serverName: read from
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: batlehub-pg-backup
+        serverName: batlehub-pg-r1      # the NEW one: archived into
+```
+
+```sh
+task k -- apply -f /tmp/batlehub-pg.yaml
+task k -- -n batlehub get cluster batlehub-pg -w   # Cluster in healthy state
+```
+
+En cas d'échec : `task k -- -n batlehub logs -l cnpg.io/cluster=batlehub-pg --all-containers --tail=50`. Pour revenir en arrière, recommencer cette étape avec `recoveryTarget.backupID` sur `batlehub-pg-before-restore`.
+
+## 4. Reporter dans Git
+
+Dans `2.argo/helm/batlehub/values.yaml`, sous `batlehub.postgres.backup.pg` :
+
+```yaml
+        serverName: batlehub-pg-r1
+```
+
+Commit et push. Ensuite, remettre le `bootstrap` tel que Git le rend :
+
+```sh
+task k -- -n batlehub patch cluster batlehub-pg --type merge -p '{"spec":{
+  "bootstrap":{"recovery":null,"initdb":{"database":"batlehub","owner":"batlehub","secret":{"name":"batlehub-pg-cred"}}},
+  "externalClusters":null}}'
+```
+
+## 5. Vider le cache
+
+Le cache contient des métadonnées d'après le point restauré, qui pointeraient vers des versions que la base ne connaît plus :
+
+```sh
+export REDISCLI_AUTH="$(task k -- -n batlehub get secret batlehub-valkey-cred -o jsonpath='{.data.pwd}' | base64 -d)"
+task k -- -n batlehub exec valkey-batlehub-valkey-0-0-0 -- \
+  env REDISCLI_AUTH="$REDISCLI_AUTH" valkey-cli --user batlehub FLUSHALL
+unset REDISCLI_AUTH
+```
+
+Attendu : `OK`.
+
+## 6. Dégeler et relancer
+
+```sh
+task k -- -n argocd patch application main --type merge -p '{"spec":{"syncPolicy":{"automated":{}}}}'
+```
+
+Si l'opérateur a été arrêté à l'étape 1, `weebo-batlehub` reprend lui aussi sa syncPolicy. Vérifier :
+
+```sh
+task k -- -n argocd get application batlehub batlehub-app
+task k -- -n batlehub get pods
+```
+
+Puis : `https://pkg.weebo.poc` répond, la connexion OIDC fonctionne, et un paquet connu s'installe (`npm view <paquet> --registry https://npm.pkg.weebo.poc/`).
+
+## 7. Première sauvegarde du nouveau dossier
+
+```sh
+sed 's/batlehub-pg-before-restore/batlehub-pg-after-restore/' /tmp/batlehub-before.yaml | tee /tmp/batlehub-after.yaml
+task k -- apply -f /tmp/batlehub-after.yaml
+task k -- -n batlehub get objectstore batlehub-pg-backup -o jsonpath='{.status.serverRecoveryWindow}'
+```
+
+Attendu : une entrée `batlehub-pg-r1`. Dans 7 jours, supprimer `pg/batlehub-pg/` dans la console RustFS (bucket `batlehub-backup`).
