@@ -1,0 +1,23 @@
+{{- $o := .Values.operator -}}
+{{- $s := .Values.angos.scanner -}}
+{{- if and .Values.angos.enabled $o.enabled $s.enabled -}}
+---
+# The Basic identity the scanner pulls with (`[auth.identity.scanner]`). Its
+# password is adopted, not generated: terraform wrote it to mv/angos/scanner
+# (2.terra/vault/terra-map/angos.tf) and the scanner's scanner.toml reads it
+# from there. No rotation: nothing would hand a new password to the scanner.
+apiVersion: angos.weebo.io/v1alpha1
+kind: AngosIdentity
+metadata:
+  name: {{ $s.username | default "scanner" }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  instanceRef:
+    name: {{ $o.instance.name }}
+  adoptSecretRef:
+    name: {{ $o.instance.credentialsSecret }}
+    key: scanner-password
+{{- end -}}

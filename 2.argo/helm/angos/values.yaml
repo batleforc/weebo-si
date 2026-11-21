@@ -90,7 +90,7 @@ angos:
         pull: ["provider:weebo", "provider:kube"]
         browse: ["provider:weebo"]
     ghcr:
-      scan: false
+      scan: true
       upstreams:
         - "https://ghcr.io"
       access:
@@ -144,7 +144,7 @@ angos:
     # with their own service-account token, humans push it, and only an admin
     # removes anything.
     weebo:
-      scan: false
+      scan: true
       # OR with `angos.retention`: every tag stays. This is the only copy of
       # what the cluster builds, and a node that has the image cached never
       # pulls it, so "unpulled for 7 days" says nothing about a running image.
@@ -209,7 +209,9 @@ angos:
   # database before it opens the listener, which took ~90s here on an empty
   # cache -- which is why `cache` below is a volume and not an emptyDir.
   scanner:
-    enabled: false
+    # On since 2026-11-21 for `weebo` (what the cluster builds) and `ghcr`
+    # (the dev images); the other caches stay off to spare the node.
+    enabled: true
     # `trivy` or `grype`. It picks both the image tag suffix and the
     # subcommand, and nothing else in this chart changes with it.
     #

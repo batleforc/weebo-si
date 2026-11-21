@@ -1,9 +1,6 @@
 {{- $o := .Values.operator -}}
 {{- $a := .Values.angos -}}
 {{- if and $a.enabled $o.enabled -}}
-{{- if $a.scanner.enabled -}}
-{{- fail "operator.enabled: the scanner is not migrated yet (spec.scan + an AngosIdentity adopting mv/angos/scanner) -- keep angos.scanner.enabled false" -}}
-{{- end -}}
 {{- $creds := $o.instance.credentialsSecret -}}
 ---
 # The registry, as the operator runs it. Every field comes from the `angos.*`
@@ -132,6 +129,17 @@ spec:
     - name: weebo-ca
       mountPath: {{ $a.caTrust.mountPath | quote }}
       readOnly: true
+  {{- end }}
+  {{- if $a.scanner.enabled }}
+  # `[global.scan]`: the chart's scanner StatefulSet (templates/angos/
+  # scanner.yaml), which pulls as the AngosIdentity of scanner-identity.yaml.
+  # No default here: a repository's own `scan` (repositories.yaml) decides.
+  scan:
+    url: "http://angos-scanner.{{ .Release.Namespace }}.svc:{{ $a.scanner.port | default 8766 }}"
+    timeoutSecs: {{ $a.scanner.timeoutSecs | default 600 }}
+    tokenSecretRef:
+      name: {{ $creds }}
+      key: scanner-token
   {{- end }}
   # angos hot-reloads its configuration; the operator confirms it in the pod's
   # logs and only rolls the pods when a key needs a restart.

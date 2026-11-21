@@ -27,9 +27,19 @@ spec:
   retention:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+  {{- $scan := and $.Values.angos.scanner.enabled $repo.scan }}
+  {{- if $scan }}
+  scan:
+    default: Scan
+  {{- end }}
   access:
     {{- range $verb := list "pull" "browse" "push" "delete" }}
-    {{ $verb }}: {{ index ($repo.access | default dict) $verb | default list | toJson }}
+    {{- $subjects := index ($repo.access | default dict) $verb | default list }}
+    {{- if and $scan (eq $verb "pull") }}
+    {{- /* The scanner pulls back what it analyses. */}}
+    {{- $subjects = append $subjects (printf "identity:%s" ($.Values.angos.scanner.username | default "scanner")) }}
+    {{- end }}
+    {{ $verb }}: {{ $subjects | toJson }}
     {{- end }}
 {{- end }}
 {{- end -}}
