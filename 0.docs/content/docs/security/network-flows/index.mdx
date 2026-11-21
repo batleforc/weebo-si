@@ -35,6 +35,7 @@ Le hook `pre-commit` (cog.toml) la lance dès qu'un commit touche `2.argo/helm`,
 - [forgejo](/docs/security/network-flows/forgejo)
 - [hook](/docs/security/network-flows/hook)
 - [ingress](/docs/security/network-flows/ingress)
+- [kubearmor](/docs/security/network-flows/kubearmor)
 - [main-storage](/docs/security/network-flows/main-storage)
 - [monitoring](/docs/security/network-flows/monitoring)
 - [vault](/docs/security/network-flows/vault)
@@ -44,6 +45,10 @@ Le hook `pre-commit` (cog.toml) la lance dès qu'un commit touche `2.argo/helm`,
 
 ```mermaid
 flowchart LR
+  n_cidr_100_64_0_0_16_e953f7[/"CIDR 100.64.0.0/16"/]
+  n_cidr_fd67_3c3d_53b7_8bb7___64_9f4ed1[/"CIDR fd67:3c3d:53b7:8bb7::/64"/]
+  n_entity_cluster_0dac32(["entité: cluster"])
+  n_entity_host_c8baa5(["entité: host"])
   n_entity_kube_apiserver_3b39a7(["entité: kube-apiserver"])
   n_entity_open_f65d5d(["tout : internet + cluster"])
   n_entity_world_1a2945(["entité: world"])
@@ -98,6 +103,12 @@ flowchart LR
   end
   subgraph ns_kube_system["kube-system"]
     n_ns_kube_system_9d0e37["kube-dns"]
+  end
+  subgraph ns_kubearmor["kubearmor"]
+    n_ns_kubearmor_2465ca["tous les pods"]
+  end
+  subgraph ns_kubelet_serving_cert_approver["kubelet-serving-cert-approver"]
+    n_ns_kubelet_serving_cert_approver_dac844["tous les pods"]
   end
   subgraph ns_local_path_storage["local-path-storage"]
     n_ns_local_path_storage_78f2b1["tous les pods"]
@@ -164,6 +175,9 @@ flowchart LR
     n_ns_workspaces_Che__dev_ws____e38a98["profil weebo-net-kube-api"]
     n_ns_workspaces_Che__dev_ws____a24264["tous les pods"]
   end
+  n_cidr_100_64_0_0_16_e953f7 -->|"tous ports"| n_ns_traefik_d50a8d
+  n_cidr_fd67_3c3d_53b7_8bb7___64_9f4ed1 -->|"tous ports"| n_ns_traefik_d50a8d
+  n_entity_cluster_0dac32 -->|"tous ports"| n_ns_traefik_d50a8d
   n_ns_angos_86cc70 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_angos_86cc70 -->|"tous ports"| n_ns_angos_86cc70
   n_ns_angos_node_61b630 -->|"egress non restreint"| n_entity_open_f65d5d
@@ -198,6 +212,7 @@ flowchart LR
   n_ns_eclipse_che_43d24e -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_eclipse_che_43d24e ==>|"via Traefik : dex.weebo.poc"| n_ns_dex_bea24e
   n_ns_eclipse_che_43d24e -->|"tous ports"| n_ns_eclipse_che_43d24e
+  n_ns_eclipse_che_43d24e -->|"tous ports"| n_ns_traefik_d50a8d
   n_ns_eclipse_che_43d24e -->|"tous ports"| n_ns_workspaces_Che__dev_ws____ac87b9
   n_ns_external_secrets_276995 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_external_secrets_276995 -->|"tous ports"| n_ns_external_secrets_276995
@@ -208,7 +223,13 @@ flowchart LR
   n_ns_forgejo_90cc22 ==>|"via Traefik : s3-main.weebo.poc"| n_ns_s3_aa1591
   n_ns_hook_d7c9c8 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_hook_d7c9c8 -->|"tous ports"| n_ns_hook_d7c9c8
-  n_ns_local_path_storage_78f2b1 -->|"egress non restreint"| n_entity_open_f65d5d
+  n_ns_kubearmor_2465ca -->|"TCP 32766, TCP 32767"| n_entity_host_c8baa5
+  n_ns_kubearmor_2465ca -->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
+  n_ns_kubearmor_2465ca -->|"ANY 53"| n_ns_kube_system_9d0e37
+  n_ns_kubelet_serving_cert_approver_dac844 -->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
+  n_ns_kubelet_serving_cert_approver_dac844 -->|"ANY 53"| n_ns_kube_system_9d0e37
+  n_ns_local_path_storage_78f2b1 -->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
+  n_ns_local_path_storage_78f2b1 -->|"ANY 53"| n_ns_kube_system_9d0e37
   n_ns_local_path_storage_78f2b1 -->|"tous ports"| n_ns_local_path_storage_78f2b1
   n_ns_longhorn_911a87 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_monitoring_f1b4f0 -->|"TCP 9500"| n_ns_longhorn_e4afa5
@@ -230,12 +251,14 @@ flowchart LR
   n_ns_netbird_45c447 ==>|"via Traefik : vault.weebo.poc"| n_ns_vault_b5391e
   n_ns_netbird_b1fc84 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_netbird_b1fc84 -->|"TCP 2222"| n_ns_forgejo_90cc22
+  n_ns_netbird_b1fc84 -->|"tous ports"| n_ns_traefik_d50a8d
   n_ns_netbird_b1fc84 -->|"TCP 8200"| n_ns_vault_da07f8
   n_ns_obi_e941c2 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_obi_e941c2 -->|"TCP 4317, TCP 4318"| n_ns_monitoring_1d4c40
   n_ns_s3_0ff49c -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_s3_0ff49c ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
   n_ns_s3_0ff49c -->|"tous ports"| n_ns_s3_0ff49c
+  n_ns_traefik_907541 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_traefik_907541 -->|"TCP 8200"| n_ns_vault_da07f8
   n_ns_traefik_d50a8d -->|"TCP 8000"| n_ns_angos_86cc70
   n_ns_traefik_d50a8d -->|"TCP 9000, TCP 9443"| n_ns_auth_895bb8
@@ -281,6 +304,7 @@ flowchart LR
   n_ns_workspaces_Che__dev_ws____01372c -->|"tous ports"| n_entity_world_1a2945
   n_ns_workspaces_Che__dev_ws____e38a98 -->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
   n_ns_workspaces_Che__dev_ws____a24264 -->|"TCP 8080, TCP 8089"| n_ns_eclipse_che_43d24e
+  n_ns_workspaces_Che__dev_ws____a24264 -->|"tous ports"| n_ns_traefik_d50a8d
   n_ns_workspaces_Che__dev_ws____a24264 -->|"tous ports"| n_ns_workspaces_Che__dev_ws____ac87b9
 ```
 
@@ -300,11 +324,15 @@ flowchart LR
 | external-secrets | `external-secrets-ingress` | Cilium | déployée | `2.argo/helm/vault/sub` |
 | forgejo | `forgejo-ingress` | Cilium | déployée | `2.argo/helm/forgejo` |
 | hook | `hook-ingress` | Cilium | déployée | `2.argo/helm/hook/sub` |
+| kubearmor | `kubearmor-ingress` | Cilium | déployée | `2.argo/helm/kubearmor/main` |
+| kubelet-serving-cert-approver | `kubelet-serving-cert-approver-ingress` | Cilium | déployée | `2.argo/helm/ingress/sub` |
 | local-path-storage | `local-path-storage-ingress` | Cilium | déployée | `2.argo/helm/storage` |
 | longhorn | `longhorn-manager-metrics` | Kubernetes | déployée | `2.argo/helm/storage` |
 | monitoring | `monitoring-ingress` | Cilium | déployée | `2.argo/helm/monitoring` |
+| netbird | `netbird-ingress` | Cilium | déployée | `2.helm/netbird-exit-node` |
 | obi | `obi-ingress` | Cilium | déployée | `2.argo/helm/monitoring` |
 | s3 | `s3-ingress` | Cilium | déployée | `2.argo/helm/database/sub` |
+| traefik | `traefik-ingress` | Cilium | déployée | `2.argo/helm/ingress/sub` |
 | vault | `openbao-ingress` | Cilium | déployée | `2.argo/helm/vault/sub` |
 | vault-infra | `vault-infra-ingress` | Cilium | déployée | `2.argo/helm/vault/sub` |
 | vault-operator | `vault-operator-ingress` | Cilium | déployée | `2.argo/helm/vault/sub` |

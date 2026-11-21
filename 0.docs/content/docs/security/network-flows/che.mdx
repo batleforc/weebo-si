@@ -89,6 +89,21 @@ flowchart LR
   n_ns_workspaces_Che__dev_ws____a24264 -->|"tous ports"| n_ns_workspaces_Che__dev_ws____ac87b9
 ```
 
+## Flux ouverts par d'autres applications
+
+Les politiques d'autres applications qui touchent les namespaces de `che`.
+
+```mermaid
+flowchart LR
+  subgraph ns_eclipse_che["eclipse-che"]
+    n_ns_eclipse_che_43d24e["tous les pods"]
+  end
+  subgraph ns_traefik["traefik"]
+    n_ns_traefik_d50a8d["traefik"]
+  end
+  n_ns_eclipse_che_43d24e -->|"tous ports"| n_ns_traefik_d50a8d
+```
+
 ## Politiques
 
 | Namespace | Politique | Type | État | Chart |

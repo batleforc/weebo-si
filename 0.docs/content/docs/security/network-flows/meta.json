@@ -10,6 +10,7 @@
     "forgejo",
     "hook",
     "ingress",
+    "kubearmor",
     "main-storage",
     "monitoring",
     "vault",

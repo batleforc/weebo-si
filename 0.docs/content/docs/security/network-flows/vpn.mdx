@@ -81,10 +81,14 @@ flowchart LR
   subgraph ns_netbird["netbird"]
     n_ns_netbird_b1fc84["tous les pods"]
   end
+  subgraph ns_traefik["traefik"]
+    n_ns_traefik_d50a8d["traefik"]
+  end
   subgraph ns_vault["vault"]
     n_ns_vault_da07f8["openbao"]
   end
   n_ns_netbird_b1fc84 -->|"TCP 2222"| n_ns_forgejo_90cc22
+  n_ns_netbird_b1fc84 -->|"tous ports"| n_ns_traefik_d50a8d
   n_ns_netbird_b1fc84 -->|"TCP 8200"| n_ns_vault_da07f8
 ```
 
@@ -92,4 +96,5 @@ flowchart LR
 
 | Namespace | Politique | Type | État | Chart |
 |---|---|---|---|---|
+| netbird | `netbird-ingress` | Cilium | déployée | `2.helm/netbird-exit-node` |
 

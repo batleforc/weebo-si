@@ -5,7 +5,7 @@ description: "Les flux autorisés par les politiques réseau de ingress"
 
 {/* Généré par `task docs:netflow` (0.task/scripts/netflow.py). Ne pas éditer à la main. */}
 
-Les flux que les politiques de l'application Argo CD `ingress` autorisent. Namespaces : `cert-manager`.
+Les flux que les politiques de l'application Argo CD `ingress` autorisent. Namespaces : `cert-manager`, `kubelet-serving-cert-approver`, `traefik`.
 
 ## Légende
 
@@ -21,12 +21,44 @@ Les flux que les politiques de l'application Argo CD `ingress` autorisent. Names
 
 ```mermaid
 flowchart LR
+  n_cidr_100_64_0_0_16_e953f7[/"CIDR 100.64.0.0/16"/]
+  n_cidr_fd67_3c3d_53b7_8bb7___64_9f4ed1[/"CIDR fd67:3c3d:53b7:8bb7::/64"/]
+  n_entity_cluster_0dac32(["entité: cluster"])
+  n_entity_kube_apiserver_3b39a7(["entité: kube-apiserver"])
   n_entity_open_f65d5d(["tout : internet + cluster"])
   subgraph ns_cert_manager["cert-manager"]
     n_ns_cert_manager_12e016["tous les pods"]
   end
+  subgraph ns_eclipse_che["eclipse-che"]
+    n_ns_eclipse_che_43d24e["tous les pods"]
+  end
+  subgraph ns_kube_system["kube-system"]
+    n_ns_kube_system_9d0e37["kube-dns"]
+  end
+  subgraph ns_kubelet_serving_cert_approver["kubelet-serving-cert-approver"]
+    n_ns_kubelet_serving_cert_approver_dac844["tous les pods"]
+  end
+  subgraph ns_netbird["netbird"]
+    n_ns_netbird_b1fc84["tous les pods"]
+  end
+  subgraph ns_traefik["traefik"]
+    n_ns_traefik_907541["tous les pods"]
+    n_ns_traefik_d50a8d["traefik"]
+  end
+  subgraph ns_workspaces_Che__dev_ws___["workspaces Che (dev-ws-*)"]
+    n_ns_workspaces_Che__dev_ws____a24264["tous les pods"]
+  end
+  n_cidr_100_64_0_0_16_e953f7 -->|"tous ports"| n_ns_traefik_d50a8d
+  n_cidr_fd67_3c3d_53b7_8bb7___64_9f4ed1 -->|"tous ports"| n_ns_traefik_d50a8d
+  n_entity_cluster_0dac32 -->|"tous ports"| n_ns_traefik_d50a8d
   n_ns_cert_manager_12e016 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_cert_manager_12e016 -->|"tous ports"| n_ns_cert_manager_12e016
+  n_ns_eclipse_che_43d24e -->|"tous ports"| n_ns_traefik_d50a8d
+  n_ns_kubelet_serving_cert_approver_dac844 -->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
+  n_ns_kubelet_serving_cert_approver_dac844 -->|"ANY 53"| n_ns_kube_system_9d0e37
+  n_ns_netbird_b1fc84 -->|"tous ports"| n_ns_traefik_d50a8d
+  n_ns_traefik_907541 -->|"egress non restreint"| n_entity_open_f65d5d
+  n_ns_workspaces_Che__dev_ws____a24264 -->|"tous ports"| n_ns_traefik_d50a8d
 ```
 
 ## Flux ouverts par d'autres applications
@@ -35,13 +67,60 @@ Les politiques d'autres applications qui touchent les namespaces de `ingress`.
 
 ```mermaid
 flowchart LR
+  subgraph ns_angos["angos"]
+    n_ns_angos_86cc70["tous les pods"]
+  end
+  subgraph ns_auth["auth"]
+    n_ns_auth_895bb8["tous les pods"]
+  end
+  subgraph ns_batlehub["batlehub"]
+    n_ns_batlehub_62b5f7["tous les pods"]
+  end
   subgraph ns_cert_manager["cert-manager"]
     n_ns_cert_manager_12e016["tous les pods"]
+  end
+  subgraph ns_dex["dex"]
+    n_ns_dex_d4c810["tous les pods"]
+  end
+  subgraph ns_eclipse_che["eclipse-che"]
+    n_ns_eclipse_che_43d24e["tous les pods"]
+  end
+  subgraph ns_forgejo["forgejo"]
+    n_ns_forgejo_90cc22["tous les pods"]
+  end
+  subgraph ns_monitoring["monitoring"]
+    n_ns_monitoring_1d4c40["tous les pods"]
+  end
+  subgraph ns_netbird["netbird"]
+    n_ns_netbird_45c447["exit-node-ingress"]
+  end
+  subgraph ns_s3["s3"]
+    n_ns_s3_0ff49c["tous les pods"]
+  end
+  subgraph ns_traefik["traefik"]
+    n_ns_traefik_67721a["svc error-pages-internal"]
+    n_ns_traefik_907541["tous les pods"]
+    n_ns_traefik_d50a8d["traefik"]
   end
   subgraph ns_vault["vault"]
     n_ns_vault_da07f8["openbao"]
   end
+  subgraph ns_workspaces_Che__dev_ws___["workspaces Che (dev-ws-*)"]
+    n_ns_workspaces_Che__dev_ws____ac87b9["profil weebo-net-base"]
+  end
   n_ns_cert_manager_12e016 -->|"TCP 8200"| n_ns_vault_da07f8
+  n_ns_netbird_45c447 ==>|"via Traefik : truc.weebo.poc"| n_ns_traefik_67721a
+  n_ns_traefik_907541 -->|"TCP 8200"| n_ns_vault_da07f8
+  n_ns_traefik_d50a8d -->|"TCP 8000"| n_ns_angos_86cc70
+  n_ns_traefik_d50a8d -->|"TCP 9000, TCP 9443"| n_ns_auth_895bb8
+  n_ns_traefik_d50a8d -->|"TCP 8080"| n_ns_batlehub_62b5f7
+  n_ns_traefik_d50a8d -->|"TCP 5556"| n_ns_dex_d4c810
+  n_ns_traefik_d50a8d -->|"TCP 8080"| n_ns_eclipse_che_43d24e
+  n_ns_traefik_d50a8d -->|"TCP 3000"| n_ns_forgejo_90cc22
+  n_ns_traefik_d50a8d -->|"TCP 8080"| n_ns_monitoring_1d4c40
+  n_ns_traefik_d50a8d -->|"TCP 9000, TCP 9001, TCP 9090"| n_ns_s3_0ff49c
+  n_ns_traefik_d50a8d -->|"tous ports"| n_ns_workspaces_Che__dev_ws____ac87b9
+  n_ns_workspaces_Che__dev_ws____ac87b9 -->|"TCP 8000, TCP 8443"| n_ns_traefik_d50a8d
 ```
 
 ## Politiques
@@ -49,4 +128,6 @@ flowchart LR
 | Namespace | Politique | Type | État | Chart |
 |---|---|---|---|---|
 | cert-manager | `cert-manager-ingress` | Cilium | déployée | `2.argo/helm/ingress/sub` |
+| kubelet-serving-cert-approver | `kubelet-serving-cert-approver-ingress` | Cilium | déployée | `2.argo/helm/ingress/sub` |
+| traefik | `traefik-ingress` | Cilium | déployée | `2.argo/helm/ingress/sub` |
 

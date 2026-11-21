@@ -21,7 +21,11 @@ Les flux que les politiques de l'application Argo CD `main-storage` autorisent. 
 
 ```mermaid
 flowchart LR
+  n_entity_kube_apiserver_3b39a7(["entité: kube-apiserver"])
   n_entity_open_f65d5d(["tout : internet + cluster"])
+  subgraph ns_kube_system["kube-system"]
+    n_ns_kube_system_9d0e37["kube-dns"]
+  end
   subgraph ns_local_path_storage["local-path-storage"]
     n_ns_local_path_storage_78f2b1["tous les pods"]
   end
@@ -32,7 +36,8 @@ flowchart LR
   subgraph ns_monitoring["monitoring"]
     n_ns_monitoring_f1b4f0["opentelemetry-collector / component=agent-collector"]
   end
-  n_ns_local_path_storage_78f2b1 -->|"egress non restreint"| n_entity_open_f65d5d
+  n_ns_local_path_storage_78f2b1 -->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
+  n_ns_local_path_storage_78f2b1 -->|"ANY 53"| n_ns_kube_system_9d0e37
   n_ns_local_path_storage_78f2b1 -->|"tous ports"| n_ns_local_path_storage_78f2b1
   n_ns_longhorn_911a87 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_monitoring_f1b4f0 -->|"TCP 9500"| n_ns_longhorn_e4afa5

@@ -53,6 +53,35 @@ spec:
       middlewares:
         - name: clickstack-api-origin
         - name: clickstack-api-auth
+    # On that 401 HyperDX does a client-side router.push("/login"), and its login
+    # page, seeing the team still in react-query's cache, pushes straight back to
+    # /search: an endless loop that never reaches the server for a page. Failing
+    # the login chunk makes Next fall back to a full load of /login, which takes
+    # the forward-auth 302 to authentik, and /login itself goes to /search since
+    # preauth already makes HyperDX's own login page pointless. The chunk is
+    # served immutable, so it must fail every time, not just when unauthenticated.
+    - kind: Rule
+      match: Host(`{{ .Values.clickstack.domain }}`) && PathPrefix(`/_next/static/chunks/pages/login-`)
+      priority: 13
+      services:
+        # Straight to HyperDX, not preauth: the path is rewritten to a fixed 404.
+        - name: clickstack
+          namespace: {{ .Release.Namespace }}
+          port: 3000
+      middlewares:
+        - name: clickstack-login-chunk-404
+    - kind: Rule
+      match: Host(`{{ .Values.clickstack.domain }}`) && Path(`/login`)
+      priority: 13
+      services:
+        - name: {{ $service }}
+          namespace: {{ .Release.Namespace }}
+          port: {{ $port }}
+          passHostHeader: true
+      middlewares:
+        - name: authentik
+          namespace: auth
+        - name: clickstack-login-to-search
     - kind: Rule
       match: Host(`{{ .Values.clickstack.domain }}`) && PathPrefix(`/outpost.goauthentik.io/`)
       priority: 15
@@ -94,6 +123,25 @@ spec:
   headers:
     customRequestHeaders:
       X-Original-URL: "https://{{ .Values.clickstack.domain }}/api/"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: clickstack-login-chunk-404
+  namespace: {{ .Release.Namespace }}
+spec:
+  replacePath:
+    path: /_next/static/chunks/pages/login-blocked.js
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: clickstack-login-to-search
+  namespace: {{ .Release.Namespace }}
+spec:
+  redirectRegex:
+    regex: ^https://[^/]+/login
+    replacement: https://{{ .Values.clickstack.domain }}/search
 ---
 # Same session check as auth/authentik (one outpost cookie), 401 instead of a
 # redirect. Still the only authentication in front of preauth on this path.
