@@ -7,13 +7,6 @@
 {{- fail (printf "angos: scanner.engine is %q -- expected trivy or grype" $engine) -}}
 {{- end -}}
 {{- $registryUrl := $scanner.registryUrl | default (printf "https://%s" .Values.angos.dns) -}}
-{{- /*
-  The authority as it appears in an image reference -- host, and port when it
-  is not the default one -- which is what grype matches its credentials
-  against. Derived from the URL above rather than configured, so the two can
-  never disagree.
-*/ -}}
-{{- $authority := regexReplaceAll "^[a-zA-Z][a-zA-Z0-9+.-]*://" $registryUrl "" | trimSuffix "/" -}}
 ---
 # The scanner's whole configuration, `[scanner]` and nothing else: `angos
 # scanner` reads that section alone, so this file describes no store, no
@@ -44,10 +37,6 @@ spec:
           url = "{{ $registryUrl }}"
           username = "{{ $username }}"
           password = "{{ "{{" }}.password}}"
-        # Read by the GRYPE_REGISTRY_AUTH_PASSWORD below. Same value as the one
-        # in the file above, exposed as its own key because an environment
-        # variable cannot be sourced out of the middle of one.
-        registry-password: "{{ "{{" }}.password}}"
   data:
     # Written by 2.terra/vault/terra-map/angos.tf, which also writes the
     # argon2id hash of this same password into the registry's own secret. The
@@ -171,25 +160,6 @@ spec:
             # because the scanner it forks is a Go program.
             - name: SSL_CERT_FILE
               value: {{ printf "%s/%s" .Values.angos.caTrust.mountPath .Values.angos.caTrust.bundleKey | quote }}
-          {{- end }}
-          {{- if eq $engine "grype" }}
-            # Measured on 1.8.0: `[scanner.registry]`'s username and password
-            # never reach grype, which then pulls anonymously and fails every
-            # scan with `UNAUTHORIZED: Access denied`. grype reads its own
-            # credentials from these three, and with them the same scan
-            # succeeds. trivy needs nothing of the sort, which is why it is
-            # the default engine.
-            #
-            # Remove this block once upstream hands grype the credentials.
-            - name: GRYPE_REGISTRY_AUTH_AUTHORITY
-              value: {{ $authority | quote }}
-            - name: GRYPE_REGISTRY_AUTH_USERNAME
-              value: {{ $username | quote }}
-            - name: GRYPE_REGISTRY_AUTH_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: angos-scanner-config
-                  key: registry-password
           {{- end }}
           volumeMounts:
             - name: config

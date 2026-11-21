@@ -213,13 +213,11 @@ angos:
     # `trivy` or `grype`. It picks both the image tag suffix and the
     # subcommand, and nothing else in this chart changes with it.
     #
-    # trivy is the default because it is the one that works from configuration
-    # alone. Measured on 1.9.2: the `[scanner.registry]` username and password
-    # never reach grype, which then pulls anonymously and fails every scan with
-    # `UNAUTHORIZED: Access denied` from this registry's own policy. The
-    # `GRYPE_REGISTRY_AUTH_*` environment in templates/angos/scanner.yaml is
-    # that gap's workaround and is set for grype only; drop it once upstream
-    # passes the credentials itself.
+    # Either works from configuration alone since 1.13.0: up to 1.12 the
+    # `[scanner.registry]` credentials never reached grype, which pulled
+    # anonymously and failed every scan with `UNAUTHORIZED` (fixed upstream by
+    # project-angos/angos#356; the chart's GRYPE_REGISTRY_AUTH_* workaround was
+    # dropped on 2026-11-21). trivy stays the default.
     #
     # Beyond that they differ in how they parallelise: trivy locks its cache
     # and scans one image at a time whatever `maxConcurrentScans` says, so
