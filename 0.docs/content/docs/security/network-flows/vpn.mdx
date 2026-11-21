@@ -84,7 +84,7 @@ flowchart LR
   subgraph ns_vault["vault"]
     n_ns_vault_da07f8["openbao"]
   end
-  n_ns_netbird_b1fc84 -.->|"TCP 2222"| n_ns_forgejo_90cc22
+  n_ns_netbird_b1fc84 -->|"TCP 2222"| n_ns_forgejo_90cc22
   n_ns_netbird_b1fc84 -->|"TCP 8200"| n_ns_vault_da07f8
 ```
 

@@ -32,6 +32,9 @@ flowchart LR
     n_ns_forgejo_881e90["svc forgejo-http"]
     n_ns_forgejo_90cc22["tous les pods"]
   end
+  subgraph ns_monitoring["monitoring"]
+    n_ns_monitoring_1d4c40["tous les pods"]
+  end
   subgraph ns_netbird["netbird"]
     n_ns_netbird_b1fc84["tous les pods"]
   end
@@ -44,17 +47,18 @@ flowchart LR
   subgraph ns_weebo_forgejo["weebo-forgejo"]
     n_ns_weebo_forgejo_29bdd1["tous les pods"]
   end
-  n_ns_database_7191e8 -.->|"TCP 5432, TCP 8000"| n_ns_forgejo_90cc22
+  n_ns_database_7191e8 -->|"TCP 5432, TCP 8000"| n_ns_forgejo_90cc22
   n_ns_forgejo_90cc22 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_forgejo_90cc22 ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
-  n_ns_forgejo_90cc22 -.->|"tous ports"| n_ns_forgejo_90cc22
+  n_ns_forgejo_90cc22 -->|"tous ports"| n_ns_forgejo_90cc22
   n_ns_forgejo_90cc22 ==>|"via Traefik : s3-main.weebo.poc"| n_ns_s3_aa1591
-  n_ns_netbird_b1fc84 -.->|"TCP 2222"| n_ns_forgejo_90cc22
-  n_ns_traefik_d50a8d -.->|"TCP 3000"| n_ns_forgejo_90cc22
+  n_ns_monitoring_1d4c40 -->|"TCP 9187"| n_ns_forgejo_90cc22
+  n_ns_netbird_b1fc84 -->|"TCP 2222"| n_ns_forgejo_90cc22
+  n_ns_traefik_d50a8d -->|"TCP 3000"| n_ns_forgejo_90cc22
   n_ns_weebo_forgejo_29bdd1 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_weebo_forgejo_29bdd1 ==>|"via Traefik : git.weebo.poc"| n_ns_forgejo_881e90
-  n_ns_weebo_forgejo_29bdd1 -.->|"TCP 3000"| n_ns_forgejo_90cc22
-  n_ns_weebo_forgejo_29bdd1 -.->|"tous ports"| n_ns_weebo_forgejo_29bdd1
+  n_ns_weebo_forgejo_29bdd1 -->|"TCP 3000"| n_ns_forgejo_90cc22
+  n_ns_weebo_forgejo_29bdd1 -->|"tous ports"| n_ns_weebo_forgejo_29bdd1
 ```
 
 ## Flux ouverts par d'autres applications
@@ -87,6 +91,6 @@ flowchart LR
 
 | Namespace | Politique | Type | État | Chart |
 |---|---|---|---|---|
-| forgejo | `forgejo-ingress` | Cilium | proposée | `2.argo/helm/forgejo` |
-| weebo-forgejo | `weebo-forgejo-ingress` | Cilium | proposée | `2.argo/helm/forgejo` |
+| forgejo | `forgejo-ingress` | Cilium | déployée | `2.argo/helm/forgejo` |
+| weebo-forgejo | `weebo-forgejo-ingress` | Cilium | déployée | `2.argo/helm/forgejo` |
 

@@ -50,17 +50,17 @@ flowchart LR
   end
   n_ns_batlehub_62b5f7 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_batlehub_62b5f7 ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
-  n_ns_batlehub_62b5f7 -.->|"tous ports"| n_ns_batlehub_62b5f7
+  n_ns_batlehub_62b5f7 -->|"tous ports"| n_ns_batlehub_62b5f7
   n_ns_batlehub_62b5f7 ==>|"via Traefik : git.weebo.poc"| n_ns_forgejo_881e90
   n_ns_batlehub_62b5f7 ==>|"via Traefik : s3-main.weebo.poc"| n_ns_s3_aa1591
-  n_ns_database_7191e8 -.->|"TCP 5432, TCP 8000"| n_ns_batlehub_62b5f7
-  n_ns_database_7ef0dc -.->|"TCP 6379"| n_ns_batlehub_62b5f7
-  n_ns_monitoring_1d4c40 -.->|"TCP 8080"| n_ns_batlehub_62b5f7
-  n_ns_traefik_d50a8d -.->|"TCP 8080"| n_ns_batlehub_62b5f7
+  n_ns_database_7191e8 -->|"TCP 5432, TCP 8000"| n_ns_batlehub_62b5f7
+  n_ns_database_7ef0dc -->|"TCP 6379"| n_ns_batlehub_62b5f7
+  n_ns_monitoring_1d4c40 -->|"TCP 8080, TCP 9187"| n_ns_batlehub_62b5f7
+  n_ns_traefik_d50a8d -->|"TCP 8080"| n_ns_batlehub_62b5f7
   n_ns_weebo_batlehub_3f15d5 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_weebo_batlehub_3f15d5 ==>|"via Traefik : pkg.weebo.poc"| n_ns_batlehub_eb6c8e
-  n_ns_weebo_batlehub_3f15d5 -.->|"TCP 8080"| n_ns_batlehub_62b5f7
-  n_ns_weebo_batlehub_3f15d5 -.->|"tous ports"| n_ns_weebo_batlehub_3f15d5
+  n_ns_weebo_batlehub_3f15d5 -->|"TCP 8080"| n_ns_batlehub_62b5f7
+  n_ns_weebo_batlehub_3f15d5 -->|"tous ports"| n_ns_weebo_batlehub_3f15d5
 ```
 
 ## Flux ouverts par d'autres applications
@@ -82,6 +82,6 @@ flowchart LR
 
 | Namespace | Politique | Type | État | Chart |
 |---|---|---|---|---|
-| batlehub | `batlehub-ingress` | Cilium | proposée | `2.argo/helm/batlehub` |
-| weebo-batlehub | `weebo-batlehub-ingress` | Cilium | proposée | `2.argo/helm/batlehub` |
+| batlehub | `batlehub-ingress` | Cilium | déployée | `2.argo/helm/batlehub` |
+| weebo-batlehub | `weebo-batlehub-ingress` | Cilium | déployée | `2.argo/helm/batlehub` |
 

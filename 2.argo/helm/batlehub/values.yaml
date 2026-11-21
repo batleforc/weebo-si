@@ -638,7 +638,8 @@ operator:
 # in (kubelet probes, apiserver -> webhooks). Same sources and checks as in
 # 2.argo/helm/angos/values.yaml.
 ciliumNetworkPolicies:
-  enabled: false
+  # Default deny, by waves (0.docs/content/docs/left-todo.md): wave 2, 2026-11-21.
+  enabled: true
   policies:
     batlehub-ingress:
       namespace: batlehub
@@ -688,7 +689,8 @@ ciliumNetworkPolicies:
             - ports:
                 - port: "8080"
                   protocol: TCP
-        # otel-node's scrape of /metrics.
+        # otel-node's scrape of /metrics, and of the postgres exporter
+        # (weebo-base.cnpgClusterSpec).
         - fromEndpoints:
             - matchLabels:
                 k8s:io.kubernetes.pod.namespace: monitoring
@@ -696,6 +698,8 @@ ciliumNetworkPolicies:
           toPorts:
             - ports:
                 - port: "8080"
+                  protocol: TCP
+                - port: "9187"
                   protocol: TCP
     weebo-batlehub-ingress:
       namespace: weebo-batlehub

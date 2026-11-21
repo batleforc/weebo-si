@@ -642,7 +642,8 @@ operator:
 # then watch for policy drops right after:
 #   hubble observe --to-namespace <ns> --verdict DROPPED -f
 ciliumNetworkPolicies:
-  enabled: false
+  # Default deny, by waves (0.docs/content/docs/left-todo.md): wave 2, 2026-11-21.
+  enabled: true
   policies:
     angos-ingress:
       namespace: angos
@@ -669,6 +670,15 @@ ciliumNetworkPolicies:
             - ports:
                 - port: "8000"
                   protocol: TCP
+        # The valkey operator managing the registry's cache instance.
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: database
+                app.kubernetes.io/name: valkey-operator
+          toPorts:
+            - ports:
+                - port: "6379"
+                  protocol: TCP
     # Operator: its webhook (8443) is only called by the apiserver, i.e. host.
     weebo-angos-ingress:
       namespace: weebo-angos
@@ -685,6 +695,10 @@ ciliumNetworkPolicies:
     # auth.weebo.poc), the apiserver (kubeOidc JWKS) and, on 443, each
     # upstream with its companions below. `angos-egress: {enabled: false}`
     # here turns it off on its own.
+    # Off while the default deny rolls out ingress only: it selects the
+    # operator's registry pods too (same labels) and would cut the upstreams.
+    angos-egress:
+      enabled: false
 
 # Hosts an upstream redirects blob downloads to: a pull through
 # registry-1.docker.io that may only reach registry-1.docker.io gets its

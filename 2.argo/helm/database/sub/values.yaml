@@ -74,10 +74,13 @@ s3:
 # 2.argo/helm/angos/values.yaml. Values passed down by the main chart override
 # these, ciliumNetworkPolicies.enabled included.
 ciliumNetworkPolicies:
-  enabled: false
+  # Default deny, by waves (0.docs/content/docs/left-todo.md): s3 in wave 2,
+  # 2026-11-21; database still off below.
+  enabled: true
   policies:
     # Operators only: webhooks (apiserver = host) and nothing else.
     database-ingress:
+      enabled: false
       namespace: database
       endpointSelector: {}
       ingress:

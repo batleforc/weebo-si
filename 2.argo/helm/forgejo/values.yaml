@@ -448,7 +448,8 @@ operator:
 # in (kubelet probes, apiserver -> webhooks). Same sources and checks as in
 # 2.argo/helm/angos/values.yaml.
 ciliumNetworkPolicies:
-  enabled: false
+  # Default deny, by waves (0.docs/content/docs/left-todo.md): wave 2, 2026-11-21.
+  enabled: true
   policies:
     forgejo-ingress:
       namespace: forgejo
@@ -495,6 +496,15 @@ ciliumNetworkPolicies:
           toPorts:
             - ports:
                 - port: "3000"
+                  protocol: TCP
+        # otel-node's scrape of the postgres exporter (weebo-base.cnpgClusterSpec).
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: monitoring
+                app.kubernetes.io/instance: otel-node
+          toPorts:
+            - ports:
+                - port: "9187"
                   protocol: TCP
     weebo-forgejo-ingress:
       namespace: weebo-forgejo

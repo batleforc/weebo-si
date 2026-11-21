@@ -21,25 +21,15 @@ Les flux que les politiques de l'application Argo CD `angos` autorisent. Namespa
 
 ```mermaid
 flowchart LR
-  n_entity_kube_apiserver_3b39a7(["entité: kube-apiserver"])
   n_entity_open_f65d5d(["tout : internet + cluster"])
-  n_fqdn_codeberg_org_code_forgejo_org_gcr_io_storage_googleapis_com_ghcr_io_pkg_con_feb69b[/"FQDN<br/>codeberg.org<br/>code.forgejo.org<br/>gcr.io<br/>storage.googleapis.com<br/>ghcr.io<br/>pkg-containers.githubusercontent.com<br/>registry-1.docker.io<br/>auth.docker.io<br/>production.cloudflare.docker.com<br/>quay.io<br/>*.quay.io<br/>registry.access.redhat.com<br/>*.redhat.com<br/>*.redhat.io"/]
   subgraph ns_angos["angos"]
-    n_ns_angos_ece4d4["angos / server"]
-    n_ns_angos_dafce5["autres pods"]
     n_ns_angos_86cc70["tous les pods"]
   end
   subgraph ns_angos_node["angos-node"]
     n_ns_angos_node_61b630["tous les pods"]
   end
-  subgraph ns_auth["auth"]
-    n_ns_auth_3aba95["authentik / server (chart authentik)"]
-  end
-  subgraph ns_kube_system["kube-system"]
-    n_ns_kube_system_9d0e37["kube-dns"]
-  end
-  subgraph ns_s3["s3"]
-    n_ns_s3_aa1591["svc main-console"]
+  subgraph ns_database["database"]
+    n_ns_database_7ef0dc["valkey-operator"]
   end
   subgraph ns_traefik["traefik"]
     n_ns_traefik_d50a8d["traefik"]
@@ -47,21 +37,14 @@ flowchart LR
   subgraph ns_weebo_angos["weebo-angos"]
     n_ns_weebo_angos_b7bea6["tous les pods"]
   end
-  n_ns_angos_ece4d4 -.->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
-  n_ns_angos_ece4d4 -->|"egress non restreint tant que angos-egress est désactivée"| n_entity_open_f65d5d
-  n_ns_angos_ece4d4 -.->|"TCP 443"| n_fqdn_codeberg_org_code_forgejo_org_gcr_io_storage_googleapis_com_ghcr_io_pkg_con_feb69b
-  n_ns_angos_ece4d4 -.->|"tous ports"| n_ns_angos_86cc70
-  n_ns_angos_ece4d4 ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
-  n_ns_angos_ece4d4 -.->|"ANY 53 (dns)"| n_ns_kube_system_9d0e37
-  n_ns_angos_ece4d4 ==>|"via Traefik : s3-main.weebo.poc"| n_ns_s3_aa1591
-  n_ns_angos_ece4d4 -.->|"TCP 8443"| n_ns_traefik_d50a8d
-  n_ns_angos_dafce5 -->|"egress non restreint"| n_entity_open_f65d5d
-  n_ns_angos_86cc70 -.->|"tous ports"| n_ns_angos_86cc70
+  n_ns_angos_86cc70 -->|"egress non restreint"| n_entity_open_f65d5d
+  n_ns_angos_86cc70 -->|"tous ports"| n_ns_angos_86cc70
   n_ns_angos_node_61b630 -->|"egress non restreint"| n_entity_open_f65d5d
-  n_ns_traefik_d50a8d -.->|"TCP 8000"| n_ns_angos_86cc70
+  n_ns_database_7ef0dc -->|"TCP 6379"| n_ns_angos_86cc70
+  n_ns_traefik_d50a8d -->|"TCP 8000"| n_ns_angos_86cc70
   n_ns_weebo_angos_b7bea6 -->|"egress non restreint"| n_entity_open_f65d5d
-  n_ns_weebo_angos_b7bea6 -.->|"TCP 8000"| n_ns_angos_86cc70
-  n_ns_weebo_angos_b7bea6 -.->|"tous ports"| n_ns_weebo_angos_b7bea6
+  n_ns_weebo_angos_b7bea6 -->|"TCP 8000"| n_ns_angos_86cc70
+  n_ns_weebo_angos_b7bea6 -->|"tous ports"| n_ns_weebo_angos_b7bea6
 ```
 
 ## Flux ouverts par d'autres applications
@@ -83,8 +66,7 @@ flowchart LR
 
 | Namespace | Politique | Type | État | Chart |
 |---|---|---|---|---|
-| angos | `angos-egress` | Cilium | proposée | `2.argo/helm/angos` |
-| angos | `angos-ingress` | Cilium | proposée | `2.argo/helm/angos` |
-| angos-node | `angos-node-ingress` | Cilium | proposée | `2.argo/helm/angos` |
-| weebo-angos | `weebo-angos-ingress` | Cilium | proposée | `2.argo/helm/angos` |
+| angos | `angos-ingress` | Cilium | déployée | `2.argo/helm/angos` |
+| angos-node | `angos-node-ingress` | Cilium | déployée | `2.argo/helm/angos` |
+| weebo-angos | `weebo-angos-ingress` | Cilium | déployée | `2.argo/helm/angos` |
 
