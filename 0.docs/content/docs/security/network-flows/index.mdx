@@ -190,14 +190,14 @@ flowchart LR
   n_ns_database_7ef0dc -->|"TCP 6379"| n_ns_angos_86cc70
   n_ns_database_7ef0dc -->|"TCP 6379"| n_ns_batlehub_62b5f7
   n_ns_devworkspace_controller_3115b1 -->|"egress non restreint"| n_entity_open_f65d5d
-  n_ns_devworkspace_controller_3115b1 -.->|"tous ports"| n_ns_devworkspace_controller_3115b1
+  n_ns_devworkspace_controller_3115b1 -->|"tous ports"| n_ns_devworkspace_controller_3115b1
   n_ns_devworkspace_controller_3115b1 -->|"tous ports"| n_ns_workspaces_Che__dev_ws____ac87b9
   n_ns_dex_d4c810 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_dex_d4c810 ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
   n_ns_dex_d4c810 -->|"TCP 8200"| n_ns_vault_da07f8
   n_ns_eclipse_che_43d24e -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_eclipse_che_43d24e ==>|"via Traefik : dex.weebo.poc"| n_ns_dex_bea24e
-  n_ns_eclipse_che_43d24e -.->|"tous ports"| n_ns_eclipse_che_43d24e
+  n_ns_eclipse_che_43d24e -->|"tous ports"| n_ns_eclipse_che_43d24e
   n_ns_eclipse_che_43d24e -->|"tous ports"| n_ns_workspaces_Che__dev_ws____ac87b9
   n_ns_external_secrets_276995 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_external_secrets_276995 -->|"tous ports"| n_ns_external_secrets_276995
@@ -207,7 +207,7 @@ flowchart LR
   n_ns_forgejo_90cc22 -->|"tous ports"| n_ns_forgejo_90cc22
   n_ns_forgejo_90cc22 ==>|"via Traefik : s3-main.weebo.poc"| n_ns_s3_aa1591
   n_ns_hook_d7c9c8 -->|"egress non restreint"| n_entity_open_f65d5d
-  n_ns_hook_d7c9c8 -.->|"tous ports"| n_ns_hook_d7c9c8
+  n_ns_hook_d7c9c8 -->|"tous ports"| n_ns_hook_d7c9c8
   n_ns_local_path_storage_78f2b1 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_local_path_storage_78f2b1 -->|"tous ports"| n_ns_local_path_storage_78f2b1
   n_ns_longhorn_911a87 -->|"egress non restreint"| n_entity_open_f65d5d
@@ -217,7 +217,7 @@ flowchart LR
   n_ns_monitoring_1d4c40 -->|"TCP 8080, TCP 9187"| n_ns_batlehub_62b5f7
   n_ns_monitoring_1d4c40 -->|"TCP 9187"| n_ns_forgejo_90cc22
   n_ns_monitoring_1d4c40 -->|"tous ports"| n_ns_monitoring_1d4c40
-  n_ns_monitoring_1d4c40 -.->|"TCP 8081"| n_ns_weebo_si_hardening_973fb2
+  n_ns_monitoring_1d4c40 -->|"TCP 8081"| n_ns_weebo_si_hardening_973fb2
   n_ns_netbird_45c447 ==>|"via Traefik : registry.pkg.weebo.poc"| n_ns_angos_f1c162
   n_ns_netbird_45c447 ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
   n_ns_netbird_45c447 ==>|"via Traefik : pkg.weebo.poc"| n_ns_batlehub_eb6c8e
@@ -241,14 +241,16 @@ flowchart LR
   n_ns_traefik_d50a8d -->|"TCP 9000, TCP 9443"| n_ns_auth_895bb8
   n_ns_traefik_d50a8d -->|"TCP 8080"| n_ns_batlehub_62b5f7
   n_ns_traefik_d50a8d -->|"TCP 5556"| n_ns_dex_d4c810
-  n_ns_traefik_d50a8d -.->|"TCP 8080"| n_ns_eclipse_che_43d24e
+  n_ns_traefik_d50a8d -->|"TCP 8080"| n_ns_eclipse_che_43d24e
   n_ns_traefik_d50a8d -->|"TCP 3000"| n_ns_forgejo_90cc22
   n_ns_traefik_d50a8d -->|"TCP 8080"| n_ns_monitoring_1d4c40
   n_ns_traefik_d50a8d -->|"TCP 9000, TCP 9001, TCP 9090"| n_ns_s3_0ff49c
   n_ns_traefik_d50a8d -->|"tous ports"| n_ns_workspaces_Che__dev_ws____ac87b9
   n_ns_vault_1e8c25 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_vault_1e8c25 -->|"tous ports"| n_ns_vault_da07f8
+  n_ns_vault_infra_14c050 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_vault_infra_14c050 -->|"TCP 8200"| n_ns_vault_da07f8
+  n_ns_vault_infra_14c050 -->|"tous ports"| n_ns_vault_infra_14c050
   n_ns_vault_operator_bf680a -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_vault_operator_bf680a -->|"TCP 8200"| n_ns_vault_da07f8
   n_ns_vault_operator_bf680a -->|"tous ports"| n_ns_vault_operator_bf680a
@@ -266,7 +268,7 @@ flowchart LR
   n_ns_weebo_forgejo_29bdd1 -->|"tous ports"| n_ns_weebo_forgejo_29bdd1
   n_ns_weebo_openbao_640a2d -->|"TCP 8200"| n_ns_vault_da07f8
   n_ns_weebo_si_hardening_98b8dc ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
-  n_ns_weebo_si_hardening_98b8dc -.->|"TCP 8089"| n_ns_eclipse_che_43d24e
+  n_ns_weebo_si_hardening_98b8dc -->|"TCP 8089"| n_ns_eclipse_che_43d24e
   n_ns_weebo_si_hardening_af5a96 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_workspaces_Che__dev_ws____07f3cd -->|"TCP 443"| n_fqdn_api_anthropic_com_41439f
   n_ns_workspaces_Che__dev_ws____ac87b9 -->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
@@ -278,7 +280,7 @@ flowchart LR
   n_ns_workspaces_Che__dev_ws____fa1322 -->|"TCP 22, TCP 443"| n_fqdn_github_com_git_batleforc_fr_c00a93
   n_ns_workspaces_Che__dev_ws____01372c -->|"tous ports"| n_entity_world_1a2945
   n_ns_workspaces_Che__dev_ws____e38a98 -->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
-  n_ns_workspaces_Che__dev_ws____a24264 -.->|"TCP 8080, TCP 8089"| n_ns_eclipse_che_43d24e
+  n_ns_workspaces_Che__dev_ws____a24264 -->|"TCP 8080, TCP 8089"| n_ns_eclipse_che_43d24e
   n_ns_workspaces_Che__dev_ws____a24264 -->|"tous ports"| n_ns_workspaces_Che__dev_ws____ac87b9
 ```
 
@@ -292,18 +294,19 @@ flowchart LR
 | batlehub | `batlehub-ingress` | Cilium | déployée | `2.argo/helm/batlehub` |
 | cert-manager | `cert-manager-ingress` | Cilium | déployée | `2.argo/helm/ingress/sub` |
 | database | `database-ingress` | Cilium | déployée | `2.argo/helm/database/sub` |
-| devworkspace-controller | `devworkspace-controller-ingress` | Cilium | proposée | `2.argo/helm/che/sub` |
+| devworkspace-controller | `devworkspace-controller-ingress` | Cilium | déployée | `2.argo/helm/che/sub` |
 | dex | `dex-ingress` | Cilium | déployée | `2.argo/helm/auth/sub` |
-| eclipse-che | `eclipse-che-ingress` | Cilium | proposée | `2.argo/helm/che/sub` |
+| eclipse-che | `eclipse-che-ingress` | Cilium | déployée | `2.argo/helm/che/sub` |
 | external-secrets | `external-secrets-ingress` | Cilium | déployée | `2.argo/helm/vault/sub` |
 | forgejo | `forgejo-ingress` | Cilium | déployée | `2.argo/helm/forgejo` |
-| hook | `hook-ingress` | Cilium | proposée | `2.argo/helm/hook/sub` |
+| hook | `hook-ingress` | Cilium | déployée | `2.argo/helm/hook/sub` |
 | local-path-storage | `local-path-storage-ingress` | Cilium | déployée | `2.argo/helm/storage` |
 | longhorn | `longhorn-manager-metrics` | Kubernetes | déployée | `2.argo/helm/storage` |
 | monitoring | `monitoring-ingress` | Cilium | déployée | `2.argo/helm/monitoring` |
 | obi | `obi-ingress` | Cilium | déployée | `2.argo/helm/monitoring` |
 | s3 | `s3-ingress` | Cilium | déployée | `2.argo/helm/database/sub` |
 | vault | `openbao-ingress` | Cilium | déployée | `2.argo/helm/vault/sub` |
+| vault-infra | `vault-infra-ingress` | Cilium | déployée | `2.argo/helm/vault/sub` |
 | vault-operator | `vault-operator-ingress` | Cilium | déployée | `2.argo/helm/vault/sub` |
 | weebo-angos | `weebo-angos-ingress` | Cilium | déployée | `2.argo/helm/angos` |
 | weebo-batlehub | `weebo-batlehub-ingress` | Cilium | déployée | `2.argo/helm/batlehub` |
@@ -313,7 +316,7 @@ flowchart LR
 | weebo-si-hardening | `weebo-net-dev-registries` | Cilium | déployée | `2.argo/helm/che/hardening` |
 | weebo-si-hardening | `weebo-net-internet` | Cilium | déployée | `2.argo/helm/che/hardening` |
 | weebo-si-hardening | `weebo-net-kube-api` | Cilium | déployée | `2.argo/helm/che/hardening` |
-| weebo-si-hardening | `weebo-si-operator-ingress` | Cilium | proposée | `2.argo/helm/che/sub` |
+| weebo-si-hardening | `weebo-si-operator-ingress` | Cilium | déployée | `2.argo/helm/che/sub` |
 
 ## Charts non dessinés
 

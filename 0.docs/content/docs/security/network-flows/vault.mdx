@@ -5,7 +5,7 @@ description: "Les flux autorisés par les politiques réseau de vault"
 
 {/* Généré par `task docs:netflow` (0.task/scripts/netflow.py). Ne pas éditer à la main. */}
 
-Les flux que les politiques de l'application Argo CD `vault` autorisent. Namespaces : `external-secrets`, `vault`, `vault-operator`.
+Les flux que les politiques de l'application Argo CD `vault` autorisent. Namespaces : `external-secrets`, `vault`, `vault-infra`, `vault-operator`.
 
 ## Légende
 
@@ -66,7 +66,9 @@ flowchart LR
   n_ns_traefik_907541 -->|"TCP 8200"| n_ns_vault_da07f8
   n_ns_vault_1e8c25 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_vault_1e8c25 -->|"tous ports"| n_ns_vault_da07f8
+  n_ns_vault_infra_14c050 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_vault_infra_14c050 -->|"TCP 8200"| n_ns_vault_da07f8
+  n_ns_vault_infra_14c050 -->|"tous ports"| n_ns_vault_infra_14c050
   n_ns_vault_operator_bf680a -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_vault_operator_bf680a -->|"TCP 8200"| n_ns_vault_da07f8
   n_ns_vault_operator_bf680a -->|"tous ports"| n_ns_vault_operator_bf680a
@@ -95,5 +97,6 @@ flowchart LR
 |---|---|---|---|---|
 | external-secrets | `external-secrets-ingress` | Cilium | déployée | `2.argo/helm/vault/sub` |
 | vault | `openbao-ingress` | Cilium | déployée | `2.argo/helm/vault/sub` |
+| vault-infra | `vault-infra-ingress` | Cilium | déployée | `2.argo/helm/vault/sub` |
 | vault-operator | `vault-operator-ingress` | Cilium | déployée | `2.argo/helm/vault/sub` |
 

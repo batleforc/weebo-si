@@ -72,7 +72,8 @@ rustfsCaTrust:
 # 2.argo/helm/angos/values.yaml. Values passed down by the main chart override
 # these, ciliumNetworkPolicies.enabled included.
 ciliumNetworkPolicies:
-  enabled: false
+  # Default deny, by waves (0.docs/content/docs/left-todo.md): wave 4, 2026-11-21.
+  enabled: true
   policies:
     # Kyverno: the admission webhook is only called by the apiserver.
     hook-ingress:

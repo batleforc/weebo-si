@@ -129,7 +129,8 @@ branch: ""
 # 2.argo/helm/angos/values.yaml. Values passed down by the main chart override
 # these, ciliumNetworkPolicies.enabled included.
 ciliumNetworkPolicies:
-  enabled: false
+  # Default deny, by waves (0.docs/content/docs/left-todo.md): wave 4, 2026-11-21.
+  enabled: true
   # Docs only (weebo-base.netflowReaches): endpoint-gateway's policy comes
   # from its upstream chart, so the relation cannot sit on a policy here.
   reaches:

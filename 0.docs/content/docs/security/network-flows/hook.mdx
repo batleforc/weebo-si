@@ -26,12 +26,12 @@ flowchart LR
     n_ns_hook_d7c9c8["tous les pods"]
   end
   n_ns_hook_d7c9c8 -->|"egress non restreint"| n_entity_open_f65d5d
-  n_ns_hook_d7c9c8 -.->|"tous ports"| n_ns_hook_d7c9c8
+  n_ns_hook_d7c9c8 -->|"tous ports"| n_ns_hook_d7c9c8
 ```
 
 ## Politiques
 
 | Namespace | Politique | Type | État | Chart |
 |---|---|---|---|---|
-| hook | `hook-ingress` | Cilium | proposée | `2.argo/helm/hook/sub` |
+| hook | `hook-ingress` | Cilium | déployée | `2.argo/helm/hook/sub` |
 

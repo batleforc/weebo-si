@@ -81,7 +81,7 @@ flowchart LR
   n_ns_monitoring_1d4c40 -->|"TCP 9090, TCP 9187"| n_ns_auth_895bb8
   n_ns_monitoring_1d4c40 -->|"TCP 8080, TCP 9187"| n_ns_batlehub_62b5f7
   n_ns_monitoring_1d4c40 -->|"TCP 9187"| n_ns_forgejo_90cc22
-  n_ns_monitoring_1d4c40 -.->|"TCP 8081"| n_ns_weebo_si_hardening_973fb2
+  n_ns_monitoring_1d4c40 -->|"TCP 8081"| n_ns_weebo_si_hardening_973fb2
   n_ns_netbird_45c447 ==>|"via Traefik : clickstack.weebo.poc"| n_ns_monitoring_adae0f
 ```
 

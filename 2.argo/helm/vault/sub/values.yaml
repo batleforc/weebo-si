@@ -72,8 +72,8 @@ networkPolicy:
 # these, ciliumNetworkPolicies.enabled included.
 # openbao keeps its own policy (networkPolicy above).
 ciliumNetworkPolicies:
-  # Default deny, by waves (0.docs/content/docs/left-todo.md): wave 3,
-  # 2026-11-21. vault-infra (the vault webhook) waits for the webhook wave.
+  # Default deny, by waves (0.docs/content/docs/left-todo.md): waves 3 and 4
+  # (vault-infra, the vault webhook), 2026-11-21.
   enabled: true
   policies:
     # vault-operator serves metrics only, nobody scrapes them.
@@ -85,7 +85,6 @@ ciliumNetworkPolicies:
             - {}
     # vault-secrets-webhook, called by the apiserver.
     vault-infra-ingress:
-      enabled: false
       namespace: vault-infra
       endpointSelector: {}
       ingress:
