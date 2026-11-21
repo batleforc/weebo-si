@@ -239,6 +239,19 @@ frontend:
 						// the chart at /shared/app/custom. Until it exists the UI
 						// keeps its own look.
 						"ui.cssurl": pulumi.String("./custom/batlehub.css"),
+						// CNPG ships no health check: without one a Cluster is Healthy as
+						// soon as it exists, and the sync-waves after it (the apps using
+						// the database) do not wait for PostgreSQL to accept connections.
+						"resource.customizations.health.postgresql.cnpg.io_Cluster": pulumi.String(`hs = { status = "Progressing", message = "Waiting for the cluster" }
+if obj.status ~= nil then
+  if obj.status.phase ~= nil then hs.message = obj.status.phase end
+  if obj.status.conditions ~= nil then
+    for _, c in ipairs(obj.status.conditions) do
+      if c.type == "Ready" and c.status == "True" then hs.status = "Healthy" end
+    end
+  end
+end
+return hs`),
 					},
 					"params": pulumi.Map{
 						"server.insecure": pulumi.Bool(deployed),

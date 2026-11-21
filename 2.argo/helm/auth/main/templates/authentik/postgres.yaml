@@ -60,10 +60,10 @@ spec:
 ---
 # The database behind Authentik, reached at `authentik-pg-rw.auth.svc:5432`.
 # No `imageName`, as for forgejo and batlehub: the operator picks the image
-# matching its own version. Wave -1 orders the creation only: Argo CD (as
-# installed by 1.pulu-conf) has no health check for postgresql.cnpg.io
-# Clusters, so it does not wait for the database to be up before the
-# `authentik` Application; Authentik's pods retry until it is.
+# matching its own version. Wave -1: with the health check 1.pulu-conf gives
+# Argo CD for postgresql.cnpg.io Clusters (Ready condition), the waves after
+# it wait for the database. The `authentik` Application is a separate one and
+# does not wait; Authentik's pods retry until the database is up.
 #
 # Bootstrapped on 2026-10-18 by importing the chart's old PostgreSQL
 # (bootstrap.initdb.import, since removed -- CNPG only reads `bootstrap` when
