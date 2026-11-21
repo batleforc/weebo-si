@@ -321,12 +321,20 @@ config:
 
     # RFC 0006. What a workspace's processes may do (exec, files, network,
     # capabilities), through KubeArmor (2.argo/helm/kubearmor, BPF-LSM
-    # enforcer). DryRun since 2026-11-21: read a day of `karmor logs` before
-    # Enforce (runbook bascule-weebo-si, Thursday). Needs
-    # operator.kubearmorPolicy.rbac.enabled.
+    # enforcer). Needs operator.kubearmorPolicy.rbac.enabled.
+    # Enforce since 2026-11-21, every rule and the default posture still on
+    # Audit, so nothing is blocked yet: DryRun writes no KubeArmorPolicy, so
+    # `karmor logs` had nothing to show; Enforce is what starts the audit
+    # trail. A rule goes Block once its logs are read (runbook
+    # bascule-weebo-si). namespaceSelector added the same day: without it the
+    # operator targets every namespace (its DryRun log showed a diff for
+    # vault, vault-infra, longhorn, netbird...), not only the workspaces.
     kubearmorPolicy:
       enabled: true
-      mode: DryRun
+      mode: Enforce
+      namespaceSelector:
+        matchLabels:
+          hardening.weebo.io/workspace-namespace: "true"
       catalog:
         - key: base
           templateRef: { name: weebo-armor-base, namespace: weebo-si-hardening }
@@ -485,9 +493,11 @@ config:
     # of the three upstream levels (lowercase). Before Enforce, run
     # `weebo-si-operator pods audit --all-namespaces`. Needs
     # operator.podSecurity.rbac.enabled.
+    # Enforce since 2026-11-21: a started workspace passed a server dry run
+    # of the baseline label (no warning).
     podSecurity:
       enabled: true
-      mode: DryRun
+      mode: Enforce
       namespaceSelector:
         matchLabels:
           hardening.weebo.io/workspace-namespace: "true"
