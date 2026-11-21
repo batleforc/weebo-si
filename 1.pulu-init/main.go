@@ -1190,10 +1190,12 @@ func main() {
 		// nodes ask it), VXLAN 8472 (no peer node; open, it lets anyone inject
 		// frames into the pod network).
 		//
-		// ADMIN_CIDRS (comma separated, IPv4 and/or IPv6) is who keeps apid and
-		// the apiserver. Without it there is no firewall at all: a block policy
-		// with no admin source would lock talosctl out, and on a single node
-		// the only way back is a reinstall.
+		// ADMIN_CIDRS (comma separated, IPv4 and/or IPv6, in the root .env) is
+		// who keeps apid and the apiserver. A block policy with no admin source
+		// would lock talosctl out, and on a single node the only way back is a
+		// reinstall. A missing value used to be a warning, which is how the node
+		// ran with no firewall until 2026-11-21: it now fails the run, and
+		// ADMIN_CIDRS=none is the explicit way to go without a firewall.
 		//
 		// netbirdCIDRs is the second way in, should ADMIN_CIDRS go stale (new
 		// home IP): peers reach the node's own netbird address on wt0 with
@@ -1204,8 +1206,10 @@ func main() {
 		if adminCIDRs := strings.FieldsFunc(os.Getenv("ADMIN_CIDRS"), func(r rune) bool {
 			return r == ',' || r == ' '
 		}); len(adminCIDRs) == 0 {
-			ctx.Log.Warn("ADMIN_CIDRS is not set, so the node gets no ingress firewall: "+
-				"apid, kubelet, etcd and hubble stay reachable from the internet.", nil)
+			return fmt.Errorf("ADMIN_CIDRS is not set: without it the node gets no ingress firewall " +
+				"and apid, kubelet, etcd and hubble are reachable from the internet; set ADMIN_CIDRS=none to accept that")
+		} else if len(adminCIDRs) == 1 && adminCIDRs[0] == "none" {
+			ctx.Log.Warn("ADMIN_CIDRS=none: the node gets no ingress firewall.", nil)
 		} else {
 			subnets := func(cidrs ...[]string) []map[string]interface{} {
 				var out []map[string]interface{}
@@ -1248,6 +1252,27 @@ func main() {
 					// 4244: hubble server, read by hubble-relay.
 					"name":         "cilium",
 					"portSelector": map[string]interface{}{"ports": []interface{}{4240, 4244}, "protocol": "tcp"},
+					"ingress":      subnets(podSubnets),
+				},
+				{
+					// KubeArmor's hostNetwork daemon: 32767 is the gRPC log
+					// feed kubearmor-relay (and `karmor logs`) reads, 32766
+					// its health server.
+					"name":         "kubearmor",
+					"portSelector": map[string]interface{}{"ports": []interface{}{32766, 32767}, "protocol": "tcp"},
+					"ingress":      subnets(podSubnets),
+				},
+				{
+					// Host DNS (169.254.116.108): CoreDNS forwards to it
+					// (forwardKubeDNSToHost, on by default). Talos may
+					// already let it through; explicit costs nothing.
+					"name":         "host-dns-udp",
+					"portSelector": map[string]interface{}{"ports": []int{53}, "protocol": "udp"},
+					"ingress":      subnets(podSubnets),
+				},
+				{
+					"name":         "host-dns-tcp",
+					"portSelector": map[string]interface{}{"ports": []int{53}, "protocol": "tcp"},
 					"ingress":      subnets(podSubnets),
 				},
 			}
