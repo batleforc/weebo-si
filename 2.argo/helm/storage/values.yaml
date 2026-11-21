@@ -29,7 +29,8 @@ branch: ""
 # (templates/longhorn/network-policy.yaml). Same checks as in
 # 2.argo/helm/angos/values.yaml.
 ciliumNetworkPolicies:
-  enabled: false
+  # Wave 1 of the default deny (2026-11-21).
+  enabled: true
   policies:
     # The provisioner serves nothing; its helper pods run in the same
     # namespace and only talk to the apiserver.

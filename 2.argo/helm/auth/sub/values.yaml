@@ -1095,9 +1095,12 @@ branch: ""
 # 2.argo/helm/angos/values.yaml. Values passed down by the main chart override
 # these, ciliumNetworkPolicies.enabled included.
 ciliumNetworkPolicies:
-  enabled: false
+  # Default deny, by waves: dex-ingress since 2026-11-21 (wave 1), the others
+  # still off one by one below.
+  enabled: true
   policies:
     auth-ingress:
+      enabled: false
       namespace: auth
       endpointSelector: {}
       # The weebo-authentik operator drives authentik's API by its public name.
