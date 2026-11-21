@@ -95,7 +95,7 @@ spec:
           bootstrap_password: "vault:mv/data/main-config#AUTHENTIK_BOOTSTRAP_PASSWORD"
           secret_key: "vault:mv/data/main-config#AUTHENTIK_SECRET_KEY"
           error_reporting:
-            enabled: true
+            enabled: false
 
         server:
           ingress:
