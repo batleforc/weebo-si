@@ -155,6 +155,24 @@ d'un middleware oublié ou non.
 - **`externalTrafficPolicy: Local`** : l'IP réelle du client arrive déjà sur
   Traefik, c'est validé (décision 4).
 
+### 3.1 Ce qui demanderait un host public (recensé le 2026-11-21)
+
+Aucun host public n'existe, et rien n'est exposé tant qu'aucun de ces cas
+n'est tranché. La liste dit où une ouverture serait nécessaire, et ce qui
+fonctionne déjà sans.
+
+| Cas | Entrant depuis Internet ? | État / alternative |
+| --- | --- | --- |
+| CI sur les runners hébergés par GitHub qui pousse vers angos (`registry.pkg.weebo.poc`) ou batlehub (`pkg.weebo.poc`) en OIDC | **oui**, le runner doit joindre le registre | Seul cas qui bloque un item de `left-todo` (OIDC CI d'angos). La config OIDC CI de batlehub existe mais ne peut pas servir depuis GitHub. Sans ouverture : un runner dans le cluster (Forgejo Actions ou runner GitHub auto-hébergé) qui pousse avec son jeton de ServiceAccount (`provider:kube`, accepté par les deux registres). |
+| Mail externe Stalwart (`weebo.fr`, RFC 0001, « plus tard ») | oui, SMTP 25 (et la soumission si des clients externes) | Pas prévu à court terme. |
+| Certificats publics en HTTP-01 (issuer `outbound`) | oui, port 80 depuis l'ACME | Seulement le jour où un host public existe ; DNS-01 l'éviterait. |
+| Webhooks GitHub vers Argo CD ou les miroirs Forgejo | oui | Optionnel : Argo CD et Forgejo sondent les dépôts. |
+| ProxyAuthK8S (`kube.weebo.poc`) | non tant qu'il reste derrière Netbird | À revoir si des clients hors VPN doivent l'utiliser (RFC 0005). |
+| Renovate, le connecteur Dex `forgejo-actions`, la validation des jetons OIDC GitHub (JWKS) | non | Sorties uniquement. |
+
+Toute ouverture passe par `traefik-public` et son WAF, jamais par une route
+`weebo.poc`.
+
 ---
 
 ## 4. Conception côté utilisateur

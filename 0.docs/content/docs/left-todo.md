@@ -16,15 +16,16 @@ description: "What's left to do ?"
 - [ ] Suites de la migration CNPG d'Authentik
   - [x] Mutation des Secrets de vault-secrets-webhook coupée le 2026-10-18 (`secretsMutation: false`) : aucun Secret ne s'en servait (seul `auth/authentik` porte des références `vault:`, jamais mutées, résolues par vault-env dans les pods), elle ne faisait que bloquer. Le constat d'origine : sans annotations `vault.security.banzaicloud.io/*` sur le Secret, il cherche Vault à `https://vault:8200`, qui ne résout plus, et refuse toute écriture d'un Secret à références `vault:` (`failurePolicy: Fail`). Ça bloque aussi leur suppression en foreground : le garbage collector ne peut pas retirer le finalizer `foregroundDeletion` (cas d'`authentik-postgresql-auth`, retiré à la main le 2026-10-18 en remplaçant la référence dans le même patch). Contourné pour Authentik par `ApplyOutOfSyncOnly=true` et l'hôte de la base en env
   - [ ] Sauvegardes CNPG vers RustFS (plugin barman-cloud + `ScheduledBackup`) pour `authentik-pg`, `forgejo-pg` et `batlehub-pg`. Authentik y garde aussi ses sessions, sa file de tâches, les appareils MFA et la trace des élévations admin
-    - [ ] Écrit le 2026-11-18, un bucket `<app>-backup` par application, base backup à 02:00, rétention 7 jours (`weebo-base.cnpgBackup`) : `forgejo-pg` + volume `forgejo-data` (restic, 1 jour + 1 de la semaine passée), `batlehub-pg`, `authentik-pg`. Reste `terraform apply` de 2.terra/vault, la sync, puis un test de restauration
-    - [ ] Dashboard ClickStack `Backups` + alertes ntfy (`backups.json`) : à vérifier une fois les métriques CNPG arrivées
+    - [x] Écrit le 2026-11-18, en place depuis : un bucket `<app>-backup` par application, base backup à 02:00, rétention 7 jours (`weebo-base.cnpgBackup`) : `forgejo-pg` + volume `forgejo-data` (restic, 1 jour + 1 de la semaine passée), `batlehub-pg`, `authentik-pg`
+    - [ ] Restauration : [runbook](/docs/runbooks/restauration), une page par application. Reste à faire le premier test et à le noter dans le journal du runbook
+    - [x] Dashboard ClickStack `Backups` + alertes ntfy (`backups.json`), vérifiés
     - [ ] `mail-pg` (Stalwart) : pas encore sauvegardé
   - [x] Rétention bornée le 2026-10-18 : tâches gardées 7 jours (`AUTHENTIK_WORKER__TASK_EXPIRATION`, chart), événements 90 jours (`event_retention` du tenant, **réglé en base, pas dans Git** : à reposer si la base repart de zéro, et les `expires` existants ont été ramenés à 90 jours). `tasklog` et `task` faisaient 2,4 Go des 3 Go
   - [x] Cause du volume : l'opérateur weebo-authentik réécrivait chaque objet à chaque réconciliation, 99,96 % des événements d'Authentik. Corrigé en weebo-authentik 0.18.3 et validé le 2026-10-18 : 0 événement sur l'heure 18:30-19:30, contre ~480 `model_updated` par heure avant - [RFC 0003](/docs/rfc/0003-authentik-ecritures)
-  - [ ] Test de dérive de la RFC 0003 : renommer une Application dans l'UI, elle doit revenir sous 5 minutes (`drift corrected` dans les logs de l'opérateur)
-  - [ ] Health check Argo CD pour `postgresql.cnpg.io/Cluster` dans `1.pulu-conf`, pour que les sync-waves attendent les bases
+  - [x] Test de dérive de la RFC 0003, passé le 2026-11-21 : Application `stalwart` renommée en base, nom rétabli en 11 s (`drift corrected` dans les logs de l'opérateur)
+  - [ ] Health check Argo CD pour `postgresql.cnpg.io/Cluster` dans `1.pulu-conf`, pour que les sync-waves attendent les bases : écrit le 2026-11-21 (condition `Ready`), reste `pulumi up` de `1.pulu-conf`
   - [x] Redémarrages d'`authentik-server` : fuite dans `/dev/shm`, qui a déclenché une boucle de SIGBUS le 2026-10-18 de 07:59 à 12:00. À chaque recyclage gunicorn, des fichiers Prometheus multiprocess indexés par PID restent derrière ; 64 Mi se remplissent en ~39 jours. Ralenti (`AUTHENTIK_WEB__MAX_REQUESTS=10000`, `/dev/shm` en `emptyDir` Memory de 256 Mi), pas corrigé : la fuite est dans le `gunicorn.conf.py` d'Authentik. Détail dans `2.argo/helm/auth/main/templates/authentik/authentik.yaml`
-  - [ ] Vérifier que l'auto-sync de l'Application racine `main` avait `prune` avant le gel du 2026-10-18 : il a été remis à `selfHeal: true` seul
+  - [x] Auto-sync de l'Application racine `main` : Git (`1.pulu-conf`) n'a jamais eu ni `prune` ni `selfHeal` (`automated: {}`), et c'est ce qui tourne au 2026-11-21. Sans `prune`, une Application retirée de `2.argo/app` reste à supprimer à la main
 - [ ] [ProxyAuthK8S](https://github.com/batleforc/ProxyAuthK8S) - Will wait for 0.2.0 - Ouroboros
   - [ ] Point d'accés externe au cluster Kubernetes pour l'authentification OIDC
   - [ ] Rejeter toutes requêtes qui ne viendrais pas de ProxyAuthK8S ?
@@ -41,11 +42,11 @@ description: "What's left to do ?"
   - [x] [OIDC Kube](https://angos.dev/docs/how-to/configure-kubernetes-oidc) : Allow Kubernetes to authenticate with OIDC (e.g. Create a Dockerconfigjson from service account that can be used to pull images from a private registry)
     - [x] Cote angos : `[auth.oidc.kube]` sur l'issuer du cluster, ServiceAccount dedie + ClusterRoleBinding pour lire la JWKS, et une policy en lecture seule pour ce provider. Un pod qui presente son propre jeton projete (audience `angos`) est authentifie
     - [x] Cote noeud : pull d'image sans imagePullSecret, verifie de bout en bout le 2026-09-08. Quatre pieces, dans cet ordre : DaemonSet installeur (namespace `angos-node`, PSA privileged), drapeaux kubelet Talos, entree DNS + CA du registre pour containerd, et le ClusterRole `angos-image-pull-audience` sans lequel l'apiserver refuse au noeud le jeton pour l'audience `angos`
-  - [ ] [OIDC CI](https://angos.dev/docs/how-to/configure-github-actions-oidc) : Directly push images to angos registry from GitHub Actions using OIDC
+  - [ ] [OIDC CI](https://angos.dev/docs/how-to/configure-github-actions-oidc) : Directly push images to angos registry from GitHub Actions using OIDC. Bloqué : les runners GitHub ne joignent pas le registre interne. Exposer (RFC 0006 §3.1) ou runner dans le cluster
   - [x] Page `/me/` : rend a l'utilisateur connecte son propre jeton OIDC et la commande `docker login` prete a coller, servie par oauth2-proxy depuis un ConfigMap
   - [x] UI web : SSO navigateur via oauth2-proxy, sur la meme application Authentik que le device grant. angos ne lit aucun cookie, l'IngressRoute ne route par le proxy que ce qui porte la session ou n'est pas une route d'API
   - [ ] [Scan d'images](https://angos.dev/docs/how-to/scan-images/) : StatefulSet `angos-scanner` (trivy par defaut), active registre par registre via `scan: true`, desactive partout par defaut. Identite Basic dediee dans Vault, mot de passe et hash argon2id ecrits par terraform, rapport SARIF attache en referrer de l'image
-    - [ ] Verifie en local (podman) de bout en bout le 2026-09-13 : push -> job -> rapport. Reste a activer sur le cluster
+    - [ ] Verifie en local (podman) de bout en bout le 2026-09-13 : push -> job -> rapport. Migre vers l'operateur et active le 2026-11-21 sur `weebo` et `ghcr` (`AngosIdentity` scanner qui adopte `mv/angos/scanner`, `spec.scan`). Reste a voir un rapport SARIF sur une image apres la sync
     - [ ] grype ne recoit pas les credentials de `[scanner.registry]` en 1.8.0 et pull en anonyme ; contourne par `GRYPE_REGISTRY_AUTH_*` dans le chart, a retirer quand upstream corrige
   - [x] Expo : registry.pkg.weebo.poc
 - [x] [Batlehub](https://batleforc.git.batleforc.fr/batlehub/) - en 1.7.0
@@ -63,14 +64,14 @@ description: "What's left to do ?"
 - [ ] [Weebo Si Hardening](https://github.com/batleforc/weebo-si-hardening)
   - [ ] Bascule Weebo5 → Weebo-SI : [runbook](/docs/runbooks/bascule-weebo-si) (élévation admin 2FA tracée, KubeArmor)
   - [x] NetPolicy (networkProfiles, Enforce)
-  - [ ] NetPolicy guard (policyGuard, activé en DryRun, passer en Enforce)
-  - [ ] DWOC restrictions (dwocPin, activé en DryRun, passer en Enforce)
+  - [x] NetPolicy guard (policyGuard, Enforce le 2026-11-21, aucun refus en DryRun)
+  - [x] DWOC restrictions (dwocPin, Enforce le 2026-11-21, aucun refus en DryRun)
   - [ ] Image Pull Policy
   - [x] Image Registry (imagePolicy, Enforce, via angos + egress direct vers les registres coupé)
   - [ ] Package Registry (registryConfig)
   - [x] Endpoint auth (endpointAuth, Enforce)
-  - [ ] KubeArmor policies (kubearmorPolicy, needs KubeArmor)
-  - [ ] Pod Security (podSecurity, dispo depuis l'opérateur 0.3.0, à passer en DryRun puis `pods audit`)
+  - [ ] KubeArmor policies (kubearmorPolicy) : KubeArmor installé (BPF-LSM), feature en DryRun le 2026-11-21 (template `weebo-armor-base` : `/etc/shadow`, `/usr/bin`, `/usr/sbin`, `net_raw`). Reste une journée de `karmor logs` puis Enforce et les Block (runbook bascule, jeudi)
+  - [ ] Pod Security (podSecurity) : DryRun le 2026-11-21. Reste `weebo-si-operator pods audit --all-namespaces` puis Enforce
   - [ ] Resource quotas (resourceQuotas, dispo depuis l'opérateur 0.3.0, templates dans weebo-si-hardening-templates)
 - [ ] [Eclipse Che](https://www.eclipse.org/che/)
   - [x] Expo : cde.dev.weebo.poc && \*.cde.dev.weebo.poc
@@ -79,6 +80,10 @@ description: "What's left to do ?"
   - [x] IDEs pilotés par `che.editors` (éditeurs maison)
   - [ ] Autres IDEs : [openchamber](https://github.com/openchamber/openchamber) (derrière l'auth Che), [abcdesktop](https://www.abcdesktop.io/compare/overview/) avec un JetBrains ?
 - [ ] Properly apply a CiliumNetworkPolicy with default deny for all
+  - [x] Vague 1, entrée, le 2026-11-21 : `local-path-storage`, `obi` (pods en hostNetwork, la politique ne filtre rien), `dex`. Vérifié : aucun drop Hubble, dex répond via Traefik, l'accès direct au pod est refusé
+  - [ ] Vagues suivantes, entrée (brouillons weebo-base prêts, `enabled` par politique) : forgejo, angos, batlehub, s3, puis database, monitoring, auth, cert-manager, external-secrets, vault-*, enfin les namespaces à webhooks `failurePolicy: Fail` (hook, vault-infra, eclipse-che, devworkspace-controller, weebo-si-hardening)
+  - [ ] Politiques à écrire : traefik, netbird, kubearmor, kubelet-serving-cert-approver
+  - [ ] Sortie namespace par namespace (modèle : profil `weebo-net-base` du hardening), puis une `CiliumClusterwideNetworkPolicy` de filet. Pas de `policyAuditMode` : il est global et suspendrait les politiques déjà appliquées
 - [ ] Setup [Stalwart](https://stalw.art/) as an internal mail system for the cluster and connect every app to it (prevent mail to go outside the cluster) - [RFC 0001](/docs/rfc/0001-stalwart) (opérateur weebo-stalwart sur weebo-operator-kit)
   - [ ] Weebo.poc for internal messaging (entre les apps du cluster et les utilisateurs du cluster ou user <-> user)
   - [ ] weebo.[fr/net/untruc] for external messaging si nécessaire plus tard
@@ -140,6 +145,7 @@ description: "What's left to do ?"
     - [ ] Maintenance Page
     - [ ] Request ID
     - [ ] WAF ?
+    - [ ] Besoins d'exposition publique recensés : [RFC 0006 §3.1](/docs/rfc/0006-ingress-public-interne)
   - [ ] Hook / Kyverno
   - [ ] Storage
     - [ ] Longhorn
