@@ -158,6 +158,11 @@ spec:
             # usr/local/bin under it for trivy's.
             - name: PATH
               value: /opt/scanner:/opt/scanner/usr/local/bin
+            # The engine's database, on the `cache` volume. The old -trivy /
+            # -grype images set it; the registry image does not, and the
+            # default (~/.cache = /.cache) is on the read-only root.
+            - name: XDG_CACHE_HOME
+              value: /cache
           {{- if .Values.angos.caTrust.enabled }}
             # Covers both halves of what this pod talks to: the registry,
             # signed by the internal CA, and the vulnerability database feed
