@@ -40,3 +40,20 @@ ciliumNetworkPolicies:
       ingress:
         - fromEndpoints:
             - {}
+      # First egress wave (2026-11-21): the provisioner only talks to the
+      # apiserver; the helper pods write to a hostPath and open nothing.
+      egress:
+        - toEndpoints:
+            - matchLabels:
+                k8s-app: kube-dns
+                k8s:io.kubernetes.pod.namespace: kube-system
+          toPorts:
+            - ports:
+                - port: "53"
+                  protocol: ANY
+        - toEntities:
+            - kube-apiserver
+          toPorts:
+            - ports:
+                - port: "6443"
+                  protocol: TCP

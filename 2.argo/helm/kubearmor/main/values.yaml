@@ -2,8 +2,43 @@ repo: ""
 project: ""
 branch: ""
 
+# CiliumNetworkPolicies, rendered by 2.helm/weebo-base (templates/_cilium.tpl).
+# Wave 5, 2026-11-21. The daemon is hostNetwork, so no policy applies to it.
+# Hubble showed only `host` (always let in): the apiserver on the controller
+# webhook (9443) and the kubelet probes. `karmor logs` goes through a
+# port-forward, which also arrives as `host`.
 ciliumNetworkPolicies:
-  enabled: false
+  enabled: true
+  policies:
+    # Egress (first egress wave): controller, operator and snitch talk to the
+    # apiserver only; the relay reads the hostNetwork daemon on host:32767
+    # and checks its health on 32766 (seen dropped on the first try).
+    kubearmor-ingress:
+      namespace: kubearmor
+      endpointSelector: {}
+      egress:
+        - toEndpoints:
+            - matchLabels:
+                k8s-app: kube-dns
+                k8s:io.kubernetes.pod.namespace: kube-system
+          toPorts:
+            - ports:
+                - port: "53"
+                  protocol: ANY
+        - toEntities:
+            - kube-apiserver
+          toPorts:
+            - ports:
+                - port: "6443"
+                  protocol: TCP
+        - toEntities:
+            - host
+          toPorts:
+            - ports:
+                - port: "32766"
+                  protocol: TCP
+                - port: "32767"
+                  protocol: TCP
 
 kubearmor:
   enabled: true

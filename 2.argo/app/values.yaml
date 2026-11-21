@@ -155,6 +155,10 @@ project:
         namespace: "local-path-storage"
       - server: "https://kubernetes.default.svc"
         namespace: "weebo-openbao"
+      # Installed by 1.pulu-init; only its CiliumNetworkPolicy comes from
+      # ingress-app.
+      - server: "https://kubernetes.default.svc"
+        namespace: "kubelet-serving-cert-approver"
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"

@@ -50,10 +50,12 @@ traefik:
         - fd67:3c3d:53b7:8bb7::/64
         - 100.64.0.0/16
   # CiliumNetworkPolicy in front of traefik, see
-  # templates/middleware/network-policy.yaml. Off until it has been checked
-  # against `hubble observe --to-namespace traefik`.
+  # templates/middleware/network-policy.yaml. On since 2026-11-21: the access
+  # logs showed no legitimate client from `world`, only scanners on stale
+  # weebo.fr names. Nothing here is public until RFC 0006 adds traefik-public;
+  # a GitHub Actions push to batlehub/angos would need a CIDR below.
   networkPolicy:
-    enabled: false
+    enabled: true
     # Allow every pod in the cluster. Simplest and safest first step, because
     # a lot of in-cluster OIDC traffic goes through auth.weebo.poc. Set to
     # false and use the lists below to restrict further.
@@ -113,6 +115,29 @@ ciliumNetworkPolicies:
   # Default deny, by waves (0.docs/content/docs/left-todo.md): wave 3, 2026-11-21.
   enabled: true
   policies:
+    # kubelet-serving-cert-approver (installed by 1.pulu-init, policy here
+    # with the other certificate tooling): its only callers are the kubelet
+    # probes on 8080 (`host`, always let in). Wave 5, 2026-11-21.
+    # Egress (first egress wave, same day): it only talks to the apiserver
+    # (watch CSRs, approve them).
+    kubelet-serving-cert-approver-ingress:
+      namespace: kubelet-serving-cert-approver
+      endpointSelector: {}
+      egress:
+        - toEndpoints:
+            - matchLabels:
+                k8s-app: kube-dns
+                k8s:io.kubernetes.pod.namespace: kube-system
+          toPorts:
+            - ports:
+                - port: "53"
+                  protocol: ANY
+        - toEntities:
+            - kube-apiserver
+          toPorts:
+            - ports:
+                - port: "6443"
+                  protocol: TCP
     # cert-manager and trust-manager webhooks, called by the apiserver.
     cert-manager-ingress:
       namespace: cert-manager

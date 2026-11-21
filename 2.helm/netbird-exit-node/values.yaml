@@ -111,12 +111,17 @@ netpol:
             - port: "1900"
               protocol: UDP
 
-# CiliumNetworkPolicies from 2.helm/weebo-base. Nothing here: the exit node
-# already has its own policy (netpol above), and it accepts no connection
-# from inside the cluster.
+# CiliumNetworkPolicies from 2.helm/weebo-base. Ingress only, wave 5,
+# 2026-11-21: the exit node accepts no connection from inside the cluster
+# (Hubble: nothing). Its peers' WireGuard packets answer connections it opened
+# itself, which conntrack lets through. `netpol` above (ingress + egress,
+# written for weebo5) stays off.
 ciliumNetworkPolicies:
-  enabled: false
-  policies: {}
+  enabled: true
+  policies:
+    netbird-ingress:
+      namespace: netbird
+      endpointSelector: {}
   # Docs only (weebo-base.netflowReaches): VPN peers are masqueraded by the
   # exit node, so from inside the cluster it is the one reaching every
   # name Traefik serves.
