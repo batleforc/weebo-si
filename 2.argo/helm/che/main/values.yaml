@@ -76,7 +76,7 @@ che:
     devworkspace:
       repoURL: https://github.com/devfile/devworkspace-operator
       # renovate: datasource=github-tags depName=devfile/devworkspace-operator
-      version: v1.1.0
+      version: v1.1.1
   # weebo-si-operator from batleforc/weebo-si-hardening, pulled as an OCI chart.
   # The chart version is also the image tag (appVersion).
   hardening:
