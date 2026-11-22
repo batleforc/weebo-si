@@ -503,6 +503,7 @@ applications:
     enabled: false
     slug: longhorn
     name: longhorn
+    metaLaunchUrl: "https://longhorn.weebo.poc/"
     accessGroup: weebo_admin
     provider:
       kind: proxy
@@ -545,6 +546,7 @@ applications:
     enabled: false
     slug: clickstack
     name: clickstack
+    metaLaunchUrl: "https://clickstack.weebo.poc/search"
     accessGroup: weebo_admin
     provider:
       kind: proxy
@@ -572,6 +574,7 @@ applications:
     enabled: false
     slug: argo
     name: argo
+    metaLaunchUrl: "https://argo.weebo.poc/"
     metaIcon: "https://maxleriche.net/public/media/techno/argo.png"
     # weebo_user: anyone may sign in, Argo CD's RBAC decides what they see.
     # Its default policy is empty, so a plain user only gets the che-users
@@ -614,6 +617,8 @@ applications:
     enabled: false
     slug: argo-admin
     name: argo-admin
+    # A fresh login, so Dex offers the weebo-admin connector.
+    metaLaunchUrl: "https://argo.weebo.poc/auth/login?return_url=https%3A%2F%2Fargo.weebo.poc%2Fapplications"
     metaIcon: "https://maxleriche.net/public/media/techno/argo.png"
     accessGroup: weebo_admin
     secretTargets:
@@ -639,6 +644,8 @@ applications:
     enabled: false
     slug: che-cluster
     name: che-cluster
+    # Was https://cde.weebo.poc, a Terraform-era value kept in the database.
+    metaLaunchUrl: "https://cde.dev.weebo.poc/dashboard/"
     metaIcon: "https://maxleriche.net/public/media/application/eclipse-che.png"
     accessGroup: weebo_moderator
     # che-cluster.tf writes the SAME credentials to two paths; the fan-out
@@ -691,6 +698,7 @@ applications:
     enabled: false
     slug: angos
     name: angos
+    metaLaunchUrl: "https://registry.pkg.weebo.poc/"
     # Not uploaded yet -- every other icon here is a real file under
     # /public/media/application/ and this one 404s until one is put there.
     metaIcon: "https://maxleriche.net/public/media/application/angos.png"
@@ -733,6 +741,7 @@ applications:
     enabled: true
     slug: batlehub
     name: batlehub
+    metaLaunchUrl: "https://pkg.weebo.poc/"
     metaIcon: "https://maxleriche.net/public/media/application/batlehub.png"
     accessGroup: weebo_moderator
     secretTargets:
@@ -786,6 +795,8 @@ applications:
     enabled: false
     slug: forgejo
     name: forgejo
+    # Starts the Authentik sign-in, then lands on the dashboard.
+    metaLaunchUrl: "https://git.weebo.poc/user/oauth2/authentik"
     metaIcon: "https://maxleriche.net/public/media/techno/forgejo.png"
     accessGroup: weebo_user
     secretTargets:
@@ -831,6 +842,8 @@ applications:
     enabled: false
     slug: stalwart
     name: stalwart
+    # Derived from the regex redirect URI, it read https://mail\.weebo\.poc.
+    metaLaunchUrl: "https://mail.weebo.poc/"
     metaIcon: "https://maxleriche.net/public/media/application/stalwart.png"
     accessGroup: weebo_user
     secretTargets:
@@ -865,6 +878,8 @@ applications:
     enabled: false
     slug: endpoint-gateway
     name: endpoint-gateway
+    # Hidden: the gate in front of workspace endpoints, not a destination.
+    metaLaunchUrl: "blank://blank"
     metaIcon: "https://maxleriche.net/public/media/application/eclipse-che.png"
     accessGroup: weebo_moderator
     # mv/weebo-si-hardening/* is what the auth-read role lets a SecretStore in
@@ -902,6 +917,8 @@ applications:
     enabled: false
     slug: kube-admin
     name: kube-admin
+    # Hidden: kubectl oidc-login only (derived as http://localhost:8000).
+    metaLaunchUrl: "blank://blank"
     accessGroup: weebo_admin
     # Public client (kubectl oidc-login, PKCE): no secret, nothing to write.
     # An empty list falls back to the instance default, read by nothing.
@@ -937,6 +954,8 @@ applications:
     enabled: false
     slug: s3
     name: s3
+    # The bucket root answers 403.
+    metaLaunchUrl: "https://s3-main.weebo.poc/rustfs/console/"
     metaIcon: "https://maxleriche.net/public/media/application/s3.png"
     accessGroup: weebo_moderator
     # Unlike angos above, nothing in this repo reads AUTHENTIK_URL from
@@ -1022,6 +1041,8 @@ applications:
     enabled: false
     slug: openbao
     name: openbao
+    # The users namespace (RFC 0007), the one every weebo_user has.
+    metaLaunchUrl: "https://vault.weebo.poc/ui/vault/auth?namespace=users&with=authentik"
     metaIcon: "https://maxleriche.net/public/media/techno/vault.png"
     accessGroup: weebo_user
     secretTargets:

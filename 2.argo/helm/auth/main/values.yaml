@@ -72,9 +72,10 @@ authentik:
     enabled: true
     # >= 0.23.0: AuthentikBlueprint (auth/sub, blueprints). 0.23.1: a proxy
     # provider PATCH carries internal_host (a flow change on longhorn /
-    # clickstack was refused with a 400 before).
+    # clickstack was refused with a 400 before). 0.26.0: metaLaunchUrl
+    # (auth/sub applications); against an older CRD the field is refused.
     # renovate: datasource=docker depName=ghcr.io/weebo-si-operator/charts/weebo-authentik
-    version: 0.25.1
+    version: 0.26.0
     replicaCount: 1
   sub:
     enabled: true

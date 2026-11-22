@@ -17,6 +17,13 @@ spec:
 {{- with $app.metaIcon }}
   metaIcon: {{ . | quote }}
 {{- end }}
+{{- with $app.metaLaunchUrl }}
+  # Where the Authentik library sends the user (operator >= 0.26.0). Unset,
+  # the remote value is left alone and Authentik derives one from the
+  # provider (proxy external host, first redirect URI), often the wrong page.
+  # `blank://blank` hides the application from the library.
+  metaLaunchUrl: {{ . | quote }}
+{{- end }}
   provider:
     kind: {{ $app.provider.kind }}
 {{- if eq $app.provider.kind "oauth2" }}
