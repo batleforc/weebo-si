@@ -98,6 +98,21 @@ spec:
             enabled: false
 
         server:
+          # PSA `restricted`, as for the worker below (2026-11-22). Checked
+          # live first: ready on 9000, auth.weebo.poc answers 200 through
+          # Traefik, the embedded outpost still answers forward-auth (302 to
+          # authorize on clickstack.weebo.poc).
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containerSecurityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           ingress:
             ingressClassName: traefik
             enabled: true
