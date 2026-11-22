@@ -151,6 +151,25 @@ spec:
               mountPath: /web/dist/assets/batlehub
               readOnly: true
           {{- end }}
+        # PSA `restricted` for the worker (2026-11-22): the image already runs
+        # as authentik (1000), this states it and drops the rest. Pod-level so
+        # it also covers vault-webhook's injected copy-vault-env init
+        # container. Checked live before this commit: the worker starts and
+        # processes tasks; the only new log line is "Not running as root,
+        # disabling permission fixes". Root filesystem left writable, as the
+        # chart has not tested it read-only.
+        worker:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containerSecurityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
         # The database is CNPG's (templates/authentik/postgres.yaml), not the
         # chart's bundled Bitnami PostgreSQL -- off upstream by default, and
         # stated here so a chart bump can't bring it back.
