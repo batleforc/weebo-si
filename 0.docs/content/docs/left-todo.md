@@ -60,7 +60,7 @@ description: "What's left to do ?"
     - pkg.weebo.poc
     - npm.pkg.weebo.poc
     - \*.pkg.weebo.poc
-- [ ] [Kuberarmor](https://kubearmor.com/)
+- [x] [Kuberarmor](https://kubearmor.com/)
 - [ ] [Kloak](https://une-tasse-de.cafe/blog/kloak/)
 - [ ] [Weebo Si Hardening](https://github.com/batleforc/weebo-si-hardening)
   - [ ] Bascule Weebo5 → Weebo-SI : [runbook](/docs/runbooks/bascule-weebo-si) (élévation admin 2FA tracée, KubeArmor)

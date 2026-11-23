@@ -232,7 +232,19 @@ octodoctor-output/
 /.claude/skills/grill-me
 /.claude/skills/grilling
 /.claude/skills/ponytail
+/.claude/skills/weebo-dum-e
 /.claude/skills/weebo-good-practice
 /.claude/skills/weebo-testing
 /.claude/skills/wska
 # <<< wska links in .claude/
+
+# >>> wska links in .agents/ (rewritten by wska install)
+/.agents/skills/batlehub-rfc
+/.agents/skills/grill-me
+/.agents/skills/grilling
+/.agents/skills/ponytail
+/.agents/skills/weebo-dum-e
+/.agents/skills/weebo-good-practice
+/.agents/skills/weebo-testing
+/.agents/skills/wska
+# <<< wska links in .agents/
