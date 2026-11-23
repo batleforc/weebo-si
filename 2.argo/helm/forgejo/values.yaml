@@ -137,7 +137,7 @@ forgejo:
       image:
         repository: docker.io/restic/restic
         # renovate: datasource=docker depName=docker.io/restic/restic
-        tag: "0.18.1"
+        tag: "0.20.0"
 
   # ── Admin ──────────────────────────────────────────────────────────────────
   # A local admin, for the day Authentik is down or before the OIDC source
