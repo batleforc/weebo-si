@@ -166,7 +166,7 @@ Notes:
 - Easter eggs: `src/eggs.runtime.js`, built by `src/eggs.mjs` into one script per target
   with its config written in. A key sequence (Konami, or a word such as `sudo` typed
   outside a text field) opens a dialog; on the error pages it turns the crab's stage into
-  a game (`crab-run`: Space or a tap to jump the bugs; `shelf-climb`: a rusty robot bouncing up
+  a game (`crab-run`: Space or a tap to jump the bugs and stay under the bats, obstacles drawn at random; `shelf-climb`: the crab bouncing up
   a library from book to book, steered with the arrows or a side of the stage). A season (date range) swaps the
   accent, contrast-checked by the build like the tokens, and sends one parade a session
   (bats, snow, upside-down crab); `?bh-season=<name>` previews one. After `idle` minutes

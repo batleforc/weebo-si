@@ -1,17 +1,17 @@
 # Graph Report - weebo-si  (2026-11-23)
 
 ## Corpus Check
-- 589 files · ~316,440 words
+- 589 files · ~317,779 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 98 file(s) not represented in the graph (top: (none) 36, .woff2 18, .tpl 17)
 
 ## Summary
-- 5963 nodes · 6478 edges · 562 communities (522 shown, 40 thin omitted)
+- 5962 nodes · 6477 edges · 564 communities (524 shown, 40 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 33 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8b796847`
+- Built from commit: `6353f471`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -355,6 +355,7 @@
 - angos/values.yaml
 - endpoints
 - fumadocs-mdx
+- configMap
 - networkProfiles
 - spaces/Chart.yaml
 - githubToken
@@ -553,6 +554,7 @@
 - waitForMongodb
 - ciliumNetworkPolicies
 - caSecret
+- metrics
 - chart
 - chart
 - zipkin
@@ -591,7 +593,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (562 total, 40 thin omitted)
+## Communities (564 total, 40 thin omitted)
 
 ### Community 0 - "Upgrade guidelines"
 Cohesion: 0.04
@@ -922,8 +924,8 @@ Cohesion: 0.15
 Nodes (14): additionalArgs, resources, schedule, resources, tasks, cpu, memory, cpu (+6 more)
 
 ### Community 83 - "ports"
-Cohesion: 0.14
-Nodes (14): enabled, enabled, enabled, containerPort, enabled, protocol, servicePort, ports (+6 more)
+Cohesion: 0.22
+Nodes (9): enabled, enabled, enabled, ports, jaeger-compact, jaeger-grpc, jaeger-thrift, zipkin (+1 more)
 
 ### Community 84 - "rustfs/values.yaml"
 Cohesion: 0.14
@@ -982,8 +984,8 @@ Cohesion: 0.13
 Nodes (15): enabled, spec, hyperdx, autoscaling, networkPolicy, podDisruptionBudget, promql, serviceAccount (+7 more)
 
 ### Community 98 - "spec"
-Cohesion: 0.18
-Nodes (13): keeper, spec, accessModes, resources, storageClassName, spec, name, policy (+5 more)
+Cohesion: 0.16
+Nodes (14): cluster, keeper, spec, accessModes, resources, storageClassName, spec, name (+6 more)
 
 ### Community 99 - "rustfs/Chart.yaml"
 Cohesion: 0.15
@@ -1262,8 +1264,8 @@ Cohesion: 0.14
 Nodes (14): storage.wiredTiger.engineConfig.journalCompressor, modes, spec, authentication, additionalMongodConfig, members, security, statefulSet (+6 more)
 
 ### Community 168 - "otel-collector"
-Cohesion: 0.13
-Nodes (15): name, optional, mountPath, name, readOnly, configMap, name, otel-collector (+7 more)
+Cohesion: 0.20
+Nodes (10): mountPath, name, readOnly, otel-collector, enabled, extraVolumeMounts, mode, podAnnotations (+2 more)
 
 ### Community 169 - "cheUsersProject"
 Cohesion: 0.14
@@ -1886,8 +1888,8 @@ Cohesion: 0.40
 Nodes (5): TALOSCONFIG, aliases, cmds, env, talosctl
 
 ### Community 324 - "clickhouse"
-Cohesion: 0.25
-Nodes (8): clickhouse, cluster, enabled, nativePort, port, prometheus, enabled, port
+Cohesion: 0.29
+Nodes (7): clickhouse, enabled, nativePort, port, prometheus, enabled, port
 
 ### Community 325 - "KUBECONFIG"
 Cohesion: 0.13
@@ -1948,6 +1950,10 @@ Nodes (11): cookiesAuthEnabled, discoverable, type, urlRewriteSupported, endpoin
 ### Community 339 - "fumadocs-mdx"
 Cohesion: 0.50
 Nodes (3): fumadocs-mdx@15.4.9, docs, fumadocs-mdx
+
+### Community 340 - "configMap"
+Cohesion: 0.40
+Nodes (5): name, optional, configMap, name, extraVolumes
 
 ### Community 341 - "networkProfiles"
 Cohesion: 0.11
@@ -2645,6 +2651,10 @@ Nodes (6): ciliumNetworkPolicies, enabled, policies, endpointSelector, namespace
 Cohesion: 0.40
 Nodes (5): key, name, caSecret, name, instance
 
+### Community 550 - "metrics"
+Cohesion: 0.40
+Nodes (5): containerPort, enabled, protocol, servicePort, metrics
+
 ### Community 551 - "chart"
 Cohesion: 0.60
 Nodes (5): name, repoURL, version, chart, chart
@@ -2663,7 +2673,7 @@ Nodes (5): enabled, includeCollectorLogs, maxRecombineLogSize, storeCheckpoints,
 
 ### Community 557 - "eggs.mjs"
 Cohesion: 0.13
-Nodes (20): vars(), accentOnly(), ARGOCD_FILE, BAT, block(), BUG, egg(), FORGEJO_FILE (+12 more)
+Nodes (19): vars(), accentOnly(), ARGOCD_FILE, BAT, block(), BUG, egg(), FORGEJO_FILE (+11 more)
 
 ### Community 558 - "ports"
 Cohesion: 0.40
@@ -2683,13 +2693,13 @@ Nodes (4): both(), CSS_FILE, renderArgoCss(), rules()
 
 ## Knowledge Gaps
 - **3 isolated node(s):** `0.pulumi-conf`, `kubernetes-ovh-go`, `weebo.poc/requestid`
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3869 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3868 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **40 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `applications` connect `deviceCode` to `argo-admin`, `kind`, `openbao`, `batlehub`, `angos`, `kube-admin`, `endpoint-gateway`, `backend`, `s3`, `backend`, `argo`, `che`, `vault`?**
+- **Why does `hyperdx` connect `hyperdx` to `ports`, `dashboards`, `clickstack/values.yaml`, `secrets`, `ingress`, `config`, `requests`, `service`, `deployment`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **Are the 3 inferred relationships involving `main()` (e.g. with `.edge()` and `.node()`) actually correct?**
   _`main()` has 3 INFERRED edges - model-reasoned connections that need verification._
@@ -2697,9 +2707,9 @@ _Questions this graph is uniquely positioned to answer:_
   _3 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Upgrade guidelines` be split into smaller, more focused modules?**
   _Cohesion score 0.04081632653061224 - nodes in this community are weakly interconnected._
-- **Why does `hyperdx` connect `hyperdx` to `ports`, `dashboards`, `clickstack/values.yaml`, `secrets`, `ingress`, `config`, `requests`, `service`, `deployment`?**
+- **Why does `applications` connect `deviceCode` to `argo-admin`, `kind`, `openbao`, `batlehub`, `angos`, `kube-admin`, `endpoint-gateway`, `backend`, `s3`, `backend`, `argo`, `che`, `vault`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **Should `rustfs` be split into smaller, more focused modules?**
   _Cohesion score 0.044444444444444446 - nodes in this community are weakly interconnected._
-- **Why does `features` connect `features` to `endpointAuth`, `key`, `networkProfiles`, `podSecurity`, `features`, `resourceQuotas`, `networkProfiles`, `kubearmorPolicy`, `hardening/values.yaml`, `weebo-npmrc`?**
+- **Why does `forgejo` connect `forgejo` to `token`, `s3`, `chart`, `resources`, `backup`, `oidc`, `operatorNetworkPolicy`, `postgres`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._

@@ -177,25 +177,44 @@
     return g;
   };
 
-  // Crab run: jump over the bugs. Space, ArrowUp or a tap; any of them restarts.
+  // Crab run: jump over the bugs, stay low under the bats. Space, ArrowUp or a tap;
+  // any of them restarts. Obstacles are drawn at random, harder ones unlocked by score.
   const crabRun = (stage) => {
-    const g = canvasGame(stage, "run", "Crab run", "press Space or tap to jump over the bugs.");
+    const g = canvasGame(stage, "run", "Crab run", "press Space or tap to jump over the bugs, stay down under the bats.");
     const crab = new Path2D(CFG.sprites.crab[2]);
-    const bug = new Path2D(CFG.sprites.bug[2]);
+    const art = { bug: new Path2D(CFG.sprites.bug[2]), bat: new Path2D(CFG.sprites.bat[2]) };
+    const size = { bug: CFG.sprites.bug, bat: CFG.sprites.bat };
     const U = 4; // CSS px per sprite pixel, the stage's --u
     const G = 2400;
     const CRAB_X = 48;
+    // [sprite, dx, dy] in sprite px, dy above the floor. "triple" needs speed 480 (score 80)
+    // to be cleared in one jump; a bat at 14 only hits a jumping crab.
+    const KINDS = [
+      { from: 0, weight: 4, parts: [["bug", 0, 0]] },
+      { from: 15, weight: 2, parts: [["bug", 0, 0], ["bug", 9, 0]] },
+      { from: 30, weight: 2, parts: [["bug", 0, 0], ["bug", 0, 5]] },
+      { from: 45, weight: 2, parts: [["bat", 0, 14]] },
+      { from: 80, weight: 1, parts: [["bug", 0, 0], ["bug", 9, 0], ["bug", 18, 0]] },
+    ];
+    const pick = () => {
+      const open = KINDS.filter((k) => score >= k.from);
+      let r = Math.random() * open.reduce((s, k) => s + k.weight, 0);
+      return open.find((k) => (r -= k.weight) < 0) ?? open[0];
+    };
+    // Each part as a box in px: x from the obstacle's left edge, h above the floor.
+    const boxes = (o) =>
+      o.kind.parts.map(([s, dx, dy]) => ({ s, x0: o.x + dx * U, x1: o.x + (dx + size[s][0]) * U, h0: dy * U, h1: (dy + size[s][1]) * U }));
     let state = "ready";
     let y = 0; // crab height above the floor
     let vy = 0;
-    let bugs = [];
+    let obstacles = [];
     let next = 0;
     let score = 0;
     let then = 0;
     const draw = () => {
       g.ctx.clearRect(0, 0, g.w, g.h);
       g.sprite(crab, CRAB_X, g.h - 13 * U - y, g.accent, U);
-      for (const b of bugs) g.sprite(bug, b, g.h - 5 * U, g.ink, U);
+      for (const o of obstacles) for (const b of boxes(o)) g.sprite(art[b.s], b.x0, g.h - b.h1, b.s === "bat" ? g.copper : g.ink, U);
       g.hud(score, state, "PRESS SPACE TO RUN");
     };
     const tick = (t) => {
@@ -206,13 +225,17 @@
       vy -= G * dt;
       y = Math.max(0, y + vy * dt);
       if (y === 0) vy = 0;
-      bugs = bugs.map((b) => b - speed * dt).filter((b) => b > -7 * U);
+      for (const o of obstacles) o.x -= speed * dt;
+      obstacles = obstacles.filter((o) => o.x > -30 * U);
       if ((next -= dt) <= 0) {
-        bugs.push(g.w);
-        next = 0.9 + Math.random() * 1.1;
+        const kind = pick();
+        const width = Math.max(...kind.parts.map(([s, dx]) => (dx + size[s][0]) * U));
+        obstacles.push({ x: g.w, kind });
+        next = width / speed + 0.75 + Math.random() * 1.2; // the crab always lands in between
       }
-      // The body only (columns 5-20, rows 6-12): a claw grazing a bug is fair.
-      if (bugs.some((b) => b < CRAB_X + 20 * U && b + 7 * U > CRAB_X + 6 * U && y < 5 * U)) {
+      // The body only (columns 6-20, rows 6-12): a claw grazing a bug is fair.
+      const hit = (b) => b.x0 < CRAB_X + 20 * U && b.x1 > CRAB_X + 6 * U && b.h0 < y + 7 * U && b.h1 > y;
+      if (obstacles.some((o) => boxes(o).some(hit))) {
         state = "over";
         g.over(score);
       }
@@ -223,7 +246,7 @@
       if (ev.type === "keydown" && ev.key !== " " && ev.key !== "ArrowUp") return;
       ev.preventDefault();
       if (state !== "run") {
-        [state, y, vy, bugs, next, score] = ["run", 0, 0, [], 0.6, 0];
+        [state, y, vy, obstacles, next, score] = ["run", 0, 0, [], 0.6, 0];
         then = performance.now();
         requestAnimationFrame(tick);
       } else if (y === 0) vy = 650; // apex ~88px: the crab stays inside the 144px stage
@@ -235,23 +258,23 @@
     draw();
   };
 
-  // Shelf climb: a rusty robot bounces up a library from book to book. It bounces by
+  // Shelf climb: the crab bounces up a library from book to book. It bounces by
   // itself; ArrowLeft / ArrowRight (or holding a side of the stage) steer, and the sides
   // wrap. Some books slide; a falling one breaks. Missing every book below ends the run.
   const shelfClimb = (stage) => {
     stage.style.height = "min(520px, 75vh)"; // a climb needs height: the stage grows
     const g = canvasGame(stage, "climb", "Shelf climb", "press Space or tap to start, ArrowLeft and ArrowRight to steer.");
-    const robot = new Path2D(CFG.sprites.robot[2]);
-    const U = 3;
-    const RW = CFG.sprites.robot[0] * U;
-    const RH = CFG.sprites.robot[1] * U;
+    const crab = new Path2D(CFG.sprites.crab[2]);
+    const U = 2; // 52 px wide: still fits on a 60 px book
+    const RW = CFG.sprites.crab[0] * U;
+    const RH = CFG.sprites.crab[1] * U;
     const [G, BOUNCE, STEER] = [1800, 760, 340]; // apex ~160px: every gap below is reachable
     const BOOK = { w: 60, h: 12 };
     const COVERS = [g.accent, g.copper, g.dim, g.ink];
     const SHELF = 120; // px between two planks of the bookcase behind
     let state = "ready";
     let x = 0;
-    let y = 0; // robot's feet, world px above the start
+    let y = 0; // crab's feet, world px above the start
     let vy = 0;
     let cam = 0; // world y at the bottom of the stage
     let top = 0; // highest book made so far
@@ -283,7 +306,7 @@
       ctx.save();
       ctx.beginPath();
       ctx.rect(ox(), 0, W(), g.h);
-      ctx.clip(); // the robot wrapping round shows on both sides of the case, not past them
+      ctx.clip(); // the crab wrapping round shows on both sides of the case, not past them
       ctx.translate(ox(), 0);
       for (const b of books) {
         const sy = screenY(b.y);
@@ -294,7 +317,7 @@
         ctx.fillRect(Math.round(b.x) + BOOK.w - 9, sy, 3, BOOK.h);
         if (b.kind === "loose") ctx.fillRect(Math.round(b.x) + 12, sy + BOOK.h - 3, BOOK.w - 24, 2);
       }
-      for (const dx of [0, -W(), W()]) g.sprite(robot, x + dx, screenY(y) - RH, g.copper, U);
+      for (const dx of [0, -W(), W()]) g.sprite(crab, x + dx, screenY(y) - RH, g.accent, U);
       ctx.restore();
       g.hud(cam / 10, state, "PRESS SPACE TO CLIMB");
     };
@@ -312,7 +335,7 @@
         }
         if (b.fall) b.y -= (b.fall += G * dt) * dt;
       }
-      // Feet crossing a book's top on the way down; the robot wraps, so test both sides.
+      // Feet crossing a book's top on the way down; the crab wraps, so test both sides.
       const landed = vy < 0 && books.find((b) => !b.fall && was >= b.y && y <= b.y &&
         [x, x - W(), x + W()].some((rx) => rx + RW - 6 > b.x && rx + 6 < b.x + BOOK.w));
       if (landed) {
