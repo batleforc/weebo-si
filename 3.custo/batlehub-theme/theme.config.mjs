@@ -210,6 +210,50 @@ export default {
   // read frontend.issuer, set where each Dex is configured. Set `dex: false` to skip.
   dex: true,
 
+  // Easter eggs (src/eggs.mjs). Forgejo and Argo CD can run a script; Authentik, Che
+  // and Dex take CSS only, so they get none of this.
+  //
+  // `keys`: "konami", or a word typed outside any text field. It opens a dialog: title,
+  // optional text, one button that goes to `href` (https) or, without one, closes it.
+  // On the error pages (`errors`) it can turn the crab's stage into a game instead.
+  eggs: {
+    argocd: [
+      { keys: "konami", title: "EASTER EGG LOADED", button: "READY TO RAMBLE ?", href: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+      { keys: "sudo", title: "NOT IN THE SUDOERS FILE", text: "This incident will be reported.", button: "SORRY" },
+    ],
+    forgejo: [
+      // The pong from monofolio: point it at the real page once it is published.
+      { keys: "konami", title: "EASTER EGG LOADED", button: "READY TO RAMBLE ?", href: "https://batleforc.github.io/pong/" },
+      { keys: "sudo", title: "NOT IN THE SUDOERS FILE", text: "This incident will be reported.", button: "SORRY" },
+    ],
+    errors: [
+      { keys: "konami", game: "crab-run" },
+      { keys: "rust", game: "shelf-climb" },
+    ],
+  },
+
+  // Date ranges (MM-DD, the browser's local date; `from` after `to` wraps the new year),
+  // first match wins, on Forgejo, Argo CD and the error pages. Each swaps the accent
+  // (OKLCH per rendition, contrast-checked like the tokens) and sends one parade a
+  // session: bats, snow or crab (upside down). `?bh-season=<name>` previews one.
+  seasons: [
+    {
+      name: "halloween", from: "10-24", to: "11-03", parade: "bats",
+      accent: { dark: "oklch(0.74 0.16 55)", light: "oklch(0.50 0.14 50)" },
+    },
+    {
+      name: "christmas", from: "12-01", to: "12-31", parade: "snow",
+      accent: { dark: "oklch(0.74 0.15 150)", light: "oklch(0.46 0.12 150)" },
+    },
+    {
+      name: "april-fools", from: "04-01", to: "04-01", parade: "crab",
+      accent: { dark: "oklch(0.72 0.13 240)", light: "oklch(0.48 0.14 255)" },
+    },
+  ],
+
+  // Minutes without any input before the crab screensaver (Forgejo, Argo CD); 0 for none.
+  idle: 10,
+
   // Deploy manifests written to dist/deploy/.
   deploy: {
     namespace: "forgejo",

@@ -306,9 +306,9 @@
     "semantic_hash": ""
   },
   "1.pulu-conf/main.go": {
-    "mtime": 1795278347.9532733,
-    "seen": 1795278831.0287673,
-    "ast_hash": "c22440a66a512f4eef5c490c3edf721f",
+    "mtime": 1795431465.5114272,
+    "seen": 1795431490.59966,
+    "ast_hash": "6d297a2a40777bc9ad88a565d7bd44e4",
     "semantic_hash": ""
   },
   "1.pulu-init/Pulumi.dev.yaml": {
@@ -414,8 +414,8 @@
     "semantic_hash": ""
   },
   "2.argo/helm/auth/sub/files/brand/brand.yaml": {
-    "mtime": 1793572980.444973,
-    "seen": 1793903263.3212602,
+    "mtime": 1795432788.1669176,
+    "seen": 1795432874.3464363,
     "ast_hash": "7b491c16c9ed4e41117505fcf81fe562",
     "semantic_hash": ""
   },
@@ -552,8 +552,8 @@
     "semantic_hash": ""
   },
   "2.argo/helm/forgejo/files/theme/theme.yaml": {
-    "mtime": 1793572980.4501321,
-    "seen": 1793903263.321316,
+    "mtime": 1795432788.1638565,
+    "seen": 1795432874.3485296,
     "ast_hash": "2cbfb33d6b41595bb9e872e313f9e909",
     "semantic_hash": ""
   },
@@ -984,9 +984,9 @@
     "semantic_hash": ""
   },
   "3.custo/batlehub-theme/src/build.mjs": {
-    "mtime": 1793901884.3177662,
-    "seen": 1793903263.3214114,
-    "ast_hash": "6fe1956fc9a157c3d217b5b902786e77",
+    "mtime": 1795432393.3650968,
+    "seen": 1795432549.97866,
+    "ast_hash": "8d5f036488742bde61dabdc1b3bb7a2a",
     "semantic_hash": ""
   },
   "3.custo/batlehub-theme/src/color.mjs": {
@@ -996,9 +996,9 @@
     "semantic_hash": ""
   },
   "3.custo/batlehub-theme/src/errors.mjs": {
-    "mtime": 1793572980.460132,
-    "seen": 1793903263.3214154,
-    "ast_hash": "ace84671a4195492359bb023afaa3d1e",
+    "mtime": 1795432393.352413,
+    "seen": 1795432549.9787688,
+    "ast_hash": "8bb2fec6906b0338784a15f797973fef",
     "semantic_hash": ""
   },
   "3.custo/batlehub-theme/src/home.mjs": {
@@ -1038,9 +1038,9 @@
     "semantic_hash": ""
   },
   "3.custo/batlehub-theme/theme.config.mjs": {
-    "mtime": 1793901884.3180802,
-    "seen": 1793903263.3214366,
-    "ast_hash": "ad72a6d59432d0c28051c383bc00d313",
+    "mtime": 1795432736.492589,
+    "seen": 1795432874.352182,
+    "ast_hash": "23e9e9e07b3d9a4fa1e7a723f02b511c",
     "semantic_hash": ""
   },
   "Taskfile.yml": {
@@ -1284,15 +1284,15 @@
     "semantic_hash": ""
   },
   "2.argo/helm/ingress/sub/files/error-pages/errors-external.html": {
-    "mtime": 1793135140.786934,
-    "seen": 1793903263.3215027,
-    "ast_hash": "f12588862468c99dd2a563d1b3847c16",
+    "mtime": 1795432788.164237,
+    "seen": 1795432874.3547988,
+    "ast_hash": "80c774c901208e88cb2bf28ffb64d216",
     "semantic_hash": ""
   },
   "2.argo/helm/ingress/sub/files/error-pages/errors-internal.html": {
-    "mtime": 1793135140.786934,
-    "seen": 1793903263.321504,
-    "ast_hash": "ef420cb3d28fcd41cc79199233da4463",
+    "mtime": 1795432788.164237,
+    "seen": 1795432874.3548,
+    "ast_hash": "57d9477111bcc11d9dab9e6ca7b39ea5",
     "semantic_hash": ""
   },
   "2.argo/helm/monitoring/dashboards/README.md": {
@@ -1338,9 +1338,9 @@
     "semantic_hash": ""
   },
   "3.custo/batlehub-theme/README.md": {
-    "mtime": 1793901884.3176765,
-    "seen": 1793903263.321512,
-    "ast_hash": "1108f942c1bd45d1774acfab5f5459e0",
+    "mtime": 1795432736.4926953,
+    "seen": 1795432874.3550491,
+    "ast_hash": "9428c6ad2e105b151dc8b29b5c37235c",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -1386,80 +1386,80 @@
     "semantic_hash": ""
   },
   "2.argo/helm/auth/main/files/theme/background-dark.svg": {
-    "mtime": 1793572980.4430423,
-    "seen": 1793903263.321534,
+    "mtime": 1795432788.1660738,
+    "seen": 1795432874.355289,
     "ast_hash": "1fd1049bf66b5f885f9fea20078b9794",
     "semantic_hash": ""
   },
   "2.argo/helm/auth/main/files/theme/background-light.svg": {
-    "mtime": 1793572980.4433522,
-    "seen": 1793903263.3215349,
+    "mtime": 1795432788.1660738,
+    "seen": 1795432874.3552902,
     "ast_hash": "372e8dcb9903eb5c277fe63216186efd",
     "semantic_hash": ""
   },
   "2.argo/helm/auth/main/files/theme/favicon.svg": {
-    "mtime": 1793572980.4433522,
-    "seen": 1793903263.3215358,
+    "mtime": 1795432788.1660738,
+    "seen": 1795432874.3552911,
     "ast_hash": "11498cd78fb3edbd2a5e69ef5ba05748",
     "semantic_hash": ""
   },
   "2.argo/helm/auth/main/files/theme/logo-dark.svg": {
-    "mtime": 1793572980.443826,
-    "seen": 1793903263.3215368,
+    "mtime": 1795432788.1660738,
+    "seen": 1795432874.3552918,
     "ast_hash": "9d00ecaa8ce3611127db91efb96a6864",
     "semantic_hash": ""
   },
   "2.argo/helm/auth/main/files/theme/logo-light.svg": {
-    "mtime": 1793572980.443826,
-    "seen": 1793903263.3215377,
+    "mtime": 1795432788.1660738,
+    "seen": 1795432874.355293,
     "ast_hash": "b9fd3962f6dacee499e48852cad09bdd",
     "semantic_hash": ""
   },
   "2.argo/helm/forgejo/files/theme/public/assets/img/apple-touch-icon.png": {
-    "mtime": 1793135140.7827115,
-    "seen": 1793903263.321541,
+    "mtime": 1795432788.162888,
+    "seen": 1795432874.3552954,
     "ast_hash": "c92511583a9f7cc5f84f72bc45d18c58",
     "semantic_hash": ""
   },
   "2.argo/helm/forgejo/files/theme/public/assets/img/batlehub/halftone-plate.png": {
-    "mtime": 1793135140.7842681,
-    "seen": 1793903263.3215423,
+    "mtime": 1795432788.1630688,
+    "seen": 1795432874.355297,
     "ast_hash": "5cfc551d75f3e28432027a891d140cbd",
     "semantic_hash": ""
   },
   "2.argo/helm/forgejo/files/theme/public/assets/img/batlehub/logo-cream.svg": {
-    "mtime": 1793135140.7838476,
-    "seen": 1793903263.3215435,
+    "mtime": 1795432788.1630688,
+    "seen": 1795432874.3552978,
     "ast_hash": "9d00ecaa8ce3611127db91efb96a6864",
     "semantic_hash": ""
   },
   "2.argo/helm/forgejo/files/theme/public/assets/img/batlehub/logo-ink.svg": {
-    "mtime": 1793135140.7840621,
-    "seen": 1793903263.3215444,
+    "mtime": 1795432788.1630688,
+    "seen": 1795432874.3552985,
     "ast_hash": "b9fd3962f6dacee499e48852cad09bdd",
     "semantic_hash": ""
   },
   "2.argo/helm/forgejo/files/theme/public/assets/img/favicon.png": {
-    "mtime": 1793135140.7832522,
-    "seen": 1793903263.3215454,
+    "mtime": 1795432788.162888,
+    "seen": 1795432874.3552992,
     "ast_hash": "45229a7c0f34f1ce1d2c02ae823642df",
     "semantic_hash": ""
   },
   "2.argo/helm/forgejo/files/theme/public/assets/img/favicon.svg": {
-    "mtime": 1793135140.782983,
-    "seen": 1793903263.3215468,
+    "mtime": 1795432788.162888,
+    "seen": 1795432874.3553002,
     "ast_hash": "11498cd78fb3edbd2a5e69ef5ba05748",
     "semantic_hash": ""
   },
   "2.argo/helm/forgejo/files/theme/public/assets/img/logo.png": {
-    "mtime": 1793135140.7823992,
-    "seen": 1793903263.3215477,
+    "mtime": 1795432788.162888,
+    "seen": 1795432874.3553011,
     "ast_hash": "a38620364cd91b12dd5e2f0702928885",
     "semantic_hash": ""
   },
   "2.argo/helm/forgejo/files/theme/public/assets/img/logo.svg": {
-    "mtime": 1793135140.7846856,
-    "seen": 1793903263.321549,
+    "mtime": 1795432788.1630688,
+    "seen": 1795432874.355302,
     "ast_hash": "16b0b0e740c6c2b215c1a81d8b1292f3",
     "semantic_hash": ""
   },
@@ -1530,21 +1530,21 @@
     "semantic_hash": ""
   },
   "2.argo/helm/che/sub/files/branding/manifest.json": {
-    "mtime": 1793572980.4488432,
-    "seen": 1793903263.3213024,
+    "mtime": 1795432788.167237,
+    "seen": 1795432874.3482416,
     "ast_hash": "81558aeb1c7865a8d9fc84c8c3ac1093",
     "semantic_hash": ""
   },
   "2.argo/helm/che/sub/files/branding/product.json": {
-    "mtime": 1793572980.4488432,
-    "seen": 1793903263.321304,
+    "mtime": 1795432788.167237,
+    "seen": 1795432874.348244,
     "ast_hash": "1a8d18be7f5985e71bd99b9c265f35c1",
     "semantic_hash": ""
   },
   "3.custo/batlehub-theme/src/argocd.mjs": {
-    "mtime": 1793572980.459132,
-    "seen": 1793903263.3214095,
-    "ast_hash": "a2b695264934c45f4e3b631fb45e8c18",
+    "mtime": 1795432393.3290935,
+    "seen": 1795432549.9786224,
+    "ast_hash": "415d1b1862a85325cf575967eccf3e3c",
     "semantic_hash": ""
   },
   "3.custo/batlehub-theme/src/che.mjs": {
@@ -1566,38 +1566,38 @@
     "semantic_hash": ""
   },
   "2.argo/app/files/argocd-theme/background-dark.svg": {
-    "mtime": 1793572980.4401321,
-    "seen": 1793903263.3215206,
+    "mtime": 1795432788.1682613,
+    "seen": 1795432874.3552778,
     "ast_hash": "1fd1049bf66b5f885f9fea20078b9794",
     "semantic_hash": ""
   },
   "2.argo/app/files/argocd-theme/background-light.svg": {
-    "mtime": 1793572980.4401321,
-    "seen": 1793903263.3215218,
+    "mtime": 1795432788.1682613,
+    "seen": 1795432874.3552787,
     "ast_hash": "372e8dcb9903eb5c277fe63216186efd",
     "semantic_hash": ""
   },
   "2.argo/app/files/argocd-theme/logo-dark.svg": {
-    "mtime": 1793572980.441132,
-    "seen": 1793903263.3215227,
+    "mtime": 1795432788.1682613,
+    "seen": 1795432874.3552802,
     "ast_hash": "9d00ecaa8ce3611127db91efb96a6864",
     "semantic_hash": ""
   },
   "2.argo/app/files/argocd-theme/logo-light.svg": {
-    "mtime": 1793572980.441132,
-    "seen": 1793903263.3215237,
+    "mtime": 1795432788.1688328,
+    "seen": 1795432874.355281,
     "ast_hash": "b9fd3962f6dacee499e48852cad09bdd",
     "semantic_hash": ""
   },
   "2.argo/helm/che/sub/files/branding/batlehub-logo.svg": {
-    "mtime": 1793572980.4487112,
-    "seen": 1793903263.3215392,
+    "mtime": 1795432788.167237,
+    "seen": 1795432874.355294,
     "ast_hash": "163bd542093989b6350a9643e7c1837b",
     "semantic_hash": ""
   },
   "2.argo/helm/che/sub/files/branding/loader.svg": {
-    "mtime": 1793572980.4488432,
-    "seen": 1793903263.32154,
+    "mtime": 1795432788.167237,
+    "seen": 1795432874.3552947,
     "ast_hash": "11498cd78fb3edbd2a5e69ef5ba05748",
     "semantic_hash": ""
   },
@@ -1650,8 +1650,8 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/meta.json": {
-    "mtime": 1795338264.6891525,
-    "seen": 1795338281.1756837,
+    "mtime": 1795389333.603366,
+    "seen": 1795431490.5991297,
     "ast_hash": "e7a25e3498dd19959b6b34829fd18d9a",
     "semantic_hash": ""
   },
@@ -1662,80 +1662,80 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/angos.mdx": {
-    "mtime": 1795338264.686611,
-    "seen": 1795338281.184303,
+    "mtime": 1795389333.6005824,
+    "seen": 1795431490.6064935,
     "ast_hash": "b319367a74ba31d2810651d68369a78e",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/auth.mdx": {
-    "mtime": 1795338264.6869242,
-    "seen": 1795338281.1843045,
+    "mtime": 1795389333.6008189,
+    "seen": 1795431490.6064942,
     "ast_hash": "f0774f01c4412ee7f3a79ae658b7685b",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/batlehub.mdx": {
-    "mtime": 1795338264.6871383,
-    "seen": 1795338281.1843057,
+    "mtime": 1795389333.6009998,
+    "seen": 1795431490.606495,
     "ast_hash": "fda6f5eea3cce60ad8b74b48c13f0bb7",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/che.mdx": {
-    "mtime": 1795338264.6874619,
-    "seen": 1795338281.1843069,
+    "mtime": 1795389333.6012979,
+    "seen": 1795431490.6064959,
     "ast_hash": "e820a91efc5dfcbc8eb965cccdf694a6",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/database.mdx": {
-    "mtime": 1795338264.687676,
-    "seen": 1795338281.184308,
+    "mtime": 1795389333.6015682,
+    "seen": 1795431490.6064968,
     "ast_hash": "8dc24c33c0e31303662db683dc0a04cb",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/forgejo.mdx": {
-    "mtime": 1795338264.6878786,
-    "seen": 1795338281.1843092,
+    "mtime": 1795389333.6018379,
+    "seen": 1795431490.6064975,
     "ast_hash": "e4e1b4b21aaceb7555715e26e487e276",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/hook.mdx": {
-    "mtime": 1795338264.6879728,
-    "seen": 1795338281.1843102,
+    "mtime": 1795389333.601985,
+    "seen": 1795431490.6064982,
     "ast_hash": "a11697de4a0f72e9e2855a1fe908e1df",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/index.mdx": {
-    "mtime": 1795338264.6861086,
-    "seen": 1795338281.1843116,
+    "mtime": 1795389333.600342,
+    "seen": 1795431490.606499,
     "ast_hash": "10e2151a4223a14962265577683d8631",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/ingress.mdx": {
-    "mtime": 1795338264.688253,
-    "seen": 1795338281.1843128,
+    "mtime": 1795389333.602325,
+    "seen": 1795431490.6065,
     "ast_hash": "c13239c0c16ab5999cb989125312045d",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/main-storage.mdx": {
-    "mtime": 1795338264.6884997,
-    "seen": 1795338281.1843154,
+    "mtime": 1795389333.6026561,
+    "seen": 1795431490.6065016,
     "ast_hash": "27e27fa98388623393a2497575d5c416",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/monitoring.mdx": {
-    "mtime": 1795338264.6886873,
-    "seen": 1795338281.1843164,
+    "mtime": 1795389333.6028507,
+    "seen": 1795431490.6065023,
     "ast_hash": "3d42494fd1fc77e541d88025ce784b5e",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/vault.mdx": {
-    "mtime": 1795338264.6888914,
-    "seen": 1795338281.1843174,
+    "mtime": 1795389333.603077,
+    "seen": 1795431490.6065032,
     "ast_hash": "b7c8b89cca03100676b2df8a76f65864",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/vpn.mdx": {
-    "mtime": 1795338264.689074,
-    "seen": 1795338281.1843185,
+    "mtime": 1795389333.6032672,
+    "seen": 1795431490.606504,
     "ast_hash": "46f66537476df22cd08de63916bbe41e",
     "semantic_hash": ""
   },
@@ -1764,8 +1764,8 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/index.mdx": {
-    "mtime": 1795338276.5748591,
-    "seen": 1795338281.1842613,
+    "mtime": 1795389346.3356981,
+    "seen": 1795431490.606455,
     "ast_hash": "fea1325def89cbcc5b221a3eb85a85bf",
     "semantic_hash": ""
   },
@@ -1776,56 +1776,56 @@
     "semantic_hash": ""
   },
   "2.argo/app/files/dex-theme/background-dark.svg": {
-    "mtime": 1793901884.3140903,
-    "seen": 1793903263.3215246,
+    "mtime": 1795432788.169237,
+    "seen": 1795432874.3552818,
     "ast_hash": "1fd1049bf66b5f885f9fea20078b9794",
     "semantic_hash": ""
   },
   "2.argo/app/files/dex-theme/background-light.svg": {
-    "mtime": 1793901884.31434,
-    "seen": 1793903263.321526,
+    "mtime": 1795432788.169237,
+    "seen": 1795432874.355283,
     "ast_hash": "372e8dcb9903eb5c277fe63216186efd",
     "semantic_hash": ""
   },
   "2.argo/app/files/dex-theme/favicon.png": {
-    "mtime": 1793901884.314585,
-    "seen": 1793903263.3215272,
+    "mtime": 1795432788.169237,
+    "seen": 1795432874.355284,
     "ast_hash": "45229a7c0f34f1ce1d2c02ae823642df",
     "semantic_hash": ""
   },
   "2.argo/app/files/dex-theme/logo.svg": {
-    "mtime": 1793901884.3153956,
-    "seen": 1793903263.3215287,
+    "mtime": 1795432788.169237,
+    "seen": 1795432874.3552847,
     "ast_hash": "9d00ecaa8ce3611127db91efb96a6864",
     "semantic_hash": ""
   },
   "2.argo/helm/auth/main/files/dex-theme/background-dark.svg": {
-    "mtime": 1793901884.316137,
-    "seen": 1793903263.3215299,
+    "mtime": 1795432788.1707778,
+    "seen": 1795432874.3552854,
     "ast_hash": "1fd1049bf66b5f885f9fea20078b9794",
     "semantic_hash": ""
   },
   "2.argo/helm/auth/main/files/dex-theme/background-light.svg": {
-    "mtime": 1793901884.3162658,
-    "seen": 1793903263.3215306,
+    "mtime": 1795432788.1702368,
+    "seen": 1795432874.3552866,
     "ast_hash": "372e8dcb9903eb5c277fe63216186efd",
     "semantic_hash": ""
   },
   "2.argo/helm/auth/main/files/dex-theme/favicon.png": {
-    "mtime": 1793901884.3163154,
-    "seen": 1793903263.321532,
+    "mtime": 1795432788.1702368,
+    "seen": 1795432874.3552876,
     "ast_hash": "45229a7c0f34f1ce1d2c02ae823642df",
     "semantic_hash": ""
   },
   "2.argo/helm/auth/main/files/dex-theme/logo.svg": {
-    "mtime": 1793901884.316351,
-    "seen": 1793903263.321533,
+    "mtime": 1795432788.170881,
+    "seen": 1795432874.3552883,
     "ast_hash": "9d00ecaa8ce3611127db91efb96a6864",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/meta.json": {
-    "mtime": 1795338276.5786068,
-    "seen": 1795338281.1756814,
+    "mtime": 1795389346.3390338,
+    "seen": 1795431490.5991278,
     "ast_hash": "707e70b3b405cb2435d5319d00340159",
     "semantic_hash": ""
   },
@@ -1842,26 +1842,26 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/applications.mdx": {
-    "mtime": 1795338276.5760415,
-    "seen": 1795338281.1842566,
+    "mtime": 1795389346.3368049,
+    "seen": 1795431490.606451,
     "ast_hash": "ae505e261195b9db7a1a2f2ea4e3df82",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/flux.mdx": {
-    "mtime": 1795338276.5770986,
-    "seen": 1795338281.1842587,
+    "mtime": 1795389346.3377945,
+    "seen": 1795431490.6064532,
     "ast_hash": "f8ea2b54121fcaeeea31b9ae6929dcd8",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/groupes.mdx": {
-    "mtime": 1795338276.5770779,
-    "seen": 1795338281.1842604,
+    "mtime": 1795389346.3369823,
+    "seen": 1795431490.6064544,
     "ast_hash": "3bb6e4b9cdab6573fceafee4b5bf9195",
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/kubernetes.mdx": {
-    "mtime": 1795338276.577775,
-    "seen": 1795338281.1842625,
+    "mtime": 1795389346.338069,
+    "seen": 1795431490.6064558,
     "ast_hash": "298ce584377650ffceb8b0c879606d84",
     "semantic_hash": ""
   },
@@ -1872,8 +1872,8 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/authentication/argocd.mdx": {
-    "mtime": 1795338276.5780985,
-    "seen": 1795338281.1842577,
+    "mtime": 1795389346.3388953,
+    "seen": 1795431490.6064522,
     "ast_hash": "21633bfc1a7cbbcec3c874bedb429f47",
     "semantic_hash": ""
   },
@@ -2028,8 +2028,8 @@
     "semantic_hash": ""
   },
   "0.docs/content/docs/security/network-flows/kubearmor.mdx": {
-    "mtime": 1795338264.6883583,
-    "seen": 1795338281.1843143,
+    "mtime": 1795389333.6024773,
+    "seen": 1795431490.6065009,
     "ast_hash": "791a2605b1781bf5ee91cf1e52b435f3",
     "semantic_hash": ""
   },
@@ -2037,6 +2037,36 @@
     "mtime": 1795300752.9400434,
     "seen": 1795301765.6663291,
     "ast_hash": "ee66e8ea46e4a79b12f59d074fa333ff",
+    "semantic_hash": ""
+  },
+  "2.argo/app/files/argocd-theme/extension-batlehub-eggs.js": {
+    "mtime": 1795432788.1682613,
+    "seen": 1795432874.3461072,
+    "ast_hash": "cf82d0a0c7a13e23789f4052acddbd2e",
+    "semantic_hash": ""
+  },
+  "2.argo/helm/forgejo/files/theme/public/assets/js/batlehub-eggs.js": {
+    "mtime": 1795432788.162237,
+    "seen": 1795432874.3485281,
+    "ast_hash": "6e14c61c50061e3f7e2d6b667c37b695",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/src/eggs.mjs": {
+    "mtime": 1795432736.4924345,
+    "seen": 1795432874.351772,
+    "ast_hash": "8499842fd7a02bdc5bc987c20c9459f0",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/test/eggs.test.mjs": {
+    "mtime": 1795432491.936573,
+    "seen": 1795432549.9790528,
+    "ast_hash": "99236efa7a0bec89e747cd3c4e3e9760",
+    "semantic_hash": ""
+  },
+  "3.custo/batlehub-theme/src/eggs.runtime.js": {
+    "mtime": 1795432779.2327168,
+    "seen": 1795432874.3517735,
+    "ast_hash": "5719d8f3d3d932c7f25584ed663f030d",
     "semantic_hash": ""
   },
   "0.docs/yarn.lock": {

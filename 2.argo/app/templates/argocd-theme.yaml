@@ -7,7 +7,9 @@
 # The BatleHub theme of the Argo CD UI. The argo-cd chart mounts this
 # ConfigMap, optional, as a plain directory at /shared/app/custom on
 # argocd-server, which serves it as /custom/; ui.cssurl in argocd-cm
-# (1.pulu-conf) points at ./custom/batlehub.css. No subPath: an update reaches
+# (1.pulu-conf) points at ./custom/batlehub.css. 1.pulu-conf mounts it again at
+# /tmp/extensions/batlehub, where argocd-server loads extension*.js (the easter
+# eggs) into every page. No subPath: an update reaches
 # the pod without a restart, and a browser on its next load.
 #
 # Server-side apply: the two login backgrounds inline the halftone plate, past
@@ -21,13 +23,13 @@ metadata:
     argocd.argoproj.io/sync-options: ServerSideApply=true
 data:
   {{- range $path, $_ := $files }}
-  {{- if regexMatch "\\.(css|svg)$" $path }}
+  {{- if regexMatch "\\.(css|svg|js)$" $path }}
   {{ base $path }}: {{ $.Files.Get $path | toJson }}
   {{- end }}
   {{- end }}
 binaryData:
   {{- range $path, $_ := $files }}
-  {{- if not (regexMatch "\\.(css|svg)$" $path) }}
+  {{- if not (regexMatch "\\.(css|svg|js)$" $path) }}
   {{ base $path }}: {{ $.Files.Get $path | b64enc }}
   {{- end }}
   {{- end }}

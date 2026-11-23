@@ -327,6 +327,26 @@ g, weebo_admin, role:readonly`),
 				},
 				"server": pulumi.Map{
 					"podAnnotations": otelScrapeAnnotations("8083"),
+					// The easter eggs (3.custo/batlehub-theme, eggs): argocd-server
+					// serves every extension*.js under /tmp/extensions as a UI
+					// extension, the only way to run a script in its pages. Same
+					// ConfigMap as the stylesheet; optional, like the dex theme.
+					"volumes": pulumi.Array{
+						pulumi.Map{
+							"name": pulumi.String("batlehub-eggs"),
+							"configMap": pulumi.Map{
+								"name":     pulumi.String("argocd-styles-cm"),
+								"optional": pulumi.Bool(true),
+							},
+						},
+					},
+					"volumeMounts": pulumi.Array{
+						pulumi.Map{
+							"name":      pulumi.String("batlehub-eggs"),
+							"mountPath": pulumi.String("/tmp/extensions/batlehub"),
+							"readOnly":  pulumi.Bool(true),
+						},
+					},
 					"ingress": pulumi.Map{
 						"enabled": pulumi.Bool(deployed),
 						"tls":     pulumi.Bool(true),

@@ -16,7 +16,7 @@ import { hex, mix } from "./color.mjs";
 
 export const CSS_FILE = "batlehub.css";
 
-const vars = (t) => [
+export const vars = (t) => [
   ["--bh-page", hex(t.groundSunk)],
   ["--bh-box", hex(t.ground)],
   ["--bh-raised", hex(t.groundRaised)],

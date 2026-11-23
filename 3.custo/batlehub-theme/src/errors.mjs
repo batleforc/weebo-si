@@ -18,7 +18,7 @@ const FALLBACK = {
 };
 
 // ── Sprites ─────────────────────────────────────────────────────────────────
-const rects = (svg) => [...svg.matchAll(/M(\d+) (\d+)h(\d+)v1h-\d+z/g)].map(([, x, y, w]) => ({ x: +x, y: +y, w: +w }));
+export const rects = (svg) => [...svg.matchAll(/M(\d+) (\d+)h(\d+)v1h-\d+z/g)].map(([, x, y, w]) => ({ x: +x, y: +y, w: +w }));
 const d = (rs) => rs.map((r) => `M${r.x} ${r.y}h${r.w}v1h-${r.w}z`).join("");
 const COLOURS = { "#": "c-ink", "*": "c-copper", "+": "c-accent", "-": "c-dim", o: "c-raised" };
 // Sprite pixels from the stage's left edge (past the page gutter) and floor.
@@ -69,9 +69,10 @@ function sprite({ cls, x, y, art, parts = {}, still }, logo) {
 /**
  * `css` is the page's complete stylesheet, `logo` the pixel logo SVG (one path of 1px-high
  * rects). `variant` is "internal" (lists `errors.internal.links`) or "external" (page head
- * only). With `preview` set to a status code, returns plain HTML for that code.
+ * only). With `preview` set to a status code, returns plain HTML for that code. `script`,
+ * optional, is inlined at the end of the body (the easter eggs, src/eggs.mjs).
  */
-export function renderErrors(errors, { css, logo }, { variant, preview } = {}) {
+export function renderErrors(errors, { css, logo, script = "" }, { variant, preview } = {}) {
   if (!VARIANTS.includes(variant)) throw new Error(`errors: unknown variant "${variant}"`);
   const pages = Object.entries(errors.pages).map(([code, p]) => [Number(code), {
     label: esc(p.label),
@@ -86,7 +87,8 @@ export function renderErrors(errors, { css, logo }, { variant, preview } = {}) {
   const go = (s) => String(s).includes("{{");
   for (const [, p] of pages) for (const v of Object.values(p)) if (go(v)) throw new Error(`errors: "{{" in copy: ${v}`);
   for (const l of links) for (const v of Object.values(l)) if (go(v)) throw new Error(`errors: "{{" in copy: ${v}`);
-  if (go(css) || go(logo)) throw new Error("errors: \"{{\" in the inlined CSS or logo would break the Go template");
+  if (go(css) || go(logo) || go(script)) throw new Error("errors: \"{{\" in the inlined CSS, logo or script would break the Go template");
+  if (/<\/script/i.test(script)) throw new Error("errors: \"</script\" in the inlined script");
 
   // One if / else-if chain per slot: the codes with their own page, then the fallback.
   const sample = { label: "Error 599", title: "Unknown Status Code", caption: "", scene: fallback.scene };
@@ -138,7 +140,7 @@ ${css}
 		<div class="bh-stage bh-scene-${slot((p) => p.scene)}" aria-hidden="true">${slot((p) => props(SCENES[p.scene].behind))}<div class="bh-crab" style="${slot((p) => place(SCENES[p.scene].crab.x, 0))}">${crab(logo)}</div>${slot((p) => props(SCENES[p.scene].front))}</div>
 	</section>
 ${sheet}</main>
-</body>
+${script ? `<script>\n${script}</script>\n` : ""}</body>
 </html>
 `;
 }

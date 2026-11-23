@@ -13,6 +13,7 @@ import { renderErrors, VARIANTS } from "./errors.mjs";
 import { renderAuthentikCss, renderBackground, renderBrandYaml } from "./authentik.mjs";
 import { icoFromPng, LOGO_FILE, renderCheCss, renderCheLogo, renderManifest, renderProductJson } from "./che.mjs";
 import { CSS_FILE, renderArgoCss } from "./argocd.mjs";
+import { ARGOCD_FILE as ARGOCD_EGGS_FILE, FORGEJO_FILE as FORGEJO_EGGS_FILE, FORGEJO_FOOTER, renderEggs, seasonTokens } from "./eggs.mjs";
 import { CSS_FILE as DEX_CSS_FILE, FAVICON_FILE as DEX_FAVICON_FILE, LOGO_FILE as DEX_LOGO_FILE, renderDexCss } from "./dex.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -28,16 +29,19 @@ const tokens = Object.fromEntries(
 
 // ── Contrast floors ─────────────────────────────────────────────────────────
 let broken = 0;
+// The seasons (eggs) swap the accent: only the pairs that use it are checked again.
+const sets = [["", tokens, cfg.contrast], ...(cfg.seasons ?? []).map((s) => [`${s.name}: `, seasonTokens(s, tokens), cfg.contrast.filter((p) => p.some((k) => /^accent/.test(k)))])];
 console.log("contrast".padEnd(28) + RENDITIONS.map((r) => r.padStart(9)).join("") + "    floor");
-for (const [fg, bg, floor] of cfg.contrast) {
+for (const [label, set, pairs] of sets)
+for (const [fg, bg, floor] of pairs) {
   const cells = RENDITIONS.map((r) => {
-    for (const k of [fg, bg]) if (!tokens[r][k]) throw new Error(`contrast: unknown token "${k}"`);
-    const ratio = contrast(tokens[r][fg], tokens[r][bg]);
+    for (const k of [fg, bg]) if (!set[r][k]) throw new Error(`contrast: unknown token "${k}"`);
+    const ratio = contrast(set[r][fg], set[r][bg]);
     const ok = ratio >= floor;
     if (!ok) broken++;
     return ((ok ? "" : "✗ ") + ratio.toFixed(2)).padStart(9);
   });
-  console.log(`${fg} / ${bg}`.padEnd(28) + cells.join("") + `    ${floor}`);
+  console.log(`${label}${fg} / ${bg}`.padEnd(28) + cells.join("") + `    ${floor}`);
 }
 if (broken) {
   console.error(`\n${broken} pair(s) below their floor. Adjust the tokens or the floors in theme.config.mjs.`);
@@ -121,6 +125,15 @@ if (cfg.home) {
   await mkdir(join(dist, "templates"), { recursive: true });
   await writeFile(join(dist, "templates/home.tmpl"), renderHome(cfg.home));
 }
+const inkLogo = await readFile(join(root, "assets/img/theme/logo-ink.svg"), "utf8");
+const forgejoEggs = renderEggs("forgejo", cfg, { tokens, logo: inkLogo });
+if (forgejoEggs) {
+  await mkdir(join(pub, "js"), { recursive: true });
+  await writeFile(join(pub, "js", FORGEJO_EGGS_FILE), forgejoEggs);
+  await mkdir(join(dist, "templates/custom"), { recursive: true });
+  await writeFile(join(dist, "templates/custom/footer.tmpl"), FORGEJO_FOOTER);
+}
+const hasTemplates = Boolean(cfg.home || forgejoEggs);
 
 // ── Error pages (error-pages template, served off-Forgejo: inlines everything) ─
 let errorsHtml = null; // variant -> template
@@ -140,14 +153,15 @@ ${bhVars("dark")}
 }
 ${homeCss}
 ${await readFile(join(root, "src/errors.css"), "utf8")}`;
-  const logo = await readFile(join(root, "assets/img/theme/logo-ink.svg"), "utf8");
+  const logo = inkLogo;
+  const script = renderEggs("errors", cfg, { tokens, logo }) ?? "";
   errorsHtml = {};
   await mkdir(join(dist, "errors"));
   for (const variant of VARIANTS) {
-    errorsHtml[variant] = renderErrors(cfg.errors, { css, logo }, { variant });
+    errorsHtml[variant] = renderErrors(cfg.errors, { css, logo, script }, { variant });
     await writeFile(join(dist, `errors-${variant}.html`), errorsHtml[variant]);
     for (const code of [...Object.keys(cfg.errors.pages), "599"])
-      await writeFile(join(dist, "errors", `${variant}-${code}.html`), renderErrors(cfg.errors, { css, logo }, { variant, preview: Number(code) }));
+      await writeFile(join(dist, "errors", `${variant}-${code}.html`), renderErrors(cfg.errors, { css, logo, script }, { variant, preview: Number(code) }));
   }
 }
 
@@ -202,6 +216,8 @@ if (cfg.argocd) {
   await cp(join(root, "assets/img/theme/logo-cream.svg"), join(argocdOut, "logo-dark.svg"));
   for (const r of RENDITIONS) await writeFile(join(argocdOut, `background-${r}.svg`), flowBackground(r));
   for (const f of Object.values(cfg.fonts).flatMap((face) => face.files)) await cp(join(root, "assets/fonts", f.file), join(argocdOut, f.file));
+  const eggs = renderEggs("argocd", cfg, { tokens, logo: inkLogo });
+  if (eggs) await writeFile(join(argocdOut, ARGOCD_EGGS_FILE), eggs);
 }
 
 // ── Dex (a theme directory, flat: styles.css and the files it points at) ──────
@@ -227,7 +243,7 @@ async function walk(dir) {
   }
   return out.sort();
 }
-const files = [...(await walk(join(dist, "public"))), ...(cfg.home ? await walk(join(dist, "templates")) : [])].map((f) =>
+const files = [...(await walk(join(dist, "public"))), ...(hasTemplates ? await walk(join(dist, "templates")) : [])].map((f) =>
   relative(dist, f).split("\\").join("/"),
 );
 const keys = new Map();
@@ -252,7 +268,7 @@ configMapGenerator:
 ${files.map((f) => `      - ${f}`).join("\n")}
 `,
 );
-const mounts = [["public", "public"], ...(cfg.home ? [["templates", "templates"]] : [])];
+const mounts = [["public", "public"], ...(hasTemplates ? [["templates", "templates"]] : [])];
 await writeFile(
   join(dist, "values.forgejo.yaml"),
   `# Generated. Merge into the Forgejo Helm chart values.

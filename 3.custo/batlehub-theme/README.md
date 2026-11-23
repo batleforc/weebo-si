@@ -39,6 +39,8 @@ contrast ratios, a few controls) without a running Forgejo.
 | Che: which PatternFly 6 token a token feeds, logo, loader, favicon | `src/che.mjs` |
 | Argo CD: the rules it overrides, sidebar, login page | `src/argocd.mjs`          |
 | Dex: the theme's stylesheet (login, password, approval, device, error pages) | `src/dex.mjs` |
+| Easter eggs, seasons (date ranges), idle screensaver | `theme.config.mjs` → `eggs`, `seasons`, `idle` |
+| Their dialog, parades, screensaver, error-page game | `src/eggs.runtime.js` (built by `src/eggs.mjs`) |
 
 Colours are written as OKLCH and converted to sRGB hex at build time; a value outside the
 sRGB gamut has its chroma reduced until it fits. The build fails if a pair listed under
@@ -161,5 +163,19 @@ Notes:
   replaces the stock theme's, so it paints every `theme-*` class (`test/dex.test.mjs`
   checks the list in `test/fixtures/`); light by default, dark by `prefers-color-scheme`.
   Re-check after a Dex minor upgrade.
+- Easter eggs: `src/eggs.runtime.js`, built by `src/eggs.mjs` into one script per target
+  with its config written in. A key sequence (Konami, or a word such as `sudo` typed
+  outside a text field) opens a dialog; on the error pages it turns the crab's stage into
+  a game (`crab-run`: Space or a tap to jump the bugs; `shelf-climb`: a rusty robot bouncing up
+  a library from book to book, steered with the arrows or a side of the stage). A season (date range) swaps the
+  accent, contrast-checked by the build like the tokens, and sends one parade a session
+  (bats, snow, upside-down crab); `?bh-season=<name>` previews one. After `idle` minutes
+  without input the crab bounces around the screen (Forgejo, Argo CD). Nothing moves under
+  reduced motion but the game the person starts. Forgejo loads
+  `/assets/js/batlehub-eggs.js` from `templates/custom/footer.tmpl`; Argo CD loads
+  `extension-batlehub-eggs.js` as a UI extension (`argocd-styles-cm` mounted again at
+  `/tmp/extensions/batlehub` by `1.pulu-conf`, `task puluconf:up`); the error pages inline
+  it. Authentik, Che and Dex take CSS only: none of this there. A season recolours Forgejo
+  through `<html data-theme>`: re-check after a major Forgejo upgrade.
 - `home.tmpl` relies on `base/head`, `base/footer`, `AppName`, `AppSubUrl`, `.IsSigned`;
   re-check it after a major Forgejo upgrade.
