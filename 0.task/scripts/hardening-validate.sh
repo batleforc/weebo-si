@@ -307,6 +307,8 @@ spec:
   matchResources: { namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: $TEST_NS } } }
 EOF
   track "validatingadmissionpolicybinding/hardening-validate-v14"; track "validatingadmissionpolicy/hardening-validate-v14"
+  # Une VAP n'est appliquée qu'une fois compilée par l'apiserver : sans attente, le premier appel passe sans warning.
+  sleep 15
   local dw; dw=$(k -n "$TEST_NS" get devworkspace -o name | head -1)
   if [ -z "$dw" ]; then
     report V-14 MANUAL "VAP Warn posée sur $TEST_NS ; aucun DevWorkspace : en démarrer un depuis le dashboard MAINTENANT (le script attend 120 s) et noter si le warning s'affiche"
