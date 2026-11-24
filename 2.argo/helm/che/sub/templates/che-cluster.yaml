@@ -22,6 +22,18 @@ spec:
       autoProvision: false
     persistUserHome:
       enabled: true
+    # PSA `restricted` (durcissement-workspaces, V-10 du 24/11) : les trois
+    # champs que les pods de workspace enfreignaient. che-operator les recopie
+    # dans le DWOC devworkspace-config ; containerSecurityContext n'est honoré
+    # que parce que disableContainer{Build,Run}Capabilities valent true.
+    security:
+      containerSecurityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+      podSecurityContext:
+        seccompProfile:
+          type: RuntimeDefault
     networking:
       externalTLSConfig:
         enabled: true
