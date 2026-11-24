@@ -39,7 +39,7 @@ flowchart LR
     C["WeeboSiConfig cluster"]
   end
 
-  subgraph OP["weebo-si-operator 0.5.0 · webhook 1 réplique → 2 + PDB (ph. 1)"]
+  subgraph OP["weebo-si-operator 0.5.0 · webhook 1 réplique (mono-nœud assumé)"]
     direction TB
     subgraph ADM["Admission (webhooks, failurePolicy Fail)"]
       RW["imageRewrite<br/>docker.io / quay.io / ghcr.io → angos"] --> IP["imagePolicy<br/>angos/** (+ ghcr direct à retirer, ph. 2)"]
@@ -148,7 +148,7 @@ Légende : actif mais en Audit (ne bloque rien) · feature non activée · prév
 | Haute | Le kube-apiserver:6443 doit rester ouvert, sinon le workspace ne passe jamais en started. Or le token du ServiceAccount (`devworkspace-default-role`) permet de lire, créer et supprimer tous les Secrets du namespace, de faire un `pods/exec` et de patcher les DevWorkspace. Tout processus du pod peut donc lire le PAT, les credentials git et les clés TLS. | Garder 6443, mais limiter qui peut lire le token : une règle KubeArmor `fromSource` qui n'autorise la lecture de `/var/run/secrets/kubernetes.io/serviceaccount/` qu'au Node de l'IDE che-code, celui qui remonte l'état du workspace. Supprimer aussi le profil `kube-api`, qui fait doublon avec la base. |
 | Haute | Le DNS laisse passer toutes les requêtes (`matchPattern: "*"`). Une donnée peut sortir encodée dans des requêtes DNS, même si toute la sortie HTTP est bloquée. | Restreindre les patterns DNS de la base aux domaines internes, et laisser chaque profil ajouter les siens (phase 3). |
 | Moyenne | L'entrée `open` (endpoint anonyme) est accordée à toute la team : un workspace peut publier un endpoint sur Internet sans authentification. | Ne l'accorder que par annotation de namespace posée par l'admin, et alerter à chaque usage (phase 3). |
-| Moyenne | Le webhook weebo-si n'a qu'une réplique, avec `failurePolicy: Fail`. Pendant un redémarrage, aucun workspace ne démarre, et il s'ajoute à la chaîne d'admission au boot. Aucun test continu ne vérifie que les interdits tiennent toujours. | 2 répliques et une PDB, plus un workspace témoin qui tente les interdits et alerte (phase 1). |
+| Moyenne | Le webhook weebo-si n'a qu'une réplique, avec `failurePolicy: Fail`. Pendant un redémarrage, aucun workspace ne démarre, et il s'ajoute à la chaîne d'admission au boot. Aucun test continu ne vérifie que les interdits tiennent toujours. | La réplique unique est acceptée pour le lab (décision du 24/11, voir « Mono-nœud »). Reste un workspace témoin qui tente les interdits et alerte (phase 1), et un runbook de reboot. |
 | Accepté | Cluster mono-nœud : un seul etcd, Longhorn à 1 réplique, plateforme et workspaces sur le même noyau. | Faiblesses assumées pour l'instant. Documenter le passage au multi-nœud et les bonnes pratiques à suivre dès maintenant (section dédiée). |
 | Moyenne | Pas de quota : un workspace peut épuiser le CPU, la mémoire et le stockage Longhorn du nœud. | Activer `resourceQuotas` avec un profil par team (CPU, mémoire, nombre de PVC, `requests.storage`). |
 | Moyenne | PSA reste en `baseline`. | Tester `restricted` (le binaire `passwd-append` existe pour l'UID arbitraire). Ajouter `hostUsers: false` (user namespaces) via le DWOC épinglé. |
@@ -209,9 +209,11 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 
 **Constat** : Tous les webhooks weebo-si sont en `failurePolicy: Fail`. C'est le bon choix : s'il tombe, il bloque au lieu de laisser passer sans contrôle. Mais `weebo-si-operator-webhook` n'a qu'une réplique. Pendant un redémarrage ou une mise à jour, aucun DevWorkspace, Pod de workspace ni Ingress ne peut être admis. Au reboot du nœud, il s'ajoute à la chaîne d'admission déjà fragile (le cycle kyverno ↔ vault-webhook).
 
-**Comment** : 2 répliques, une PDB `minAvailable: 1` et une `topologySpreadConstraints` (inutile en mono-nœud, mais prête pour le multi-nœud). Vérifier que le `namespaceSelector` de chaque webhook exclut `kube-system` et `weebo-si-hardening`, pour qu'il ne puisse jamais bloquer son propre démarrage. Faire un test de reboot à froid avec la check-list du runbook.
+**Décision du 24/11** : le webhook reste à **1 réplique** sur le lab, mono-nœud assumé. Deux répliques sur un seul nœud ne couvrent de toute façon que le redémarrage d'un pod, pas celui du nœud. Le chart garde 2 répliques et une PDB par défaut, prêts pour le multi-nœud. Le cluster les ramène à 1 (`che.hardening.replicas`). Les RFC qui demandaient « 2 répliques avant `Enforce` » ont leur prérequis levé pour le lab (RFC 0018, Q23).
 
-**Vérif** : Supprimer un pod du webhook pendant le démarrage d'un workspace ne change rien. Après un reboot du nœud, les workspaces démarrent sans intervention.
+**Comment** : Vérifier que le `namespaceSelector` de chaque webhook exclut `kube-system` et `weebo-si-hardening`, pour qu'il ne puisse jamais bloquer son propre démarrage (V-01 PASS). Faire un test de reboot à froid avec la check-list du runbook. Ajouter au runbook de reboot : redémarrer les workspaces passés en `Failed` pendant que le webhook n'était pas prêt.
+
+**Vérif** : Pendant un redémarrage du webhook, un démarrage de workspace est refusé, puis repasse après un redémarrage du workspace (fail-closed, accepté). Après un reboot du nœud, le runbook suffit à rétablir les workspaces.
 
 #### Un workspace témoin qui teste les interdits
 
@@ -777,7 +779,7 @@ Le témoin exécute ces tests depuis un vrai workspace, avec les droits d'un dé
 | T-07 | Profil réseau auto-accordé | Avec le token : patch de l'attribut `hardening.weebo.io/network-profiles: [internet]` du DevWorkspace | Refusé ou ignoré (`onNotGranted`). Pas de CNP `internet` créée. | 3 |
 | T-08 | Modification d'une policy gérée | Supprimer ou modifier `weebo-base` (CNP), une KubeArmorPolicy ou le quota du namespace | Refusé par policyGuard. | actuel |
 | T-09 | Ajout d'une policy permissive | Créer une CNP `allow-all` dans le namespace | Refusée, car l'identité n'est pas dans `allowedIdentities`. | actuel |
-| T-10 | Webhook indisponible | Mettre le webhook à 0 réplique, puis démarrer un workspace | Démarrage refusé (fail-closed), jamais admis sans contrôle. Avec 2 répliques, supprimer un pod ne change rien. | 1 |
+| T-10 | Webhook indisponible | Mettre le webhook à 0 réplique, puis démarrer un workspace | Démarrage refusé (fail-closed), jamais admis sans contrôle. En multi-nœud, avec 2 répliques, supprimer un pod ne change rien. | 1 |
 | T-11 | Changement d'UID | Pod ou composant avec `runAsUser: 0`, puis `runAsUser: 1234`, puis un UID hors de la plage du namespace | Refusé. | 5 |
 | T-12 | Annotation d'accord posée par l'utilisateur | Annoter son propre namespace avec `hardening.weebo.io/dwoc`, `uid-range` ou un accord `open` | Refusé : seuls l'opérateur et l'admin peuvent la poser. | 3 |
 | **Identité et API Kubernetes** |  |  |  |  |
@@ -873,7 +875,7 @@ Le cluster tourne sur un seul nœud (`talos-r2k-rp0` : 12 CPU, 64 Gio, control p
 | Un seul etcd et un seul apiserver | Un reboot ou une mise à jour Talos coupe tout, workspaces compris. | 3 nœuds control plane, pour qu'etcd garde son quorum. |
 | Longhorn à 1 réplique (`numberOfReplicas: 1`), plus 4 PVC en `local-path` | Un disque perdu, ce sont des données perdues. Les backups S3 (phase 10) sont la seule protection. | 3 répliques Longhorn, avec anti-affinité sur les nœuds. Sortir de `local-path` ce qui doit survivre à un nœud. |
 | Tout partage le même noyau | Une évasion depuis un workspace donne accès au nœud qui porte aussi OpenBao, Argo CD et etcd. youki, les user namespaces et KubeArmor réduisent ce risque, sans l'éliminer. | Un pool de nœuds dédié aux workspaces (taints et `nodeSelector`/`tolerations` du CheCluster), séparé de la plateforme. |
-| Webhooks et opérateurs en 1 réplique | Pendant un redémarrage, les admissions sont bloquées (phase 1). | 2 répliques ou plus, avec PDB et `topologySpreadConstraints` sur les nœuds. |
+| Webhooks et opérateurs en 1 réplique (maintenu volontairement sur le lab, 24/11) | Pendant un redémarrage, les admissions sont bloquées, et un workspace démarré à ce moment passe en `Failed`. | 2 répliques ou plus, avec PDB et `topologySpreadConstraints` sur les nœuds. |
 | Drain d'upgrade Talos désactivé (`--drain=false`, bloqué par les PDB) | Une mise à jour interrompt les pods au lieu de les déplacer. | Un vrai drain. Les PDB doivent alors permettre de déplacer les pods, sans exiger qu'ils restent sur le nœud. |
 | Voisins bruyants | Un workspace, un BuildKit ou un émulateur saturent la machine qui fait tourner la plateforme. | Les outils de team privilégiés (BuildKit, émulateurs avec `/dev/kvm`) sur un pool dédié. |
 
