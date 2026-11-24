@@ -473,7 +473,9 @@ V27() { # le moteur ajoute-t-il seul l'UID arbitraire à /etc/passwd ? (RFC 0018
   esac
 }
 
-ALL="V-01 V-02 V-03 V-04 V-05 V-06 V-07 V-08 V-09 V-10 V-11 V-12 V-13 V-14 V-15 V-16 V-17 V-18 V-19 V-20 V-21 V-22 V-23 V-24 V-25 V-26 V-27"
+V28() { report V-28 MANUAL "workspace réel (persistUserHome) avec le sidecar che-browser, sous l'UID d'un bloc sans groupe 0 : ls -ld \$HOME et touch \$HOME/x dans chaque conteneur, redémarrages de Chrome (RFC 0018, Still open 9)"; }
+
+ALL="V-01 V-02 V-03 V-04 V-05 V-06 V-07 V-08 V-09 V-10 V-11 V-12 V-13 V-14 V-15 V-16 V-17 V-18 V-19 V-20 V-21 V-22 V-23 V-24 V-25 V-26 V-27 V-28"
 SELECTED=${*:-$ALL}
 
 for t in kubectl jq; do command -v "$t" >/dev/null || { echo "$t manquant (mise install)" >&2; exit 1; }; done
