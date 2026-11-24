@@ -35,7 +35,7 @@ flowchart TB
 | Utilisateur | Nom | Email | Groupes directs | Groupes effectifs | Actif |
 |---|---|---|---|---|---|
 | `batleforc` | max | `max@weebo.internal` | `weebo_admin`, `batleforc`, `batleforc-org_owner` | `weebo_admin`, `weebo_moderator`, `weebo_user`, `batleforc`, `batleforc-org_owner` | oui |
-| `batleforc-test` | batleforc-test | `batleforc-test@weebo.internal` | `weebo_user` | `weebo_user` | non |
+| `batleforc-test` | batleforc-test | `batleforc-test@weebo.internal` | `weebo_user` | `weebo_user` | oui |
 
 ## Applications Argo CD visibles
 
@@ -49,7 +49,7 @@ Ces rôles, comme les RoleBindings `labsso:<email>` de l'apiserver, font confian
 | `batleforc` | tout (`role:readonly`) | `policy.csv` : `weebo_admin` |
 | `batleforc` | `che-users/che-user-batleforc` (get, sync) | rôle `proj:che-users:user-batleforc` : `max@weebo.internal` |
 | `batleforc` | `che-config-batleforc/*` (get, sync) | rôle `proj:che-config-batleforc:user-batleforc` : `max@weebo.internal` |
-| `batleforc-test` | rien | aucun rôle |
+| `batleforc-test` | `che-users/che-user-batleforc-test` (get, sync) | rôle `proj:che-users:user-batleforc-test` : `batleforc-test@weebo.internal` |
 
 ## Accès aux applications
 

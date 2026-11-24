@@ -775,7 +775,7 @@ users:
     username: batleforc-test
     email: batleforc-test@weebo.internal
     team: weebo
-    active: false  # test du runbook depart-utilisateur (24/11)
+    active: true
     che:
       mode: Ensure
       values:
