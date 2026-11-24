@@ -353,9 +353,11 @@ config:
           network: Audit
           capabilities: Audit
       templates:
-        # What a workspace should never do. Not the ServiceAccount token: every
-        # workspace reads it for kubectl. Each rule goes Block on its own on
-        # Thursday, after a day of `karmor logs`.
+        # What a workspace should never do. Each rule goes Block on its own on
+        # Thursday, after a day of `karmor logs`. The ServiceAccount token
+        # rule stays Audit: it is V-08's census of which binaries read the
+        # token (from 2026-11-24, 7 days), the input of the fromSource Block
+        # of phase 3. /var/run is a symlink to /run in most images, hence both.
         weebo-armor-base:
           apiVersion: security.kubearmor.com/v1
           kind: KubeArmorPolicy
@@ -372,6 +374,12 @@ config:
                 - dir: /usr/sbin/
                   recursive: true
                   readOnly: true
+                  action: Audit
+                - dir: /var/run/secrets/kubernetes.io/serviceaccount/
+                  recursive: true
+                  action: Audit
+                - dir: /run/secrets/kubernetes.io/serviceaccount/
+                  recursive: true
                   action: Audit
             capabilities:
               matchCapabilities:
