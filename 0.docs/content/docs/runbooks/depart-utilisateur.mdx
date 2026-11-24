@@ -1,0 +1,136 @@
+---
+title: Départ d'un utilisateur
+description: "Couper tout de suite les accès d'une personne qui part, garder ses données pendant une durée définie, puis tout supprimer et vérifier qu'il ne reste rien"
+---
+
+Objectif : quand une personne quitte Weebo-SI, aucun accès ne lui survit, ses données restent récupérables pendant la durée de conservation, puis plus aucun objet ne porte son nom. Le pendant de ce runbook est [Onboarder un utilisateur](./onboarding-utilisateur).
+
+Trois temps : **tout de suite** (couper), **pendant la conservation** (garder, sans accès), **ensuite** (supprimer et vérifier). La durée de conservation par défaut est de **30 jours**. Elle se raccourcit sur demande de la personne, et s'allonge si une donnée doit être reprise.
+
+## Ce qu'il faut savoir avant
+
+- **`active: false` sur le WeeboSiUser ne coupe rien** si l'opérateur ne gère pas l'AuthentikUser de la personne. C'est le cas de tous les comptes actuels, déclarés dans `auth/sub`. Ce champ ne sert qu'à recopier `isActive` sur un AuthentikUser géré par l'opérateur (`weebo-si-hardening`, `crates/weebo-si-crd/src/identity.rs`). La coupure passe donc par `auth/sub`, à l'étape 1.
+- **Bloquer le compte Authentik n'invalide pas les jetons déjà émis.** Une session Argo CD dure 8 h (`users.session.duration`). Un access token OIDC dure jusqu'à 12 h selon l'application (`accessTokenValidity` dans `auth/sub`), et 1 h pour `kube-admin`. Les accès qui ne passent pas par Authentik (token Forgejo, clé SSH, PAT GitHub) ne sont pas touchés du tout : l'étape 1 les traite un par un.
+- **Pas de backup Longhorn aujourd'hui** (aucune cible de backup, aucune `VolumeSnapshotClass`), et les PV sont en `reclaimPolicy: Delete`. Un snapshot Longhorn disparaît avec son volume. Pendant la conservation, c'est donc le PVC lui-même qu'on garde. Si une donnée doit survivre à la suppression, on archive le PV à l'étape 3.
+- `KUBECONFIG=0.config/kubeconfig.yaml`, et la personne notée `alice` ci-dessous (namespace `dev-ws-alice`, email `alice@weebo.internal`).
+
+## 1. Tout de suite : couper les accès
+
+### 1.1 Bloquer le compte (git)
+
+Dans `2.argo/helm/auth/sub/values.yaml`, `identity.users.items`, sur l'entrée de la personne :
+
+```yaml
+        isActive: false
+```
+
+Dans `2.argo/helm/che/hardening/values.yaml`, `users.alice` : `active: false`. Ça ne coupe rien aujourd'hui (voir plus haut), mais ça trace l'intention et ce sera la commande le jour où l'opérateur gérera le départ.
+
+Commit sur `develop`, push, puis synchroniser `auth-app` et attendre `weebo-si-hardening-config`.
+
+**Vérification** :
+
+```bash
+export KUBECONFIG=0.config/kubeconfig.yaml
+kubectl get authentikuser alice -o jsonpath='{.spec.isActive} {.status.conditions[?(@.type=="Ready")].status}{"\n"}'   # false True
+W=$(kubectl -n auth get pod -o name | grep worker | head -1)
+kubectl -n auth exec $W -c worker -- /vault/vault-env ak shell -c "
+from authentik.core.models import User, AuthenticatedSession, Token
+u = User.objects.get(username='alice')
+print('active', u.is_active, 'sessions', AuthenticatedSession.objects.filter(user=u).count(),
+      'tokens', Token.objects.filter(user=u).count())
+"
+# active False sessions 0 tokens 0
+```
+
+S'il reste des sessions ou des jetons Authentik : *Annuaire → Utilisateurs → alice → Sessions* et *Jetons*, tout supprimer.
+
+### 1.2 Arrêter les workspaces
+
+```bash
+for dw in $(kubectl -n dev-ws-alice get devworkspace -o name); do
+  kubectl -n dev-ws-alice patch "$dw" --type merge -p '{"spec":{"started":false}}'
+done
+kubectl -n dev-ws-alice get devworkspace          # tous Stopped
+kubectl -n dev-ws-alice get pods                  # aucun pod de workspace
+```
+
+Ne pas supprimer les DevWorkspaces maintenant : leur PVC part avec eux.
+
+### 1.3 Révoquer ce qui ne passe pas par Authentik
+
+- **Forgejo** : le compte vient de l'OIDC, mais ses tokens et ses clés SSH vivent sans lui. *Administration du site → Comptes utilisateurs → alice → Modifier* : décocher **Actif** et cocher **Désactiver la connexion**, ce qui refuse aussi les tokens et le SSH. Le token du workspace est un CR `ForgejoAccessToken` du namespace (`che-workspace`, rendu par l'App `che-user-alice`, secret aussi dans OpenBao sous `users/alice/forgejo-token`). Il est révoqué à l'étape 3, quand son CR disparaît.
+- **GitHub et autres PAT personnels** : les Secrets de type PAT ou git-credential du namespace sont lisibles par le workspace et valent au-delà du cluster. Il faut les révoquer **côté fournisseur** (la personne, ou l'admin de l'organisation GitHub), puis supprimer les Secrets :
+
+  ```bash
+  kubectl -n dev-ws-alice get secret -l controller.devfile.io/scm-personal-access-token=true -o name
+  kubectl -n dev-ws-alice get secret -l controller.devfile.io/git-credential=true -o name
+  ```
+
+- **Clé fournisseur LLM ou autre secret personnel** dans le home du workspace : à révoquer côté fournisseur. Le home est sur le PVC, inaccessible une fois les workspaces arrêtés.
+- **Élévation admin** (`weebo_admin` seulement) : retirer le groupe dans `groupRefs` (étape 1.1). Un jeton `kube-admin` déjà émis expire seul dans l'heure.
+
+**Vérification** : la personne (ou un test avec ses anciens identifiants) n'ouvre plus Che, Argo CD ni Forgejo, et `git push` avec son ancien token Forgejo est refusé.
+
+## 2. Pendant la conservation : garder sans accès
+
+Rien à supprimer. Les PVC restent dans `dev-ws-alice`, les workspaces sont arrêtés, et la personne n'a plus aucun accès.
+
+Facultatif : figer l'état avec un snapshot Longhorn de chaque volume, utile si quelqu'un doit redémarrer un workspace pour reprendre une donnée.
+
+```bash
+for pv in $(kubectl -n dev-ws-alice get pvc -o jsonpath='{.items[*].spec.volumeName}'); do
+  kubectl -n longhorn-system apply -f - <<EOF
+apiVersion: longhorn.io/v1beta2
+kind: Snapshot
+metadata: { name: depart-alice-$pv, namespace: longhorn-system }
+spec: { volume: $pv, createSnapshot: true }
+EOF
+done
+```
+
+Noter la date de fin de conservation dans le ticket ou l'agenda.
+
+## 3. Ensuite : supprimer, puis vérifier qu'il ne reste rien
+
+### 3.1 Archiver ce qui doit survivre (facultatif)
+
+Si un volume doit être gardé au-delà de la suppression :
+
+```bash
+kubectl patch pv <pv> -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'
+```
+
+Après la suppression du namespace, le PV reste en `Released` avec son volume Longhorn. Il faudra le supprimer à la main plus tard (`kubectl delete pv <pv>`, puis le volume dans l'UI Longhorn).
+
+### 3.2 Supprimer (git, puis une commande)
+
+1. `2.argo/helm/che/hardening/values.yaml` : retirer `users.alice`. Le WeeboSiUser, l'App `che-user-alice` et `dev-ws-alice` disparaissent, avec les PVC, le `ForgejoAccessToken` (ce qui révoque le token dans Forgejo et OpenBao) et les RoleBindings `labsso:alice@weebo.internal`.
+2. `2.argo/helm/auth/sub/values.yaml` : retirer l'entrée. `auth-app` ne fait pas de prune, il faut donc supprimer le CR une fois, volontairement : `kubectl delete authentikuser alice`. Son finalizer supprime l'utilisateur Authentik.
+3. Forgejo : *Administration du site → Comptes utilisateurs → alice → Supprimer le compte*, après avoir transféré les dépôts à garder.
+4. Les snapshots de l'étape 2, s'il en reste (supprimer le volume les emporte, sauf pour un PV archivé) : `kubectl -n longhorn-system get snapshots.longhorn.io -o name | grep depart-alice- | xargs -r kubectl -n longhorn-system delete`.
+
+### 3.3 Vérifier (T-46)
+
+```bash
+U=alice; E=alice@weebo.internal
+kubectl get ns dev-ws-$U                                            # NotFound
+kubectl get weebosiuser,authentikuser $U                            # NotFound
+kubectl -n argocd get application che-user-$U                       # NotFound
+kubectl get rolebinding,clusterrolebinding -A -o json \
+  | jq -r --arg e "labsso:$E" --arg u "$U" '.items[]|select(any(.subjects[]?; .name==$e or .name==$u))|"\(.kind) \(.metadata.namespace)/\(.metadata.name)"'
+                                                                    # rien (bindings legacy sans préfixe compris)
+kubectl get pv -o json | jq -r --arg ns dev-ws-$U '.items[]|select(.spec.claimRef.namespace==$ns)|.metadata.name'
+                                                                    # rien, sauf un PV archivé exprès en 3.1
+```
+
+Plus rien dans Authentik (*Annuaire → Utilisateurs*), Forgejo (*Comptes utilisateurs*) ni OpenBao (`users/alice/`).
+
+## Retour arrière
+
+- **Pendant l'étape 1 ou 2** : remettre `isActive: true` (et `active: true`), puis redémarrer les workspaces. Rien n'est perdu. Les tokens révoqués côté fournisseur sont à recréer.
+- **Après l'étape 3** : il n'y a plus de retour arrière, sauf pour un PV archivé en 3.1. On recrée alors le compte par [l'onboarding](./onboarding-utilisateur), puis on rattache le PV à un nouveau PVC.
+
+## Ce qui reste manuel, et pourquoi
+
+Aujourd'hui, tout ce runbook est manuel. À terme, l'opérateur fera les étapes 1.2, 2 et 3.2 au passage à `active: false`, et ce runbook servira de cahier des charges à la RFC weebo-si-hardening correspondante. Les révocations chez des fournisseurs externes (GitHub, clés LLM) resteront manuelles dans tous les cas.

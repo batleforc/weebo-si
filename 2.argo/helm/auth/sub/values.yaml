@@ -225,7 +225,7 @@ identity:
         username: batleforc-test
         name: batleforc-test
         email: batleforc-test@weebo.internal
-        isActive: true
+        isActive: false  # test du runbook depart-utilisateur (24/11)
         groupRefs:
           - weebo_user
 

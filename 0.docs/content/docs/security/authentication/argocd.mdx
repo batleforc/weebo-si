@@ -32,7 +32,6 @@ flowchart LR
     n_claim_weebo_admin_step_up_348fcd("weebo_admin:step-up")
     n_claim_weebo_admin_5bbd1d("weebo_admin")
     n_claim_max_weebo_internal_e2e9e1("max@weebo.internal")
-    n_claim_batleforc_test_weebo_internal_69b8a7("batleforc-test@weebo.internal")
   end
   subgraph n_sg_R_les_Argo_CD_be5664["Rôles Argo CD"]
     n_role_role_admin_10a3e4(["role:admin"])
@@ -43,7 +42,6 @@ flowchart LR
   end
   subgraph n_sg_Projet_che_users_ad876b["Projet che-users"]
     n_prole_che_users_user_batleforc_c7d9e9(["proj:che-users:user-batleforc"])
-    n_prole_che_users_user_batleforc_test_8f5a6d(["proj:che-users:user-batleforc-test"])
   end
   n_ak_argo_358618 --> n_conn_weebo_f3bc65
   n_group_weebo_user_58ae05 -->|"accès"| n_ak_argo_358618
@@ -57,7 +55,6 @@ flowchart LR
   n_claim_weebo_admin_5bbd1d -->|"policy.csv"| n_role_role_readonly_cab0d8
   n_claim_max_weebo_internal_e2e9e1 -->|"rôle de projet"| n_prole_che_config_batleforc_user_batleforc_0ce05f
   n_claim_max_weebo_internal_e2e9e1 -->|"rôle de projet"| n_prole_che_users_user_batleforc_c7d9e9
-  n_claim_batleforc_test_weebo_internal_69b8a7 -->|"rôle de projet"| n_prole_che_users_user_batleforc_test_8f5a6d
 ```
 
 ## Réglages
@@ -114,5 +111,4 @@ Projet `default` : Verrouillé (`2.argo/app`, `lockDefaultProject: true`) : aucu
 |---|---|---|---|
 | `che-config-batleforc` | `user-batleforc` | `max@weebo.internal` | `p, proj:che-config-batleforc:user-batleforc, applications, get, che-config-batleforc/*, allow`<br/>`p, proj:che-config-batleforc:user-batleforc, applications, sync, che-config-batleforc/*, allow` |
 | `che-users` | `user-batleforc` | `max@weebo.internal` | `p, proj:che-users:user-batleforc, applications, get, che-users/che-user-batleforc, allow`<br/>`p, proj:che-users:user-batleforc, applications, sync, che-users/che-user-batleforc, allow` |
-| `che-users` | `user-batleforc-test` | `batleforc-test@weebo.internal` | `p, proj:che-users:user-batleforc-test, applications, get, che-users/che-user-batleforc-test, allow`<br/>`p, proj:che-users:user-batleforc-test, applications, sync, che-users/che-user-batleforc-test, allow` |
 
