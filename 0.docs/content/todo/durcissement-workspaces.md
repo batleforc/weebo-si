@@ -385,6 +385,8 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 
 **Migration** : Les PVC existants appartiennent à 1234 : `fsGroup` corrige le groupe au montage, mais pas le propriétaire. Il faut un `chown` une seule fois via un init container ou un Job, ou recréer les workspaces. On teste d'abord sur `batleforc-test`.
 
+**Ce que le DWO bloque déjà (relevé du 24/11)** : la config résolue du DWO v1.1.1, écrite dans ses logs à chaque reconcile, refuse dans les overrides d'un devfile `hostNetwork`, `hostPID`, `hostIPC`, `runAsNonRoot: false`, `runAsUser: 0` et `volumes.hostPath` au niveau du pod. Au niveau du conteneur, elle refuse aussi `privileged`, `allowPrivilegeEscalation: true`, `procMount: Unmasked` et `capabilities.add`. C'est une couche de plus, pas un remplaçant de l'UID par namespace. Elle laisse passer tout UID non root (V-28 a posé 10100 par `pod-overrides`), elle ne voit pas les pods que le DWO ne construit pas, et une montée de version du DWO peut la changer. D'où la validation par webhook de la RFC 0018.
+
 #### PSA `restricted` et user namespaces
 
 **Pourquoi** : `baseline` laisse passer root, l'élévation de privilèges et les capabilities par défaut. `restricted` les retire. `hostUsers: false` fait que root dans le conteneur n'est plus root sur le nœud, ce qui coupe la plupart des évasions.
