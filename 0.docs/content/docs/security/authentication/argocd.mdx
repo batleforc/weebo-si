@@ -97,7 +97,7 @@ Projet `default` : Verrouillé (`2.argo/app`, `lockDefaultProject: true`) : aucu
 
 | Projet | Sources | Destinations | Types cluster | Types namespacés | Applications | Rendu par |
 |---|---|---|---|---|---|---|
-| `bootstrap` | ce dépôt | `argocd`, `kube-system` | `ClusterRoleBinding` | tous | `main (1.pulu-conf)` | `app of apps` |
+| `bootstrap` | ce dépôt | `argocd`, `kube-system` | `ClusterRoleBinding`, `RuntimeClass` | tous | `main (1.pulu-conf)` | `app of apps` |
 | `che-config-batleforc` | `https://github.com/batleforc/weebo-dotfiles-che` | `dev-ws-batleforc` | aucun | `ConfigMap`, `Secret` | `batleforc-external-config (2.helm/user-app)` | `che` |
 | `che-users` | ce dépôt | `dev-ws-*`, `argocd` | `Namespace` | `ForgejoAccessToken`, `ServiceAccount`, `Role`, `ExternalSecret`, `RoleBinding`, `SecretStore`, `Application`, `ConfigMap` | `che-user-batleforc (weebo-si-operator)`<br/>`che-user-batleforc-test (weebo-si-operator)` | `che` |
 | `database` | `oci://ghcr.io/clickhouse/clickhouse-operator-helm`<br/>`https://mongodb.github.io/helm-charts`<br/>`https://cloudnative-pg.github.io/charts`<br/>`https://operator.rustfs.com`<br/>`https://github.com/rustfs/operator`<br/>`https://valkey.io/valkey-helm`<br/>ce dépôt | `argocd`, `database`, `monitoring`, `s3`, `valkey` | `Namespace`, `CustomResourceDefinition`, `ClusterRole`, `MutatingWebhookConfiguration`, `ValidatingWebhookConfiguration`, `ClusterRoleBinding`, `Tenant` | tous | `clickhouse-operator`<br/>`cnpg-barman-cloud`<br/>`cnpg-operator`<br/>`database`<br/>`database-app`<br/>`mongodb-operator`<br/>`s3-operator`<br/>`valkey-operator` | `app of apps` |

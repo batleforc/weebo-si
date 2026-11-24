@@ -54,6 +54,10 @@ tasks:
       KUBECONFIG: 0.config/kubeconfig.oidc.yaml
     cmds:
       - kubectl --context Weebo-si-admin {{ .CLI_ARGS }}
+  hardening:validate:
+    desc: "Validation amont du durcissement des workspaces (V-xx du protocole, durcissement-workspaces.md) ; preuves dans .hardening-runs/"
+    cmds:
+      - 0.task/scripts/hardening-validate.sh {{ .CLI_ARGS }}
   docs:run:
     desc: "Run the current doc (Fumadocs) dev server"
     dir: 0.docs

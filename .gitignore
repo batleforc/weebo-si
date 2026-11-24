@@ -248,3 +248,6 @@ octodoctor-output/
 /.agents/skills/weebo-testing
 /.agents/skills/wska
 # <<< wska links in .agents/
+
+# Preuves locales de 0.task/scripts/hardening-validate.sh
+.hardening-runs/

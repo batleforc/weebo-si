@@ -9,8 +9,10 @@ Décisions déjà prises :
 
 - le kube-apiserver (6443) reste joignable depuis le workspace : che-code en a
   besoin pour remonter son état, sinon le workspace ne passe jamais en Started ;
-- moteur cible : youki, avec un repli runc via `dwocPin`. Kata reste une piste
-  pour plus tard. gVisor et crun sont écartés ;
+- moteur : runc avec user namespaces (`hostUsers: false`). Décision du 24/11, qui
+  remplace celle du 23/11 (youki) : V-06 a montré que youki ne supporte pas les user
+  namespaces. youki est mis en attente, la RuntimeClass reste en place. Kata reste une
+  piste pour plus tard. gVisor et crun sont écartés ;
 - outils : sidecar par défaut. Seuls les outils qui demandent un privilège ou un
   périphérique (BuildKit, émulateur Android) vont dans un namespace de team, et
   ils démarrent à la demande ;
@@ -41,7 +43,7 @@ flowchart LR
     direction TB
     subgraph ADM["Admission (webhooks, failurePolicy Fail)"]
       RW["imageRewrite<br/>docker.io / quay.io / ghcr.io → angos"] --> IP["imagePolicy<br/>angos/** (+ ghcr direct à retirer, ph. 2)"]
-      DP["dwocPin<br/>che (runc) · youki · repli runc (ph. 5)"]
+      DP["dwocPin<br/>che (runc) · youki en attente (ph. 5)"]
       PG["policyGuard<br/>refuse écritures hors opérateur"]
       EA["endpointAuth<br/>private par défaut · open à restreindre (ph. 3)"]
       UIDW["UID par namespace<br/>(à créer, ph. 5)"]:::plan
@@ -62,7 +64,7 @@ flowchart LR
   C --> OP
 
   subgraph NS["ns dev-ws-batleforc"]
-    DW["Pod workspace<br/>runc → youki + hostUsers:false (ph. 5)"]
+    DW["Pod workspace<br/>runc + hostUsers:false (ph. 5)"]
     SC["Sidecars (ph. 7)<br/>Postgres · Redis · rustfs dev · Playwright · sccache"]:::plan
     ING["Ingress *.cde.dev.weebo.poc"]
     LR["LimitRange Kyverno<br/>mem 2Gi, pas de CPU max"]
@@ -127,13 +129,15 @@ Légende : actif mais en Audit (ne bloque rien) · feature non activée · prév
 
 - **resourceQuotas** (Off) : Pas de ResourceQuota. Seule une LimitRange Kyverno existe : 2Gi de mémoire par défaut, ni limite CPU ni maximum.
 
-- **teamTools** (À créer) : N'existe pas encore. Les outils qui demandent des privilèges ou un périphérique (BuildKit, émulateurs Android) tournent dans un namespace de team et démarrent à la demande. Tous les autres restent des sidecars du workspace. Phase 7.
+- **teamTools** (À créer, RFC 0020 `team-tools` en Draft) : N'existe pas encore. Les outils qui demandent des privilèges ou un périphérique (BuildKit, émulateurs Android) tournent dans un namespace de team et démarrent à la demande. Tous les autres restent des sidecars du workspace. Phase 7.
 
-- **Contrôle devfile** (À créer) : Avertissement au démarrage selon `weebo.io/platform-contract`, `schemaVersion` et un parent épinglé. Refus seulement pour une version vulnérable. Vaut aussi pour les devfiles écrits à la main. Phase 8.
+- **Contrôle devfile** (À créer, RFC 0019 `devfile-contract` en Draft dans weebo-si-hardening) : Avertissement au démarrage selon `weebo.io/platform-contract`, `schemaVersion` et un parent épinglé. Refus seulement pour une version vulnérable. Vaut aussi pour les devfiles écrits à la main. Phase 8.
+
+- **Accords réservés à l'admin** (À créer, RFC 0021 `namespace-only-grants` en Draft) : une entrée de catalogue `restricted` (profil `internet`, accès `open`) n'est honorée que si l'annotation du Namespace, que seul l'admin peut poser, la nomme. Répond à T-07, T-12 et T-27. Phase 3.
 
 - **Workspace témoin** (À créer) : Un vrai workspace qui rejoue chaque nuit les tests T-xx automatisables et alerte dès qu'une attaque réussit. Phase 1.
 
-- **UID par namespace** (À créer) : N'existe pas encore. Une plage UID/GID attribuée à chaque namespace de workspace et imposée par webhook. Phase 5.
+- **UID par namespace** (À créer, RFC 0018 `namespace-uid-range` en Draft) : N'existe pas encore. Une plage UID/GID attribuée à chaque namespace de workspace et imposée par webhook. Phase 5.
 
 ## Ce qui manque pour sécuriser
 
@@ -161,7 +165,7 @@ Légende : actif mais en Audit (ne bloque rien) · feature non activée · prév
 - **Détection runtime.** Envoyer les alertes KubeArmor et les flux Hubble dans ClickStack avec de l'alerting. Hubble seul n'a pas assez d'historique pour enquêter sur l'egress. Envisager Tetragon pour la vue processus.
 - **Exfiltration via git.** github.com en 443/22 permet de pousser n'importe où. Passer par Forgejo comme seul remote (avec des miroirs) et retirer github.com de `dev-registries`.
 - **Secrets longue durée.** Le PAT et les credentials git sont des Secrets statiques dans le namespace. Les remplacer par des tokens courts émis par OpenBao (ExternalSecret avec TTL).
-- **Moteur youki.** Passer les workspaces sur youki, avec un repli sur runc. Kata reste une piste pour plus tard, pour les workspaces à risque.
+- **Moteur.** Workspaces sur runc avec `hostUsers: false` (décision du 24/11). youki est en attente du support des montages idmap. Kata reste une piste pour plus tard, pour les workspaces à risque.
 - **Outils de team et sidecars.** Les outils privilégiés ou qui demandent un périphérique (BuildKit, Android) tournent dans un namespace de team et démarrent à la demande. Les autres (bases de données, navigateurs, caches) sont des sidecars du workspace.
 - **Sauvegarde des PVC workspace.** Ajouter des backups Longhorn vers S3 pour le stockage per-workspace.
 - **Passerelle LLM.** Les agents IA passent par une passerelle interne (clés par utilisateur, journal, budget) au lieu d'une clé personnelle dans le workspace.
@@ -169,7 +173,7 @@ Légende : actif mais en Audit (ne bloque rien) · feature non activée · prév
 - **Accès admin et audit.** Une règle d'accès d'urgence, et la journalisation des `exec` et des lectures de Secrets dans les namespaces de workspace.
 - **Cycle de vie.** Un runbook de départ d'un utilisateur, et un rythme de mise à jour des forks Che et de WeeboDevImage, avec signature des images.
 - **Multi-nœud.** Documenter le passage au multi-nœud et les bonnes pratiques à suivre dès maintenant. Les faiblesses du mono-nœud sont acceptées en attendant.
-- **Durée de vie.** Un timeout d'inactivité, une durée maximale d'exécution et un plafond de workspaces simultanés côté Che. Je ne les ai pas vérifiés dans le CheCluster.
+- **Durée de vie.** Relevé du 24/11 : le CheCluster arrête un workspace inactif après 3 h (`secondsOfInactivityBeforeIdling: 10800`) et plafonne à 5 workspaces lancés et 20 workspaces par utilisateur. Il manque une durée maximale d'exécution (`secondsOfRunBeforeIdling: -1`).
 
 ## Plan d'action
 
@@ -309,9 +313,11 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 
 ### Phase 5 · Moteur et identité du pod
 
-> On change d'abord le moteur (youki), puis on sépare les identités : user namespaces, un UID par namespace, PSA `restricted`. Ces étapes changent ce que voient KubeArmor et les volumes. Elles passent donc avant le Block KubeArmor, qui sera calibré une seule fois, sur l'état final.
+> On active d'abord les user namespaces (le moteur reste runc, voir la décision du 24/11 ci-dessous), puis on sépare les identités : user namespaces, un UID par namespace, PSA `restricted`. Ces étapes changent ce que voient KubeArmor et les volumes. Elles passent donc avant le Block KubeArmor, qui sera calibré une seule fois, sur l'état final.
 
 #### Workspaces sur youki, avec repli sur runc
+
+**Décision du 24/11 : étape suspendue.** V-06 a échoué : `youki features` déclare les montages idmap non supportés (v0.7.0, v0.8.0 et `main`), et containerd 2.3.7 en déduit que le handler `youki` ne supporte pas `hostUsers: false`. Entre youki et les user namespaces, on garde les user namespaces. Ils font que root dans le conteneur n'est plus root sur le nœud, alors que l'argument de youki est faible : runc est écrit en Go, donc déjà sûr en mémoire, et ses CVE d'évasion récentes sont des bugs de logique, pas des bugs mémoire. Les workspaces restent sur runc. La RuntimeClass `youki` existe (`2.argo/app/templates/runtime/youki.yaml`, projet `bootstrap`). V-06 est relancé à chaque montée de version de youki, et la suite de cette section ne reprend que s'il passe.
 
 **Pourquoi** : youki isole exactement comme runc, donc KubeArmor, Cilium, PSA et `hostUsers` continuent de fonctionner. Mais il est écrit en Rust : les bugs mémoire du moteur lui-même disparaissent, alors que c'est la couche par laquelle passent les évasions (CVE-2024-21626, CVE-2025-31133/52565/52881 sur runc).
 
@@ -413,7 +419,7 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 
 **Sidecar si…** :
 
-- Il tourne sous `restricted`, youki, `hostUsers: false` et l'UID du namespace, sans exception.
+- Il tourne sous `restricted`, `hostUsers: false` et l'UID du namespace, sans exception.
 - Son état appartient au développeur et peut être jeté : une base de test, un Redis, un S3 de dev.
 - L'application testée le joint sur `localhost`, et il vit et meurt avec le workspace.
 
@@ -729,6 +735,17 @@ Deux protocoles. Le premier lève les inconnues **avant** d'engager une phase : 
 | V-20 | Cilium filtre-t-il par SNI sur 8443 ? | Règle de test `toPorts.serverNames` (ou `rules.http.host` sur 8000) sur le namespace de test, puis `curl` vers un host autorisé et un interdit. | L'autorisé passe, l'interdit est coupé. |
 | V-21 | La chaîne KubeArmor → ClickStack marche-t-elle ? | Une écriture dans `/usr/bin` dans le namespace de test. | L'événement apparaît dans ClickStack en moins de 60 secondes. |
 | V-22 | Renovate repère-t-il les devfiles ? | `renovate --dry-run=full` avec le custom manager, sur `weebo-che-project`. | Il propose d'épingler le parent et de monter les images. |
+| V-23 | Quels champs du devfile survivent dans le DevWorkspace ? (RFC 0019) | Lire un DevWorkspace créé par le dashboard : annotations `che.eclipse.org/*`, `spec.template.attributes`, `spec.template.parent`. Puis un devfile de test avec un attribut de premier niveau `weebo.io/platform-contract`. | `parent` est conservé tel quel, et `schemaVersion` survit dans l'annotation `che.eclipse.org/devfile` (relevé du 24/11). Reste à prouver que les `attributes` de premier niveau arrivent dans `spec.template.attributes`.<br>Si non : le contrôle devfile lit l'annotation, ou le générateur écrit l'attribut ailleurs. |
+| V-24 | Quels pods naissent dans un namespace de workspace en dehors du pod du workspace ? (RFC 0018) | Lister les pods et Jobs des `dev-ws-*` sans label `controller.devfile.io/devworkspace_id`, après un arrêt puis une suppression de workspace (job de nettoyage DWO). Noter leur `securityContext`. | Chaque pod listé reçoit l'UID du namespace sans casser son travail.<br>Si un pod exige root (nettoyage du PVC) : exemption explicite dans la RFC 0018 ou correction côté DWOC. |
+| V-25 | Qui peut écrire une annotation de Namespace, qui peut patcher un DevWorkspace ? (RFC 0021, T-12) | `kubectl auth can-i patch namespace/<ns>` et `patch devworkspaces` en se faisant passer pour l'utilisateur et pour le ServiceAccount du workspace. | Namespace : non pour les deux. DevWorkspace : oui (c'est le problème que la RFC 0021 traite).<br>Si un non-admin peut annoter son Namespace : le canal d'accord admin ne tient pas, la RFC 0021 est à revoir. |
+| V-26 | Une NetworkPolicy Kubernetes s'additionne-t-elle à `weebo-base` ? | Lister les NetworkPolicy des `dev-ws-*` et lire `config.workspace.networkPolicy` du DWOC de Che. | Aucune NetworkPolicy. Le DWOC déclare un `egress: [{}]` (tout autorisé) qui n'est pas matérialisé aujourd'hui. Cilium additionne les policies : si une future version de Che ou du DWO la crée, toute la sortie s'ouvre. À relancer après chaque montée de version de Che ou du DWO. |
+| V-27 | Le moteur ajoute-t-il seul l'UID arbitraire à `/etc/passwd` ? (RFC 0018 : faut-il le groupe 0 ?) | Pod avec l'image WeeboDevImage (`/etc/passwd` en g=u), `runAsUser`/`runAsGroup: 54321`, sous runc puis sous youki : `id`, `grep :54321: /etc/passwd`, `whoami`. | Relevé du 24/11 sous runc : **non**. containerd n'ajoute pas l'entrée (CRI-O le fait, d'où l'observation chez Red Hat), et sans groupe 0 `passwd-append` ne peut pas écrire le fichier.<br>Décision RFC 0018 : pas de groupe 0 par défaut ; l'identité passe par nss_wrapper dans WeeboDevImage, et le groupe 0 n'est qu'un dernier recours sur option. youki reste à tester. |
+
+**Script.** `task hardening:validate` (ou `task hardening:validate -- V-01 V-05`) déroule ces tests : `0.task/scripts/hardening-validate.sh`. Chaque test sort en PASS, FAIL, SKIP (prérequis Git manquant, l'étape à faire est indiquée) ou MANUAL (action humaine, durée longue ou outil absent), et la preuve brute va dans `.hardening-runs/<date>/`. Le script n'agit que dans `dev-ws-batleforc-test` et dans un namespace jetable `hardening-validate` exclu de weebo-si (policyGuard y refuserait les CNP et KubeArmorPolicy de test), et supprime ce qu'il crée. V-12 modifie le DWOC de Che : il ne tourne qu'avec `ALLOW_CHE_PATCH=1`.
+
+**Première campagne (24/11/2026, lecture seule).** V-01 PASS : le namespace de l'opérateur porte `hardening.weebo.io/exclude`, et les webhooks Pods et policies ne visent que les namespaces de workspace (les webhooks DevWorkspace visent tout le cluster, mais `kube-system` ne porte aucun DevWorkspace). V-18 PASS : `Maven` est dans l'enum, et `Ecosystem` n'est qu'une étiquette de métrique, donc un `init.gradle` se distribue sans évolution de weebo-si. V-25 PASS. V-26 PASS. V-10 SKIP (aucun workspace démarré dans le namespace de test). V-11 MANUAL : le CheCluster n'a pas de `runtimeClassName`. Au passage, le CheCluster fixe déjà `secondsOfInactivityBeforeIdling: 10800`, `maxNumberOfRunningWorkspacesPerUser: 5` et `maxNumberOfWorkspacesPerUser: 20`, mais `secondsOfRunBeforeIdling: -1` (pas de durée maximale).
+
+**Deuxième campagne (24/11/2026, avec la RuntimeClass `youki`).** V-02 PASS (pod Running sous youki, `memory.max` appliqué), V-03 PASS (KubeArmor voit le pod youki), V-04 PASS (le kube-apiserver de la base est joignable, `example.com` est coupé), V-05 PASS (`hostUsers: false` sous runc : mapping non identitaire, PVC Longhorn inscriptible, Secret lisible), V-16 PASS (BuildKit rootless build, mais seulement dans un namespace `privileged`), V-20 PASS (Cilium filtre le SNI sur 8443 : `registry.pkg` passe, `argocd` est coupé). **V-06 FAIL** : `can't set spec.hostUsers: false, RuntimeClass handler "youki" does not support user namespaces`. La cause est en amont : `youki features` déclare `mountExtensions.idmap.enabled: false` (« idmapped mounts is not supported in youki », dans `crates/youki/src/commands/features.rs` en v0.7.0, en v0.8.0 et sur `main`), et containerd 2.3.7 (`supportsCRIUserns`) en déduit que le handler ne supporte pas les user namespaces. youki et `hostUsers: false` sont donc incompatibles aujourd'hui. V-07 PASS sous runc (`ping` bloqué par KubeArmor en user namespace), mais l'UID remonté par KubeArmor est l'UID traduit côté nœud (`1094909952`), pas celui du conteneur. V-27 FAIL sous runc et sous youki : aucun moteur n'ajoute l'UID arbitraire à `/etc/passwd`.
 
 ### 2. Protocole complet : les menaces à bloquer
 
@@ -786,6 +803,7 @@ Le témoin exécute ces tests depuis un vrai workspace, avec les droits d'un dé
 | T-40 | BuildKit comme tremplin | Un `RUN` qui tente une sortie Internet, la lecture du token du pod BuildKit, et des montages `--mount=type=bind` hors du contexte | Sortie limitée comme un workspace, pas de token monté, pas d'accès hors du contexte de build. | 7 |
 | T-41 | Démarrage et arrêt à la demande | Aucun demandeur, puis un demandeur, puis un arrêt | 0, puis 1, puis 0 réplique après le délai. Pas d'outil qui reste allumé sans demandeur. | 7 |
 | T-42 | Sidecar hors règles | Composant devfile privilégié, avec une image hors angos, ou sans limites | Mêmes refus que T-01, T-29 et T-11. Le sidecar n'a aucun passe-droit. | 7 |
+| T-51 | Outil de team non accordé | Avec le token : patch de l'attribut `hardening.weebo.io/team-tools` du DevWorkspace vers un outil que la team n'a pas, ou celui d'une autre team | Ignoré ou refusé (`onNotGranted`), aucun ConfigMap client ni CNP de sortie créé, l'outil reste à 0 réplique. | 7 |
 | **Secrets, audit et cycle de vie** |  |  |  |  |
 | T-43 | Secrets dans les dépôts | `gitleaks detect` et `trufflehog git` sur `weebo-che-project`, WeeboDevImage et les dépôts de devfiles | Aucun secret. | 8 |
 | T-44 | Clé LLM dans le workspace | Chercher des clés `sk-…` dans l'environnement et le home. Appeler le fournisseur sans passer par la passerelle. | Aucune clé, et l'appel direct est coupé. | 10 |
@@ -802,8 +820,8 @@ Le témoin exécute ces tests depuis un vrai workspace, avec les droits d'un dé
 - **À chaque PR weebo-si-hardening :** les tests d'admission (T-01 à T-03, T-06 à T-12, T-26, T-29, T-42, T-47) en suites Kyverno Chainsaw, dans la suite `weebo-si-e2e` existante sur kind. C'est le même outil pour décrire « j'applique ceci, j'attends un refus ».
 - **En continu sur le cluster :** le workspace témoin (phase 1) lance chaque nuit les tests qu'on peut automatiser depuis un workspace : T-13, T-15, T-17 à T-20, T-22 à T-24, T-31, T-32, T-36. Toute réussite d'une attaque déclenche une alerte ClickStack.
 - **Chaque semaine :** T-05 (Trivy et Grype), T-28 (nuclei depuis l'extérieur), T-50 (Kubescape et Trivy k8s), T-43 (gitleaks), avec le résultat comparé à la semaine précédente.
-- **Après chaque montée de version** de Talos, Cilium, KubeArmor, Che, du DWO, de weebo-si ou de youki : la validation amont concernée (par exemple V-02 à V-07 pour youki ou Talos), plus `cilium connectivity test` et T-48 si c'est Talos.
-- **Chaque mois, à la main :** une campagne complète de 50 tests avec Peirates, Stratus Red Team, CDK, linPEAS, LES et event-generator (T-14, T-16, T-30, T-33, T-34). LES est aussi relancé après chaque montée de version de Talos., et une page de campagne dans la doc.
+- **Après chaque montée de version** de Talos, Cilium, KubeArmor, Che, du DWO, de weebo-si ou de youki : la validation amont concernée (par exemple V-02 à V-07 pour youki ou Talos, V-23, V-24 et V-26 pour Che ou le DWO), plus `cilium connectivity test` et T-48 si c'est Talos. Le tout passe par `task hardening:validate`.
+- **Chaque mois, à la main :** une campagne complète de 51 tests avec Peirates, Stratus Red Team, CDK, linPEAS, LES et event-generator (T-14, T-16, T-30, T-33, T-34). LES est aussi relancé après chaque montée de version de Talos., et une page de campagne dans la doc.
 - **Avant chaque passage en `Enforce` d'une phase :** tous les tests marqués avec cette phase passent sur `batleforc-test`.
 
 ### Projets de référence
@@ -864,14 +882,15 @@ Seuls les moteurs disponibles en extension Talos officielle (siderolabs/extensio
 |---|---|---|---|---|---|---|---|
 | **runc**actuel | Namespaces et cgroups, noyau partagé | Référence | Totale | Complet | Complet | Oui | Aucun |
 | **crun** | Identique à runc | Démarrage et mémoire un peu meilleurs | Totale | Complet | Complet | Oui | Extension `crun` |
-| **youki** | Identique à runc. Le moteur lui-même est écrit en Rust, ce qui élimine ses bugs mémoire (runc a eu plusieurs CVE d'évasion : 2024-21626, 2025-31133/52565/52881). | Proche de crun | Bonne, mais moins éprouvée en production Kubernetes | Complet | Complet | Oui | Extension `youki` |
+| **youki** | Identique à runc. Écrit en Rust, mais runc est déjà sûr en mémoire (Go), et ses CVE d'évasion (2024-21626, 2025-31133/52565/52881) sont des bugs de logique. | Proche de crun | Bonne, mais moins éprouvée en production Kubernetes | Complet | Complet | **Non** : `youki features` déclare idmap non supporté, donc containerd refuse `hostUsers: false` (V-06, 24/11) | Extension `youki` |
 | **gVisor**runsc | Noyau en espace utilisateur (Sentry) qui intercepte les appels système. Le noyau du nœud est très peu exposé. | Sensible sur les tâches qui font beaucoup d'appels système ou d'IO : `npm install`, compilation, git, surveillance de fichiers | Bonne, avec des trous : certains appels système, ptrace, `/proc` émulé, FUSE | Aveugle : il ne voit que le processus Sentry | L3/L4/L7 OK. Le socket-LB doit rester limité au namespace du nœud (`hostNamespaceOnly: true`, déjà le cas). | À vérifier, et moins utile puisque Sentry isole déjà | Extension `gvisor`. Pas besoin de KVM (plateforme systrap). |
 | **Kata Containers** | Une micro-VM par pod, avec son propre noyau. C'est la meilleure isolation de la liste. | Environ 100 Mo et plus de mémoire par pod, démarrage plus lent. Les volumes partagés via virtio-fs sont plus lents. Un volume en bloc passe directement. | Très bonne : un vrai noyau Linux | Aveugle : ce qui tourne dans la VM échappe au noyau du nœud | OK, avec la même condition socket-LB (déjà remplie) | Sans objet : la VM sépare déjà les UID | Extension `kata-containers`, et **`/dev/kvm` sur le nœud** (machine physique ou virtualisation imbriquée, à vérifier) |
 
-- **Décision (23/11) : youki par défaut pour les workspaces, avec repli sur runc.** On garde tout ce qui marche avec un moteur classique (KubeArmor, `hostUsers: false`, l'UID par namespace) et on retire les bugs mémoire du moteur, d'où sont venues les dernières CVE d'évasion de runc. Le reste du cluster reste sur runc. Mise en œuvre : étape « Workspaces sur youki » en phase 5.
+- **Décision (24/11) : runc avec `hostUsers: false` pour les workspaces ; youki en attente.** V-06 a montré que youki ne supporte pas les user namespaces, et les user namespaces protègent davantage que le changement de langage du moteur. La RuntimeClass `youki` reste en place pour retester à chaque version.
+- *Décision remplacée (23/11) : youki par défaut pour les workspaces, avec repli sur runc.* On garde tout ce qui marche avec un moteur classique (KubeArmor, `hostUsers: false`, l'UID par namespace) et on retire les bugs mémoire du moteur, d'où sont venues les dernières CVE d'évasion de runc. Le reste du cluster reste sur runc. Mise en œuvre : étape « Workspaces sur youki » en phase 5.
 - **Kata : piste pour plus tard, pas pour maintenant.** Il servira pour les workspaces à risque (agent IA en mode autonome, code tiers non relu), via une entrée `kata` du catalogue `dwocPin`. Il faudra alors choisir entre l'isolation du nœud et le contrôle KubeArmor. Le prérequis `/dev/kvm` est rempli (confirmé le 23/11). Il ne manque que l'extension `kata-containers`.
 - **gVisor : écarté.** Kata couvre le même besoin d'isolation, et gVisor coûte trop cher sur npm, la compilation et Gradle.
-- **crun : écarté.** Il ne change rien à la sécurité, et youki apporte en plus la sécurité mémoire.
+- **crun : écarté.** Il ne change rien à la sécurité.
 
 Vérifié : `/dev/kvm` est présent sur le nœud, l'extension youki est installée, et le CRD du DWOC accepte `runtimeClassName` et `hostUsers`. Les surcoûts annoncés sont des ordres de grandeur, pas des mesures faites sur ce cluster.
 
@@ -914,7 +933,7 @@ Ce n'est pas pour tout de suite. L'idée est d'éviter que les choix de sécurit
 
 **KVM** : `/dev/kvm` est présent sur le nœud (confirmé le 23/11). L'émulateur dans le workspace et Kata sont donc réalisables. Il reste à exposer le périphérique aux pods avec un device plugin.
 
-**Kata** : Un émulateur dans une micro-VM Kata demande de la virtualisation imbriquée. Les workspaces Android resteront donc sur youki, ou sur runc en repli, et pas sur Kata.
+**Kata** : Un émulateur dans une micro-VM Kata demande de la virtualisation imbriquée. Les workspaces Android resteront donc sur runc, et pas sur Kata.
 
 **Hardening** : Tout ce qu'il faut ouvrir pour Android doit passer par une entrée de catalogue (`dwocPin`, `networkProfiles`, `resourceQuotas`) accordée à la team, jamais par la base. Les autres workspaces ne gagnent rien.
 

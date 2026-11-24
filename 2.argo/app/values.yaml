@@ -85,7 +85,8 @@ lockDefaultProject: true
 project:
   # The app of apps itself (`main`, 1.pulu-conf). What this chart renders:
   # Applications, AppProjects and theme ConfigMaps in argocd, the dex-theme
-  # ConfigMap in kube-system, and weebo-admin-crb. It writes the AppProjects,
+  # ConfigMap in kube-system, weebo-admin-crb and the RuntimeClasses
+  # (templates/runtime). It writes the AppProjects,
   # so it is the root of trust whatever its own restrictions.
   - name: bootstrap
     sourceRepo: []
@@ -98,6 +99,9 @@ project:
     clusterResourceWhitelist:
       - group: "rbac.authorization.k8s.io"
         kind: "ClusterRoleBinding"
+      # templates/runtime: the RuntimeClasses every project's pods may name.
+      - group: "node.k8s.io"
+        kind: "RuntimeClass"
   - name: infra
     sourceRepo:
       - oci://ghcr.io/traefik/helm/traefik
