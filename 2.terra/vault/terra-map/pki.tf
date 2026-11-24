@@ -38,8 +38,17 @@ resource "vault_mount" "pki_int" {
 # This resource changes its own id every rotation_days, which is the diff that
 # makes the two resources below get replaced -- a new key, a new CSR, a newly
 # signed intermediate.
+#
+# The clock starts when this resource is created, not when the intermediate was
+# signed: added on 2026-09-05, it would have rotated on 2027-01-03, after the
+# 2026-06-26 intermediate died on 2026-12-22 (renewals refused from 2026-11-22).
+# Bumping `generation` replaces the clock, and with it the intermediate, so the
+# two start together. Bump it again only to force an early rotation.
 resource "time_rotating" "pki_intermediate" {
   rotation_days = 120
+  triggers = {
+    generation = "2"
+  }
 }
 
 resource "vault_pki_secret_backend_intermediate_cert_request" "csr-request" {
