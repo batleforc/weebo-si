@@ -1,0 +1,71 @@
+---
+title: Passage au multi-nœud (plan)
+description: "Ce que le mono-nœud accepte aujourd'hui, ce qu'il faut respecter dès maintenant pour ne pas tout refaire, et l'ordre de bascule le jour où un deuxième nœud arrive"
+---
+
+Le cluster tourne sur un seul nœud : `talos-r2k-rp0`, 12 CPU et 64 Gio, à la fois control plane et worker (`allowSchedulingOnControlPlanes: true`). C'est un choix assumé (plan de durcissement des workspaces, `0.docs/content/todo/durcissement-workspaces.md`, section « Mono-nœud »). Ce runbook n'est pas une procédure à dérouler aujourd'hui : il fixe les règles à suivre **dès maintenant** pour que la bascule ne demande pas de tout refaire, puis l'ordre de bascule.
+
+Relevé du 24/11/2026, base de ce qui suit.
+
+## Ce que le mono-nœud accepte aujourd'hui
+
+| Faiblesse | Relevé | En multi-nœud |
+| --- | --- | --- |
+| Un seul etcd, un seul apiserver | Le nœud est l'unique `controlplane`, et l'endpoint du cluster est son IP (`ClusterEndpoint: https://<ip>:6443`, `1.pulu-init/main.go`). | 3 control planes, et un endpoint qui ne dépend d'aucun nœud : VIP Talos ou entrée DNS. |
+| Longhorn à 1 réplique | `default-replica-count` = 1, aucune cible de backup (la cible `default` n'a pas d'URL), aucune `VolumeSnapshotClass`. | 3 répliques avec anti-affinité de nœud, et une cible de backup S3. |
+| Volumes `local-path` | `auth/terra-job-authentik`, `vault/openbao-openbao-0`, `vault/terra-job-vault`, `vault/vault-raft` : liés au disque du nœud. | OpenBao en raft à 3 membres sur Longhorn, et les jobs Terraform sur Longhorn. |
+| Webhooks en `failurePolicy: Fail` sur 1 pod | 14 services de webhook en `Fail`. Seuls `devworkspace-webhookserver` a 2 pods, et seuls authentik et Longhorn ont une PDB. Pendant un redémarrage, toute admission concernée est bloquée. | 2 répliques ou plus, une PDB `minAvailable: 1` et une `topologySpreadConstraints` par webhook. |
+| Drain d'upgrade désactivé | `--drain=false` : une PDB à `minAvailable: 1` sur un pod unique bloque le drain. | Un vrai drain, avec des PDB qui permettent de déplacer les pods. |
+| Pare-feu Talos | etcd 2379/2380, trustd 50001 et VXLAN 8472 sont fermés exprès (`1.pulu-init/main.go`, aucun pair). | Ouverts **entre nœuds seulement** (CIDR des nœuds), jamais sur Internet. |
+| Un seul noyau | Une évasion depuis un workspace atteint le nœud qui porte aussi OpenBao, Argo CD et etcd. | Un pool de nœuds pour les workspaces, séparé de la plateforme. |
+
+## Ce qu'il faut respecter dès aujourd'hui
+
+Chaque règle coûte presque rien sur un seul nœud, et évite une reprise de tous les manifests plus tard.
+
+### Labels et taints de pool, posés tout de suite
+
+Définir les pools même avec un seul nœud, pour que les manifests les portent déjà :
+
+| Pool | Label | Taint (en multi-nœud) |
+| --- | --- | --- |
+| control plane | `node-role.kubernetes.io/control-plane` (déjà là) | aucun tant que `allowSchedulingOnControlPlanes` est vrai |
+| plateforme | `weebo.io/pool=platform` | aucun |
+| workspaces | `weebo.io/pool=workspaces` | `weebo.io/pool=workspaces:NoSchedule` |
+| outils privilégiés (BuildKit, émulateurs KVM) | `weebo.io/pool=privileged-tools` | `weebo.io/pool=privileged-tools:NoSchedule` |
+
+**À faire** (non fait au 24/11, le nœud n'a que le label `control-plane`) : poser sur le nœud actuel les trois labels de pool (`platform`, `workspaces`, `privileged-tools`), et **aucun taint**. Les manifests ajoutent ensuite leur `nodeSelector` ou `nodeAffinity` (`preferred` pour la plateforme, `required` pour les workspaces une fois en multi-nœud) et la `toleration` correspondante. Un taint posé sur l'unique nœud bloquerait tout ce qui n'a pas la toleration.
+
+Les labels se posent dans la machine config Talos (`1.pulu-init`), pas avec `kubectl label` : Talos les réapplique, et un label posé à la main se perd à la réinstallation.
+
+### Charges
+
+- **Tout webhook et tout opérateur nouveau** sort avec `replicas: 2`, une PDB `minAvailable: 1` et une `topologySpreadConstraints` sur `kubernetes.io/hostname` en `ScheduleAnyway` (sans effet sur un nœud, active au deuxième). Le webhook weebo-si est le premier à passer (phase 1 du plan de durcissement). Les autres de la liste ci-dessus suivent.
+- **Aucun manifest ne suppose un seul nœud** : pas de `hostPath` partagé entre pods, pas de nom de nœud en dur (`nodeName`, `kubernetes.io/hostname: talos-r2k-rp0`), pas de `local-path` pour une donnée qui doit survivre à un nœud.
+- **Stockage des workspaces** : il reste en RWO. RWX passe par NFS, ce qui est incompatible avec `hostUsers: false` (montages idmap).
+
+### Réseau
+
+- Cilium reste en `routingMode: tunnel` + `vxlan` (`1.pulu-init/cilium-values.yaml`) : ajouter un nœud ne change rien au routage.
+- **À ajouter au passage** : le chiffrement entre nœuds (Cilium WireGuard, `encryption.enabled: true`, `type: wireguard`), puisque le trafic des workspaces passera alors sur le réseau physique. Rappel du [piège Cilium](/docs/runbooks/upgrade-talos-cilium) : `cilium-values.yaml` est toute la release, et une clé absente disparaît au prochain `up`.
+- L'IP source réelle et Netbird derrière le LoadBalancer sont à revérifier : un deuxième nœud change le chemin d'entrée.
+
+### Sécurité
+
+- Les extensions Talos (youki, crun, fuse3…) sont identiques sur chaque nœud : un même schematic, appliqué par la même procédure d'upgrade.
+- KubeArmor tourne en DaemonSet et suit les nœuds. Les policies weebo-si suivent les pods, elles ne changent pas.
+
+## Ordre de bascule (le jour venu)
+
+Chaque étape se vérifie avant la suivante. Le retour arrière d'une étape est de retirer le nœud ajouté, tant que rien ne dépend de lui.
+
+1. **Endpoint du cluster** : basculer `ClusterEndpoint` de l'IP du nœud vers une VIP Talos ou une entrée DNS, puis régénérer kubeconfig et talosconfig. À faire **avant** d'ajouter un control plane, sinon les nouveaux nœuds rejoignent une IP qui ne doit plus être l'unique entrée. Suivre les règles du [runbook d'upgrade](/docs/runbooks/upgrade-talos-cilium) : pas de `pulumi refresh` sur `1.pulu-init`, et pas de reboot par `machine.files` pendant un upgrade.
+2. **Pare-feu** : ouvrir etcd, trustd et VXLAN au seul CIDR des nouveaux nœuds.
+3. **Deux control planes de plus** (`1.pulu-init`, même schematic) : etcd passe à 3 membres. Vérifier `talosctl etcd members` et la santé de l'apiserver sur les trois.
+4. **Workers**, avec leurs labels de pool ; poser les taints `workspaces` et `privileged-tools` sur leurs nœuds dédiés.
+5. **Longhorn** : passer `default-replica-count` à 3, puis augmenter le nombre de répliques des volumes existants. Configurer la cible de backup S3.
+6. **Sortir de `local-path`** : OpenBao en raft à 3 membres sur Longhorn (avec sa [procédure de restauration](/docs/runbooks/restauration) prête), puis les jobs Terraform.
+7. **Déplacer les workspaces** sur leur pool : `nodeSelector` et `tolerations` dans le CheCluster (`devEnvironments.nodeSelector`, `tolerations`), puis redémarrer les workspaces.
+8. **Réactiver le drain d'upgrade** en dernier, une fois que chaque PDB peut être satisfaite sur un autre nœud.
+
+**Vérification finale** : redémarrer un nœud à la fois (T-48 du plan de durcissement). Les workspaces et la plateforme restent joignables, aucune admission n'est bloquée, et Longhorn reconstruit ses répliques sans perte.

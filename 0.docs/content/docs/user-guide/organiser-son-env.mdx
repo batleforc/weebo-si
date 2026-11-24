@@ -1,0 +1,54 @@
+---
+title: Organiser son environnement de dev
+description: "Projet chapeau ou devfile dans le projet : lequel choisir, deux exemples réels, et les pièges qui font perdre une heure"
+---
+
+Un workspace Che naît d'un **devfile** : il dit quelle image utiliser, quels conteneurs lancer à côté (base de données, navigateur…), quels dépôts cloner et quels ports exposer. Il y a deux façons de ranger ce devfile. C'est une **recommandation**, pas une obligation : les deux marchent, et le cluster applique exactement les mêmes règles aux deux.
+
+## Les deux façons
+
+### Devfile dans le projet
+
+Un `devfile.yaml` (ou `.devfile.yaml`) à la racine du dépôt applicatif. Ouvrir l'URL du dépôt dans Che suffit.
+
+- **Pour** : un projet en un seul dépôt.
+- **Avantages** : l'environnement est versionné avec le code. Une branche qui a besoin d'un autre environnement (une nouvelle base, un autre port) le dit dans son propre devfile.
+- **Risque** : la même configuration se répète d'un dépôt à l'autre. Le parent commun (plus bas) limite cette duplication.
+
+**Exemple réel : `batlehub/batlehub`.** Son devfile hérite du parent `che-min-mise` et n'ajoute que ce qui est propre au projet :
+
+- deux endpoints sur le conteneur `tools` (le front sur 5173, le back sur 8080) ;
+- un sidecar **`che-browser`** (Chrome piloté par CDP sur 9222, visible en noVNC) pour les tests qui ont besoin d'une vraie page rendue ;
+- un sidecar **dex** (fournisseur OIDC jetable) et un sidecar **postgres**, avec un volume pour ses données.
+
+Tous ces conteneurs partagent le même pod, donc le même `localhost` : le backend joint postgres sur `localhost:5432`, et Chrome ouvre le front sur `localhost:5173`, sans aucune entrée réseau.
+
+### Projet chapeau
+
+Un dépôt dédié à l'environnement : un devfile et les scripts communs (setup, données de test, tâches). Il liste les dépôts applicatifs à cloner dans `projects:`.
+
+- **Pour** : un produit en plusieurs dépôts, un environnement commun à toute une team, des dépôts dont on n'est pas propriétaire.
+- **Risque** : l'environnement et le code évoluent séparément. Une branche applicative qui a besoin d'un autre environnement n'a nulle part où le dire.
+
+**Exemple réel : `batleforc/weebo-che-project`.** Il hérite du parent `che-min-mise` et n'ajoute que ses endpoints. Il clone six dépôts (che-dashboard, che-code, le plugin et le serveur JetBrains, WeeboDevImage, et lui-même), et porte les scripts de l'environnement : un `Taskfile.yaml`, la synchronisation des forks (`scripts/fork-sync.sh`, piloté par `forks.yaml`) et `mise.toml`.
+
+### Lequel choisir
+
+| Situation | Recommandation |
+| --- | --- |
+| Un seul dépôt | Devfile dans le projet |
+| Un produit en plusieurs dépôts | Projet chapeau |
+| Des dépôts que vous ne contrôlez pas | Projet chapeau |
+| Un environnement partagé par toute une team | Projet chapeau |
+
+Dans les deux cas, on part du **parent commun** (`che-min-mise`, dans WeeboDevImage) : il apporte l'image de base, les outils (mise, task…) et les réglages que le cluster attend.
+
+## Les pièges
+
+- **Le devfile est aux deux endroits ?** C'est l'URL ouverte qui décide. Ouvrir le dépôt applicatif ignore le chapeau, et ouvrir le chapeau ignore le devfile du dépôt applicatif.
+- **Un parent sur une branche change sous vos pieds.** `parent.uri` qui pointe sur `refs/heads/main` suit chaque commit de WeeboDevImage. C'est le cas des deux exemples ci-dessus aujourd'hui, en attendant les tags de WeeboDevImage. Pour figer, épingler sur un commit dans l'URL (`…/WeeboDevImage/<commit de 40 caractères>/che-min-mise/devfile.yaml`). Renovate sait ensuite proposer la mise à jour d'un commit épinglé, mais pas celle d'une branche.
+- **Un script de setup qui télécharge depuis Internet** échoue en silence ou en timeout : la sortie du workspace est filtrée. Passer par les miroirs (BatleHub pour les paquets, angos pour les images), ou demander un profil réseau.
+- **Une image épinglée hors du registre interne** est réécrite vers angos (`docker.io/…` devient `registry.pkg.weebo.poc/hub/…`), ou refusée si son registre n'est pas couvert. Le message de refus le dit, et ce n'est pas un bug.
+- **Pas de secret dans le devfile ni dans les scripts du chapeau.** Ils sont dans Git. Les secrets passent par OpenBao. Les mots de passe des sidecars jetables (le `changeme` du postgres de batlehub) sont acceptables parce que ces bases ne quittent pas le pod.
+- **Composants en double** entre le parent et votre devfile : redéclarer dans `components:` un composant qui existe déjà dans le parent est une **erreur** (nom en double), pas un remplacement. Pour modifier un composant du parent, passez par `parent.components:`. C'est ce que fait batlehub pour ajouter ses endpoints et sa mémoire au conteneur `tools`. Vos propres composants prennent un nom qui leur est propre (`browser`, `postgres`).
+- **Un sidecar qui écrit dans son `HOME`** : dans un workspace, `/home/user` est un volume persistant partagé par tous les conteneurs du pod. Un sidecar dont le `HOME` est ailleurs (`/` pour postgres ou dex) ne peut pas y écrire. C'est normal, et ces images tournent quand même. Mettez les données d'un sidecar sur son propre volume, comme le `postgres-data` de batlehub.
