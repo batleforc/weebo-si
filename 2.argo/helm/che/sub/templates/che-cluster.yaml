@@ -14,6 +14,9 @@ spec:
     # che-operator forces this to true on Kubernetes (container builds are
     # OpenShift-only); false here only kept che-app OutOfSync.
     disableContainerBuildCapabilities: true
+    # Written out: containerSecurityContext below is only honoured while
+    # both disableContainer*Capabilities are true.
+    disableContainerRunCapabilities: true
     maxNumberOfWorkspacesPerUser: 20
     maxNumberOfRunningWorkspacesPerUser: 5
     secondsOfInactivityBeforeIdling: 10800
