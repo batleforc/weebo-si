@@ -1,0 +1,79 @@
+---
+title: Demander un outil de team
+description: "BuildKit et les autres outils privilégiés : les demander depuis le devfile, ce que la team accorde, et comment s'en servir depuis le workspace"
+---
+
+<Callout type="warn">
+**Pas encore actif sur le lab.** La feature `teamTools` (RFC 0020) n'est pas configurée sur le cluster, et aucune team n'a d'outil accordé : l'attribut ci-dessous n'a aucun effet pour l'instant. Les noms d'outils, chemins et variables de cette page sont ceux de l'exemple BuildKit de référence, à confirmer au déploiement.
+</Callout>
+
+Un workspace durci ne peut pas lancer BuildKit ni un émulateur Android : ils demandent des privilèges que le workspace n'a pas. Ces outils tournent dans un **namespace d'outils de la team**, et démarrent à la demande quand un workspace qui les demande démarre. Ils s'arrêtent après un délai sans demandeur (10 minutes dans l'exemple de référence).
+
+Un outil léger, sans privilège, dont l'état est jetable (Postgres, Redis, Playwright) reste un **sidecar** dans votre devfile. Cette page n'est pas pour lui.
+
+## Le demander
+
+Un attribut de premier niveau du devfile :
+
+```yaml
+attributes:
+  hardening.weebo.io/team-tools: buildkit
+```
+
+- Une liste séparée par des virgules (`buildkit,android`), **8 clés au plus**. Au-delà, la demande compte comme la clé invalide `<invalid>`.
+- **Attribut absent** : vous recevez les outils par défaut de votre team (souvent aucun).
+- **Attribut vide** (`""`) : aucun outil, même si la team en a par défaut.
+
+## Ce que la team accorde
+
+L'admin écrit, dans l'objet de la team (`WeeboSiTeam`), la liste des outils qu'elle a le droit d'utiliser. Vous ne pouvez demander que dans cette liste. Pour un outil absent, demandez à l'admin de la plateforme de l'ajouter à votre team.
+
+Si vous demandez un outil non accordé :
+
+| Réglage du cluster | Effet | Message |
+| --- | --- | --- |
+| `Default` (par défaut) | l'outil est ignoré, le workspace démarre sans lui | avertissement `team tool "android" is not granted to team weebo; ignored` |
+| `Deny` | la création ou le démarrage du workspace est refusé | `Error from server: … denied the request: team tool "android" is not granted to team weebo` |
+
+Un outil retiré à la team pendant que votre workspace existe ne bloque jamais le workspace : il est retiré, avec l'avertissement `team tool "buildkit" is no longer granted to team weebo; dropped`.
+
+Comme ailleurs, les avertissements ne s'affichent qu'avec `kubectl`. Depuis le dashboard, lisez le verdict et les Events du DevWorkspace :
+
+```bash
+kubectl get dw <nom> -o jsonpath='{.metadata.annotations.hardening\.weebo\.io/team-tools}'
+# granted=buildkit;dropped=android
+kubectl get events --field-selector involvedObject.name=<nom>
+```
+
+| Event | Sens |
+| --- | --- |
+| `TeamToolNotGranted` | l'outil demandé n'est pas accordé à la team, il est ignoré |
+| `TeamToolRestartNeeded` | `team tool "buildkit" was added to a running workspace: restart it once to mount its client side` |
+| `TeamToolNoIdentity` | aucun certificat client : votre namespace n'est pas un namespace de workspace complet. À signaler à l'admin |
+
+## Redémarrer une fois
+
+Le certificat client et la configuration de l'outil sont montés **à la construction du pod**. Si vous ajoutez l'attribut à un workspace qui tourne, ou si l'outil vient d'être accordé à votre team, **redémarrez le workspace une fois**. Ensuite, chaque démarrage les monte directement.
+
+## S'en servir : BuildKit
+
+Dans le workspace démarré :
+
+```text
+$ echo $BUILDKIT_HOST
+tcp://buildkitd.team-weebo-tools.svc:1234
+$ ls /home/user/.config/weebo/buildkit
+ca.crt  tls.crt  tls.key
+```
+
+Le certificat client est à votre nom (l'utilisateur Che du namespace) et n'est accepté que par l'outil de votre team. `buildctl` lit `BUILDKIT_HOST` tout seul :
+
+```bash
+CERTS=/home/user/.config/weebo/buildkit
+buildctl \
+  --tlscacert "$CERTS/ca.crt" --tlscert "$CERTS/tls.crt" --tlskey "$CERTS/tls.key" \
+  build --frontend dockerfile.v0 --local context=. --local dockerfile=. \
+  --output type=oci,dest=image.tar
+```
+
+Le démon démarre avec l'IDE : le premier build peut le trouver encore en démarrage, `buildctl` réessaie la connexion. Le cache de build survit à l'arrêt de l'outil.

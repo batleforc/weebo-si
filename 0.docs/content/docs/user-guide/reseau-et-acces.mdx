@@ -1,0 +1,100 @@
+---
+title: Réseau et accès aux endpoints
+description: "Ce que le workspace peut joindre, comment demander un profil réseau ou un accès d'endpoint depuis le devfile, et les clés réservées à l'admin"
+---
+
+Deux choix se font dans le devfile : **ce que le workspace peut joindre** (les profils réseau) et **qui peut ouvrir ses endpoints** (la clé d'accès). Dans les deux cas, vous ne choisissez que parmi ce que votre team a reçu.
+
+## Profils réseau
+
+La sortie du workspace est filtrée. Un socle (`base`) s'applique toujours : DNS, Che, l'API Kubernetes et tout `*.weebo.poc`, donc les miroirs BatleHub (paquets) et angos (images). Pas d'Internet. Les profils s'y ajoutent :
+
+| Profil | Ouvre |
+| --- | --- |
+| `dev-registries` | les forges Git : `github.com` et `git.batleforc.fr` (443 et 22) |
+| `anthropic` | `api.anthropic.com` |
+| `kube-api` | l'API Kubernetes (déjà dans le socle) |
+| `internet` | tout ce qui est hors du cluster : la porte de secours |
+
+Sans rien demander, vous recevez le défaut de la team : `dev-registries,anthropic`.
+
+Pour choisir, un attribut de premier niveau du devfile :
+
+```yaml
+attributes:
+  hardening.weebo.io/network-profiles: dev-registries,anthropic,internet
+```
+
+- C'est la **liste complète** : écrire `internet` seul retire `dev-registries` et `anthropic`. Recopiez le défaut et ajoutez ce qui manque.
+- Vide (`""`) : rien d'autre que le socle.
+- Un profil que la team n'a pas : toute la demande est ignorée et le défaut de la team s'applique (réglage `Default` du lab).
+- Le changement s'applique en quelques secondes, sans redémarrage.
+
+Avant de demander `internet`, cherchez le miroir : BatleHub pour les paquets, angos pour les images.
+
+## Accès aux endpoints
+
+Un endpoint `public` passe toujours par une connexion authentik. La clé d'accès dit qui passe :
+
+| Clé | Qui |
+| --- | --- |
+| `private` (défaut) | vous seul |
+| `team` | votre team |
+| `shared` | votre team et les utilisateurs ou groupes délégués |
+| `open` | **n'importe qui** connaissant l'URL, sans connexion |
+
+Elle se pose sur l'endpoint du devfile, avec le champ **`annotation`** (au singulier : `annotations` est refusé et le workspace ne démarre pas) :
+
+```yaml
+endpoints:
+  - name: api
+    targetPort: 8080
+    exposure: public
+    annotation:
+      hardening.weebo.io/access: open
+```
+
+ou seulement sur les chemins qui en ont besoin, ce qui est préférable pour un webhook :
+
+```yaml
+    annotation:
+      hardening.weebo.io/rules: |
+        - { path: /api/webhooks/, match: prefix, access: open, methods: [POST] }
+        - { path: /healthz, match: exact, access: open }
+```
+
+La clé arrive sur l'Ingress au **prochain démarrage** du workspace. Une clé que la team n'a pas est refusée à l'admission (`… not granted`) : l'Ingress n'est pas créé et le workspace ne démarre pas. Un endpoint `open` répond à tout le monde : authentifiez vous-même ce qu'il sert (token d'API, signature de webhook).
+
+## Les clés réservées à l'admin
+
+<Callout type="warn">
+**Pas encore actif sur le lab** (RFC 0021). Aujourd'hui, `internet` et `open` sont accordés à toute la team. Ils deviendront `restricted` : la suite décrit ce qui se passera alors.
+</Callout>
+
+Certaines clés élargissent trop ce que le workspace peut faire : `internet` et `open`. N'importe quel processus du workspace (un `postinstall` npm, un agent IA) peut modifier son propre DevWorkspace, donc les demander. Une clé `restricted` n'est donc honorée que si **votre Namespace** la nomme dans une annotation que seul l'admin peut poser :
+
+| Annotation du Namespace | Accorde |
+| --- | --- |
+| `hardening.weebo.io/network-grants` | des profils réseau `restricted` (`internet`) |
+| `hardening.weebo.io/endpoint-access` | des clés d'accès `restricted` (`open`) |
+
+Vous ne pouvez pas la poser vous-même, et le token du workspace non plus. L'annotation accorde seulement : c'est toujours votre devfile qui choisit.
+
+**Pour en obtenir une**, demandez-la à l'admin de la plateforme avec votre namespace (`dev-ws-<utilisateur>`), la clé, et pourquoi vous en avez besoin (pour `open` : quel endpoint et quel chemin). L'accord est écrit dans Git (`2.helm/user-app`) ; en attendant ce rendu, l'admin le pose à la main.
+
+Sans l'accord :
+
+| Demande | Effet |
+| --- | --- |
+| profil `internet` | ignoré, le défaut de la team s'applique. `kubectl` affiche `network profile(s) [internet]: restricted, no namespace grant (hardening.weebo.io/network-grants); not applied` |
+| profil `internet`, cluster en `Deny` | la création du workspace est refusée : `Error from server: … denied the request: workspace python-web requests network profile(s) [internet], which are restricted: namespace dev-ws-alice does not grant them (annotation hardening.weebo.io/network-grants)` |
+| accès `open` | l'endpoint reste en accès par défaut (`private`) : un navigateur est renvoyé vers la connexion, un `curl` reçoit `401`. Vous y accédez toujours |
+
+Le dashboard n'affiche pas les avertissements. Les Events du DevWorkspace ou de l'Ingress le disent aussi (`RestrictedGrantRefused`) :
+
+```text
+network profile internet is restricted and namespace dev-ws-alice does not grant it
+  (annotation hardening.weebo.io/network-grants); onNotGranted=Default applied the team default [dev-registries,anthropic]
+access key open is restricted and namespace dev-ws-alice does not grant it
+  (annotation hardening.weebo.io/endpoint-access); served as private
+```

@@ -1,4 +1,12 @@
 {
   "title": "User Guide",
-  "pages": ["index", "organiser-son-env", "..."]
+  "pages": [
+    "index",
+    "organiser-son-env",
+    "contrat-plateforme",
+    "reseau-et-acces",
+    "outils-de-team",
+    "identite-workspace",
+    "..."
+  ]
 }

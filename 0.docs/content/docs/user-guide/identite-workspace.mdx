@@ -1,0 +1,78 @@
+---
+title: Identité du workspace
+description: "UID 1234 dans son propre user namespace, sans groupe 0 : ce que ça change pour vos images et pour les pod-overrides du devfile"
+---
+
+<Callout type="warn">
+**Pas encore actif sur le lab** (RFC 0018, phase 5). Aujourd'hui, les pods tournent en 1234 **avec le groupe 0**, dans le user namespace du nœud. Le passage en `Enforce` attend deux préalables : la PSA `restricted` sur les namespaces de workspace, et des images qui n'écrivent plus dans des répertoires réservés au groupe 0. Préparez vos images dès maintenant.
+</Callout>
+
+## Ce qui change
+
+Chaque pod d'un namespace de workspace (le workspace, ses sidecars, un pod lancé à la main) tourne :
+
+- dans **son propre user namespace** (`hostUsers: false`) : l'UID 1234 du pod correspond sur le nœud à une plage que nul autre pod ne partage. Root dans le conteneur n'est pas root sur le nœud ;
+- en **1234:1234**, `fsGroup` 1234 ;
+- **sans groupe 0** (`supplementalGroupsPolicy: Strict`), même si le `/etc/group` de l'image y met `user`.
+
+```text
+$ id
+uid=1234(user) gid=1234(user) groups=1234(user)
+```
+
+Un UID non nul choisi par une image ou un override (un sidecar construit pour 999, un `pod-overrides` en 10100) est gardé. Un pod sans UID reçoit 1234. Vos volumes ne changent pas : les fichiers restent à 1234.
+
+Les pods déjà démarrés gardent l'ancienne identité jusqu'à leur redémarrage.
+
+## Vos images : « Permission denied »
+
+Sans groupe 0, tout ce qu'une image rendait inscriptible **par le groupe 0 seulement** devient en lecture seule. C'est la recette OpenShift `chgrp -R 0 <dir> && chmod -R g=u <dir>`. Exemples connus : `/home/tooling` et `/globals` de che-min-mise, `/data` de che-lgtm, les répertoires SDK et Appium de che-android.
+
+La correction est dans l'image (décision Q20), **dans le même `RUN`** que l'installation :
+
+```dockerfile
+# avant
+RUN install-tool && chgrp -R 0 /opt/tool && chmod -R g=u /opt/tool
+# après
+RUN install-tool && chown -R 1234:0 /opt/tool && chmod -R g=u /opt/tool
+```
+
+Un `COPY --chown=0:0` de configuration que l'utilisateur modifie devient `COPY --chown=1234:0`. L'UID 1234 écrit, et le groupe 0 écrit toujours pour un UID quelconque sur OpenShift. Un `RUN` séparé recopierait tous les fichiers dans une nouvelle couche.
+
+Une image Testcontainers qui exige root (lancée via kubedock) a besoin d'une variante non-root ou de `--runas-user`.
+
+## Vos `pod-overrides` et `container-overrides`
+
+Le webhook corrige ce qu'il peut et refuse le reste :
+
+| Dans le devfile | Effet |
+| --- | --- |
+| rien | 1234:1234, sans groupe 0 |
+| `runAsUser` non nul (10100) | gardé |
+| `runAsUser: 0` (pod ou conteneur) | **refusé** |
+| `runAsGroup: 0` sur un conteneur | **refusé** |
+| `runAsGroup: 0` ou `fsGroup: 0` au niveau du pod | remplacé par 1234 |
+| `supplementalGroups` contenant `0` | **refusé** |
+| `supplementalGroupsPolicy: Merge` | **refusé** |
+| `hostUsers: true` | **refusé** |
+
+Retirez ces champs : le défaut est le bon. Le refus porte sur la **création du pod**, pas sur le DevWorkspace : le workspace passe en `Failed` (DevWorkspace Operator ne réessaie pas) et le message est dans son statut, sur le dashboard ou avec `kubectl get dw`. Corrigez le devfile, puis redémarrez.
+
+Les messages, un par raison (plusieurs raisons sont jointes par un point) :
+
+```text
+container "tools": securityContext.runAsUser=0 is not allowed in a workspace namespace; set a non-zero runAsUser or remove it
+container "tools": securityContext.runAsGroup=0 is not allowed in a workspace namespace; remove runAsGroup from the devfile's container-overrides or set a non-zero group
+securityContext.fsGroup=0 is not allowed in a workspace namespace; remove fsGroup from the devfile's pod-overrides
+securityContext.supplementalGroups contains 0; remove it from the devfile's pod-overrides
+securityContext.supplementalGroupsPolicy="Merge" lets the image's /etc/group add group 0; remove it from the devfile's pod-overrides
+hostUsers=true: pods in a workspace namespace run in their own user namespace; remove hostUsers from the pod spec (or the devfile's pod-overrides)
+```
+
+`fsGroup=0` n'apparaît que si un autre mécanisme a remis la valeur après la correction. Pour un pod créé à la main, `kubectl` affiche le refus en `Error from server:` nu :
+
+```text
+Error from server: admission webhook "pod-identity-validate.hardening.weebo.io" denied the request: hostUsers=true: pods in a workspace namespace run in their own user namespace; remove hostUsers from the pod spec (or the devfile's pod-overrides)
+```
+
+`kubectl debug` sur un pod démarré avant le passage en `Enforce` est refusé (`… this pod still shares the node's user namespace …; restart the workspace, then debug it`) : redémarrez le workspace, puis déboguez.

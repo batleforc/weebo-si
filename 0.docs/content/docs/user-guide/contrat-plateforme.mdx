@@ -1,0 +1,102 @@
+---
+title: Le contrat de plateforme
+description: "weebo.io/platform-contract : déclarer les règles pour lesquelles un devfile est écrit, lire les avertissements, épingler son parent, et ce qui change à chaque numéro de contrat"
+---
+
+<Callout type="warn">
+**Pas encore actif sur le lab.** Le contrôle (`devfileContract`, RFC 0019) n'est pas dans le `WeeboSiConfig` du cluster : aujourd'hui, rien n'est affiché ni refusé. Il passera d'abord en `DryRun` (invisible pour vous), puis en `Enforce`. Ajouter l'attribut dès maintenant ne coûte rien.
+</Callout>
+
+Les règles du cluster changent : images via angos, profils réseau, identité des pods… Le **contrat de plateforme** est un numéro qui dit avec quelles règles votre devfile a été écrit. Quand une règle change d'une façon qui peut casser un devfile, la plateforme incrémente le numéro, et cette page dit ce qui a changé ([Changements par contrat](#changements-par-contrat)).
+
+## Déclarer son contrat
+
+Un attribut de **premier niveau** du devfile, un entier :
+
+```yaml
+schemaVersion: 2.3.0
+attributes:
+  weebo.io/platform-contract: 1
+parent:
+  uri: https://raw.githubusercontent.com/batleforc/WeeboDevImage/<commit de 40 caractères>/che-min-mise/devfile.yaml
+```
+
+- Pas dans `metadata.attributes`, ni sur un composant : c'est le bloc `attributes:` à la racine. Che le recopie dans `spec.template.attributes` du DevWorkspace, et c'est là que le contrôle le lit.
+- Un entier, sans guillemets. Une autre valeur compte comme absente.
+- Un devfile sans l'attribut compte comme contrat `1`, le plus ancien.
+- Le contrat courant est **1**.
+
+## Ce que vous voyez
+
+Le contrôle **avertit**, il ne refuse presque jamais : le workspace démarre quand même. Les avertissements sont en anglais, et ne s'affichent qu'avec `kubectl`, en lignes `Warning:` au `kubectl apply`. **Le dashboard Che n'affiche aucun avertissement** (son backend les perd). Un devfile correct n'affiche rien.
+
+| Votre devfile | Avertissement | Quoi faire |
+| --- | --- | --- |
+| sans l'attribut | `devfile has no weebo.io/platform-contract attribute; add "weebo.io/platform-contract: 1" to its attributes` | ajouter l'attribut |
+| attribut qui n'est pas un entier | `weebo.io/platform-contract must be an integer, read as absent; current is 1` | écrire un entier sans guillemets |
+| contrat plus récent que la plateforme | `weebo.io/platform-contract 9 is newer than this platform (1): check the value` | corriger le numéro |
+| contrat sous le minimum | `devfile written for platform contract 1, minimum is 2: see the User Guide changes for contracts 2 to 3` | lire les contrats cités plus bas, adapter le devfile, puis monter le numéro |
+| `parent.uri` sur une branche | `devfile parent follows branch "main": pin parent.uri to a tag or a commit` | [épingler le parent](#épingler-son-parent) |
+| `parent.uri` sans tag, commit ni version reconnaissable | `devfile parent is not pinned to a tag or a commit: pin parent.uri to one` | idem |
+| `parent.id` sans `version` | `devfile parent "che-min-mise" has no version: set parent.version` | ajouter `parent.version` |
+| `parent.kubernetes` | `devfile parent is a DevWorkspaceTemplate (parent.kubernetes): the workspace itself can change it` | passer par un `parent.uri` épinglé |
+| `schemaVersion` trop ancien | `devfile schemaVersion 2.1.0 is below the platform minimum 2.2.0` | monter `schemaVersion` |
+
+Les numéros et versions de ces exemples changent selon votre devfile et la configuration du cluster.
+
+Depuis le dashboard, le verdict reste lisible sur le DevWorkspace (`current`, `outdated` ou `unknown`, avec les codes de raison) :
+
+```bash
+kubectl get dw <nom> -o jsonpath='{.metadata.annotations}' \
+  | jq 'with_entries(select(.key|startswith("hardening.weebo.io/devfile")))'
+```
+
+### Quand c'est refusé
+
+Un refus n'arrive que pour un contrat ou un parent que l'admin a explicitement **interdit** (une version vulnérable, par exemple). La liste est vide par défaut. Le refus porte **uniquement sur le prochain démarrage** : création, `spec.started` qui passe à `true`, ou modification du devfile d'un workspace qui tourne. Arrêter ou supprimer un workspace marche toujours ; ces opérations reçoivent seulement l'avertissement `… this workspace will be refused at its next start`.
+
+`kubectl` affiche le refus en `Error from server:` nu (ni `BadRequest` ni `Forbidden`) :
+
+```text
+Error from server: admission webhook "devworkspaces.hardening.weebo.io" denied the request: devfile parent is denied by the platform (deniedParents entry 1: https://raw.githubusercontent.com/batleforc/WeeboDevImage/v1.2.0/): move parent.uri to a newer version; contract 3 in the User Guide lists them
+```
+
+```text
+Error from server: admission webhook "devworkspaces.hardening.weebo.io" denied the request: platform contract 1 is denied (devfiles without weebo.io/platform-contract count as 1): add "weebo.io/platform-contract: 3" and follow the User Guide
+```
+
+Dans les deux cas : mettre le parent à jour ou monter le contrat, après avoir lu les [changements](#changements-par-contrat) du contrat cité.
+
+## Épingler son parent
+
+Un `parent.uri` qui pointe sur une branche (`refs/heads/main`, `/main/`) change à chaque commit du dépôt parent : votre workspace d'aujourd'hui n'est pas celui d'hier, et un parent devenu cassé ou vulnérable vous arrive sans que vous ayez rien modifié. D'où l'avertissement `devfile parent follows branch …`.
+
+Épinglez sur un **tag** ou un **commit** :
+
+```yaml
+parent:
+  # un commit : 40 caractères hexadécimaux
+  uri: https://raw.githubusercontent.com/batleforc/WeeboDevImage/<commit>/che-min-mise/devfile.yaml
+  # ou un tag, quand le dépôt en publie
+  # uri: https://raw.githubusercontent.com/batleforc/WeeboDevImage/v1.4.0/che-min-mise/devfile.yaml
+```
+
+WeeboDevImage ne publie pas encore de tag : épinglez sur un commit. Renovate sait proposer la mise à jour d'un commit épinglé, jamais celle d'une branche. Avec un registre de devfiles (`parent.id`), donnez toujours `parent.version`.
+
+## Changements par contrat
+
+Chaque entrée liste ce qui peut casser un devfile écrit pour le contrat précédent, et quoi changer. Les avertissements et refus renvoient ici (`#contrat-<n>`).
+
+### Contrat 1
+
+Les règles en place quand le contrôle arrive. Un devfile sans attribut est traité comme écrit pour ce contrat.
+
+- **Images** : une image hors du registre interne est réécrite vers angos (`docker.io/…` devient `registry.pkg.weebo.poc/hub/…`), ou refusée si son registre n'est pas couvert. Seuls `registry.pkg.weebo.poc/**` et `ghcr.io/batleforc/weebodevimage/**` sont autorisés.
+- **Réseau** : la sortie du workspace est filtrée par des profils. Voir [Réseau et accès aux endpoints](/docs/user-guide/reseau-et-acces).
+- **Endpoints** : tout endpoint public passe par une authentification, en accès `private` par défaut. Voir la même page.
+- **Configuration du workspace** : le DevWorkspace est épinglé sur la configuration de Che (`eclipse-che/devworkspace-config`) ; un devfile ne peut pas apporter la sienne.
+- **Sécurité des conteneurs** : `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]` et seccomp `RuntimeDefault` sont posés sur chaque conteneur. Les `pod-overrides` et `container-overrides` ne peuvent pas demander `privileged`, `hostNetwork`, `hostPID`, `hostPath`, l'UID 0 ou des capabilities en plus.
+
+### Contrat 2 et suivants
+
+**À compléter** quand la plateforme incrémente `currentContract`. Le premier changement attendu est l'[identité des workspaces](/docs/user-guide/identite-workspace) (UID 1234 sans groupe 0, user namespace) : s'il donne lieu au contrat 2, son entrée dira quelles images reconstruire et quels overrides retirer.
