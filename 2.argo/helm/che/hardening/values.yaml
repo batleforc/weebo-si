@@ -84,7 +84,11 @@ config:
           variants:
             - backend: Cilium
               templateRef: { name: weebo-net-dev-registries, namespace: weebo-si-hardening }
+        # RFC 0021: honoured only where the Namespace grants it
+        # (hardening.weebo.io/network-grants, admin-only). Same value on
+        # the team's copy, or CatalogKeyConflict.
         - key: internet
+          restricted: true
           variants:
             - backend: Cilium
               templateRef: { name: weebo-net-internet, namespace: weebo-si-hardening }
@@ -103,6 +107,10 @@ config:
         attribute: hardening.weebo.io/network-profiles
       # A workspace naming a profile its team does not grant gets the team
       # default instead of being refused.
+      # RFC 0021. Spelt out (CRD default) for the same OutOfSync reason as
+      # endpointAuth's `anonymous`.
+      namespaceGrant:
+        annotation: hardening.weebo.io/network-grants
       onNotGranted: Default
       enforcement:
         # Not Auto: the templates only exist as CiliumNetworkPolicy, and a
@@ -319,6 +327,44 @@ config:
         - { from: code.forgejo.org, to: registry.pkg.weebo.poc/forgejo }
         - { from: codeberg.org, to: registry.pkg.weebo.poc/codeberg }
 
+    # RFC 0019. Admission warnings when a devfile was written for older
+    # platform rules (`weebo.io/platform-contract`, top-level attribute, V-23)
+    # or follows a moving parent; refuses a start only on a denied contract
+    # or parent. Warnings reach kubectl only, the Che dashboard drops them
+    # (V-14). No operator switch: it rides the DevWorkspace webhook. DryRun
+    # counts and logs, nothing more; Enforce once the counts are read.
+    # Every field spelt out (ArgoCD compares what the apiserver stores).
+    devfileContract:
+      enabled: true
+      mode: DryRun
+      namespaceSelector:
+        matchLabels:
+          hardening.weebo.io/workspace-namespace: "true"
+      currentContract: 1
+      minimumContract: 1
+      minimumSchemaVersion: "2.2.0"
+      deniedContracts: []
+      # Empty until WeeboDevImage is tagged (V-13): nothing to deny yet.
+      deniedParents: []
+      onDenied: Deny
+
+    # RFC 0018. Every pod of a workspace namespace in its own user namespace
+    # (hostUsers: false) as 1234:1234, supplementalGroupsPolicy Strict, no
+    # group 0 (V-30). Step 2 of the upgrade: enable only once
+    # operator.podIdentity.webhooks.enabled is true and running. Test
+    # namespace first; Enforce wide needs PSA restricted and WeeboDevImage
+    # on `chown -R 1234:0` (Q20).
+    podIdentity:
+      enabled: false
+      mode: DryRun
+      namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: dev-ws-batleforc-test
+      runAsUser: 1234
+      runAsGroup: 1234
+      exemptDwocKeys: []
+      grantGroupZero: false
+
     # RFC 0006. What a workspace's processes may do (exec, files, network,
     # capabilities), through KubeArmor (2.argo/helm/kubearmor, BPF-LSM
     # enforcer). Needs operator.kubearmorPolicy.rbac.enabled.
@@ -418,9 +464,9 @@ config:
             controller.devfile.io/mount-as: subpath
             controller.devfile.io/mount-path: /home/user
           data:
-            # Placeholder: point it at the internal mirror.
+            # BatleHub's npm registry root (2.argo/helm/batlehub).
             .npmrc: |
-              registry=https://registry.npmjs.org/
+              registry=https://npm.pkg.weebo.poc/
 
     # RFC 0009. An authenticating gate in front of every workspace endpoint
     # on its own FQDN, served by the endpoint-gateway
@@ -577,6 +623,7 @@ teams:
           # `hardening.weebo.io/network-profiles: [internet]` (world covers
           # the forges and the API); the others keep the default.
           - key: internet
+            restricted: true
             variants:
               - backend: Cilium
                 templateRef: { name: weebo-net-internet, namespace: weebo-si-hardening }
@@ -585,10 +632,14 @@ teams:
         catalog:
           - key: angos
             patterns: ["registry.pkg.weebo.poc/**"]
-          # The weebodevimage images, also straight from ghcr.io.
-          - key: weebo-devimages
-            patterns: ["ghcr.io/batleforc/weebodevimage/**"]
-        default: [angos, weebo-devimages]
+        # No direct ghcr.io entry: imageRewrite already sends
+        # ghcr.io/batleforc/weebodevimage/* through angos.
+        default: [angos]
+      # Enforce stays baseline (podman/buildah builds); warn and audit
+      # restricted, the step before raising it (V-10 PASS on 2026-11-24).
+      podSecurity:
+        level: baseline
+        warnLevel: restricted
       kubearmorPolicy:
         # Same key as the cluster catalogue's.
         catalog:
@@ -608,14 +659,16 @@ teams:
         # `hardening.weebo.io/access: open` on the devfile endpoint (or
         # `kubectl annotate` until the next start). The gate stays in the
         # chain and lets anyone through: for webhooks, CLIs and APIs that
-        # cannot follow a sign-in. Only this team reaches it: another team's
+        # cannot follow a sign-in. Restricted (RFC 0021): honoured only in a
+        # Namespace an admin annotated hardening.weebo.io/endpoint-access:
+        # open, else served private. Only this team reaches it: another team's
         # Ingress naming it is refused at admission ("not granted"), so that
         # workspace does not start.
         # `team` and `shared` re-declared, identical to config.features
         # .endpointAuth.catalog: a team reaches only what it catalogues plus
         # the cluster default, so without them `access: team` is refused.
         catalog:
-          - { key: open, anonymous: true, delegation: [] }
+          - { key: open, anonymous: true, restricted: true, delegation: [] }
           - { key: team, anonymous: false, delegation: [Team] }
           - { key: shared, anonymous: false, delegation: [Team, UsersAndGroups] }
         default: private

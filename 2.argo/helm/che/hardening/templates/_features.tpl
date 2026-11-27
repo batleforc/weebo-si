@@ -13,10 +13,12 @@
       "registryConfig"  (((($op.registryConfig).rbac).enabled))
       "endpointAuth"    (((($op.endpointAuth).rbac).enabled))
       "podSecurity"     (((($op.podSecurity).rbac).enabled))
-      "resourceQuotas"  (((($op.resourceQuotas).rbac).enabled)) -}}
+      "resourceQuotas"  (((($op.resourceQuotas).rbac).enabled))
+      "teamTools"       (((($op.teamTools).rbac).enabled))
+      "podIdentity"     (((($op.podIdentity).webhooks).enabled)) -}}
 {{- range $feature, $granted := $need -}}
-{{- if and (get $f $feature).enabled (not $granted) -}}
-{{- fail (printf "config.features.%s is enabled but che.hardening.operator.%s.rbac.enabled is not (2.argo/helm/che/main/values.yaml)" $feature $feature) -}}
+{{- if and ((get $f $feature) | default dict).enabled (not $granted) -}}
+{{- fail (printf "config.features.%s is enabled but its switch in che.hardening.operator.%s (rbac or webhooks) is off (2.argo/helm/che/main/values.yaml)" $feature $feature) -}}
 {{- end -}}
 {{- end -}}
 {{- with $f.networkProfiles -}}

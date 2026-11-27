@@ -83,7 +83,7 @@ che:
     enabled: true
     namespace: weebo-si-hardening
     ## renovate: datasource=docker depName=ghcr.io/batleforc/charts/weebo-si-operator
-    version: 0.5.0
+    version: 0.6.0
     # 1 = no HA (no webhook during a drain, see hardening-operator.yaml).
     replicas: 1
     # WeeboSiConfig/Team/User, rendered by 2.argo/helm/che/hardening and
@@ -143,6 +143,20 @@ che:
       podSecurity:
         rbac:
           enabled: true
+      # features.podIdentity (RFC 0018): registers the two Pod webhooks
+      # (Fail, workspace namespaces). Two commits, never one: an upgrade that
+      # registers them while the old pods still answer 404 refuses every
+      # workspace pod for the length of the roll. So true only once the
+      # release runs, and before the feature's DryRun (they answer in every
+      # mode, Off included). Back to false before any chart downgrade.
+      podIdentity:
+        webhooks:
+          enabled: false
+      # features.teamTools (RFC 0020): unbound ClusterRoles, template
+      # namespace and CA guard. Off until probe V-16 (rootless buildkitd).
+      teamTools:
+        rbac:
+          enabled: false
       # features.resourceQuotas (RFC 0014): write on resourcequotas and
       # limitranges cluster-wide, plus the pod-less namespace that holds the
       # quota templates (a quota is live where it lives, so never in the

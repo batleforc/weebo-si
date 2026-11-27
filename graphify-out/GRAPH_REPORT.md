@@ -1,17 +1,17 @@
-# Graph Report - weebo-si  (2026-11-26)
+# Graph Report - weebo-si  (2026-11-27)
 
 ## Corpus Check
-- 601 files · ~346,861 words
+- 601 files · ~347,227 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 99 file(s) not represented in the graph (top: (none) 36, .woff2 18, .tpl 17)
 
 ## Summary
-- 6132 nodes · 6742 edges · 586 communities (546 shown, 40 thin omitted)
+- 6161 nodes · 6776 edges · 581 communities (541 shown, 40 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 33 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `7d1837ac`
+- Built from commit: `972ceef7`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -221,7 +221,7 @@
 - angos
 - attributes
 - precache
-- builtin
+- podSecurity
 - endpoint-gateway
 - forgejo
 - backend
@@ -233,7 +233,7 @@
 - endpoint-gateway/Chart.yaml
 - hardening/Chart.yaml
 - che/main/Chart.yaml
-- operator
+- devfileContract
 - sub-bis/Chart.yaml
 - commands
 - components
@@ -487,8 +487,8 @@
 - matchLabels
 - monitoring.mdx
 - kubectl
-- default-authenticator-webauthn-setup
-- podWebhook
+- builtin
+- cilium
 - che
 - auth
 - secscan
@@ -515,11 +515,9 @@
 - authentication/index.mdx
 - 10. Exploitation
 - components
-- vault
 - hook
 - spaces/values.yaml
 - argo-admin
-- default-provider-invalidation-flow
 - default-source-authentication
 - secureboot-faisabilite.mdx
 - deviceCode
@@ -547,7 +545,6 @@
 - readers
 - traces
 - templateNamespace
-- default-user-settings-flow
 - weeboEmail
 - weeboGroups
 - podSecurityContext
@@ -563,7 +560,6 @@
 - contrat-plateforme.mdx
 - ui
 - clickhouse
-- caSecretRef
 - argocd.mjs
 - Phase 7 · Outils de team et sidecars
 - Phase 3 · Réduire ce que le workspace peut atteindre
@@ -571,7 +567,6 @@
 - Préparer le dev mobile Android
 - Phase 1 · Voir avant de bloquer
 - Phase 5 · Moteur et identité du pod
-- token
 - Phase 2 · Nettoyer et activer ce qui est déjà prévu
 - Les deux façons
 - youki.yaml
@@ -596,8 +591,8 @@
 5. `k()` - 24 edges
 6. `config` - 23 edges
 7. `Upgrade guidelines` - 22 edges
-8. `log()` - 21 edges
-9. `oauth2` - 21 edges
+8. `oauth2` - 21 edges
+9. `log()` - 21 edges
 10. `tasks` - 20 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -615,7 +610,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (586 total, 40 thin omitted)
+## Communities (581 total, 40 thin omitted)
 
 ### Community 0 - "Upgrade guidelines"
 Cohesion: 0.04
@@ -842,8 +837,8 @@ Cohesion: 0.12
 Nodes (15): dependencies, isbot@^5.1.40, lucide-react@^1.17.0, next-themes@^0.4.6, react@^19.2.6, react-dom@^19.2.6, @react-router/node@^7.15.1, tailwind-merge@^3.6.0 (+7 more)
 
 ### Community 57 - "kubearmorPolicy"
-Cohesion: 0.11
-Nodes (18): templateRef, kubearmorPolicy, baseline, catalog, default, enabled, mode, onNotGranted (+10 more)
+Cohesion: 0.14
+Nodes (14): kubearmorPolicy, baseline, default, enabled, mode, onNotGranted, templates, action (+6 more)
 
 ### Community 58 - "custom"
 Cohesion: 0.12
@@ -866,8 +861,8 @@ Cohesion: 0.20
 Nodes (9): 1. Déclarer le compte (git), 2. Premier accès : clé de récupération, 3. Mot de passe et second facteur (par la personne), 4. Workspace Che (`weebo_moderator` et plus), 5. Élévation admin (`weebo_admin` seulement), Appareil perdu, Avant de commencer, Retour arrière (+1 more)
 
 ### Community 63 - "operator"
-Cohesion: 0.13
-Nodes (18): enabled, rbac, operator, argoNamespace, rbac, rbac, cilium, identity (+10 more)
+Cohesion: 0.12
+Nodes (20): rbac, operator, argoNamespace, rbac, podWebhook, rbac, identity, imagePolicy (+12 more)
 
 ### Community 64 - "forgejo"
 Cohesion: 0.08
@@ -918,8 +913,8 @@ Cohesion: 0.14
 Nodes (14): enabled, issuerRef, issuerRefKind, name, dns, certificate, createWithCRD, domain (+6 more)
 
 ### Community 76 - "brand"
-Cohesion: 0.14
-Nodes (14): brand, brandingDefaultFlowBackground, brandingFavicon, brandingLogo, brandingTitle, crName, default, domain (+6 more)
+Cohesion: 0.12
+Nodes (17): brand, brandingDefaultFlowBackground, brandingFavicon, brandingLogo, brandingTitle, crName, default, domain (+9 more)
 
 ### Community 77 - "image"
 Cohesion: 0.38
@@ -982,8 +977,8 @@ Cohesion: 0.11
 Nodes (18): registries, enabled, admin, anonymous, user, index_url, mode, name (+10 more)
 
 ### Community 92 - "che"
-Cohesion: 0.12
-Nodes (16): branch, che, cheApp, cheAppBis, enabled, forgejo, ingress, namespace (+8 more)
+Cohesion: 0.10
+Nodes (20): branch, che, cheApp, cheAppBis, enabled, forgejo, ingress, namespace (+12 more)
 
 ### Community 93 - "traefik"
 Cohesion: 0.15
@@ -1066,8 +1061,8 @@ Cohesion: 0.18
 Nodes (12): email_verified, items, attributes, crName, email, groupRefs, isActive, isSuperuser (+4 more)
 
 ### Community 113 - "features"
-Cohesion: 0.12
-Nodes (17): imageRewrite, policyGuard, enabled, mode, namespaceSelector, rules, namespaceSelector, hardening.weebo.io/workspace-namespace (+9 more)
+Cohesion: 0.11
+Nodes (18): imageRewrite, policyGuard, enabled, mode, namespaceSelector, rules, namespaceSelector, hardening.weebo.io/workspace-namespace (+10 more)
 
 ### Community 114 - "che-code-fast-weebo.yaml"
 Cohesion: 0.29
@@ -1127,7 +1122,7 @@ Nodes (9): 1. Geler Argo CD et arrêter batlehub, 2. Sauvegarde à la demande, 3
 
 ### Community 128 - "features"
 Cohesion: 0.12
-Nodes (16): allowedProjects, allowedRepoUrls, applicationNamespace, features, identity, podSecurity, che, enabled (+8 more)
+Nodes (16): allowedProjects, allowedRepoUrls, applicationNamespace, features, identity, podIdentity, che, enabled (+8 more)
 
 ### Community 129 - "gateway"
 Cohesion: 0.18
@@ -1174,8 +1169,8 @@ Cohesion: 0.15
 Nodes (13): imagePolicy, default, enabled, mode, onNotGranted, platform, variables, workspaceSelection (+5 more)
 
 ### Community 140 - "key"
-Cohesion: 0.22
-Nodes (9): anonymous, delegation, key, name, namespace, patterns, catalog, catalog (+1 more)
+Cohesion: 0.17
+Nodes (13): anonymous, delegation, key, patterns, restricted, templateRef, variants, catalog (+5 more)
 
 ### Community 141 - "root.tsx"
 Cohesion: 0.21
@@ -1346,8 +1341,8 @@ Cohesion: 0.09
 Nodes (21): branch, ciliumNetworkPolicies, enabled, policies, toEndpoints, toEntities, toPorts, kubearmor (+13 more)
 
 ### Community 183 - "foundation"
-Cohesion: 0.18
-Nodes (11): foundation, enabled, namespacePolicy, secretStore, url, allowedNamespaces, enabled, enabled (+3 more)
+Cohesion: 0.07
+Nodes (30): enabled, key, name, namespace, foundation, enabled, namespacePolicy, secretStore (+22 more)
 
 ### Community 184 - "angos/values.yaml"
 Cohesion: 0.25
@@ -1437,9 +1432,9 @@ Nodes (10): arch, firstPublicationDate, iconData, iconMediatype, provider, publi
 Cohesion: 0.33
 Nodes (6): precache, enabled, image, images, platform, schedule
 
-### Community 206 - "builtin"
-Cohesion: 0.33
-Nodes (6): theme, builtin, enabled, css, enabled, flows
+### Community 206 - "podSecurity"
+Cohesion: 0.14
+Nodes (14): podSecurity, namespaceSelection, namespaceSelection, annotation, namespaceSelection, backend, ceiling, default (+6 more)
 
 ### Community 207 - "endpoint-gateway"
 Cohesion: 0.25
@@ -1485,9 +1480,9 @@ Nodes (10): apiVersion, appVersion, dependencies, name, repository, version, des
 Cohesion: 0.18
 Nodes (10): apiVersion, appVersion, dependencies, name, repository, version, description, name (+2 more)
 
-### Community 218 - "operator"
-Cohesion: 0.50
-Nodes (4): operator, repoURL, version, devworkspace
+### Community 218 - "devfileContract"
+Cohesion: 0.20
+Nodes (10): currentContract, deniedContracts, deniedParents, enabled, minimumContract, minimumSchemaVersion, mode, namespaceSelector (+2 more)
 
 ### Community 219 - "sub-bis/Chart.yaml"
 Cohesion: 0.29
@@ -1979,7 +1974,7 @@ Nodes (42): apply_pod(), cleanup(), ensure_scratch_ns(), has_runtimeclass(), k()
 
 ### Community 341 - "networkProfiles"
 Cohesion: 0.11
-Nodes (18): enabled, intervalSeconds, variants, capabilities, file, network, backend, canary (+10 more)
+Nodes (19): enabled, intervalSeconds, capabilities, file, network, backend, canary, defaultPosture (+11 more)
 
 ### Community 342 - "spaces/Chart.yaml"
 Cohesion: 0.33
@@ -2066,8 +2061,8 @@ Cohesion: 0.40
 Nodes (5): cidr, fromCIDRSet, netpol, enabled, ingress
 
 ### Community 369 - "dwocPin"
-Cohesion: 0.15
-Nodes (13): default, enabled, mode, namespaceSelection, namespaceSelector, onMissingTarget, dwocPin, namespaceSelection (+5 more)
+Cohesion: 0.18
+Nodes (11): name, namespace, catalog, default, enabled, mode, namespaceSelection, namespaceSelector (+3 more)
 
 ### Community 370 - "auth"
 Cohesion: 0.67
@@ -2405,13 +2400,13 @@ Nodes (4): Flux, Flux ouverts par d'autres applications, Légende, Politiques
 Cohesion: 0.33
 Nodes (6): aliases, cmds, desc, env, silent, kubectl
 
-### Community 482 - "default-authenticator-webauthn-setup"
-Cohesion: 0.50
-Nodes (4): default-authenticator-webauthn-setup, authentication, designation, name
+### Community 482 - "builtin"
+Cohesion: 0.13
+Nodes (15): default-authenticator-webauthn-setup, default-provider-invalidation-flow, default-user-settings-flow, authentication, designation, name, authentication, designation (+7 more)
 
-### Community 483 - "podWebhook"
-Cohesion: 0.67
-Nodes (3): podWebhook, imagePolicy, failurePolicy
+### Community 483 - "cilium"
+Cohesion: 0.27
+Nodes (6): enabled, cilium, networkProfiles, podIdentity, webhooks, enabled
 
 ### Community 484 - "che"
 Cohesion: 0.05
@@ -2517,10 +2512,6 @@ Nodes (4): 10.1 Observabilité, 10.2 Modes de défaillance, 10.3 Performances et
 Cohesion: 0.29
 Nodes (7): app.kubernetes.io/component, app.kubernetes.io/part-of, controller.devfile.io/container-contribution, components, attributes, name, volume
 
-### Community 511 - "vault"
-Cohesion: 0.29
-Nodes (7): vault, address, enabled, kubernetesAuthMount, kubernetesAuthRole, mount, pathPrefix
-
 ### Community 512 - "hook"
 Cohesion: 0.67
 Nodes (3): hook, enabled, project
@@ -2532,10 +2523,6 @@ Nodes (6): instance, name, namespaces, organizations, types, users
 ### Community 514 - "argo-admin"
 Cohesion: 0.25
 Nodes (8): argo-admin, accessGroup, enabled, metaIcon, metaLaunchUrl, name, provider, slug
-
-### Community 515 - "default-provider-invalidation-flow"
-Cohesion: 0.50
-Nodes (4): default-provider-invalidation-flow, authentication, designation, name
 
 ### Community 516 - "default-source-authentication"
 Cohesion: 0.50
@@ -2645,10 +2632,6 @@ Nodes (4): traces, exporters, processors, receivers
 Cohesion: 0.40
 Nodes (5): resourceQuotas, rbac, templateNamespace, create, name
 
-### Community 543 - "default-user-settings-flow"
-Cohesion: 0.50
-Nodes (4): default-user-settings-flow, authentication, designation, name
-
 ### Community 544 - "weeboEmail"
 Cohesion: 0.29
 Nodes (7): weeboEmail, crName, description, enabled, expression, name, scopeName
@@ -2709,10 +2692,6 @@ Nodes (4): ui, enabled, nativeAuth, scope
 Cohesion: 0.25
 Nodes (8): clickhouse, cluster, enabled, nativePort, port, prometheus, enabled, port
 
-### Community 561 - "caSecretRef"
-Cohesion: 0.38
-Nodes (7): enabled, key, name, namespace, tls, caSecretRef, caSecretRef
-
 ### Community 562 - "argocd.mjs"
 Cohesion: 0.60
 Nodes (4): both(), CSS_FILE, renderArgoCss(), rules()
@@ -2740,10 +2719,6 @@ Nodes (5): Envoyer les alertes KubeArmor dans ClickStack, Fiabiliser le webhook 
 ### Community 569 - "Phase 5 · Moteur et identité du pod"
 Cohesion: 0.40
 Nodes (5): Phase 5 · Moteur et identité du pod, PSA `restricted` et user namespaces, Une identité fixe, dans un user namespace par pod, Workspaces sur youki, avec repli sur runc, À tester avant d'activer `hostUsers: false`
-
-### Community 570 - "token"
-Cohesion: 0.40
-Nodes (5): token, refreshInterval, secretName, vaultKey, vaultProperty
 
 ### Community 571 - "Phase 2 · Nettoyer et activer ce qui est déjà prévu"
 Cohesion: 0.50
@@ -2803,13 +2778,13 @@ Nodes (3): cmds, desc, hardening:validate
 
 ## Knowledge Gaps
 - **4 isolated node(s):** `KUBECONFIG`, `0.pulumi-conf`, `kubernetes-ovh-go`, `weebo.poc/requestid`
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3966 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3985 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **40 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `fumadocs-core` connect `source.ts` to `root.tsx`, `0.docs/package.json`, `fumadocs-mdx`, `docs.tsx`, `react-router.config.ts`?**
+- **Why does `applications` connect `kind` to `argo-admin`, `auth/sub/values.yaml`, `openbao`, `batlehub`, `angos`, `kube-admin`, `endpoint-gateway`, `forgejo`, `backend`, `backend`, `argo`, `che`, `kind`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **Are the 3 inferred relationships involving `main()` (e.g. with `.edge()` and `.node()`) actually correct?**
   _`main()` has 3 INFERRED edges - model-reasoned connections that need verification._
@@ -2817,9 +2792,9 @@ _Questions this graph is uniquely positioned to answer:_
   _4 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Upgrade guidelines` be split into smaller, more focused modules?**
   _Cohesion score 0.04081632653061224 - nodes in this community are weakly interconnected._
-- **Why does `hyperdx` connect `hyperdx` to `ingress`, `dashboards`, `ports`, `clickstack/values.yaml`, `secrets`, `config`, `requests`, `service`, `deployment`?**
+- **Why does `batlehub` connect `batlehub` to `postgres`, `kubeAuth`, `chart`, `storage`, `valkey`, `batlehub/values.yaml`, `requests`, `githubToken`, `oidc`, `registries`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **Should `rustfs` be split into smaller, more focused modules?**
   _Cohesion score 0.044444444444444446 - nodes in this community are weakly interconnected._
-- **Why does `features` connect `features` to `endpointAuth`, `networkProfiles`, `dwocPin`, `features`, `resourceQuotas`, `networkProfiles`, `kubearmorPolicy`, `hardening/values.yaml`, `weebo-npmrc`?**
+- **Why does `hyperdx` connect `hyperdx` to `ingress`, `dashboards`, `ports`, `clickstack/values.yaml`, `secrets`, `config`, `requests`, `service`, `deployment`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
