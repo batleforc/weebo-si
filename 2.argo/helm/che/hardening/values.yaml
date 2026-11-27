@@ -332,11 +332,12 @@ config:
     # or follows a moving parent; refuses a start only on a denied contract
     # or parent. Warnings reach kubectl only, the Che dashboard drops them
     # (V-14). No operator switch: it rides the DevWorkspace webhook. DryRun
-    # counts and logs, nothing more; Enforce once the counts are read.
+    # counts and logs. Enforce since 2026-11-28: warnings + annotation, no
+    # denial while both denied lists are empty (DryRun read on 27/11).
     # Every field spelt out (ArgoCD compares what the apiserver stores).
     devfileContract:
       enabled: true
-      mode: DryRun
+      mode: Enforce
       namespaceSelector:
         matchLabels:
           hardening.weebo.io/workspace-namespace: "true"
