@@ -355,7 +355,7 @@ config:
     # namespace first; Enforce wide needs PSA restricted and WeeboDevImage
     # on `chown -R 1234:0` (Q20).
     podIdentity:
-      enabled: false
+      enabled: true
       mode: DryRun
       namespaceSelector:
         matchLabels:
