@@ -358,9 +358,11 @@ config:
     podIdentity:
       enabled: true
       mode: Enforce
+      # Every workspace namespace since 2026-11-28 (tested in
+      # dev-ws-batleforc-test on 27/11, WeeboDevImage#212 merged).
       namespaceSelector:
         matchLabels:
-          kubernetes.io/metadata.name: dev-ws-batleforc-test
+          hardening.weebo.io/workspace-namespace: "true"
       runAsUser: 1234
       runAsGroup: 1234
       exemptDwocKeys: []
@@ -636,10 +638,12 @@ teams:
         # No direct ghcr.io entry: imageRewrite already sends
         # ghcr.io/batleforc/weebodevimage/* through angos.
         default: [angos]
-      # Enforce stays baseline (podman/buildah builds); warn and audit
-      # restricted, the step before raising it (V-10 PASS on 2026-11-24).
+      # restricted since 2026-11-28: no warning on a real workspace (27/11),
+      # and RFC 0018's prerequisite for podIdentity everywhere. In-workspace
+      # podman/buildah builds were already off (CheCluster
+      # disableContainerRunCapabilities, drop ALL).
       podSecurity:
-        level: baseline
+        level: restricted
         warnLevel: restricted
       kubearmorPolicy:
         # Same key as the cluster catalogue's.
