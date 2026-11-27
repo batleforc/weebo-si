@@ -356,7 +356,7 @@ config:
     # on `chown -R 1234:0` (Q20).
     podIdentity:
       enabled: true
-      mode: DryRun
+      mode: Enforce
       namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: dev-ws-batleforc-test
