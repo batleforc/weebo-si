@@ -15,6 +15,15 @@ metadata:
     weebo.io/team: {{ required "cheUser.teamLabel is rendered by the operator" .Values.cheUser.teamLabel | quote }}
   annotations:
     che.eclipse.org/username: {{ $user | quote }}
+    {{- /* RFC 0021: restricted catalogue keys this person is granted. Only
+    an admin writes them (WeeboSiUser che.values in git); neither the user
+    nor the workspace token can write a Namespace. */}}
+    {{- with .Values.cheUser.grants.network }}
+    hardening.weebo.io/network-grants: {{ join "," . | quote }}
+    {{- end }}
+    {{- with .Values.cheUser.grants.endpoint }}
+    hardening.weebo.io/endpoint-access: {{ join "," . | quote }}
+    {{- end }}
 {{- range include "user-app.access.clusterRoles" . | fromYamlArray }}
 ---
 # To the apiserver identity of this person, not the Che username: che-server's

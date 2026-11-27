@@ -27,6 +27,13 @@ cheUser:
     # The team's add-ons, and the person's on top (both apply).
     addons: []
     extraAddons: []
+  # Restricted keys (RFC 0021) granted to this person, set per person in
+  # the WeeboSiUser's che.values, never by the team template. network:
+  # networkProfiles keys (e.g. [internet]); endpoint: endpointAuth keys
+  # (e.g. [open]). Empty = no annotation, nothing granted.
+  grants:
+    network: []
+    endpoint: []
   externalConfig:
     enabled: false
     repoURL: ""
