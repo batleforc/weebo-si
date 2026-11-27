@@ -151,7 +151,7 @@ che:
       # mode, Off included). Back to false before any chart downgrade.
       podIdentity:
         webhooks:
-          enabled: false
+          enabled: true
       # features.teamTools (RFC 0020): unbound ClusterRoles, template
       # namespace and CA guard. Off until probe V-16 (rootless buildkitd).
       teamTools:
