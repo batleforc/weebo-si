@@ -487,6 +487,10 @@ config:
     # and no cluster default: a team reaches only what it catalogues. Not a
     # control on its own (networkProfiles is). Needs
     # operator.registryConfig.rbac.enabled.
+    # Off on purpose since 2026-11-28: the package managers get BatleHub as
+    # env vars from 2.helm/user-app (templates/batlehub-client.yaml), which
+    # needs no secrets RBAC and shadows no file in $HOME. This stays for a
+    # client only a file can configure (maven's settings.xml).
     registryConfig:
       enabled: false
       mode: DryRun

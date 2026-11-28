@@ -1,7 +1,13 @@
 {{- with .Values.batlehub.server }}
-# The one piece of package configuration a workspace is given:
-# BATLEHUB_SERVER, as an env var in every workspace container. `batlehub
-# setup apply` derives each client's config from that server's registry list.
+{{- $host := (urlParse .).host }}
+# Package configuration for every workspace container, as env vars: the
+# DevWorkspace automount, no file in $HOME to shadow and nothing to run at
+# start. Workspaces resolve no public registry (weebo-net-base, DNS), so
+# each client is pointed at its BatleHub registry, <name>.<server host>
+# (names from 2.argo/helm/batlehub/values.yaml, batlehub.registries). An env
+# var beats the user's config file; a flag (`pip install -i`) still beats it.
+# Not here: cargo (no sparse index found on cargo.<host>) and maven (no env
+# var, settings.xml only).
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -14,6 +20,11 @@ metadata:
     controller.devfile.io/mount-as: env
 data:
   BATLEHUB_SERVER: {{ . | quote }}
+  NPM_CONFIG_REGISTRY: "https://npm.{{ $host }}/"
+  PIP_INDEX_URL: "https://pypi.{{ $host }}/simple/"
+  UV_DEFAULT_INDEX: "https://pypi.{{ $host }}/simple/"
+  # The sum.golang.org checks go through BatleHub's sumdb relay as well.
+  GOPROXY: "https://go.{{ $host }}"
   {{- if $.Values.batlehub.setupApply }}
   BATLEHUB_SETUP_APPLY: "true"
   {{- end }}
