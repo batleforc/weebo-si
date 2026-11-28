@@ -46,4 +46,14 @@ spec:
     options:
       name: workspace-reachable
       namespace: traefik
+    # Traefik cannot read a domain off a HostRegexp, so without this the SNI
+    # <registry>.pkg kept the default TLS options while its Host's router has
+    # workspace-reachable: 421 on every subdomain. Same names as the
+    # certificate.
+    {{- if .Values.batlehub.subdomainRouting.enabled }}
+    domains:
+      - main: {{ .Values.batlehub.dns }}
+        sans:
+          - "*.{{ .Values.batlehub.dns }}"
+    {{- end }}
 {{- end -}}
