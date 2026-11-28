@@ -189,6 +189,7 @@ Une fois ces derniers points traités, le préventif est en place : le workspace
 - **Cycle de vie.** Un runbook de départ d'un utilisateur, et un rythme de mise à jour des forks Che et de WeeboDevImage, avec signature des images.
 - **Multi-nœud.** Documenter le passage au multi-nœud et les bonnes pratiques à suivre dès maintenant. Les faiblesses du mono-nœud sont acceptées en attendant.
 - **Durée de vie.** Relevé du 24/11 : le CheCluster arrête un workspace inactif après 3 h (`secondsOfInactivityBeforeIdling: 10800`) et plafonne à 5 workspaces lancés et 20 workspaces par utilisateur. Il manque une durée maximale d'exécution (`secondsOfRunBeforeIdling: -1`).
+- **Podman rootless dans le workspace (piste, pas pour maintenant).** Impossible aujourd'hui : `newuidmap` est setuid et `no_new_privs` l'ignore, il n'y a pas de `/dev/fuse`, et depuis WeeboDevImage #216 `/etc/subuid` et `/etc/subgid` sont en lecture seule et ne sont plus réécrits. Pour y venir : une plage subuid figée dans l'image (dans les 65536 UID du user namespace du pod), et un moyen de mapper les UID sans setuid ni escalade de privilèges, sinon un moteur isolé (Kata). D'ici là, la construction d'images passe par BuildKit (outil de team) et l'exécution de conteneurs par kubedock.
 
 ## Plan d'action
 
