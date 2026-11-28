@@ -23,6 +23,10 @@ spec:
       valuesObject:
         crds:
           enabled: {{ .Values.certManager.installCRDs }}
+        # The Secret dies with its Certificate. Without it every Ingress
+        # that goes away (each stopped or deleted workspace endpoint) left
+        # its TLS Secret behind: 68 orphans in dev-ws-* on 2026-11-28.
+        enableCertificateOwnerRef: true
         prometheus:
           enabled: false
           servicemonitor:

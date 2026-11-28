@@ -1,0 +1,16 @@
+{{- if .Values.traefik.enabled -}}
+---
+# The TLS options of every host a workspace may reach through Traefik (pkg,
+# registry, git, cde: the serverNames of weebo-net-base in
+# 2.argo/helm/che/hardening/values.yaml). Same settings as `default`; the name
+# is what matters. Traefik answers 421 when a request's Host belongs to a
+# router with other TLS options than its SNI's, so a workspace that may open
+# TLS to pkg.weebo.poc cannot send `Host: argo.weebo.poc` over it (domain
+# fronting past Cilium's SNI filter, tested 2026-11-28).
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: workspace-reachable
+  namespace: traefik
+spec: {}
+{{- end -}}
