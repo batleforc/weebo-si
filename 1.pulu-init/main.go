@@ -519,6 +519,11 @@ func main() {
 							"featureGates": map[string]interface{}{
 								"UserNamespacesSupport": true,
 							},
+							// Default 110 was full (one pod per sidecar per
+							// workspace). Ceiling: the node's /24 podCIDR (254
+							// IPs, ipam kubernetes) minus Cilium's router and
+							// health addresses.
+							"maxPods": 250,
 						},
 					},
 					"seccompProfiles": []map[string]interface{}{
