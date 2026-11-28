@@ -173,7 +173,7 @@ clickstack:
 otel:
   enabled: true
   # renovate: datasource=helm depName=opentelemetry-collector registryUrl=https://open-telemetry.github.io/opentelemetry-helm-charts
-  version: "0.178.3"
+  version: "0.183.2"
   clusterName: weebo-si
   ingestLabel: weebo.io/otel-ingest
   ingestSecret: clickstack-ingest
