@@ -61,6 +61,10 @@ check W-04 "no_new_privs" "1" "$(x 'awk "/^NoNewPrivs/{print \$2}" /proc/self/st
 check W-05 "lire le token du ServiceAccount" "denied" "$(x 'cat /var/run/secrets/kubernetes.io/serviceaccount/token >/dev/null 2>&1 && echo read || echo denied')"
 check W-06 "lire /etc/shadow" "denied" "$(x 'cat /etc/shadow >/dev/null 2>&1 && echo read || echo denied')"
 check W-07 "écrire dans /usr/bin" "denied" "$(x 'touch /usr/bin/.witness 2>/dev/null && echo written || echo denied')"
+# Identity files root:root 0644 in the image (WeeboDevImage #216): denied by
+# mode alone, whatever the groups pod-identity hands out.
+check W-18 "modifier /etc/passwd, group, subuid, subgid" "644:0:0 644:0:0 644:0:0 644:0:0 denied" \
+  "$(x 'echo $(stat -c %a:%u:%g /etc/passwd /etc/group /etc/subuid /etc/subgid) $(for f in /etc/passwd /etc/group /etc/subuid /etc/subgid; do [ -w $f ] && echo $f; done | grep -q . && echo writable || echo denied)')"
 
 # Réseau (Cilium) : DNS restreint, Traefik filtré, fronting refusé, pas d'Internet.
 check W-08 "résoudre un domaine hors profil" "refused" "$(x 'getent hosts example.com >/dev/null && echo resolved || echo refused')"

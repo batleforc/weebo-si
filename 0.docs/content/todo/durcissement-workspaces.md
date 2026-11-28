@@ -28,7 +28,7 @@ de team) et `documentation.md` (le User Guide répond au lecteur « dev qui arri
 
 ---
 
-**État au 28/11/2026** : opérateur weebo-si **0.7.0**. Tout ce que ce document appelait « Haute » est en place : KubeArmor en Block, token réservé à che-code, DNS restreint, Traefik filtré par host avec parade au domain fronting, quotas, PSA restricted, identité 1234 en user namespace. Un workspace témoin (`task hardening:witness`, 17 tests) le vérifie à la demande. Le nœud admet 250 pods (Talos `maxPods`), et le dashboard ClickStack « Workspaces & sidecars » suit les sidecars, les refus d'admission et le remplissage du nœud, avec trois alertes ntfy. Ce qui reste : Hubble historisé, posture KubeArmor du namespace, outils de team (V-16, V-17), phases 8 à 10, puis les mesures actives (détection et réponse, voir « Ensuite : les mesures actives »).
+**État au 28/11/2026** : opérateur weebo-si **0.7.0**. Tout ce que ce document appelait « Haute » est en place : KubeArmor en Block, token réservé à che-code, DNS restreint, Traefik filtré par host avec parade au domain fronting, quotas, PSA restricted, identité 1234 en user namespace. Un workspace témoin (`task hardening:witness`, 18 tests) le vérifie à la demande. Le nœud admet 250 pods (Talos `maxPods`), et le dashboard ClickStack « Workspaces & sidecars » suit les sidecars, les refus d'admission et le remplissage du nœud, avec trois alertes ntfy. Ce qui reste : Hubble historisé, posture KubeArmor du namespace, outils de team (V-16, V-17), phases 8 à 10, puis les mesures actives (détection et réponse, voir « Ensuite : les mesures actives »).
 
 Relevé live du 23/11/2026 : opérateur weebo-si 0.5.0, WeeboSiConfig `cluster` (génération 17), team `weebo`, user `batleforc`. Le workspace `weebo-dotfiles-che-owjk` était arrêté au moment du relevé. Cluster mono-nœud, un choix assumé (voir la section dédiée).
 
@@ -97,7 +97,7 @@ flowchart LR
     EV["KubeArmor · Hubble · audit apiserver<br/>(ph. 1 et 10)"]:::plan
   end
   KA -.-> EV
-  WT["Workspace témoin<br/>task hardening:witness, 17 tests"] -.-> EV
+  WT["Workspace témoin<br/>task hardening:witness, 18 tests"] -.-> EV
 
   classDef off stroke:#c0352b,stroke-width:2px,stroke-dasharray:4 3;
   classDef audit stroke:#b26a00,stroke-width:2px;
@@ -157,11 +157,11 @@ Tableau refait le 28/11 : les lignes réglées sont passées dans « Réglé » 
 
 **Réglé (23/11 → 28/11)** : KubeArmor en Block (règles), token réservé à che-code, bruit de posture KubeArmor coupé (Allow `/`), Traefik filtré par host avec parade au domain fronting, DNS restreint, `open` réservé à l'admin (RFC 0021), quotas, PSA `restricted`, UID 1234 + user namespace par pod (RFC 0018), entrée ghcr directe retirée d'imagePolicy, configuration des gestionnaires de paquets (env), RoleBindings legacy et 68 Secrets TLS orphelins supprimés (cert-manager pose désormais un ownerRef, le Secret part avec son Ingress), nœud à 250 pods.
 
-**En cours (28/11)** : WeeboDevImage #216. `/etc/passwd`, `group`, `subuid` et `subgid` passent en `root:root 0644` dans toutes les images, sans réécriture au démarrage. En prod, ils étaient en `664 root:0` : seul le gid 1234 imposé par pod-identity tenait le dev hors du groupe 0. kubedock passe sur le kubeconfig de l'utilisateur.
+**Fait (28/11)** : WeeboDevImage #216, mergée. `/etc/passwd`, `group`, `subuid` et `subgid` sont en `root:root 0644` dans toutes les images, sans réécriture au démarrage. Avant, ils étaient en `664 root:0` : seul le gid 1234 imposé par pod-identity tenait le dev hors du groupe 0. Le témoin le vérifie (W-18). kubedock passe sur le kubeconfig de l'utilisateur : reste à le valider dans un workspace démarré depuis le dashboard.
 
 ### Ensuite : les mesures actives
 
-Une fois ces derniers points traités, le préventif est en place : le workspace ne peut plus faire ce qu'on lui interdit. La suite du travail porte sur les mesures actives : voir qu'une attaque est tentée, et y répondre.
+Une fois kubedock validé, le préventif est en place : le workspace ne peut plus faire ce qu'on lui interdit. La suite du travail porte sur les mesures actives : voir qu'une attaque est tentée, et y répondre.
 
 - **Détecter** : alerter sur les refus, et pas seulement les compter.
   - Un Block KubeArmor (lecture du token, `/etc/shadow`, `/usr/bin`) part en alerte ntfy, avec le workspace et le binaire. Depuis l'Allow `/`, ces alertes sont rares, donc parlantes.
@@ -233,7 +233,7 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 
 #### Un workspace témoin qui teste les interdits
 
-**Fait (28/11)** : `task hardening:witness`, à la demande. 17 tests, tous PASS au premier passage (après correction de deux tests d'admission mal écrits). Pas de cron ni d'alerte ntfy pour l'instant : à ajouter si on veut un passage régulier.
+**Fait (28/11)** : `task hardening:witness`, à la demande. 18 tests, tous PASS au premier passage (après correction de deux tests d'admission mal écrits). Pas de cron ni d'alerte ntfy pour l'instant : à ajouter si on veut un passage régulier.
 
 **Pourquoi** : Le canary de `networkProfiles` ne vérifie que le réseau, et la suite `weebo-si-e2e` tourne sur kind, pas sur ce cluster. Rien ne prévient si un changement (montée de version, revert, selfHeal) rouvre en silence ce que le plan a fermé.
 
