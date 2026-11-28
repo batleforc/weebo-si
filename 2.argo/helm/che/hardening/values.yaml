@@ -434,11 +434,19 @@ config:
         # open, so the read is what gets narrowed. Blocked for everything but
         # the binaries V-08 saw needing it (11-24 to 11-28): che-code's own
         # Node (injected under /checode, not the user's mise Node; all three
-        # builds it ships) and kubedock, which creates its pods through the
-        # API. A Block plus Allow-fromSource on the same directory, tested
-        # 11-28: the listed binary reads, anything else gets EACCES. A
+        # builds it ships). kubedock is not one: the SA cannot create pods,
+        # it uses the user's kubeconfig the dashboard injects (WeeboDevImage
+        # che-kubedock). A Block plus Allow-fromSource on the same directory,
+        # tested 11-28: the listed binary reads, anything else gets EACCES. A
         # VS Code extension runs under che-code's Node and keeps the token.
         # /var/run is a symlink to /run in most images, hence both.
+        #
+        # Any Allow rule switches the container's file posture to whitelist:
+        # each access no rule matches logged a DefaultPosture alert (~200/min
+        # idle, enough to trip the 10/s throttle and hide the real Blocks;
+        # defaultPostureLogs only applies to AppArmor, not BPF-LSM). The
+        # Allow on / matches those: the more specific rules above still win
+        # (tested 11-28, Block and fromSource unchanged, no posture alert).
         weebo-armor-base:
           apiVersion: security.kubearmor.com/v1
           kind: KubeArmorPolicy
@@ -468,11 +476,13 @@ config:
                     - path: /checode/checode-linux-libc/ubi9/node
                     - path: /checode/checode-linux-libc/ubi8/node
                     - path: /checode/checode-linux-musl/node
-                    - path: /usr/local/bin/kubedock
                   action: Allow
                 - dir: /run/secrets/kubernetes.io/serviceaccount/
                   recursive: true
                   fromSource: *token-readers
+                  action: Allow
+                - dir: /
+                  recursive: true
                   action: Allow
             capabilities:
               matchCapabilities:
