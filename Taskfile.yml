@@ -58,6 +58,10 @@ tasks:
     desc: "Validation amont du durcissement des workspaces (V-xx du protocole, durcissement-workspaces.md) ; preuves dans .hardening-runs/"
     cmds:
       - 0.task/scripts/hardening-validate.sh {{ .CLI_ARGS }}
+  hardening:witness:
+    desc: "Workspace témoin : démarre un vrai DevWorkspace dans dev-ws-batleforc-test et rejoue les interdits (sort 1 si l'un passe)"
+    cmds:
+      - 0.task/scripts/hardening-witness.sh
   docs:run:
     desc: "Run the current doc (Fumadocs) dev server"
     dir: 0.docs
