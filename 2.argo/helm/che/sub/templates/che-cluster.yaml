@@ -83,6 +83,9 @@ spec:
     tlsSecretName: che-cluster-tls
     annotations:
       kubernetes.io/ingress.class: "traefik"
+      # Workspaces reach cde.dev (CHE_DASHBOARD_URL): see the TLSOption in
+      # 2.argo/helm/ingress/sub/templates/middleware/tls-workspace-reachable.yaml.
+      traefik.ingress.kubernetes.io/router.tls.options: traefik-workspace-reachable@kubernetescrd
     auth:
       oAuthClientName: {{ .Values.che.auth.clientId | quote }}
       # Name of the Secret rendered by oauth-secret.yaml, not the value itself.

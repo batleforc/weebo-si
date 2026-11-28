@@ -35,6 +35,26 @@ metadata:
 {{- with get $selectorField $obj.kind }}
 {{- $_ := set $spec . $neverSelected }}
 {{- end }}
+{{- /*
+  A Cilium profile resolves its own toFQDNs names: the base allows only the
+  cluster's names, the proxy REFUSES the rest, and a name never answered is
+  never learned, so its toFQDNs would match nothing. The DNS rule is derived
+  here rather than written next to each list, so the two cannot drift.
+*/ -}}
+{{- if eq $obj.kind "CiliumNetworkPolicy" }}
+{{- $names := list }}
+{{- range $spec.egress }}
+{{- range .toFQDNs }}
+{{- $names = append $names . }}
+{{- end }}
+{{- end }}
+{{- if $names }}
+{{- $dns := dict
+      "toEndpoints" (list (dict "matchLabels" (dict "k8s:io.kubernetes.pod.namespace" "kube-system" "k8s-app" "kube-dns")))
+      "toPorts" (list (dict "ports" (list (dict "port" "53" "protocol" "ANY")) "rules" (dict "dns" (uniq $names)))) }}
+{{- $_ := set $spec "egress" (append $spec.egress $dns) }}
+{{- end }}
+{{- end }}
 spec:
   {{- toYaml $spec | nindent 2 }}
 {{- end }}

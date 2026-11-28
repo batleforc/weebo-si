@@ -294,6 +294,7 @@ flowchart LR
   n_ns_weebo_si_hardening_98b8dc -->|"TCP 8089"| n_ns_eclipse_che_43d24e
   n_ns_weebo_si_hardening_af5a96 -->|"egress non restreint"| n_entity_open_f65d5d
   n_ns_workspaces_Che__dev_ws____07f3cd -->|"TCP 443"| n_fqdn_api_anthropic_com_41439f
+  n_ns_workspaces_Che__dev_ws____07f3cd -->|"ANY 53 (dns)"| n_ns_kube_system_9d0e37
   n_ns_workspaces_Che__dev_ws____ac87b9 -->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
   n_ns_workspaces_Che__dev_ws____ac87b9 -->|"TCP 8089"| n_ns_eclipse_che_50dd3c
   n_ns_workspaces_Che__dev_ws____ac87b9 -->|"TCP 8080"| n_ns_eclipse_che_2b9ac4
@@ -301,7 +302,9 @@ flowchart LR
   n_ns_workspaces_Che__dev_ws____ac87b9 -->|"TCP 8000, TCP 8443"| n_ns_traefik_d50a8d
   n_ns_workspaces_Che__dev_ws____ac87b9 -->|"tous ports"| n_ns_workspaces_Che__dev_ws____a24264
   n_ns_workspaces_Che__dev_ws____fa1322 -->|"TCP 22, TCP 443"| n_fqdn_github_com_git_batleforc_fr_c00a93
+  n_ns_workspaces_Che__dev_ws____fa1322 -->|"ANY 53 (dns)"| n_ns_kube_system_9d0e37
   n_ns_workspaces_Che__dev_ws____01372c -->|"tous ports"| n_entity_world_1a2945
+  n_ns_workspaces_Che__dev_ws____01372c -->|"ANY 53 (dns)"| n_ns_kube_system_9d0e37
   n_ns_workspaces_Che__dev_ws____e38a98 -->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
   n_ns_workspaces_Che__dev_ws____a24264 -->|"TCP 8080, TCP 8089"| n_ns_eclipse_che_43d24e
   n_ns_workspaces_Che__dev_ws____a24264 -->|"tous ports"| n_ns_traefik_d50a8d

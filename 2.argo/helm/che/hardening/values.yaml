@@ -151,7 +151,13 @@ config:
             egress:
               - toEndpoints:
                   - {}
-              # DNS, through Cilium's proxy: what makes toFQDNs work.
+              # DNS, through Cilium's proxy (what makes toFQDNs work), for
+              # names CoreDNS answers itself: the cluster zone, and
+              # *.weebo.poc, rewritten to Traefik. Neither is forwarded
+              # upstream, so neither carries data out. `**.cluster.local` also
+              # covers the search-list tries (ndots 5) of every external name.
+              # Each profile's toFQDNs names are added to the profile by
+              # templates/feature-templates.yaml; anything else is REFUSED.
               - toEndpoints:
                   - matchLabels:
                       k8s:io.kubernetes.pod.namespace: kube-system
@@ -161,17 +167,37 @@ config:
                       - { port: "53", protocol: ANY }
                     rules:
                       dns:
-                        - matchPattern: "*"
-              # *.weebo.poc (Traefik's web/websecure container ports, after
-              # service translation).
+                        - matchPattern: "**.cluster.local"
+                        - matchPattern: "**.weebo.poc"
+              # Traefik (web/websecure container ports, after service
+              # translation), for the hosts a workspace needs only: batlehub
+              # (pkg and its <registry>.pkg subdomains, registry.pkg = angos),
+              # Forgejo, and Che (CHE_DASHBOARD_URL). Argo CD, OpenBao,
+              # ClickStack... stay out. TLS by SNI, plain HTTP by Host. The
+              # routers of these hosts share the TLSOption workspace-reachable,
+              # which makes Traefik refuse (421) a Host of any other router
+              # sent over their TLS (domain fronting). A host added here needs
+              # that TLSOption on its route.
               - toEndpoints:
                   - matchLabels:
                       k8s:io.kubernetes.pod.namespace: traefik
                       app.kubernetes.io/name: traefik
                 toPorts:
                   - ports:
-                      - { port: "8000", protocol: TCP }
                       - { port: "8443", protocol: TCP }
+                    serverNames:
+                      - pkg.weebo.poc
+                      - "*.pkg.weebo.poc"
+                      - git.weebo.poc
+                      - cde.dev.weebo.poc
+                  - ports:
+                      - { port: "8000", protocol: TCP }
+                    rules:
+                      http:
+                        - host: 'pkg\.weebo\.poc'
+                        - host: '[a-z0-9-]+\.pkg\.weebo\.poc'
+                        - host: 'git\.weebo\.poc'
+                        - host: 'cde\.dev\.weebo\.poc'
               # che-host, che-dashboard and che-gateway's internal URLs.
               - toEndpoints:
                   - matchLabels:
@@ -229,6 +255,17 @@ config:
           spec:
             egress:
               - toEntities: [world]
+              # Any name: the base resolves only the cluster's own.
+              - toEndpoints:
+                  - matchLabels:
+                      k8s:io.kubernetes.pod.namespace: kube-system
+                      k8s-app: kube-dns
+                toPorts:
+                  - ports:
+                      - { port: "53", protocol: ANY }
+                    rules:
+                      dns:
+                        - matchPattern: "*"
         # Claude Code's API, the one service outside angos/batlehub/the forges
         # a workspace talks to.
         weebo-net-anthropic:

@@ -90,4 +90,10 @@ spec:
 {{- end }}
   tls:
     secretName: angos-tls
+    # weebo-net-base lets workspaces open TLS to this host: same TLS options
+    # as the other reachable hosts, so no Host of another router rides it
+    # (2.argo/helm/ingress/sub/templates/middleware/tls-workspace-reachable.yaml).
+    options:
+      name: workspace-reachable
+      namespace: traefik
 {{- end -}}
