@@ -622,9 +622,12 @@ config:
     # refused by feature-templates.yaml. Author them in that namespace
     # (an extra Application) before enabling. Needs
     # operator.resourceQuotas.rbac.enabled.
+    # Enforce since 2026-11-28, after a DryRun that found the profile valid
+    # and the only conflict Kyverno's LimitRange (dev-ws-* now excluded
+    # there, 2.argo/helm/hook).
     resourceQuotas:
       enabled: true
-      mode: DryRun
+      mode: Enforce
       namespaceSelector:
         matchLabels:
           hardening.weebo.io/workspace-namespace: "true"

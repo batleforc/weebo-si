@@ -47,6 +47,12 @@ defaultLimits:
     # also scales with volume count and size, so any number chosen today expires
     # quietly. Left unbounded as the lesser risk, not as an oversight.
     - "longhorn"
+    # Workspace namespaces get their LimitRange (weebo-limits, same defaults
+    # plus a 16Gi cap) from weebo-si-hardening's resourceQuotas, next to their
+    # ResourceQuota; two LimitRanges in one namespace apply with no defined
+    # winner. Its pod-less template namespace needs none either.
+    - "dev-ws-*"
+    - "weebo-si-hardening-templates"
 
 # Feeds templates/mount-cert-rustfs.yaml. The RustFS Tenant CRD cannot declare a
 # volume, so the CA bundle its OIDC client needs is mounted by a Kyverno
