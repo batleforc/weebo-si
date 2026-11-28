@@ -1,0 +1,320 @@
+{
+  "name": "Workspaces & sidecars",
+  "tags": [],
+  "tiles": [
+    {
+      "id": "legend",
+      "x": 0,
+      "y": 0,
+      "w": 24,
+      "h": 5,
+      "config": {
+        "name": "How to read this",
+        "configType": "sql",
+        "sqlTemplate": "SELECT 1 AS x FROM default.otel_metrics_gauge WHERE $__timeFilter(TimeUnix) LIMIT 1",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "markdown",
+        "markdown": "**Do workspace sidecars survive the hardened pod?** Every workspace pod runs as uid/gid 1234 in its own user namespace, PodSecurity `restricted`, every capability dropped (RFC 0018, user guide *Identité du workspace*). An image that expects root, a fixed uid or group 0 crash-loops here instead of failing loudly at admission. Scope: namespaces `dev-ws-*`.\n\n- **Sidecar restarts / containers not ready**: a sidecar that cannot write its data dir or find its passwd entry. The *by image* table names the culprit; the fix is a `container-overrides` `runAsUser` or a volume on its data dir.\n- **Pod creations refused**: `FailedCreate` on a workspace ReplicaSet, i.e. PodSecurity or a webhook (pod-identity, imagePolicy) refused the pod. The workspace sits *Starting* with no pod at all.\n- **Node pods running**: the node admits 250 (`maxPods`, Talos). Past it new workspace pods stay `Pending` (`FailedScheduling`).\n- DevWorkspace deletes a pod that crash-loops past its start timeout: a short-lived pod with restarts is still a failure."
+      }
+    },
+    {
+      "id": "ws-pods",
+      "x": 0,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Workspace pods running",
+        "configType": "sql",
+        "sqlTemplate": "SELECT countIf(phase = 2) AS \"Workspace pods running\"\nFROM (\n  SELECT argMax(Value, TimeUnix) AS phase\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'k8s.pod.phase' AND $__timeFilter(TimeUnix)\n    AND ResourceAttributes['k8s.namespace.name'] LIKE 'dev-ws-%'\n  GROUP BY ResourceAttributes['k8s.namespace.name'], ResourceAttributes['k8s.pod.name']\n  -- pods still reported at the end of the range: a deleted pod keeps its last phase\n  HAVING max(TimeUnix) > (\n    SELECT max(TimeUnix) FROM default.otel_metrics_gauge\n    WHERE MetricName = 'k8s.pod.phase' AND $__timeFilter(TimeUnix)\n  ) - INTERVAL 5 MINUTE\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "restarts",
+      "x": 4,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Sidecar restarts in range",
+        "configType": "sql",
+        "sqlTemplate": "SELECT toUInt32(sum(d)) AS \"Restarts in range\"\nFROM (\n  SELECT greatest(0, max(Value) - min(Value)) AS d\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'k8s.container.restarts' AND $__timeFilter(TimeUnix)\n    AND ResourceAttributes['k8s.namespace.name'] LIKE 'dev-ws-%'\n  GROUP BY ResourceAttributes['k8s.pod.name'], ResourceAttributes['k8s.container.name']\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 5,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "notready",
+      "x": 8,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Containers not ready",
+        "configType": "sql",
+        "sqlTemplate": "SELECT countIf(ready != 1) AS \"Containers not ready\"\nFROM (\n  SELECT argMax(Value, TimeUnix) AS ready\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'k8s.container.ready' AND $__timeFilter(TimeUnix)\n    AND ResourceAttributes['k8s.namespace.name'] LIKE 'dev-ws-%'\n  GROUP BY ResourceAttributes['k8s.pod.name'], ResourceAttributes['k8s.container.name']\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 3,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "backoff",
+      "x": 12,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Crash / pull back-offs",
+        "configType": "sql",
+        "sqlTemplate": "SELECT count() AS \"Crash / pull back-offs\"\nFROM default.otel_logs\nWHERE $__timeFilter(Timestamp) AND LogAttributes['k8s.resource.name'] = 'events' AND LogAttributes['type'] != 'DELETED'\n  AND JSONExtractString(LogAttributes['object'], 'regarding', 'namespace') LIKE 'dev-ws-%'\n  AND JSONExtractString(LogAttributes['object'], 'reason') = 'BackOff'",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "refused",
+      "x": 16,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Pod creations refused",
+        "configType": "sql",
+        "sqlTemplate": "SELECT count() AS \"Pod creations refused\"\nFROM default.otel_logs\nWHERE $__timeFilter(Timestamp) AND LogAttributes['k8s.resource.name'] = 'events' AND LogAttributes['type'] != 'DELETED'\n  AND JSONExtractString(LogAttributes['object'], 'regarding', 'namespace') LIKE 'dev-ws-%'\n  AND JSONExtractString(LogAttributes['object'], 'reason') = 'FailedCreate'",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 0,
+            "color": "chart-warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-pods",
+      "x": 20,
+      "y": 5,
+      "w": 4,
+      "h": 3,
+      "config": {
+        "name": "Node pods running (max 250)",
+        "configType": "sql",
+        "sqlTemplate": "SELECT countIf(phase = 2) AS \"Node pods running\"\nFROM (\n  SELECT argMax(Value, TimeUnix) AS phase\n  FROM default.otel_metrics_gauge\n  WHERE MetricName = 'k8s.pod.phase' AND $__timeFilter(TimeUnix)\n  GROUP BY ResourceAttributes['k8s.namespace.name'], ResourceAttributes['k8s.pod.name']\n  -- pods still reported at the end of the range: a deleted pod keeps its last phase\n  HAVING max(TimeUnix) > (\n    SELECT max(TimeUnix) FROM default.otel_metrics_gauge\n    WHERE MetricName = 'k8s.pod.phase' AND $__timeFilter(TimeUnix)\n  ) - INTERVAL 5 MINUTE\n)",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "number",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "colorRules": [
+          {
+            "operator": "gt",
+            "value": 200,
+            "color": "chart-warning"
+          },
+          {
+            "operator": "gt",
+            "value": 240,
+            "color": "chart-error"
+          }
+        ]
+      }
+    },
+    {
+      "id": "restarts-time",
+      "x": 0,
+      "y": 8,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Restarts over time, by container",
+        "configType": "sql",
+        "sqlTemplate": "SELECT ts, ctr AS \"Container\", sum(d) AS \"Restarts\"\nFROM (\n  SELECT\n    ts, ctr,\n    -- first bucket of a series: what it gained inside that bucket, since a\n    -- crash-looping container restarts within minutes of its pod's creation\n    if(row_number() OVER w = 1, v - lo, v - lagInFrame(v) OVER w) AS d\n  FROM (\n    SELECT\n      $__timeInterval(TimeUnix) AS ts,\n      cityHash64(ResourceAttributes['k8s.pod.uid'], ResourceAttributes['k8s.container.name']) AS series,\n      any(ResourceAttributes['k8s.container.name']) AS ctr,\n      max(Value) AS v,\n      min(Value) AS lo\n    FROM default.otel_metrics_gauge\n    WHERE MetricName = 'k8s.container.restarts' AND $__timeFilter(TimeUnix)\n      AND ResourceAttributes['k8s.namespace.name'] LIKE 'dev-ws-%'\n    GROUP BY ts, series\n  )\n  WINDOW w AS (PARTITION BY series ORDER BY ts)\n)\nWHERE d > 0\nGROUP BY ts, ctr\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "events-time",
+      "x": 12,
+      "y": 8,
+      "w": 12,
+      "h": 7,
+      "config": {
+        "name": "Failures over time, by reason",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  $__timeInterval(Timestamp) AS ts,\n  JSONExtractString(LogAttributes['object'], 'reason') AS \"Reason\",\n  count() AS \"Events\"\nFROM default.otel_logs\nWHERE $__timeFilter(Timestamp) AND LogAttributes['k8s.resource.name'] = 'events' AND LogAttributes['type'] != 'DELETED'\n  AND JSONExtractString(LogAttributes['object'], 'regarding', 'namespace') LIKE 'dev-ws-%'\n  AND JSONExtractString(LogAttributes['object'], 'reason') IN ('BackOff', 'FailedCreate', 'FailedScheduling', 'Failed', 'FailedMount', 'Evicted', 'OOMKilling', 'RestrictedGrantRefused')\nGROUP BY ts, \"Reason\"\nORDER BY ts",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "stacked_bar",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        }
+      }
+    },
+    {
+      "id": "containers",
+      "x": 0,
+      "y": 15,
+      "w": 24,
+      "h": 8,
+      "config": {
+        "name": "Workspace containers, most troubled first",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ns AS \"Namespace\", pod AS \"Pod\", ctr AS \"Container\", image AS \"Image\",\n  toUInt32(restarts_here) AS \"Restarts in range\",\n  toUInt32(restarts_total) AS \"Restarts total\",\n  if(ready = 1, 'yes', 'NO') AS \"Ready\",\n  last_seen AS \"Last seen\"\nFROM (\n  SELECT\n    ResourceAttributes['k8s.namespace.name'] AS ns,\n    ResourceAttributes['k8s.pod.name']       AS pod,\n    ResourceAttributes['k8s.container.name'] AS ctr,\n    any(concat(ResourceAttributes['container.image.name'], ':', ResourceAttributes['container.image.tag'])) AS image,\n    greatest(0, maxIf(Value, MetricName = 'k8s.container.restarts')\n              - minIf(Value, MetricName = 'k8s.container.restarts')) AS restarts_here,\n    maxIf(Value, MetricName = 'k8s.container.restarts') AS restarts_total,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.container.ready') AS ready,\n    max(TimeUnix) AS last_seen\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.container.restarts', 'k8s.container.ready')\n    AND $__timeFilter(TimeUnix)\n    AND ResourceAttributes['k8s.namespace.name'] LIKE 'dev-ws-%'\n  GROUP BY ns, pod, ctr\n)\nORDER BY (restarts_here > 0) + (ready != 1) DESC, restarts_here DESC, last_seen DESC\nLIMIT 60",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "alternateRowBackground": true,
+        "onClick": {
+          "type": "search",
+          "target": {
+            "mode": "template",
+            "template": "Logs"
+          },
+          "whereTemplate": "ResourceAttributes['k8s.pod.name'] = '{{Pod}}'",
+          "whereLanguage": "sql"
+        }
+      }
+    },
+    {
+      "id": "by-image",
+      "x": 0,
+      "y": 23,
+      "w": 10,
+      "h": 8,
+      "config": {
+        "name": "By image",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  image AS \"Image\",\n  uniqExact(pod, ctr) AS \"Containers\",\n  toUInt32(sum(restarts_here)) AS \"Restarts in range\",\n  countIf(ready != 1) AS \"Not ready now\"\nFROM (\n  SELECT\n    ResourceAttributes['k8s.pod.name']       AS pod,\n    ResourceAttributes['k8s.container.name'] AS ctr,\n    any(ResourceAttributes['container.image.name']) AS image,\n    greatest(0, maxIf(Value, MetricName = 'k8s.container.restarts')\n              - minIf(Value, MetricName = 'k8s.container.restarts')) AS restarts_here,\n    argMaxIf(Value, TimeUnix, MetricName = 'k8s.container.ready') AS ready\n  FROM default.otel_metrics_gauge\n  WHERE MetricName IN ('k8s.container.restarts', 'k8s.container.ready')\n    AND $__timeFilter(TimeUnix)\n    AND ResourceAttributes['k8s.namespace.name'] LIKE 'dev-ws-%'\n  GROUP BY pod, ctr\n)\nGROUP BY image\nORDER BY \"Restarts in range\" DESC, \"Not ready now\" DESC",
+        "connection": "Local ClickHouse",
+        "source": "Metrics",
+        "displayType": "table",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "failures",
+      "x": 10,
+      "y": 23,
+      "w": 14,
+      "h": 8,
+      "config": {
+        "name": "Refusals and failures",
+        "configType": "sql",
+        "sqlTemplate": "SELECT\n  ts AS \"Time\", ns AS \"Namespace\", obj AS \"Object\", reason AS \"Reason\", cause AS \"Cause\", note AS \"Message\"\nFROM (\n  SELECT\n    Timestamp AS ts,\n    JSONExtractString(LogAttributes['object'], 'regarding', 'namespace') AS ns,\n    concat(JSONExtractString(LogAttributes['object'], 'regarding', 'kind'), '/', JSONExtractString(LogAttributes['object'], 'regarding', 'name')) AS obj,\n    JSONExtractString(LogAttributes['object'], 'reason') AS reason,\n    JSONExtractString(LogAttributes['object'], 'note') AS note,\n    multiIf(\n      note ILIKE '%violates PodSecurity%', 'PodSecurity',\n      note ILIKE '%admission webhook%', 'webhook',\n      note ILIKE '%exceeded quota%', 'quota',\n      note ILIKE '%Too many pods%', 'maxPods',\n      note ILIKE '%unbound%PersistentVolumeClaim%', 'volume',\n      note ILIKE '%Insufficient%', 'resources',\n      note ILIKE '%back-off restarting%', 'crash loop',\n      note ILIKE '%pull%', 'image pull',\n      note ILIKE '%is restricted%', 'grant missing',\n      ''\n    ) AS cause\n  FROM default.otel_logs\n  WHERE $__timeFilter(Timestamp) AND LogAttributes['k8s.resource.name'] = 'events' AND LogAttributes['type'] != 'DELETED'\n    AND JSONExtractString(LogAttributes['object'], 'regarding', 'namespace') LIKE 'dev-ws-%'\n    AND JSONExtractString(LogAttributes['object'], 'reason') IN ('BackOff', 'FailedCreate', 'FailedScheduling', 'Failed', 'FailedMount', 'Evicted', 'OOMKilling', 'RestrictedGrantRefused')\n)\nORDER BY ts DESC\nLIMIT 100",
+        "connection": "Local ClickHouse",
+        "source": "Logs",
+        "displayType": "table",
+        "numberFormat": {
+          "output": "number",
+          "mantissa": 0,
+          "thousandSeparated": true
+        },
+        "alternateRowBackground": true
+      }
+    },
+    {
+      "id": "logs",
+      "x": 0,
+      "y": 31,
+      "w": 24,
+      "h": 8,
+      "config": {
+        "name": "Workspace container errors",
+        "source": "Logs",
+        "displayType": "search",
+        "select": "Timestamp, ResourceAttributes['k8s.namespace.name'] AS ns, ResourceAttributes['k8s.pod.name'] AS pod, ResourceAttributes['k8s.container.name'] AS container, Body",
+        "where": "ResourceAttributes['k8s.namespace.name'] LIKE 'dev-ws-%' AND (lower(SeverityText) IN ('error', 'fatal', 'critical') OR match(Body, '(?i)(permission denied|read-only file system|operation not permitted|no such user|cannot find name for (user|group) id)'))",
+        "whereLanguage": "sql",
+        "orderBy": "Timestamp DESC"
+      }
+    }
+  ]
+}

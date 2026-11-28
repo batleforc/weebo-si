@@ -536,6 +536,26 @@ from HyperDX 2.32.
   `weebo_openbao_leader` sample are treated as the retention edge and not
   counted, otherwise a 7-day range would report every lifetime total.
 
+- `workspaces.json` — do workspace sidecars survive the hardened pod (uid
+  1234, user namespace, PodSecurity `restricted`, RFC 0018)? Six verdicts
+  (workspace pods running, sidecar restarts, containers not ready, back-offs,
+  pod creations refused, node pods against `maxPods` 250), restarts per
+  container and failure events per reason over time, every workspace
+  container with its image, the same rolled up *by image* (which sidecar
+  image to fix), the refusal and failure events with their cause, and the
+  workspace logs that look like a permission problem. Three ntfy alerts sit
+  on restarts, refusals and node pods (`clickstack.alerts`).
+
+  Scope is the `dev-ws-*` name prefix: the kubeletstats and k8s_cluster
+  metrics carry no namespace label. Refusals come from the Kubernetes events
+  (`FailedCreate` on the workspace ReplicaSet), the only place a PodSecurity
+  refusal shows up: the apiserver sends its warnings to the client, not to
+  events. A restart counted in the first bucket of a series is kept (a
+  crash-looping container restarts within minutes of its pod's creation),
+  unlike the counter charts elsewhere, because `k8s.container.restarts`
+  starts at 0 with the container. *Running* means still reported at the end
+  of the range: a deleted pod keeps its last phase.
+
 - `backups.json` — are the backups healthy? Six verdicts (databases seen,
   oldest backup, failing, oldest WAL archive, WAL archive failures, shortest
   recovery window), a row per CNPG Cluster, a row per backup CronJob, the

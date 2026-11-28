@@ -161,6 +161,29 @@ clickstack:
       threshold: 26
       windows: 2
       priority: 4
+    # dashboards/workspaces.json: a sidecar that does not survive the hardened
+    # pod (uid 1234, restricted), a pod PodSecurity or a webhook refused, and
+    # the node filling up to its 250 pods.
+    - dashboard: Workspaces & sidecars
+      tile: restarts
+      name: "Workspaces: a sidecar keeps restarting"
+      message: "More than 2 workspace container restarts in 15 min. See the Workspaces & sidecars dashboard (by image)."
+      interval: 15m
+      threshold: 2
+      priority: 3
+    - dashboard: Workspaces & sidecars
+      tile: refused
+      name: "Workspaces: pod creation refused"
+      message: "PodSecurity or a webhook refused a workspace pod: the workspace hangs in Starting."
+      interval: 5m
+      priority: 4
+    - dashboard: Workspaces & sidecars
+      tile: node-pods
+      name: "Node: more than 240 pods"
+      message: "The node nears maxPods (250): new workspace pods will stay Pending."
+      interval: 15m
+      threshold: 240
+      priority: 4
     - dashboard: weebo-openbao
       tile: deletes
       name: "weebo-openbao: OpenBao objects deleted"
