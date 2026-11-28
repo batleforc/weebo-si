@@ -638,12 +638,14 @@ teams:
         # No direct ghcr.io entry: imageRewrite already sends
         # ghcr.io/batleforc/weebodevimage/* through angos.
         default: [angos]
-      # Enforce stays baseline: restricted refuses DevWorkspace Operator's
-      # project-clone init container (no allowPrivilegeEscalation: false,
-      # no drop ALL; workspace Failed on 2026-11-28). Warn and audit
-      # restricted until project-clone gets a security context.
+      # restricted since 2026-11-28 (RFC 0018 precondition). project-clone,
+      # which DWO renders without a securityContext, gets
+      # allowPrivilegeEscalation: false and drop ALL from the pod-identity
+      # mutation (operator 0.7.0); tested on a workspace with 7 projects.
+      # In-workspace podman/buildah builds were already off (CheCluster
+      # disableContainerRunCapabilities).
       podSecurity:
-        level: baseline
+        level: restricted
         warnLevel: restricted
       kubearmorPolicy:
         # Same key as the cluster catalogue's.
