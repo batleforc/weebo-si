@@ -28,6 +28,8 @@ de team) et `documentation.md` (le User Guide répond au lecteur « dev qui arri
 
 ---
 
+**État au 28/11/2026** : opérateur weebo-si **0.7.0**. Tout ce que ce document appelait « Haute » est en place : KubeArmor en Block, token réservé à che-code et kubedock, DNS restreint, Traefik filtré par host avec parade au domain fronting, quotas, PSA restricted, identité 1234 en user namespace. Un workspace témoin (`task hardening:witness`, 17 tests) le vérifie à la demande. Le nœud admet 250 pods (Talos `maxPods`), et le dashboard ClickStack « Workspaces & sidecars » suit les sidecars, les refus d'admission et le remplissage du nœud, avec trois alertes ntfy. Ce qui reste : Hubble historisé, posture KubeArmor du namespace, outils de team (V-16, V-17), phases 8 à 10.
+
 Relevé live du 23/11/2026 : opérateur weebo-si 0.5.0, WeeboSiConfig `cluster` (génération 17), team `weebo`, user `batleforc`. Le workspace `weebo-dotfiles-che-owjk` était arrêté au moment du relevé. Cluster mono-nœud, un choix assumé (voir la section dédiée).
 
 ## Ce qui s'applique au namespace
@@ -39,23 +41,23 @@ flowchart LR
     C["WeeboSiConfig cluster"]
   end
 
-  subgraph OP["weebo-si-operator 0.5.0 · webhook 1 réplique (mono-nœud assumé)"]
+  subgraph OP["weebo-si-operator 0.7.0 · webhook 1 réplique (mono-nœud assumé)"]
     direction TB
     subgraph ADM["Admission (webhooks, failurePolicy Fail)"]
-      RW["imageRewrite<br/>docker.io / quay.io / ghcr.io → angos"] --> IP["imagePolicy<br/>angos/** (+ ghcr direct à retirer, ph. 2)"]
+      RW["imageRewrite<br/>docker.io / quay.io / ghcr.io → angos"] --> IP["imagePolicy<br/>angos/** seulement"]
       DP["dwocPin<br/>che (runc) · youki en attente (ph. 5)"]
       PG["policyGuard<br/>refuse écritures hors opérateur"]
-      EA["endpointAuth<br/>private par défaut · open à restreindre (ph. 3)"]
-      UIDW["Identité fixe 1234 + userns<br/>(à créer, ph. 5)"]:::plan
-      DC["Contrôle devfile<br/>platform-contract (à créer, ph. 8)"]:::plan
+      EA["endpointAuth<br/>private par défaut · open sur grant admin (RFC 0021)"]
+      UIDW["podIdentity Enforce<br/>1234 + userns + drop ALL"]
+      DC["devfileContract Enforce<br/>platform-contract 1"]
     end
     subgraph REC["Reconcile"]
-      PS["podSecurity<br/>baseline → restricted (ph. 5)"]
-      NP["networkProfiles<br/>base + dev-registries + anthropic<br/>DNS * → restreint, L7 Traefik (ph. 3)"]
-      KA["kubearmorPolicy<br/>AUDIT → Block + token fromSource (ph. 3/6)"]
+      PS["podSecurity<br/>restricted"]
+      NP["networkProfiles<br/>base + dev-registries + anthropic<br/>DNS restreint · Traefik par SNI/Host"]
+      KA["kubearmorPolicy<br/>Block (token, shadow, /usr/bin, net_raw)<br/>posture Audit"]
       ID["identity<br/>AuthentikUser + App Argo · départ (ph. 9)"]
-      RC["registryConfig<br/>NON activé (ph. 2)"]:::off
-      RQ["resourceQuotas<br/>NON activé (ph. 4)"]:::off
+      RC["registryConfig Off<br/>remplacé par l'env batlehub-client"]:::off
+      RQ["resourceQuotas Enforce<br/>profil standard"]
       TTC["teamTools<br/>à la demande (à créer, ph. 7)"]:::plan
     end
   end
@@ -67,7 +69,7 @@ flowchart LR
     DW["Pod workspace<br/>runc + hostUsers:false (ph. 5)"]
     SC["Sidecars (ph. 7)<br/>Postgres · Redis · rustfs dev · Playwright · sccache"]:::plan
     ING["Ingress *.cde.dev.weebo.poc"]
-    LR["LimitRange Kyverno<br/>mem 2Gi, pas de CPU max"]
+    LR["weebo-quota + weebo-limits<br/>(Kyverno retiré de dev-ws-*)"]
   end
 
   ADM --> DW
@@ -76,7 +78,7 @@ flowchart LR
   NP --> DW
   KA --> DW
   RC -.-> NS
-  RQ -.-> NS
+  RQ --> NS
   SC --- DW
   ID --> APP["Argo App che-user-batleforc"] --> NS
   ING --> GW["endpoint-gateway (OIDC)"]
@@ -95,39 +97,38 @@ flowchart LR
     EV["KubeArmor · Hubble · audit apiserver<br/>(ph. 1 et 10)"]:::plan
   end
   KA -.-> EV
-  WT["Workspace témoin<br/>tests T-xx chaque nuit (ph. 1)"]:::plan -.-> EV
+  WT["Workspace témoin<br/>task hardening:witness, 17 tests"] -.-> EV
 
   classDef off stroke:#c0352b,stroke-width:2px,stroke-dasharray:4 3;
   classDef audit stroke:#b26a00,stroke-width:2px;
   classDef plan stroke:#2f5fd0,stroke-width:2px,stroke-dasharray:6 3;
-  class KA audit;
 ```
 
-Légende : actif mais en Audit (ne bloque rien) · feature non activée · prévu dans le plan.
+Légende : feature non activée (pointillé rouge) · prévu dans le plan (pointillé bleu).
 
 ## Détail par feature
 
 - **imageRewrite** (Enforce) : 7 règles dont docker.io, quay.io et ghcr.io vers angos. Le dernier match a eu lieu le 21/11 dans ce namespace.
 
-- **imagePolicy** (Enforce) : La team autorise `registry.pkg.weebo.poc/**` et aussi `ghcr.io/batleforc/weebodevimage/**` en direct. Entrée directe à retirer (phase 2), puis signature cosign vérifiée (phase 10).
+- **imagePolicy** (Enforce) : La team n'autorise que `registry.pkg.weebo.poc/**` (l'entrée `ghcr.io/batleforc/weebodevimage/**` directe est retirée). Prévu : signature cosign vérifiée (phase 10).
 
 - **dwocPin** (Enforce) : Le DevWorkspace est épinglé sur `eclipse-che/devworkspace-config`. Prévu : youki par défaut via le CheCluster, et une entrée de repli `runc` (phase 5).
 
 - **policyGuard** (Enforce) : Personne d'autre que l'opérateur ne peut modifier les policies qu'il gère.
 
-- **endpointAuth** (Enforce) : Les 4 Ingress passent par les middlewares Traefik `endpoint-auth` et `-errors`, avec l'accès private par défaut. L'entrée anonyme `open` est accordée à toute la team : à restreindre (phase 3).
+- **endpointAuth** (Enforce) : Les Ingress passent par les middlewares Traefik `endpoint-auth` et `-errors`, avec l'accès private par défaut. L'entrée anonyme `open` n'est honorée que dans un namespace annoté par l'admin (RFC 0021, voir plus bas).
 
 - **podSecurity** (Enforce) : **`restricted` en enforce, warn et audit depuis le 28/11** (v1.36), team `weebo`. Le premier essai a échoué : l'init container `project-clone` du DWO v1.1.1 n'a pas de `securityContext` (le `containerSecurityContext` du DWOC ne lui est pas appliqué). Corrigé dans weebo-si-hardening 0.7.0 (#25) : le mutateur pod-identity pose `allowPrivilegeEscalation: false` et `drop: [ALL]` sur les conteneurs qui les laissent vides, et laisse tel quel un choix explicite, `privileged` ou `SYS_ADMIN`. Testé sur un workspace à 7 projets : clones OK, che-code 200, 0 redémarrage. Les warnings PSA partent vers le ReplicaSet, pas dans les événements. `kubectl debug` demande `--profile=restricted`.
 
-- **networkProfiles** (Enforce) : Sortie autorisée : DNS (tous domaines, `*`), Traefik 8000/8443, Che, kube-apiserver 6443 (indispensable), github.com et git.batleforc.fr (443/22), api.anthropic.com. Prévu : DNS restreint et Traefik filtré par host (phase 3).
+- **networkProfiles** (Enforce) : Sortie autorisée : Che, kube-apiserver 6443 (indispensable), github.com et git.batleforc.fr (443/22), api.anthropic.com, et sur Traefik seulement `pkg` (+ `*.pkg`, dont `registry.pkg`), `git` et `cde.dev` : SNI sur 8443, Host sur 8000. Ces routes partagent la TLSOption `workspace-reachable`, et Traefik répond 421 au domain fronting (SNI `pkg` + Host `argo`). **DNS restreint depuis le 28/11** : la base ne résout que `**.cluster.local` et `**.weebo.poc` (CoreDNS y répond seul, rien ne part en amont), chaque profil reçoit une règle DNS pour ses propres `toFQDNs`, dérivée par le chart (`templates/feature-templates.yaml`), et `internet` résout tout. Le profil `kube-api`, doublon de la base, est retiré.
 
-- **kubearmorPolicy** (Audit) : Audit seulement sur `/usr/bin`, `/usr/sbin` et `net_raw`. La posture par défaut du namespace est aussi en audit. Prévu : token réservé au Node de che-code (`fromSource`, phase 3), puis Block (phase 6).
+- **kubearmorPolicy** (**Block depuis le 28/11**) : `/etc/shadow`, l'écriture sous `/usr/bin` et `/usr/sbin`, `net_raw`, et la lecture du token du ServiceAccount, sauf par le Node de che-code (`/checode/…`, ses trois builds) et kubedock (Block + Allow `fromSource` sur le même répertoire). La posture du namespace reste en Audit. Effet de bord : une règle Allow passe KubeArmor en liste blanche pour le conteneur, et chaque accès fichier hors règle sort en alerte Audit (≈ 200/min pour un workspace au repos, plafonné à 10/s). Prévu : couper `defaultPostureLogs` ou passer la posture en Block (phase 6).
 
 - **identity** (Enforce) : Crée l'AuthentikUser et l'App Argo `che-user-batleforc` (selfHeal, sans prune). Le départ d'un utilisateur reste à traiter (phase 9).
 
-- **registryConfig** (Off) : `npm-mirror` est défini dans la team, mais la feature n'existe pas dans le WeeboSiConfig : aucun `.npmrc` n'est copié dans le namespace.
+- **registryConfig** (Off, voulu) : remplacé le 28/11 par des variables d'environnement dans la ConfigMap `batlehub-client` de `2.helm/user-app`, montée dans chaque conteneur : `NPM_CONFIG_REGISTRY`, `PIP_INDEX_URL`, `UV_DEFAULT_INDEX`, `GOPROXY` (avec le relais sumdb de BatleHub). Ni RBAC sur les Secrets ni fichier masqué dans `$HOME`. Pas de cargo (index sparse introuvable sur `cargo.pkg`) ni de maven (`settings.xml` seulement). La feature reste pour un client qu'un fichier seul configure.
 
-- **resourceQuotas** (Off) : Pas de ResourceQuota. Seule une LimitRange Kyverno existe : 2Gi de mémoire par défaut, ni limite CPU ni maximum.
+- **resourceQuotas** (**Enforce depuis le 28/11**) : profil `standard` par namespace : 20 pods, 10 PVC, 100Gi de stockage, 6 CPU et 24Gi demandés, 64Gi de limites mémoire, aucun NodePort ni LoadBalancer. `weebo-limits` reprend les défauts Kyverno (2Gi, 64Mi, 10m) et plafonne un conteneur à 16Gi. La GeneratingPolicy Kyverno exclut désormais `dev-ws-*`, pour qu'une seule LimitRange s'applique. Templates dans le namespace sans pod `weebo-si-hardening-templates`.
 
 - **teamTools** (Livré en 0.6.0, Off, RFC 0020) : switch RBAC off jusqu'à V-16 (buildkitd rootless). Les outils qui demandent des privilèges ou un périphérique (BuildKit, émulateurs Android) tournent dans un namespace de team et démarrent à la demande. Tous les autres restent des sidecars du workspace. Phase 7.
 
@@ -135,29 +136,26 @@ Légende : actif mais en Audit (ne bloque rien) · feature non activée · prév
 
 - **Accords réservés à l'admin** (Actif depuis le 27/11, RFC 0021) : `internet` et `open` sont `restricted`. Testé sur un vrai workspace de `dev-ws-batleforc-test` (T-07, T-12, T-27) : un patch du DevWorkspace vers `internet` donne un warning, `RestrictedGrantRefused` et pas de CNP (Internet coupé). `hardening.weebo.io/network-grants=internet` sur le Namespace donne la CNP et un 200, la révocation recoupe en moins de 25 s. Un endpoint `access: open` reste en 401 sans grant, passe avec `hardening.weebo.io/endpoint-access=open`, revient en 401 à la révocation. L'admin ne peut pas annoter un Ingress généré par le DevWorkspace (refus du garde) : `open` passe par le devfile. Grants rendus depuis `2.helm/user-app` (`cheUser.grants.network` / `.endpoint` dans les `che.values` du WeeboSiUser) depuis le 28/11.
 
-- **Workspace témoin** (À créer) : Un vrai workspace qui rejoue chaque nuit les tests T-xx automatisables et alerte dès qu'une attaque réussit. Phase 1.
+- **Workspace témoin** (**Livré le 28/11**) : `task hardening:witness` (`0.task/scripts/hardening-witness.sh`) démarre le DevWorkspace `hardening-witness` dans `dev-ws-batleforc-test` et rejoue 17 interdits (identité, KubeArmor, réseau, PodSecurity, pod-identity, quota). Sortie non nulle si l'un passe. À la demande, pas chaque nuit.
 
 - **Identité des pods** (Enforce sur **tous** les namespaces de workspace depuis le 28/11, RFC 0018) : WeeboDevImage#212 livre les images en `chown -R 1234:0` (`g=u` gardé). Revalidé sur un vrai workspace avec la nouvelle che-min-mise (`sha256:5b7b69af…`) : `uid=1234 gid=1234 groups=1234`, `/home/tooling`, `/globals` et `/home/user` inscriptibles, `/etc/passwd` protégé, che-code 200, 0 redémarrage. Le mutateur ramène `hostUsers: true` et les GID 0 à 1234 ; `runAsUser: 0` et `supplementalGroups: [0]` sont refusés. Prérequis PSA `restricted` rempli le 28/11 (voir podSecurity). **Sidecars testés le 28/11** : les six sidecars WeeboDevImage (hors android) tournent sans redémarrage ni erreur de droits. Les images tierces à utilisateur fixe (postgres, dex, mongo, browserless) échouent en 1234, la plupart déjà avant le 28/11 ; seule `sclorg/postgresql` est une régression (elle comptait sur le groupe 0). Correction documentée dans le User Guide (`identite-workspace`) : l'UID de l'image en `container-overrides`, ou un volume sur le répertoire de données. che-android : pas de `/dev/kvm`, et appium refuse `--allow-cors`. **Le nœud est à 109 pods sur 110** (`maxPods` du kubelet) : trois pods de test sont restés `Pending`.
 
 ## Ce qui manque pour sécuriser
 
+Tableau refait le 28/11 : les lignes réglées sont passées dans « Réglé » en bas.
+
 | Priorité | Constat | Correction |
 |---|---|---|
-| Haute | KubeArmor est en Audit partout. Rien n'est bloqué à l'exécution. | Lire `karmor logs`, puis passer en Block d'abord `net_raw`, l'écriture dans `/usr/bin` et `/usr/sbin`, et la lecture de `/proc/*/environ`. Ensuite, basculer la posture du namespace (fichiers et capabilities) en block. |
-| Haute | `weebo-base` ouvre Traefik 8000/8443 à tout le namespace. Le workspace atteint donc tous les services publiés sur `*.weebo.poc` (Argo CD, OpenBao, ClickStack, Forgejo…). Seul authentik se trouve sur ce chemin. | Ajouter une règle L7 Cilium `rules.http` filtrée par `host` pour n'autoriser que les hosts utiles (registry.pkg, pkg, git, che). |
-| Haute | Le kube-apiserver:6443 doit rester ouvert, sinon le workspace ne passe jamais en started. Or le token du ServiceAccount (`devworkspace-default-role`) permet de lire, créer et supprimer tous les Secrets du namespace, de faire un `pods/exec` et de patcher les DevWorkspace. Tout processus du pod peut donc lire le PAT, les credentials git et les clés TLS. | Garder 6443, mais limiter qui peut lire le token : une règle KubeArmor `fromSource` qui n'autorise la lecture de `/var/run/secrets/kubernetes.io/serviceaccount/` qu'au Node de l'IDE che-code, celui qui remonte l'état du workspace. Supprimer aussi le profil `kube-api`, qui fait doublon avec la base. |
-| Haute | Le DNS laisse passer toutes les requêtes (`matchPattern: "*"`). Une donnée peut sortir encodée dans des requêtes DNS, même si toute la sortie HTTP est bloquée. | Restreindre les patterns DNS de la base aux domaines internes, et laisser chaque profil ajouter les siens (phase 3). |
-| Moyenne | L'entrée `open` (endpoint anonyme) est accordée à toute la team : un workspace peut publier un endpoint sur Internet sans authentification. | Ne l'accorder que par annotation de namespace posée par l'admin, et alerter à chaque usage (phase 3). |
-| Moyenne | Le webhook weebo-si n'a qu'une réplique, avec `failurePolicy: Fail`. Pendant un redémarrage, aucun workspace ne démarre, et il s'ajoute à la chaîne d'admission au boot. Aucun test continu ne vérifie que les interdits tiennent toujours. | La réplique unique est acceptée pour le lab (décision du 24/11, voir « Mono-nœud »). Reste un workspace témoin qui tente les interdits et alerte (phase 1), et un runbook de reboot. |
-| Accepté | Cluster mono-nœud : un seul etcd, Longhorn à 1 réplique, plateforme et workspaces sur le même noyau. | Faiblesses assumées pour l'instant. Documenter le passage au multi-nœud et les bonnes pratiques à suivre dès maintenant (section dédiée). |
-| Moyenne | Pas de quota : un workspace peut épuiser le CPU, la mémoire et le stockage Longhorn du nœud. | Activer `resourceQuotas` avec un profil par team (CPU, mémoire, nombre de PVC, `requests.storage`). |
-| Moyenne | PSA reste en `baseline`. | `restricted` testé (V-10 PASS le 24/11 avec le contexte de sécurité du CheCluster) : reste à passer le label des namespaces de workspace en `restricted`. `hostUsers: false` arrive avec la RFC 0018 (phase 5). |
-| Moyenne | Tous les workspaces ont le même UID/GID. Le DWOC épinglé ne fixe aucun `podSecurityContext`, donc le DevWorkspace Operator applique sa valeur par défaut : `runAsUser`/`fsGroup` 1234 dans tous les namespaces. | Donner à chaque namespace de workspace une plage UID/GID qui lui est propre, attribuée par l'opérateur et imposée par webhook. À combiner avec `hostUsers: false`. |
-| Moyenne | La team autorise `ghcr.io/batleforc/weebodevimage/**` en direct, ce qui contourne angos si la réécriture tombe. | Supprimer cette entrée du catalogue : imageRewrite la ramène déjà sur `registry.pkg.weebo.poc/ghcr/…`. |
-| Moyenne | `registryConfig` est déclaré dans la team mais pas activé. | Ajouter `registryConfig` au WeeboSiConfig et pointer `weebo-npmrc` sur le vrai miroir (c'est encore un placeholder dans values.yaml). |
-| Fonctionnel | Aucun outillage partagé par team. Construire une image (BuildKit), lancer un appareil Android, une grille de navigateurs ou un cache de compilation : soit c'est impossible, soit il faudrait affaiblir le workspace. | Séparer deux cas. Les sidecars sans privilège restent dans le pod (Postgres, Redis, rustfs de dev, Playwright, sccache). Les outils privilégiés ou qui demandent un périphérique passent par une feature `teamTools` (BuildKit, Android) : un namespace par team, démarré à la demande. Voir la phase 7. |
-| Fonctionnel | Pas de devfile de référence, aucun suivi des devfiles qui vieillissent, et aucune doc pour les développeurs. Les règles du cluster se découvrent quand un workspace refuse de démarrer. | Un générateur de devfile appuyé sur un parent versionné, puis une approche plateforme. Renovate et un avertissement weebo-si signalent un devfile obsolète. Deux façons d'organiser son env (projet chapeau ou devfile dans le projet) à documenter, dans une partie User Guide. Voir la phase 8. |
-| Hygiène | Il reste des RoleBindings legacy pour `User:batleforc`, en plus de `labsso:max@weebo.internal`, et environ 40 Secrets TLS de workspaces supprimés. | Supprimer les bindings sans préfixe et les Secrets orphelins, puis trouver qui oublie de les nettoyer. |
+| Moyenne | La posture KubeArmor du namespace reste en Audit : une opération qu'aucune règle ne vise passe. Et depuis la règle Allow du token, chaque accès fichier hors règle sort en alerte (≈ 200/min par workspace au repos). | Soit couper `defaultPostureLogs` (KubeArmor, cluster entier), soit utiliser ce flux comme recensement et passer la posture fichiers en Block (phase 6). |
+| Moyenne | Une extension VS Code tourne sous le Node de che-code et garde donc le token. Les autres éditeurs maison (herdr, orca, chemuxer, code-server, sshd, web-terminal) n'ont pas été testés sous la règle token. | Liste d'extensions autorisées (`extensions.allowed`). Lancer le témoin avec chaque éditeur, et ajouter leur binaire au `fromSource` s'il en a besoin. |
+| Moyenne | Hubble ne garde que ≈ 13 s de flux (4 095 à 300/s) : pas d'historique de sortie. | Export des flux vers ClickStack (phase 1). |
+| Moyenne | Le webhook weebo-si n'a qu'une réplique (`failurePolicy: Fail`). | Accepté pour le lab (mono-nœud). Le témoin vérifie après coup que les interdits tiennent. |
+| Accepté | Cluster mono-nœud : un seul etcd, Longhorn à 1 réplique, plateforme et workspaces sur le même noyau. | Faiblesses assumées. Documenter le passage au multi-nœud. |
+| Fonctionnel | Aucun outillage partagé par team (BuildKit, Android). kubedock lit bien le token mais le rôle du SA n'a pas `pods create` : il ne lance aucun conteneur. | `teamTools` après V-16 (BuildKit) et V-17 (`/dev/kvm`). Pour kubedock, un Role `pods` dans le namespace de workspace (à décider). |
+| Fonctionnel | Pas de générateur de devfile, aucun suivi des devfiles qui vieillissent. | Phase 8. |
+| Fonctionnel | cargo et maven n'ont pas de miroir configuré, et mise télécharge depuis github.com (CDN hors profil). | Trouver l'index sparse cargo de BatleHub, un `settings.xml` par registryConfig, des `MISE_*_MIRROR_URL` vers BatleHub. |
+
+**Réglé (23/11 → 28/11)** : KubeArmor en Block (règles), token réservé à che-code et kubedock, Traefik filtré par host avec parade au domain fronting, DNS restreint, `open` réservé à l'admin (RFC 0021), quotas, PSA `restricted`, UID 1234 + user namespace par pod (RFC 0018), entrée ghcr directe retirée d'imagePolicy, configuration des gestionnaires de paquets (env), RoleBindings legacy et 68 Secrets TLS orphelins supprimés (cert-manager pose désormais un ownerRef, le Secret part avec son Ingress), nœud à 250 pods.
 
 ## Pour aller plus loin
 
@@ -217,6 +215,8 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 
 #### Un workspace témoin qui teste les interdits
 
+**Fait (28/11)** : `task hardening:witness`, à la demande. 17 tests, tous PASS au premier passage (après correction de deux tests d'admission mal écrits). Pas de cron ni d'alerte ntfy pour l'instant : à ajouter si on veut un passage régulier.
+
 **Pourquoi** : Le canary de `networkProfiles` ne vérifie que le réseau, et la suite `weebo-si-e2e` tourne sur kind, pas sur ce cluster. Rien ne prévient si un changement (montée de version, revert, selfHeal) rouvre en silence ce que le plan a fermé.
 
 **Comment** : Un namespace témoin (un WeeboSiUser technique dans la team) avec un CronJob qui démarre un vrai DevWorkspace et tente : Chaque tentative doit échouer. Une réussite déclenche une alerte ClickStack. Les tests s'ajoutent au fil des phases.
@@ -235,6 +235,8 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 
 #### Retirer `weebo-devimages` du catalogue imagePolicy
 
+**Fait (27/11)** : la team n'a plus que `angos`.
+
 **Pourquoi** : imageRewrite envoie déjà `ghcr.io/batleforc/weebodevimage/*` sur angos. L'entrée en direct ne sert donc que si la réécriture tombe, et dans ce cas elle laisse passer une image qui n'est ni cachée ni contrôlée.
 
 **Comment** : Retirer l'entrée de `features.imagePolicy.catalog` et du `default` de la team `weebo`.
@@ -243,6 +245,8 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 
 #### Activer `registryConfig` avec un vrai `.npmrc`
 
+**Remplacé (28/11)** : variables d'environnement dans la ConfigMap `batlehub-client` (user-app), voir « Détail par feature ». La feature reste Off.
+
 **Pourquoi** : La team déclare `npm-mirror`, mais la feature n'est pas activée. Le réseau bloque déjà npmjs.org, donc npm passe soit par une config faite à la main, soit pas du tout. Activer la feature rend le miroir à la fois obligatoire et automatique.
 
 **Comment** : Ajouter `registryConfig` au WeeboSiConfig, d'abord en DryRun puis en Enforce. Remplacer le placeholder de `weebo-npmrc` par l'URL batlehub ou angos.
@@ -250,6 +254,8 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 **Vérif** : Le ConfigMap npmrc est présent dans le namespace et `npm install` fonctionne dans le workspace.
 
 #### Supprimer les RoleBindings legacy et les Secrets TLS orphelins
+
+**Fait (28/11)** : les deux RoleBindings `eclipse-che-cheworkspaces-*` vers `User:batleforc` (05/10) et 68 Secrets TLS de workspaces disparus sont supprimés. Cause trouvée : cert-manager supprime le Certificate avec l'Ingress, mais pas son Secret. `enableCertificateOwnerRef: true` (chart cert-manager, `2.argo/helm/ingress/main`) règle ça pour la suite.
 
 **Pourquoi** : Les bindings `User:batleforc` (sans préfixe `labsso:`) donnent des droits à une identité qu'aucun IdP actuel n'émet. Si une source d'identité future émet ce nom, elle hérite de ces droits. Les environ 40 Secrets TLS contiennent des clés privées que plus rien n'utilise.
 
@@ -262,6 +268,8 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 > C'est le gain le plus important. Un workspace compromis, par une dépendance npm piégée ou par un agent IA mal guidé, ne doit pas pouvoir parler à Argo CD ou OpenBao. L'API Kubernetes doit rester joignable, sinon le pod ne passe jamais en started : on limite donc qui peut utiliser le token, pas le réseau.
 
 #### Garder 6443 ouvert, mais limiter la lecture du token aux processus Che
+
+**Fait (28/11)** : V-08 (24/11 → 28/11) a vu lire le token par le Node de che-code, kubedock, grafana (sidecar lgtm, qui teste la config in-cluster et s'en passe) et nos sondes. Règle : Block sur le répertoire + Allow `fromSource` pour les trois Node de `/checode` et `/usr/local/bin/kubedock`, testée sur un pod jetable puis sur un vrai workspace (V-09) : `cat` et le Node de mise reçoivent EACCES, che-code tourne, lgtm et kubedock démarrent. Le profil `kube-api` est retiré.
 
 **Pourquoi** : Le rôle `devworkspace-default-role` donne au token des droits complets sur les Secrets (lecture, création, suppression), le `pods/exec` et le patch des DevWorkspace. N'importe quel `postinstall` npm peut lire `/var/run/secrets/kubernetes.io/serviceaccount/token` et récupérer le PAT, les credentials git et les clés TLS du namespace. Le réseau ne peut rien y faire, puisque 6443 est obligatoire.
 
@@ -281,6 +289,8 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 
 #### Filtrer Traefik 8000/8443 par host (Cilium L7)
 
+**Fait (28/11)** : V-20 PASS, `serverNames` filtre bien le SNI sur 8443 et `rules.http.host` le Host sur 8000. Mais un SNI autorisé portait n'importe quel Host (SNI `pkg` + Host `argo` = 200 sur Argo CD et OpenBao). Parade : les routes autorisées (batlehub, angos, forgejo, Ingress de Che) partagent la TLSOption `workspace-reachable`, et Traefik répond 421 quand le Host et le SNI n'ont pas les mêmes options. Piège : Traefik ne relie aucune TLSOption à un `HostRegexp`, d'où une liste de `Host()` générée depuis les registres de batlehub (environ 5 minutes de 421 sur `*.pkg` le 28/11 avant le correctif).
+
 **Pourquoi** : Aujourd'hui, passer par Traefik donne accès à tous les services publiés. Une liste de hosts autorisés ramène l'accès à ce qu'un développeur utilise : registre, packages, git, Che, ses propres endpoints.
 
 **Comment** : Ajouter `toPorts.rules.http` avec des `host` sur la règle Traefik de `weebo-base`. En 8443, Cilium ne voit que le SNI : il faut une règle TLS par SNI, sinon on passe par 8000. Les services d'admin se donnent ensuite via un profil explicite.
@@ -289,6 +299,8 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 
 #### Fermer l'exfiltration par DNS
 
+**Fait (28/11)** : base `**.cluster.local` + `**.weebo.poc` (le `**.` marche dans `rules.dns` en Cilium 1.19.10, testé), plus une règle DNS par profil dérivée de ses `toFQDNs` par le chart, et `*` pour `internet`. Sans ce lien, un nom refusé n'est jamais appris et sa règle `toFQDNs` ne matche rien. Les essais de la liste de recherche (ndots 5) tombent dans `**.cluster.local` et reçoivent NXDOMAIN, donc musl ne s'arrête pas sur un REFUSED. V-19 (14 jours de Hubble) n'a pas été fait : la base ne résout que ce que CoreDNS sert lui-même, et les profils listent déjà leurs noms.
+
 **Pourquoi** : La règle DNS de `weebo-base` accepte toutes les requêtes (`matchPattern: "*"`). Même avec toute sortie HTTP bloquée, une donnée peut sortir encodée dans des requêtes DNS vers un domaine contrôlé par l'attaquant (`<données>.attaquant.tld`), relayées par CoreDNS.
 
 **Comment** : Restreindre les `dns.matchPattern` de la base à `*.cluster.local`, `*.weebo.poc` et `*.svc`. Chaque profil ajoute les patterns de ses propres FQDN (`api.anthropic.com`, `github.com`…). Le proxy DNS de Cilium refuse le reste, et Hubble le trace. Utiliser la phase 1 pour lister les domaines réellement résolus avant de couper.
@@ -296,6 +308,8 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 **Vérif** : `dig exemple-inconnu.com` est refusé (REFUSED) depuis le workspace. Les domaines des profils accordés résolvent toujours.
 
 #### Encadrer les endpoints anonymes (`open`)
+
+**Fait (27/11)** : RFC 0021, `open` est `restricted` et accordé par l'annotation `hardening.weebo.io/endpoint-access` (user-app `cheUser.grants.endpoint`).
 
 **Pourquoi** : La team accorde l'entrée `open` de `endpointAuth` (`anonymous: true`). N'importe quel workspace de la team peut donc publier un endpoint sur Internet sans authentification. C'est une sortie de données dans l'autre sens, que les profils réseau de sortie ne voient pas.
 
@@ -308,6 +322,8 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 > Sur un cluster aussi petit, un workspace qui fuit en mémoire ou qui remplit Longhorn touche toute la plateforme, y compris OpenBao et Argo CD. Un quota borne le pire cas.
 
 #### Activer `resourceQuotas`
+
+**Fait (28/11)** : DryRun (profil valide, seul conflit la LimitRange Kyverno), puis Enforce. Un redémarrage de workspace passe sous quota (9,5Gi de limites mémoire sur 64Gi).
 
 **Pourquoi** : La seule protection actuelle est une LimitRange Kyverno qui fixe seulement des valeurs par défaut : pas de limite CPU, pas de maximum, pas de borne sur le stockage.
 
@@ -404,6 +420,8 @@ Les phases sont dans l'ordre où les faire. On voit d'abord, on retire ensuite c
 > Il faut au moins deux semaines d'historique de la phase 1, collectées **après** la phase 5. Le moteur et les UID changent le contenu des événements : un Block calibré sur runc et 1234 serait à refaire. Un Block sans données casse l'IDE au mauvais moment.
 
 #### KubeArmor : passer les règles en Block une par une
+
+**Fait en partie (28/11)** : `/etc/shadow`, `/usr/bin`, `/usr/sbin`, `net_raw` et le token passés en Block ensemble, sans attendre les deux semaines. Depuis le 24/11, rien de légitime ne les avait touchés, seulement nos sondes. `/proc/*/environ` n'a pas de règle (un chemin par PID). La posture du namespace reste en Audit.
 
 **Pourquoi** : Les règles actuelles ne font que témoigner. Les plus rentables sont celles qu'un usage normal ne déclenche jamais : `net_raw` (spoofing ou scan), l'écriture dans `/usr/bin` et `/usr/sbin` (persistance), la lecture de `/proc/*/environ` (vol de secrets).
 
@@ -728,8 +746,8 @@ Deux protocoles. Le premier lève les inconnues **avant** d'engager une phase : 
 | V-05 | `hostUsers: false` fonctionne-t-il avec runc ? | Pod `hostUsers: false` avec un PVC Longhorn RWO et un Secret monté : `cat /proc/self/uid_map`, écriture sur le PVC puis `ls -n`, lecture du Secret. | Mapping non identitaire, PVC inscriptible, Secret lisible. |
 | V-06 | `hostUsers: false` fonctionne-t-il avec youki ? | V-05 avec `runtimeClassName: youki`. | Identique à V-05.<br>Si échec : choisir entre youki et user namespaces pour les workspaces, ou garder les user namespaces sur l'entrée de repli runc. |
 | V-07 | KubeArmor bloque-t-il encore en user namespace ? Quel UID remonte-t-il ? | Pod de V-06 avec la règle `net_raw` en Block sur ce seul pod : `ping 1.1.1.1`. Lire l'UID dans l'événement. | **Relevé du 27/11** (workspace réel, RFC 0018 en Enforce) : KubeArmor voit le pod et sort les Audit fichiers (`/usr/bin`, token). L'UID remonté est celui du nœud, lu en entier signé 32 bits : `-625933102` = 3669032960 + 1234. Chaque pod a donc un UID de log distinct, à corréler avec le pod plutôt qu'avec 1234. `net_raw` non testable : pas de ping dans l'image, et `CapEff 0` rend une socket brute impossible de toute façon. |
-| V-08 | Quels binaires lisent le token ? | Règle KubeArmor en Audit sur `/var/run/secrets/kubernetes.io/serviceaccount/` pour `batleforc-test`, pendant 7 jours d'usage normal (démarrage, IDE, terminal, extensions). Agréger les `ProcessName` dans ClickStack. | La liste est réduite et stable : le Node de che-code sous `/checode`, et éventuellement machine-exec.<br>Si la liste est large : revoir le principe du `fromSource`. |
-| V-09 | La règle `fromSource` laisse-t-elle démarrer le workspace ? | Passer la règle de V-08 en Block avec la liste obtenue, sur `batleforc-test`. Démarrer, ouvrir l'IDE, ouvrir un terminal, puis `cat …/token`. | Le workspace passe en started, l'IDE remonte son état, et `cat` renvoie Permission denied.<br>Si le workspace reste en Starting : revenir en Audit et compléter la liste. |
+| V-08 | Quels binaires lisent le token ? | Règle KubeArmor en Audit sur `/var/run/secrets/kubernetes.io/serviceaccount/` pour `batleforc-test`, pendant 7 jours d'usage normal (démarrage, IDE, terminal, extensions). Agréger les `ProcessName` dans ClickStack. | La liste est réduite et stable : le Node de che-code sous `/checode`, et éventuellement machine-exec.<br>Si la liste est large : revoir le principe du `fromSource`.<br>**Relevé du 28/11** (24/11 → 28/11) : Node de che-code (`/checode/checode-linux-libc/ubi9/node`), kubedock, grafana du sidecar lgtm, et nos sondes. Liste courte et stable. |
+| V-09 | La règle `fromSource` laisse-t-elle démarrer le workspace ? | Passer la règle de V-08 en Block avec la liste obtenue, sur `batleforc-test`. Démarrer, ouvrir l'IDE, ouvrir un terminal, puis `cat …/token`. | Le workspace passe en started, l'IDE remonte son état, et `cat` renvoie Permission denied.<br>Si le workspace reste en Starting : revenir en Audit et compléter la liste.<br>**PASS (28/11)** : workspace Running, IDE servi, `cat` et le Node de mise en Permission denied, lgtm et kubedock démarrent. |
 | V-10 | Les workspaces passent-ils en PSA `restricted` ? | Label `pod-security.kubernetes.io/warn=restricted` sur le namespace de test, puis démarrage du workspace avec et sans sidecars. | Aucun warning ni annotation `audit-violations`. Sinon, on liste les champs fautifs pour le DWOC.<br>**PASS (24/11, soir)** après le commit `a0a478aa` (CheCluster `devEnvironments.security` : `allowPrivilegeEscalation: false`, `drop: [ALL]`, seccomp `RuntimeDefault` au niveau du pod). Deux workspaces dans `dev-ws-batleforc-test`, l'un sans sidecar, l'autre avec `che-browser` : aucun avertissement `restricted`. Init container, `tools`, `browser` et `che-gateway` sont tous en `allowPrivilegeEscalation: false` et `drop: [ALL]`. Chrome 158 répond sur CDP, sans redémarrage, avec `NoNewPrivs: 1` et `CapEff: 0`. |
 | V-11 | che-operator recopie-t-il `runtimeClassName` ? | Sur une copie de test du CheCluster, ou en pointant vers une RuntimeClass inoffensive, mettre `devEnvironments.runtimeClassName` puis lire le DWOC `devworkspace-config`. | Le champ apparaît dans `config.workspace.runtimeClassName`. |
 | V-12 | che-operator conserve-t-il un `hostUsers` ajouté à son DWOC ? | Patch de `config.workspace.hostUsers: false` sur le DWOC Che, puis forcer un reconcile (modifier une annotation du CheCluster) et relire. | Si le champ survit, on l'utilise.<br>Sinon : DWOC maison épinglé par défaut, décidé en phase 5. |
@@ -738,9 +756,9 @@ Deux protocoles. Le premier lève les inconnues **avant** d'engager une phase : 
 | V-15 | Le sidecar navigateur (`che-browser`) marche-t-il en `restricted` et `hostUsers: false` ? | Sidecar Playwright : `npx playwright test` sur un test minimal, avec puis sans `--no-sandbox`. | Il fonctionne avec le sandbox. Sinon, `--no-sandbox` est documenté comme exception assumée. |
 | V-16 | buildkitd rootless démarre-t-il, et à quel niveau PSA ? | Déploiement de test dans un namespace jetable, avec seccomp et AppArmor `Unconfined`, puis `buildctl build` depuis le namespace de test. | Le build passe. Le niveau PSA nécessaire du namespace d'outils est noté (`Unconfined` est refusé par `baseline`, donc il faudra `privileged`, limité à ce namespace). |
 | V-17 | `/dev/kvm` est-il exposable proprement ? | Device plugin dans un namespace jetable, puis un pod qui demande la ressource : `ls -l /dev/kvm` et `emulator -accel-check`. Le même test avec `hostUsers: false`. | KVM utilisable, avec ou sans user namespace (droits sur le groupe `kvm`). |
-| V-18 | `registryConfig` sait-il gérer Gradle ? | Lire l'enum `ecosystem` dans le CRD `WeeboSiTeam`. | Gradle ou Maven présent.<br>Sinon : évolution de weebo-si à planifier. |
-| V-19 | Quels domaines le DNS doit-il encore résoudre ? | 14 jours de requêtes DNS Hubble pour les namespaces `dev-ws-*`, agrégées par domaine. | Une liste fermée, qui sert de base à la restriction DNS. |
-| V-20 | Cilium filtre-t-il par SNI sur 8443 ? | Règle de test `toPorts.serverNames` (ou `rules.http.host` sur 8000) sur le namespace de test, puis `curl` vers un host autorisé et un interdit. | L'autorisé passe, l'interdit est coupé. |
+| V-18 | `registryConfig` sait-il gérer Gradle ? | Lire l'enum `ecosystem` dans le CRD `WeeboSiTeam`. | Gradle ou Maven présent.<br>Sinon : évolution de weebo-si à planifier.<br>**28/11** : l'enum a Npm, Pypi, Cargo, Go, Maven, RubyGems, Composer, Conda, Terraform, OpenVsx, Other. Pas de Gradle. La feature reste Off (env vars à la place). |
+| V-19 | Quels domaines le DNS doit-il encore résoudre ? | 14 jours de requêtes DNS Hubble pour les namespaces `dev-ws-*`, agrégées par domaine. | Une liste fermée, qui sert de base à la restriction DNS.<br>**Non fait, plus nécessaire (28/11)** : la base ne résout que ce que CoreDNS sert lui-même, et chaque profil dérive ses noms de ses `toFQDNs`. |
+| V-20 | Cilium filtre-t-il par SNI sur 8443 ? | Règle de test `toPorts.serverNames` (ou `rules.http.host` sur 8000) sur le namespace de test, puis `curl` vers un host autorisé et un interdit. | L'autorisé passe, l'interdit est coupé.<br>**PASS (28/11)** : SNI filtré sur 8443, Host sur 8000. Mais domain fronting possible (SNI autorisé + Host interdit = 200), d'où la TLSOption `workspace-reachable` (421). |
 | V-21 | La chaîne KubeArmor → ClickStack marche-t-elle ? | Une écriture dans `/usr/bin` dans le namespace de test. | L'événement apparaît dans ClickStack en moins de 60 secondes. |
 | V-22 | Renovate repère-t-il les devfiles ? | `renovate --dry-run=full` avec le custom manager, sur `weebo-che-project`. | Il propose d'épingler le parent et de monter les images. |
 | V-23 | Quels champs du devfile survivent dans le DevWorkspace ? (RFC 0019) | Lire un DevWorkspace créé par le dashboard : annotations `che.eclipse.org/*`, `spec.template.attributes`, `spec.template.parent`. Puis un devfile de test avec un attribut de premier niveau `weebo.io/platform-contract`. | `parent` est conservé tel quel, et `schemaVersion` survit dans l'annotation `che.eclipse.org/devfile` (relevé du 24/11). Les `attributes` de premier niveau arrivent dans `spec.template.attributes` (validé par Max le 24/11) : le contrôle devfile lit `weebo.io/platform-contract` à cet endroit. **Validé.** |
