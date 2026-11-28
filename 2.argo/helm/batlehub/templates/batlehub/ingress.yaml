@@ -4,11 +4,15 @@
 # -- batlehub runs its own OIDC login, serves its own SPA and reads its own
 # `Authorization` header, so nothing sits between Traefik and the pod.
 #
-# The regexp half is the wildcard: every registry declared in values.yaml
-# answers on `<name>.pkg.weebo.poc` as well as `/proxy/<name>/`, and adding one
-# should not mean editing a route. CoreDNS already sends `*.weebo.poc` here
-# (2.argo/app/templates/dns/coredns.yaml), so a new registry needs no DNS record
-# either. One label only, matching what the certificate covers.
+# Every registry declared in values.yaml answers on `<name>.pkg.weebo.poc` as
+# well as `/proxy/<name>/`; the Host() list is generated from that list, so
+# adding one still means no route edit. Not a HostRegexp: Traefik cannot tie
+# TLS options to one, so with the workspace-reachable options below the SNI
+# <name>.pkg kept the default ones and every subdomain answered 421 (Host and
+# SNI options differ), while fronting from it to other hosts went through.
+# CoreDNS already sends `*.weebo.poc` here (2.argo/app/templates/dns/coredns.yaml),
+# so a new registry needs no DNS record either. One label only, matching what
+# the certificate covers.
 #
 # `passHostHeader` is what makes host routing work at all: batlehub selects the
 # registry from the Host (or the X-Forwarded-Host, which is why
@@ -31,7 +35,7 @@ spec:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`{{ .Values.batlehub.dns }}`){{ if .Values.batlehub.subdomainRouting.enabled }} || HostRegexp(`^[a-z0-9-]+\.{{ .Values.batlehub.dns | replace "." "\\." }}$`){{ end }}
+      match: Host(`{{ .Values.batlehub.dns }}`){{ if .Values.batlehub.subdomainRouting.enabled }}{{ range .Values.batlehub.registries }} || Host(`{{ .name }}.{{ $.Values.batlehub.dns }}`){{ end }}{{ end }}
       priority: 10
       services:
         - name: batlehub
@@ -46,14 +50,4 @@ spec:
     options:
       name: workspace-reachable
       namespace: traefik
-    # Traefik cannot read a domain off a HostRegexp, so without this the SNI
-    # <registry>.pkg kept the default TLS options while its Host's router has
-    # workspace-reachable: 421 on every subdomain. Same names as the
-    # certificate.
-    {{- if .Values.batlehub.subdomainRouting.enabled }}
-    domains:
-      - main: {{ .Values.batlehub.dns }}
-        sans:
-          - "*.{{ .Values.batlehub.dns }}"
-    {{- end }}
 {{- end -}}

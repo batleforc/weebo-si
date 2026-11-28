@@ -241,7 +241,7 @@ flowchart LR
   n_ns_monitoring_1d4c40 -->|"TCP 8081"| n_ns_weebo_si_hardening_973fb2
   n_ns_netbird_45c447 ==>|"via Traefik : registry.pkg.weebo.poc"| n_ns_angos_f1c162
   n_ns_netbird_45c447 ==>|"via Traefik : auth.weebo.poc"| n_ns_auth_3aba95
-  n_ns_netbird_45c447 ==>|"via Traefik : pkg.weebo.poc"| n_ns_batlehub_eb6c8e
+  n_ns_netbird_45c447 ==>|"via Traefik : cargo.pkg.weebo.poc, devfile.pkg.weebo.poc, github.pkg.weebo.poc, go-dist.pkg.weebo.poc, go.pkg.weebo.poc, helm-dist.pkg.weebo.poc, k8s-dist.pkg.weebo.poc, maven.pkg.weebo.poc, mise-versions.pkg.weebo.poc, node.pkg.weebo.poc, npm.pkg.weebo.poc, pkg.weebo.poc, pypi.pkg.weebo.poc, rustup.pkg.weebo.poc, vsx.pkg.weebo.poc"| n_ns_batlehub_eb6c8e
   n_ns_netbird_45c447 ==>|"via Traefik : dex.weebo.poc"| n_ns_dex_bea24e
   n_ns_netbird_45c447 ==>|"via Traefik : git.weebo.poc"| n_ns_forgejo_881e90
   n_ns_netbird_45c447 ==>|"via Traefik : longhorn.weebo.poc"| n_ns_longhorn_3ce2a9
