@@ -3,8 +3,8 @@ title: Identité du workspace
 description: "UID 1234 dans son propre user namespace, sans groupe 0 : ce que ça change pour vos images et pour les pod-overrides du devfile"
 ---
 
-<Callout type="warn">
-**Pas encore actif sur le lab** (RFC 0018, phase 5). Aujourd'hui, les pods tournent en 1234 **avec le groupe 0**, dans le user namespace du nœud. Le passage en `Enforce` attend deux préalables : la PSA `restricted` sur les namespaces de workspace, et des images qui n'écrivent plus dans des répertoires réservés au groupe 0. Préparez vos images dès maintenant.
+<Callout type="info">
+**Actif sur le lab depuis le 28/11/2026** (RFC 0018), avec la PSA `restricted` sur les namespaces de workspace. Les images WeeboDevImage sont déjà en `1234:0`.
 </Callout>
 
 ## Ce qui change
@@ -13,7 +13,8 @@ Chaque pod d'un namespace de workspace (le workspace, ses sidecars, un pod lanc�
 
 - dans **son propre user namespace** (`hostUsers: false`) : l'UID 1234 du pod correspond sur le nœud à une plage que nul autre pod ne partage. Root dans le conteneur n'est pas root sur le nœud ;
 - en **1234:1234**, `fsGroup` 1234 ;
-- **sans groupe 0** (`supplementalGroupsPolicy: Strict`), même si le `/etc/group` de l'image y met `user`.
+- **sans groupe 0** (`supplementalGroupsPolicy: Strict`), même si le `/etc/group` de l'image y met `user` ;
+- sans escalade de privilèges ni capability (`allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]`) sur chaque conteneur qui ne fixe pas ces champs lui-même (PSA `restricted`).
 
 ```text
 $ id
@@ -53,10 +54,11 @@ Le webhook corrige ce qu'il peut et refuse le reste :
 | `runAsGroup: 0` sur un conteneur | **refusé** |
 | `runAsGroup: 0` ou `fsGroup: 0` au niveau du pod | remplacé par 1234 |
 | `supplementalGroups` contenant `0` | **refusé** |
-| `supplementalGroupsPolicy: Merge` | **refusé** |
-| `hostUsers: true` | **refusé** |
+| `supplementalGroupsPolicy: Merge` | remplacé par `Strict` |
+| `allowPrivilegeEscalation: true`, `privileged`, `capabilities.add` hors `NET_BIND_SERVICE` | gardé tel quel, puis **refusé** par la PSA `restricted` |
+| `hostUsers: true` | remplacé par `false` |
 
-Retirez ces champs : le défaut est le bon. Le refus porte sur la **création du pod**, pas sur le DevWorkspace : le workspace passe en `Failed` (DevWorkspace Operator ne réessaie pas) et le message est dans son statut, sur le dashboard ou avec `kubectl get dw`. Corrigez le devfile, puis redémarrez.
+Retirez ces champs : le défaut est le bon. Un refus PSA arrive avec `violates PodSecurity "restricted:v1.36"` dans le statut du workspace. Le refus porte sur la **création du pod**, pas sur le DevWorkspace : le workspace passe en `Failed` (DevWorkspace Operator ne réessaie pas) et le message est dans son statut, sur le dashboard ou avec `kubectl get dw`. Corrigez le devfile, puis redémarrez.
 
 Les messages, un par raison (plusieurs raisons sont jointes par un point) :
 
@@ -76,3 +78,36 @@ Error from server: admission webhook "pod-identity-validate.hardening.weebo.io" 
 ```
 
 `kubectl debug` sur un pod démarré avant le passage en `Enforce` est refusé (`… this pod still shares the node's user namespace …; restart the workspace, then debug it`) : redémarrez le workspace, puis déboguez.
+
+## Sidecars tiers : bases de données et services
+
+Une image tierce (postgres, mongo, dex…) est construite pour tourner sous **son propre utilisateur**, propriétaire de son répertoire de données dans l'image. En 1234, elle ne peut ni y écrire ni en changer les droits. Deux corrections, au choix, sans rien perdre du confinement (le pod garde son user namespace, `Strict` et `drop: [ALL]`) :
+
+- **l'UID de l'image sur le conteneur** : un `runAsUser` non nul est gardé. C'est le plus simple ;
+- **un volume sur le répertoire de données** : il reçoit le `fsGroup` 1234 et devient inscriptible.
+
+```yaml
+# devfile : l'UID de l'image
+- name: postgres
+  container:
+    image: postgres:17-alpine
+    env: [{ name: POSTGRES_PASSWORD, value: dev }]
+  attributes:
+    container-overrides:
+      securityContext: { runAsUser: 70, runAsGroup: 70 }
+```
+
+Relevé du 28/11 (pod durci, PSA `restricted`) :
+
+| Image | En 1234 tel quel | Correction qui marche |
+| --- | --- | --- |
+| `postgres:17-alpine`, `postgres:17` | échec (`initdb: could not change permissions`), déjà avant le 28/11 | `runAsUser` 70 (alpine) ou 999 ; ou un volume et `PGDATA` dans un sous-répertoire |
+| `quay.io/sclorg/postgresql-16-c9s` | échec (`mkdir /var/lib/pgsql`) : elle comptait sur le groupe 0 | `runAsUser: 26` |
+| `ghcr.io/dexidp/dex` | échec (base SQLite `/var/dex`), déjà avant | `runAsUser: 1001` ; ou un volume sur `/var/dex` |
+| `mongo` | échec, déjà avant | `runAsUser: 999` ; ou un volume sur `/data/db` |
+| `ghcr.io/browserless/chromium` | échec (pas d'entrée passwd pour 1234) | `runAsUser: 999` |
+| `rustfs/rustfs` | échec (`/data`) | volumes sur `/data` et `/logs` |
+| `redis`, `valkey`, `surrealdb` (`memory`) | OK | — |
+| sidecars WeeboDevImage (browser, lgtm, mailpit, rustfs, kubedock, desktop) | OK, 0 redémarrage | — |
+| `che-android` | échec : pas de `/dev/kvm` (outil de team prévu), et appium refuse `--allow-cors` | à corriger dans l'image |
+
