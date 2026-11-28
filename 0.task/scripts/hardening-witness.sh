@@ -90,6 +90,13 @@ hu=$(k -n "$NS" run witness-hu --image=$img --restart=Never --dry-run=server \
   -o jsonpath='{.spec.hostUsers} {.spec.securityContext.runAsUser}' \
   --overrides='{"spec":{"hostUsers":true,'"$safe"',"containers":[{"name":"c","image":"'$img'",'"$ctr"'}]}}' 2>&1 || true)
 check W-16 "pod dans le user namespace du nœud (pod-identity)" "false 1234" "$hu"
+# Not a forbidden act but the CA the user kubeconfig falls back on (WeeboDevImage
+# #217): ca.crt sits in the blocked token directory, so kubectl and kubedock
+# trust che-operator's bundle, which must hold the cluster CA.
+ca_line=$(k -n "$NS" get cm kube-root-ca.crt -o jsonpath='{.data.ca\.crt}' | sed -n 2p)
+: "${ca_line:=no cluster CA read}"  # an empty pattern would match any bundle
+check W-19 "CA du cluster dans le bundle Che (kubeconfig utilisateur)" "present" \
+  "$(x "grep -qsF '$ca_line' /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /public-certs/tls-ca-bundle.pem && echo present || echo missing")"
 check W-17 "quota du namespace" "weebo-quota" "$(k -n "$NS" get resourcequota weebo-quota -o name 2>/dev/null | cut -d/ -f2)"
 
 [ -n "${KEEP:-}" ] || k -n "$NS" patch dw "$DW" --type merge -p '{"spec":{"started":false}}' >/dev/null
