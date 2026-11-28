@@ -7,13 +7,12 @@ Deux choix se font dans le devfile : **ce que le workspace peut joindre** (les p
 
 ## Profils réseau
 
-La sortie du workspace est filtrée. Un socle (`base`) s'applique toujours : DNS, Che, l'API Kubernetes et tout `*.weebo.poc`, donc les miroirs BatleHub (paquets) et angos (images). Pas d'Internet. Les profils s'y ajoutent :
+La sortie du workspace est filtrée. Un socle (`base`) s'applique toujours : Che, l'API Kubernetes, et sur `*.weebo.poc` seulement BatleHub (`pkg` et ses sous-domaines, dont `registry.pkg` pour les images), Forgejo (`git`) et Che (`cde.dev`). Argo CD, OpenBao, ClickStack et les autres consoles ne sont pas joignables. Le DNS ne résout que les noms du cluster, les `*.weebo.poc` et les domaines des profils choisis : tout autre nom est refusé. Pas d'Internet. Les profils s'y ajoutent :
 
 | Profil | Ouvre |
 | --- | --- |
 | `dev-registries` | les forges Git : `github.com` et `git.batleforc.fr` (443 et 22) |
 | `anthropic` | `api.anthropic.com` |
-| `kube-api` | l'API Kubernetes (déjà dans le socle) |
 | `internet` | tout ce qui est hors du cluster : la porte de secours |
 
 Sans rien demander, vous recevez le défaut de la team : `dev-registries,anthropic`.

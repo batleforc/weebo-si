@@ -59,7 +59,6 @@ flowchart LR
     n_ns_workspaces_Che__dev_ws____ac87b9["profil weebo-net-base"]
     n_ns_workspaces_Che__dev_ws____fa1322["profil weebo-net-dev-registries"]
     n_ns_workspaces_Che__dev_ws____01372c["profil weebo-net-internet"]
-    n_ns_workspaces_Che__dev_ws____e38a98["profil weebo-net-kube-api"]
     n_ns_workspaces_Che__dev_ws____a24264["tous les pods"]
   end
   n_ns_devworkspace_controller_3115b1 -->|"egress non restreint"| n_entity_open_f65d5d
@@ -87,7 +86,6 @@ flowchart LR
   n_ns_workspaces_Che__dev_ws____fa1322 -->|"ANY 53 (dns)"| n_ns_kube_system_9d0e37
   n_ns_workspaces_Che__dev_ws____01372c -->|"tous ports"| n_entity_world_1a2945
   n_ns_workspaces_Che__dev_ws____01372c -->|"ANY 53 (dns)"| n_ns_kube_system_9d0e37
-  n_ns_workspaces_Che__dev_ws____e38a98 -->|"TCP 6443"| n_entity_kube_apiserver_3b39a7
   n_ns_workspaces_Che__dev_ws____a24264 -->|"TCP 8080, TCP 8089"| n_ns_eclipse_che_43d24e
   n_ns_workspaces_Che__dev_ws____a24264 -->|"tous ports"| n_ns_workspaces_Che__dev_ws____ac87b9
 ```
@@ -117,6 +115,5 @@ flowchart LR
 | weebo-si-hardening | `weebo-net-base` | Cilium | déployée | `2.argo/helm/che/hardening` |
 | weebo-si-hardening | `weebo-net-dev-registries` | Cilium | déployée | `2.argo/helm/che/hardening` |
 | weebo-si-hardening | `weebo-net-internet` | Cilium | déployée | `2.argo/helm/che/hardening` |
-| weebo-si-hardening | `weebo-net-kube-api` | Cilium | déployée | `2.argo/helm/che/hardening` |
 | weebo-si-hardening | `weebo-si-operator-ingress` | Cilium | déployée | `2.argo/helm/che/sub` |
 

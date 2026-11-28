@@ -92,10 +92,6 @@ config:
           variants:
             - backend: Cilium
               templateRef: { name: weebo-net-internet, namespace: weebo-si-hardening }
-        - key: kube-api
-          variants:
-            - backend: Cilium
-              templateRef: { name: weebo-net-kube-api, namespace: weebo-si-hardening }
         - key: anthropic
           variants:
             - backend: Cilium
@@ -224,8 +220,8 @@ config:
               # extensions read the DevWorkspace, gitconfig and secrets, run
               # terminals and report activity through it -- under Enforce
               # without it, both workspaces hammered :6443 with refused SYNs.
-              # Same rule as the kube-api profile, which stays for templates
-              # that grant it on its own.
+              # (The kube-api profile that duplicated this rule is gone,
+              # 2026-11-28; a devfile still naming it gets the team default.)
               - toEntities: [kube-apiserver]
                 toPorts:
                   - ports:
@@ -278,16 +274,6 @@ config:
                 toPorts:
                   - ports:
                       - { port: "443", protocol: TCP }
-        # kubectl from the workspace terminal (Che injects a kubeconfig).
-        weebo-net-kube-api:
-          apiVersion: cilium.io/v2
-          kind: CiliumNetworkPolicy
-          spec:
-            egress:
-              - toEntities: [kube-apiserver]
-                toPorts:
-                  - ports:
-                      - { port: "6443", protocol: TCP }
 
     # RFC 0004/0008. Refuses writes to the policies the operator owns, in
     # workspace namespaces. No access level grants networkpolicies: defence
@@ -439,11 +425,20 @@ config:
           network: Audit
           capabilities: Audit
       templates:
-        # What a workspace should never do. Each rule goes Block on its own on
-        # Thursday, after a day of `karmor logs`. The ServiceAccount token
-        # rule stays Audit: it is V-08's census of which binaries read the
-        # token (from 2026-11-24, 7 days), the input of the fromSource Block
-        # of phase 3. /var/run is a symlink to /run in most images, hence both.
+        # What a workspace should never do, Block since 2026-11-28: four days
+        # of Audit (from 11-24) caught nothing on these but our own probes.
+        # The namespace posture (operations no rule matches) stays Audit.
+        #
+        # ServiceAccount token (phase 3): its RBAC reaches every Secret of
+        # the namespace, pods/exec and the DevWorkspaces, and 6443 must stay
+        # open, so the read is what gets narrowed. Blocked for everything but
+        # the binaries V-08 saw needing it (11-24 to 11-28): che-code's own
+        # Node (injected under /checode, not the user's mise Node; all three
+        # builds it ships) and kubedock, which creates its pods through the
+        # API. A Block plus Allow-fromSource on the same directory, tested
+        # 11-28: the listed binary reads, anything else gets EACCES. A
+        # VS Code extension runs under che-code's Node and keeps the token.
+        # /var/run is a symlink to /run in most images, hence both.
         weebo-armor-base:
           apiVersion: security.kubearmor.com/v1
           kind: KubeArmorPolicy
@@ -451,26 +446,40 @@ config:
             file:
               matchPaths:
                 - path: /etc/shadow
-                  action: Audit
+                  action: Block
               matchDirectories:
                 - dir: /usr/bin/
                   recursive: true
                   readOnly: true
-                  action: Audit
+                  action: Block
                 - dir: /usr/sbin/
                   recursive: true
                   readOnly: true
-                  action: Audit
+                  action: Block
                 - dir: /var/run/secrets/kubernetes.io/serviceaccount/
                   recursive: true
-                  action: Audit
+                  action: Block
                 - dir: /run/secrets/kubernetes.io/serviceaccount/
                   recursive: true
-                  action: Audit
+                  action: Block
+                - dir: /var/run/secrets/kubernetes.io/serviceaccount/
+                  recursive: true
+                  fromSource: &token-readers
+                    - path: /checode/checode-linux-libc/ubi9/node
+                    - path: /checode/checode-linux-libc/ubi8/node
+                    - path: /checode/checode-linux-musl/node
+                    - path: /usr/local/bin/kubedock
+                  action: Allow
+                - dir: /run/secrets/kubernetes.io/serviceaccount/
+                  recursive: true
+                  fromSource: *token-readers
+                  action: Allow
             capabilities:
               matchCapabilities:
                 - capability: net_raw
-                  action: Audit
+                  action: Block
+            # Every rule carries its own action; this one is only the
+            # fallback, kept as tested.
             action: Audit
 
     # RFC 0007. Package-manager configuration (.npmrc, pip.conf...) mounted
@@ -650,10 +659,6 @@ teams:
             variants:
               - backend: Cilium
                 templateRef: { name: weebo-net-dev-registries, namespace: weebo-si-hardening }
-          - key: kube-api
-            variants:
-              - backend: Cilium
-                templateRef: { name: weebo-net-kube-api, namespace: weebo-si-hardening }
           - key: anthropic
             variants:
               - backend: Cilium
