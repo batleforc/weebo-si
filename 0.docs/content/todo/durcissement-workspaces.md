@@ -117,7 +117,7 @@ Légende : actif mais en Audit (ne bloque rien) · feature non activée · prév
 
 - **endpointAuth** (Enforce) : Les 4 Ingress passent par les middlewares Traefik `endpoint-auth` et `-errors`, avec l'accès private par défaut. L'entrée anonyme `open` est accordée à toute la team : à restreindre (phase 3).
 
-- **podSecurity** (Enforce) : enforce en `baseline`, warn et audit en `restricted` (v1.36). **Enforce `restricted` tenté le 28/11 puis annulé** : l'init container `project-clone` du DWO v1.1.1 n'a ni `allowPrivilegeEscalation: false` ni `drop: [ALL]` (le `containerSecurityContext` du DWOC ne lui est pas appliqué, et `projectClone` n'accepte que env/image/imagePullPolicy/resources), donc le pod du workspace est refusé. Piste : le mutateur pod-identity de weebo-si-hardening pose ces deux champs par défaut sur tout conteneur qui n'en a pas. Les warnings PSA partent vers le ReplicaSet, pas dans les événements : les lire dans l'audit de l'apiserver.
+- **podSecurity** (Enforce) : **`restricted` en enforce, warn et audit depuis le 28/11** (v1.36), team `weebo`. Le premier essai a échoué : l'init container `project-clone` du DWO v1.1.1 n'a pas de `securityContext` (le `containerSecurityContext` du DWOC ne lui est pas appliqué). Corrigé dans weebo-si-hardening 0.7.0 (#25) : le mutateur pod-identity pose `allowPrivilegeEscalation: false` et `drop: [ALL]` sur les conteneurs qui les laissent vides, et laisse tel quel un choix explicite, `privileged` ou `SYS_ADMIN`. Testé sur un workspace à 7 projets : clones OK, che-code 200, 0 redémarrage. Les warnings PSA partent vers le ReplicaSet, pas dans les événements. `kubectl debug` demande `--profile=restricted`.
 
 - **networkProfiles** (Enforce) : Sortie autorisée : DNS (tous domaines, `*`), Traefik 8000/8443, Che, kube-apiserver 6443 (indispensable), github.com et git.batleforc.fr (443/22), api.anthropic.com. Prévu : DNS restreint et Traefik filtré par host (phase 3).
 
@@ -137,7 +137,7 @@ Légende : actif mais en Audit (ne bloque rien) · feature non activée · prév
 
 - **Workspace témoin** (À créer) : Un vrai workspace qui rejoue chaque nuit les tests T-xx automatisables et alerte dès qu'une attaque réussit. Phase 1.
 
-- **Identité des pods** (Enforce sur **tous** les namespaces de workspace depuis le 28/11, RFC 0018) : WeeboDevImage#212 livre les images en `chown -R 1234:0` (`g=u` gardé). Revalidé sur un vrai workspace avec la nouvelle che-min-mise (`sha256:5b7b69af…`) : `uid=1234 gid=1234 groups=1234`, `/home/tooling`, `/globals` et `/home/user` inscriptibles, `/etc/passwd` protégé, che-code 200, 0 redémarrage. Le mutateur ramène `hostUsers: true` et les GID 0 à 1234 ; `runAsUser: 0` et `supplementalGroups: [0]` sont refusés. Reste ouvert : le prérequis PSA `restricted` (voir podSecurity).
+- **Identité des pods** (Enforce sur **tous** les namespaces de workspace depuis le 28/11, RFC 0018) : WeeboDevImage#212 livre les images en `chown -R 1234:0` (`g=u` gardé). Revalidé sur un vrai workspace avec la nouvelle che-min-mise (`sha256:5b7b69af…`) : `uid=1234 gid=1234 groups=1234`, `/home/tooling`, `/globals` et `/home/user` inscriptibles, `/etc/passwd` protégé, che-code 200, 0 redémarrage. Le mutateur ramène `hostUsers: true` et les GID 0 à 1234 ; `runAsUser: 0` et `supplementalGroups: [0]` sont refusés. Prérequis PSA `restricted` rempli le 28/11 (voir podSecurity).
 
 ## Ce qui manque pour sécuriser
 
