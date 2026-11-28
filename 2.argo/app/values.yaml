@@ -378,6 +378,10 @@ project:
         namespace: "devworkspace-controller"
       - server: "https://kubernetes.default.svc"
         namespace: "weebo-si-hardening"
+      # resourceQuotas templates (2.argo/helm/che/hardening,
+      # templates/quota-templates.yaml): a pod-less namespace.
+      - server: "https://kubernetes.default.svc"
+        namespace: "weebo-si-hardening-templates"
     clusterResourceWhitelist:
       - group: ""
         kind: "Namespace"

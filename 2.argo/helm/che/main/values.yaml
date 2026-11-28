@@ -165,7 +165,7 @@ che:
       # (2.argo/app/values.yaml).
       resourceQuotas:
         rbac:
-          enabled: false
+          enabled: true
         templateNamespace:
           name: weebo-si-hardening-templates
           create: true

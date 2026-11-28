@@ -623,7 +623,7 @@ config:
     # (an extra Application) before enabling. Needs
     # operator.resourceQuotas.rbac.enabled.
     resourceQuotas:
-      enabled: false
+      enabled: true
       mode: DryRun
       namespaceSelector:
         matchLabels:
@@ -636,6 +636,36 @@ config:
       namespaceSelection:
         annotation: hardening.weebo.io/resource-quota
       onNotGranted: Default
+
+# The resourceQuotas profiles' objects, written into
+# operator.resourceQuotas.templateNamespace by templates/quota-templates.yaml
+# (never into config.features.*.templates: a quota is live where it lives).
+# Sized on 2026-11-28: one pod per workspace (sidecars included), tools asks
+# 1280Mi and allows 9Gi, each workspace one 10Gi Longhorn volume; the node
+# has 12 cores and 58Gi. The LimitRange repeats Kyverno's defaults
+# (2.argo/helm/hook, default-container-limits), which leaves dev-ws-* so
+# that only one set of defaults applies, and caps one container at 16Gi.
+quotaTemplates:
+  quota-standard:
+    kind: ResourceQuota
+    spec:
+      hard:
+        pods: "20"
+        persistentvolumeclaims: "10"
+        requests.storage: 100Gi
+        services.nodeports: "0"
+        services.loadbalancers: "0"
+        requests.cpu: "6"
+        requests.memory: 24Gi
+        limits.memory: 64Gi
+  limits-standard:
+    kind: LimitRange
+    spec:
+      limits:
+        - type: Container
+          defaultRequest: { cpu: 10m, memory: 64Mi }
+          default: { memory: 2Gi }
+          max: { memory: 16Gi }
 
 # WeeboSiTeam objects: name -> spec. A team's feature block only does
 # something while that feature is enabled above; its catalogue entries must

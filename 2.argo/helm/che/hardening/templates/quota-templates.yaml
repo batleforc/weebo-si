@@ -1,0 +1,20 @@
+{{- /*
+  The objects config.features.resourceQuotas copies into each workspace
+  namespace, in the operator's pod-less template namespace (values.yaml,
+  quotaTemplates). Rendered only while the feature is on.
+*/ -}}
+{{- if (.Values.config.features.resourceQuotas | default dict).enabled }}
+{{- $ns := (((.Values.operator).resourceQuotas).templateNamespace).name | default "weebo-si-hardening-templates" }}
+{{- range $name, $obj := .Values.quotaTemplates }}
+---
+apiVersion: v1
+kind: {{ $obj.kind }}
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  labels:
+    hardening.weebo.io/template: resourceQuotas
+spec:
+  {{- toYaml $obj.spec | nindent 2 }}
+{{- end }}
+{{- end }}
